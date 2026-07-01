@@ -1,0 +1,161 @@
+SESSION INFORMATION
+===================
+Session Number: 40
+Topic: SPU Offloading, Sessions & Troubleshooting
+Date: July 2026
+Certification: Fortinet NSE7 Enterprise Firewall 7.6
+
+---
+
+STORY PROGRESS
+==============
+Setting: Vaultline Financial — the morning after the Session 39 trading floor incident.
+
+The session opened with three emails waiting. Marcus (NOC overnight engineer) had captured session list output from the recovery and starred entries he couldn't interpret. Priya (head of network security) wanted proof — not a general explanation — that trading sessions were hitting the NPU again. Daniel (security analyst) asked a harder question: are there sessions that flat-out cannot be offloaded regardless of policy?
+
+All three were answered through structured investigation of the session table entry Marcus had captured.
+
+Outstanding: The split-policy architecture for the trading VLAN was proposed in Session 39 but remains unimplemented. Vaultline's security team still wants deeper inspection on the trading VLAN alongside performance guarantees. This remains the natural next engineering challenge.
+
+Characters: Marcus, Priya, Daniel — all introduced this session.
+
+---
+
+CONCEPTS LEARNED
+================
+
+1. diagnose sys session list — Why This Command
+Lives under diagnose, not get. get produces operational summaries for administrators. diagnose exposes raw internal engine state. When you need proof that a specific session is hitting the NP7, you need engine state — not a summary. The session table lives here precisely because it shows what the forwarding engine is actually doing.
+
+2. Anatomy of a Session Entry
+The npu info line is the verdict line. Everything else — proto, duration, src, dst, state flags — provides context about the session but says nothing about where processing is happening. The exam will show full session entries. Go straight to npu info.
+
+3. Decoding offload=X/Y
+X = forward direction (source to destination). Y = reverse direction (destination to source). The number is an internal processor code, not a packet count.
+  9 = NP7 (fast path — CPU bypassed after session setup)
+  0 = CPU (slow path — full software processing)
+offload=9/9 = both directions on NP7 = fully offloaded = Priya's proof.
+offload=0/0 = both directions on CPU = investigate via no_ofld_reason.
+
+4. The Constraint vs Decision Framework
+This is the session's most important concept.
+
+ARCHITECTURAL CONSTRAINTS — cannot be configured away:
+  - Session Helpers: Protocols like FTP and SIP negotiate secondary connection ports inside application payloads. FortiOS session helpers (CPU software) watch this negotiation and dynamically open pinholes. The NP7 is a forwarding engine, not a payload parser — it cannot do this. Any session requiring a helper stays on the CPU for its entire lifetime. no_ofld_reason: helper.
+  - Software Tunnel Interfaces: GRE tunnels and SSL VPN tunnels run in software on the CPU. The tunnel processing itself lives on the CPU — so any session flowing through a software tunnel interface is CPU-bound regardless of policy. IPsec is the exception: the NP7 has dedicated crypto engines. no_ofld_reason: software-tunnel.
+  - Very Short-Lived Sessions: The NP7 takes over after the first packet — the CPU processes packet one, installs the session key, then steps aside. For sessions that complete in one or two packets (DNS queries, ICMP), the session is already finished before the NP7 ever forwards anything. Not a problem — mathematics.
+
+CONFIGURATION DECISIONS — can be reversed:
+  - Proxy-Based UTM Profile: Any proxy-mode profile attached to a policy forces all matching sessions to the CPU slow path. All of them. no_ofld_reason: disabled-by-profile.
+  - Explicit Policy Override: A firewall policy with set auto-asic-offload disable forces CPU processing. Classic forgotten troubleshooting override. no_ofld_reason: disabled-by-policy.
+
+5. The Troubleshooting Methodology
+Step 1: Read no_ofld_reason in the session entry you already have. It classifies the cause before you touch any other command.
+Step 2: Constraint (helper / software-tunnel)? Stop. Expected behaviour. Move on.
+Step 3: Decision (disabled-by-profile / disabled-by-policy)? Find the matching policy and correct it.
+
+The session entry you already have is the first diagnostic tool. Read the evidence before reaching for another command.
+
+---
+
+MY UNDERSTANDING
+================
+
+Strong Areas:
+- Immediately identified diagnose as the correct CLI tree (raw engine state vs operational summary)
+- Correctly reasoned that offload=9/9 could not be a packet count for a 142-second trading session
+- Correctly identified that session helpers prevent NP7 offloading through good reasoning about what the NP7 can and cannot do
+- Correctly concluded that no_ofld_reason: helper should not be "fixed" — expected behaviour, not a problem
+- Correctly applied the three-step troubleshooting methodology unprompted
+
+Initial Struggles:
+- Initially guessed diagnose npu rather than diagnose sys session list — right tree, slightly wrong branch
+- Initially included proxy profiles and explicit disables in the "cannot be offloaded regardless of policy" category — these are decisions, not constraints
+- Needed nudging to see that the reason code is step one before opening any other command
+
+Misconceptions Corrected:
+- "Cannot be offloaded regardless of policy" specifically excludes configuration decisions. The phrase is a filter that eliminates proxy profiles and explicit disables, pointing only to the three architectural constraints.
+
+Moments of Strong Reasoning:
+- Correctly used the packet count logic to eliminate that interpretation of 9/9
+- Correctly identified that session helpers need continuous payload inspection, making NP7 offload impossible
+- Correctly concluded no action needed for helper reason code — and explained why clearly
+
+---
+
+TROUBLESHOOTING EXPERIENCE
+==========================
+
+Fault Scenario: Vaultline Financial — junior engineer reports offload=0/0 on trading VLAN sessions.
+
+Troubleshooting Process Developed:
+1. Read no_ofld_reason before opening any other command — it categorises the cause immediately
+2. Constraint → stop. Decision → continue.
+3. disabled-by-profile: find policy, check proxy profile, determine if intentional
+4. disabled-by-policy: find policy, find set auto-asic-offload disable, re-enable
+5. After fix: clear sessions, verify offload=9/9
+
+Key Lessons:
+- The session entry already contains the first answer. Read before reaching.
+- no_ofld_reason: helper is not a problem. Treating it as one is wasted effort and an exam trap.
+- disabled-by-profile and disabled-by-policy look similar but have different root causes and different fixes.
+
+---
+
+CONNECTIONS
+===========
+
+Previous Sessions:
+- Directly continues Session 39 (Hardware Acceleration) — same scenario, next morning
+- Extends the four slow-path triggers from Session 39 (proxy profiles, session helpers, software tunnels, explicit disable) with the addition of very short-lived sessions
+- Reinforces the flow vs proxy distinction — proxy = disabled-by-profile = configuration decision
+- Builds on CLI taxonomy from Extras 01 — diagnose vs get distinction was fundamental to this session
+
+Future Topics:
+- HA and session failover: does NP7 offload status survive an HA failover? Session synchronisation interacts with offload state.
+- SD-WAN: how does hardware acceleration interact with SD-WAN steering decisions?
+- FortiManager policy deployment: how do you audit offload configuration across many devices at scale?
+- The split-policy architecture at Vaultline still needs to be implemented and validated.
+
+---
+
+IMPORTANT TAKEAWAYS
+===================
+
+1. npu info: offload=X/Y is the offload verdict. Go here first. Everything else in the session entry is context.
+
+2. 9 = NP7. 0 = CPU. The slash separates forward from reverse. offload=9/9 = proof. offload=0/0 = investigate.
+
+3. The constraint vs decision framework is the most important concept from this session. Constraints cannot be configured away. Decisions can be reversed. The no_ofld_reason field tells you which in one glance.
+
+4. no_ofld_reason: helper is expected behaviour. Do not chase it. The moment you see it, identify the protocol, confirm a helper is appropriate, move on.
+
+5. "Regardless of policy configuration" in an exam question eliminates the two decisions and points to the three constraints.
+
+6. Read the evidence you already have before reaching for another command. The reason code is step one — and it costs nothing.
+
+---
+
+FUTURE SESSION NOTES
+====================
+
+Concepts Requiring Reinforcement:
+- The three architectural constraints — worth revisiting in a scenario that presents all five causes and asks which can be resolved
+- IPsec npu_flag values (00/01/02/03/20) — introduced in Session 39 study guide, not yet tested in scenario
+- IPSA modes (basic vs advanced) — introduced briefly, not yet tested
+
+Spaced Repetition Recommendations:
+- In 1 session: present a mixed scenario with multiple sessions showing different reason codes — ask for correct response to each
+- In 3 sessions: full offload troubleshooting scenario from scratch with no guidance
+- In 5 sessions: revisit the four slow-path triggers (Sessions 39-40) in a policy prediction exercise
+
+Story Elements to Continue:
+- Vaultline split-policy architecture — proposed but not implemented. Natural next engineering task.
+- Priya as a recurring character — she will want to audit the fix and validate the design
+- Daniel as a recurring character — good vehicle for harder "why" questions about security architecture
+- Marcus as the NOC engineer who surfaces real production data in session captures
+
+Natural Opportunities for Future NSE7 Topics:
+- HA clustering: does session table synchronisation include offload state? What happens to NP7 sessions during failover?
+- SD-WAN: offload implications when traffic is steered between paths
+- FortiManager: auditing auto-asic-offload settings at scale across a managed estate

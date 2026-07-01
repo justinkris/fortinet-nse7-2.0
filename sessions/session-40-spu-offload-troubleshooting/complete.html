@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 40 — SPU Offloading, Sessions & Troubleshooting</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;} *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.005em;}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+  .top-panels{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+  .top-panels .qpanel{border-bottom:none;border-right:1px solid var(--border);}
+  .top-panels .qpanel-header{padding-left:32px;padding-right:32px;}
+  .top-panels .qpanel-body{padding-left:32px;padding-right:32px;}
+  .qpanel{background:var(--surface);}
+  .qpanel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .qpanel-header:hover,.qpanel-header.open{background:var(--surface-2);}
+  .qpanel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .qpanel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .qpanel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .qpanel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .qpanel-body{display:none;padding:0 20px 22px;}
+  .qpanel-body.open{display:block;}
+  .notes-panel{background:var(--surface);}
+  .notes-panel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 32px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .notes-panel-header:hover,.notes-panel-header.open{background:var(--surface-2);}
+  .notes-panel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .notes-panel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .notes-panel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .notes-panel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .notes-panel-body{display:none;padding:0 32px 22px;}
+  .notes-panel-body.open{display:block;}
+  .q-group{margin-bottom:16px;}
+  .q-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+  .q-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-dim);}
+  .q-item:last-child{border-bottom:none;}
+  .q-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;color:var(--blue);min-width:16px;margin-top:2px;}
+  .q-text{font-size:14px;color:var(--text-soft);line-height:1.5;flex:1;}
+  .q-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:0 4px;margin-top:1px;}
+  .no-questions{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);padding:8px 0;}
+  .btn-add-q{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .section-nav{position:sticky;top:0;z-index:90;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px;overflow-x:auto;}
+  .nav-tab{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:12px 18px;border-bottom:2px solid transparent;white-space:nowrap;}
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+  main{max-width:1200px;margin:0 auto;}
+  .main-content{padding:36px 60px 60px;}
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:4px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-green strong{color:var(--green);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .callout-amber strong{color:var(--amber);}
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;vertical-align:top;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .code-block{background:var(--ink-dark);border-radius:10px;padding:0;margin:16px 0;overflow:hidden;border:1px solid var(--border);}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:8px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:16px;overflow-x:auto;}
+  .code-block code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12.5px;line-height:1.75;color:#e8efff;}
+  .hl-green{color:#6ee7a0;} .hl-amber{color:#fcd34d;} .hl-red{color:#fca5a5;} .hl-blue{color:#93c5fd;} .hl-dim{color:#6b7794;}
+  .socratic-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:16px;border-top:3px solid var(--blue);}
+  .socratic-header{display:flex;align-items:center;gap:8px;margin-bottom:0;cursor:pointer;user-select:none;}
+  .socratic-header::after{content:'▸ Expand';margin-left:auto;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-block.soc-open .socratic-header{margin-bottom:10px;}
+  .socratic-block.soc-open .socratic-header::after{content:'▾ Collapse';}
+  .socratic-block:not(.soc-open) .socratic-insight,.socratic-block:not(.soc-open) .socratic-questions,.socratic-block:not(.soc-open) .answer-area{display:none;}
+  .socratic-icon{font-size:17px;flex-shrink:0;}
+  .socratic-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-insight{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;margin-bottom:12px;border-left:3px solid var(--border);padding-left:14px;font-style:italic;}
+  .socratic-questions{list-style:none;padding:0;margin:0;}
+  .socratic-questions li{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--border-dim);line-height:1.6;}
+  .socratic-questions li:last-child{border-bottom:none;}
+  .socratic-questions li::before{content:'?';position:absolute;left:0;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:16px;top:7px;color:var(--blue);}
+  .answer-area{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .answer-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .answer-textarea:focus{border-color:var(--blue);}
+  .answer-textarea:disabled{opacity:0.75;background:var(--surface-2);cursor:default;}
+  .answer-buttons{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .btn-add-answer{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-see-answer{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-see-answer:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-see-answer:not(:disabled){color:var(--blue);border-color:var(--blue);}
+  .model-answers{margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .model-answer-item{padding:10px 0;border-bottom:1px solid var(--border-dim);}
+  .model-answer-item:first-child{padding-top:0;}
+  .model-answer-item:last-child{border-bottom:none;padding-bottom:0;}
+  .model-answer-q{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;}
+  .model-answer-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;}
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+  .analogy-label{display:flex;align-items:center;gap:6px;user-select:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px;text-transform:uppercase;}
+  .analogy-label::after{content:'▾  Reveal illustration';margin-left:auto;font-size:10px;}
+  .analogy-box.expanded>.analogy-label::after{content:'▴  Hide illustration';}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
+  .lesson-tools{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:40px;}
+  .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .tool-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .tool-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .tool-textarea:focus{border-color:var(--blue);}
+  .tool-row{margin-top:8px;display:flex;gap:8px;}
+  .badge{display:inline-block;padding:2px 10px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;}
+  .badge-green{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}
+  .badge-red{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+  .badge-amber{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border);}
+  .badge-blue{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border);}
+  .page-nav{display:flex;border-top:2px solid var(--border);background:var(--surface);}
+  .page-nav-btn{flex:1;display:flex;flex-direction:column;gap:4px;padding:16px 28px;text-decoration:none;}
+  .page-nav-prev{border-right:1px solid var(--border);}
+  .page-nav-next{text-align:right;}
+  .page-nav-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);display:block;text-transform:uppercase;}
+  .page-nav-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;font-style:italic;color:var(--blue);display:block;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:34px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}.top-panels{grid-template-columns:1fr;}.lesson-tools-grid{grid-template-columns:1fr;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="header-eyebrow"><span class="dot-live"></span> NSE7 Enterprise Firewall 7.6 · Session 40 · Complete Study Guide</div>
+    <h1>SPU Offloading, Sessions &amp; <em>Troubleshooting</em></h1>
+    <p>Reading a session table entry like a senior engineer — constraints versus decisions, proof versus noise.</p>
+  </div>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">The session table doesn't just record traffic — it tells you <em>exactly why</em> a session is fast or slow, and who is responsible.</div>
+  <p class="motivation-sub">One command, one line, one number. Everything Priya, Marcus, and Daniel needed was already in the output — the skill is knowing how to read it.</p>
+</div>
+
+<div class="top-panels">
+  <div class="qpanel" id="qpanel">
+    <button class="qpanel-header" onclick="toggleQPanel()" id="qpanel-header">
+      <span class="qpanel-title">MY QUESTIONS</span>
+      <span class="qpanel-count" id="qpanel-count">0</span>
+      <span class="qpanel-hint">— click to expand</span>
+      <span class="qpanel-chevron" id="qpanel-chevron">▾</span>
+    </button>
+    <div class="qpanel-body" id="qpanel-body"></div>
+  </div>
+  <div class="notes-panel" id="notes-panel">
+    <button class="notes-panel-header" onclick="toggleNotesPanel()" id="notes-panel-header">
+      <span class="notes-panel-title">MY NOTES</span>
+      <span class="notes-panel-count" id="notes-panel-count">0</span>
+      <span class="notes-panel-hint">— click to expand</span>
+      <span class="notes-panel-chevron" id="notes-panel-chevron">▾</span>
+    </button>
+    <div class="notes-panel-body" id="notes-panel-body"></div>
+  </div>
+</div>
+
+<nav class="section-nav" id="section-nav">
+  <a class="nav-tab active" href="#section-session-list">Session List</a>
+  <a class="nav-tab" href="#section-offload-values">Offload Values</a>
+  <a class="nav-tab" href="#section-constraints">Constraints vs Decisions</a>
+  <a class="nav-tab" href="#section-troubleshooting">Troubleshooting</a>
+</nav>
+
+<main>
+<div class="main-content">
+
+  <!-- ══════ SECTION 1 ══════ -->
+  <div class="socratic-block">
+    <div class="socratic-header">
+      <span class="socratic-icon">💭</span>
+      <span class="socratic-label">THINK FIRST · SESSION LIST</span>
+    </div>
+    <p class="socratic-insight">Priya wants proof — not a general explanation — that trading sessions are hitting the NPU. You have a CLI tool that exposes raw internal engine state. What would you show her, and what specifically would you look for?</p>
+    <ul class="socratic-questions">
+      <li>Why is <code>diagnose sys session list</code> the right command rather than a <code>get</code> command for proving NPU offload status?</li>
+      <li>Within the session entry output, which specific line contains the offload verdict, and why is everything else secondary?</li>
+    </ul>
+    <div class="answer-area" data-section="section-session-list">
+      <textarea class="answer-textarea" placeholder="Write your thoughts before revealing the model answer..." rows="3"></textarea>
+      <div class="answer-buttons">
+        <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+        <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+      </div>
+      <div class="model-answers" style="display:none;">
+        <div class="model-answer-item">
+          <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+          <div class="model-answer-text"><code>get</code> produces a clean operational summary prepared for administrators. <code>diagnose</code> exposes raw internal engine state. Priya needs evidence from inside the forwarding engine itself — not a summary. The session table lives under <code>diagnose</code> precisely because it shows what the engine is actually doing, not what an administrator-facing view interprets it to be.</div>
+        </div>
+        <div class="model-answer-item">
+          <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+          <div class="model-answer-text">The <code>npu info</code> line is the verdict. It contains the <code>offload=X/Y</code> field which directly identifies which processor is handling each traffic direction. Everything else in the entry — proto, duration, src, dst, state flags — provides context about the session but says nothing about where processing is happening.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block" id="section-session-list">
+    <div class="section-label">SECTION 01</div>
+    <h2>Reading the <em>Session Table Entry</em></h2>
+
+    <p><strong>diagnose sys session list</strong> is your primary tool for verifying NPU offload status. It lives under <code>diagnose</code> — not <code>get</code> — because it exposes raw internal engine state rather than an operational summary. When Priya asks for proof that trading sessions are hitting the NP7, this is the command and the <code>npu info</code> line is the answer.</p>
+
+    <div class="code-block">
+      <div class="code-label">FortiGate — annotated session entry</div>
+      <pre><code><span class="hl-dim">session info: proto=6 proto_state=01 duration=142 expire=3599</span>
+  <span class="hl-dim">  → TCP session, established, running for 142 seconds</span>
+
+<span class="hl-blue">src=10.10.5.47 dst=172.16.1.20 src_port=52341 dst_port=443</span>
+  <span class="hl-dim">  → Trading workstation to market data server over HTTPS</span>
+
+<span class="hl-dim">state=may_dirty os=6 ws=6 tos=0x00</span>
+  <span class="hl-dim">  → Internal session state flags — noise for offload diagnosis</span>
+
+<span class="hl-green">npu info: flag=0x81/0x81, offload=9/9, ips_offload=0/0</span>
+  <span class="hl-green">  → THE VERDICT LINE — both directions on NP7</span></code></pre>
+    </div>
+
+    <p>The <strong>npu info</strong> line is where the proof lives. The <code>state=may_dirty</code> field and other session state flags are internal engine markers — important in some debugging contexts but not relevant to offload diagnosis. Train your eye to go straight to <code>npu info</code>.</p>
+
+    <p>You can use <code>diagnose sys session filter</code> before running the list command to narrow output to a specific source IP, destination IP, or port — essential in a production environment where the session table has thousands of entries.</p>
+
+    <div class="callout">
+      <strong>Exam tip:</strong> The exam may show you a full session entry and ask you to identify offload status. Go straight to the <code>npu info</code> line. The <code>offload=X/Y</code> field is your answer. Everything else is context.
+    </div>
+
+    <div class="mental-note-block">
+      <div class="mental-note-block-icon">🧠</div>
+      <div class="mental-note-block-inner">
+        <div class="mental-note-block-label">MENTAL NOTE</div>
+        <div class="mental-note-block-text">diagnose = raw engine. get = operational summary. Priya needs engine evidence, not a summary. The npu info line is the verdict — read it first, read everything else second.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-tools">
+    <div class="lesson-tools-grid">
+      <div>
+        <div class="tool-label">ASK A QUESTION</div>
+        <textarea class="tool-textarea" id="q-section-session-list" placeholder="What are you unsure about?" rows="3"></textarea>
+        <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-session-list','Session List')">Add Question</button></div>
+      </div>
+      <div>
+        <div class="tool-label">ADD A NOTE</div>
+        <textarea class="tool-textarea" id="note-section-session-list" placeholder="Write a note..." rows="3"></textarea>
+        <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-session-list')">+ Add Note</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SECTION 2 ══════ -->
+  <div class="socratic-block">
+    <div class="socratic-header">
+      <span class="socratic-icon">💭</span>
+      <span class="socratic-label">THINK FIRST · OFFLOAD VALUES</span>
+    </div>
+    <p class="socratic-insight">Marcus starred a session entry showing <code>offload=9/9</code>. He wasn't sure if this was good or bad. Before reading further — what do you think the number 9 represents, and what does the slash separate?</p>
+    <ul class="socratic-questions">
+      <li>If 9/9 were a packet count for a session that has been running for 142 seconds on a trading floor — does that make sense? What does 9 actually represent?</li>
+      <li>What would you expect to see in the offload field for a session that is entirely CPU-bound?</li>
+    </ul>
+    <div class="answer-area" data-section="section-offload-values">
+      <textarea class="answer-textarea" placeholder="Write your thoughts before revealing the model answer..." rows="3"></textarea>
+      <div class="answer-buttons">
+        <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+        <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+      </div>
+      <div class="model-answers" style="display:none;">
+        <div class="model-answer-item">
+          <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+          <div class="model-answer-text">A 142-second trading session would have thousands of packets — so 9/9 cannot be a packet count. The number 9 is the internal processor code that FortiOS uses to identify the NP7. The slash separates the forward direction (source to destination) from the reverse direction (destination to source). offload=9/9 means both directions are being handled by the NP7.</div>
+        </div>
+        <div class="model-answer-item">
+          <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+          <div class="model-answer-text">A fully CPU-bound session shows offload=0/0. Zero means no NPU processor is involved — both directions are being processed entirely in software on the CPU. This is the slow path.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block" id="section-offload-values">
+    <div class="section-label">SECTION 02</div>
+    <h2>Decoding <em>offload=X/Y</em></h2>
+
+    <p>The <code>offload=X/Y</code> field contains two numbers separated by a slash. The first number represents the <strong>forward direction</strong> (source to destination). The second represents the <strong>reverse direction</strong> (destination to source). Each number is the internal processor code identifying which hardware is handling that direction of traffic.</p>
+
+    <table class="data-table">
+      <thead><tr><th>Value</th><th>Processor</th><th>Meaning</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>9</td><td>NP7</td><td>Direction handled by NP7 — fast path, CPU bypassed</td><td><span class="badge badge-green">OFFLOADED</span></td></tr>
+        <tr><td>0</td><td>CPU</td><td>Direction handled by CPU — slow path, software processing</td><td><span class="badge badge-red">NOT OFFLOADED</span></td></tr>
+      </tbody>
+    </table>
+
+    <p>The most important combinations you will encounter in production and in the exam:</p>
+
+    <table class="data-table">
+      <thead><tr><th>offload value</th><th>Meaning</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>offload=9/9</td><td>Both directions on NP7. Full fast-path offload.</td><td>This is what you want. No action needed.</td></tr>
+        <tr><td>offload=0/0</td><td>Both directions on CPU. Full slow-path.</td><td>Investigate. Read the no_ofld_reason field.</td></tr>
+        <tr><td>offload=9/0</td><td>Asymmetric. Forward on NP7, reverse on CPU.</td><td>Unusual. Investigate routing asymmetry.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="code-block">
+      <div class="code-label">Fully offloaded — what you want to see</div>
+      <pre><code><span class="hl-green">npu info: flag=0x81/0x81, offload=9/9</span><span class="hl-dim">, ips_offload=0/0, epid=128/166...</span>
+<span class="hl-dim">Both directions = 9 = NP7. No no_ofld_reason line present. Done.</span></code></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">CPU-bound session — investigate further</div>
+      <pre><code><span class="hl-dim">npu_state=0x000001</span> <span class="hl-red">no_offload</span>
+<span class="hl-red">no_ofld_reason:  disabled-by-policy</span>
+<span class="hl-dim">Find this policy. Check: set auto-asic-offload disable</span></code></pre>
+    </div>
+
+    <div class="callout-amber">
+      <strong>Common mistake:</strong> Engineers sometimes interpret offload=9/9 as "9 packets offloaded out of 9 total." A 142-second trading session would have thousands of packets. The number is a processor code, not a counter.
+    </div>
+
+    <div class="mental-note-block">
+      <div class="mental-note-block-icon">🧠</div>
+      <div class="mental-note-block-inner">
+        <div class="mental-note-block-label">MENTAL NOTE</div>
+        <div class="mental-note-block-text">9 = NP7. 0 = CPU. The slash separates forward from reverse. offload=9/9 is your proof for Priya. offload=0/0 is the start of an investigation.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-tools">
+    <div class="lesson-tools-grid">
+      <div>
+        <div class="tool-label">ASK A QUESTION</div>
+        <textarea class="tool-textarea" id="q-section-offload-values" placeholder="What are you unsure about?" rows="3"></textarea>
+        <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-offload-values','Offload Values')">Add Question</button></div>
+      </div>
+      <div>
+        <div class="tool-label">ADD A NOTE</div>
+        <textarea class="tool-textarea" id="note-section-offload-values" placeholder="Write a note..." rows="3"></textarea>
+        <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-offload-values')">+ Add Note</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SECTION 3 ══════ -->
+  <div class="socratic-block">
+    <div class="socratic-header">
+      <span class="socratic-icon">💭</span>
+      <span class="socratic-label">THINK FIRST · CONSTRAINTS VS DECISIONS</span>
+    </div>
+    <p class="socratic-insight">Daniel asks whether any session flat-out cannot be offloaded regardless of policy. This is a harder question than it appears — it requires distinguishing between architectural constraints and configuration choices.</p>
+    <ul class="socratic-questions">
+      <li>FTP uses a control connection on port 21 and then opens a second data connection on a dynamically negotiated port. Why does this prevent NP7 offloading, and what mechanism handles it instead?</li>
+      <li>If you see no_ofld_reason: helper in a session entry, should you try to fix it? Why or why not?</li>
+    </ul>
+    <div class="answer-area" data-section="section-constraints">
+      <textarea class="answer-textarea" placeholder="Write your thoughts before revealing the model answer..." rows="3"></textarea>
+      <div class="answer-buttons">
+        <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+        <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+      </div>
+      <div class="model-answers" style="display:none;">
+        <div class="model-answer-item">
+          <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+          <div class="model-answer-text">The FTP data connection port is negotiated inside the application payload of the control connection. The NP7 is a forwarding engine — it moves packets based on headers and session keys. It cannot parse application payloads. FortiOS uses a session helper — software running on the CPU — to watch the control connection payload, extract the negotiated port, and dynamically create a pinhole. Because the helper must read payload continuously, the session cannot be handed to the NP7. It stays on the CPU for its entire lifetime.</div>
+        </div>
+        <div class="model-answer-item">
+          <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+          <div class="model-answer-text">No. no_ofld_reason: helper is expected behaviour, not a problem. The protocol requires CPU involvement by design. Identify which protocol is involved, confirm a session helper is appropriate for it, and move on. Treating this as a performance problem to solve is wasted effort — and the kind of mistake the exam is designed to test.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block" id="section-constraints">
+    <div class="section-label">SECTION 03</div>
+    <h2>Constraints vs <em>Configuration Decisions</em></h2>
+
+    <p>Daniel's question has a precise answer. Some sessions cannot be NP7-offloaded regardless of how clean the policy is. These are <strong>architectural constraints</strong> — not configuration choices. Understanding this distinction is the difference between a productive investigation and wasted effort.</p>
+
+    <table class="data-table">
+      <thead><tr><th>Category</th><th>Can it be fixed?</th><th>Examples</th><th>no_ofld_reason</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Session Helpers</td>
+          <td><span class="badge badge-red">CONSTRAINT</span></td>
+          <td>FTP, SIP, H.323, TFTP — protocols with dynamic secondary connections negotiated in payload</td>
+          <td><code>helper</code></td>
+        </tr>
+        <tr>
+          <td>Software Tunnel Interfaces</td>
+          <td><span class="badge badge-red">CONSTRAINT</span></td>
+          <td>GRE tunnels, SSL VPN — tunnel processing runs on CPU. IPsec is the exception.</td>
+          <td><code>software-tunnel</code></td>
+        </tr>
+        <tr>
+          <td>Very Short-Lived Sessions</td>
+          <td><span class="badge badge-red">CONSTRAINT</span></td>
+          <td>DNS queries, ICMP — session completes before NP7 session key is ever used</td>
+          <td>Session gone before key installed</td>
+        </tr>
+        <tr>
+          <td>Proxy-Based UTM Profile</td>
+          <td><span class="badge badge-amber">DECISION</span></td>
+          <td>Any policy with a proxy-mode security profile attached</td>
+          <td><code>disabled-by-profile</code></td>
+        </tr>
+        <tr>
+          <td>Explicit Policy Override</td>
+          <td><span class="badge badge-amber">DECISION</span></td>
+          <td>Policy with set auto-asic-offload disable — classic forgotten troubleshooting override</td>
+          <td><code>disabled-by-policy</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="analogy-box">
+      <div class="analogy-label">Analogy</div>
+      <div class="analogy-text">
+        <p class="analogy-summary">Think of the NP7 as a toll booth with an automatic RFID lane.</p>
+        Once your car is registered (session key installed), you sail through without stopping. But some vehicles can never use the RFID lane — oversized trucks that need a weighbridge inspection (session helpers), vehicles on routes that bypass the toll entirely through a different road (software tunnels), or cars that arrive and leave before the RFID reader even wakes up (very short sessions). No amount of policy change moves those vehicles into the RFID lane.
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Exam signal:</strong> When a question says "regardless of policy configuration," it is eliminating the two configuration decisions and pointing you toward the three architectural constraints. That phrase is a filter — use it.
+    </div>
+
+    <div class="mental-note-block">
+      <div class="mental-note-block-icon">🧠</div>
+      <div class="mental-note-block-inner">
+        <div class="mental-note-block-label">MENTAL NOTE</div>
+        <div class="mental-note-block-text">Constraints cannot be configured away — helper, software-tunnel, and session-too-short are architectural. Decisions can be reversed — disabled-by-profile and disabled-by-policy are human choices. The no_ofld_reason field tells you which category you're in before you touch anything else.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-tools">
+    <div class="lesson-tools-grid">
+      <div>
+        <div class="tool-label">ASK A QUESTION</div>
+        <textarea class="tool-textarea" id="q-section-constraints" placeholder="What are you unsure about?" rows="3"></textarea>
+        <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-constraints','Constraints vs Decisions')">Add Question</button></div>
+      </div>
+      <div>
+        <div class="tool-label">ADD A NOTE</div>
+        <textarea class="tool-textarea" id="note-section-constraints" placeholder="Write a note..." rows="3"></textarea>
+        <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-constraints')">+ Add Note</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SECTION 4 ══════ -->
+  <div class="socratic-block">
+    <div class="socratic-header">
+      <span class="socratic-icon">💭</span>
+      <span class="socratic-label">THINK FIRST · TROUBLESHOOTING</span>
+    </div>
+    <p class="socratic-insight">A junior engineer sends you a session list output showing offload=0/0 on the trading VLAN and says something is wrong. You have the output in front of you already — what is your first step before touching any other command?</p>
+    <ul class="socratic-questions">
+      <li>What does the no_ofld_reason field tell you before you've opened a single other command, and why does that change what you do next?</li>
+      <li>What is the difference in response between no_ofld_reason: helper and no_ofld_reason: disabled-by-policy?</li>
+    </ul>
+    <div class="answer-area" data-section="section-troubleshooting">
+      <textarea class="answer-textarea" placeholder="Write your thoughts before revealing the model answer..." rows="3"></textarea>
+      <div class="answer-buttons">
+        <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+        <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+      </div>
+      <div class="model-answers" style="display:none;">
+        <div class="model-answer-item">
+          <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+          <div class="model-answer-text">The no_ofld_reason field immediately tells you whether you're dealing with an architectural constraint or a configuration decision — before you open any policy, any profile, or any other command. If it says helper or software-tunnel, the investigation is complete. Expected behaviour. If it says disabled-by-profile or disabled-by-policy, you have a configuration decision to trace. The reason code is the first filter, and it costs nothing because you're already looking at the output.</div>
+        </div>
+        <div class="model-answer-item">
+          <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+          <div class="model-answer-text">helper — do not try to fix it. Identify the protocol, confirm a session helper is expected, move on. disabled-by-policy — find the matching firewall policy, look for set auto-asic-offload disable, and re-enable it. These are fundamentally different responses: one is acceptance of expected behaviour, the other is correcting a configuration error.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block" id="section-troubleshooting">
+    <div class="section-label">SECTION 04</div>
+    <h2>The Offload <em>Troubleshooting Methodology</em></h2>
+
+    <p>When a session shows <code>offload=0/0</code>, the correct response is a structured three-step process. The session list entry already contains the first answer — you do not need another command to begin the diagnosis.</p>
+
+    <table class="data-table">
+      <thead><tr><th>Step</th><th>Action</th><th>What you're doing</th></tr></thead>
+      <tbody>
+        <tr><td>Step 1</td><td>Read no_ofld_reason in the session entry you already have</td><td>Categorise: constraint or decision? This costs nothing — you're already there.</td></tr>
+        <tr><td>Step 2</td><td>If constraint (helper / software-tunnel) — stop</td><td>Expected behaviour. Document and move on. Do not chase it.</td></tr>
+        <tr><td>Step 3</td><td>If decision — find the matching firewall policy</td><td>Check for proxy profile attachment or explicit auto-asic-offload disable.</td></tr>
+      </tbody>
+    </table>
+
+    <table class="data-table">
+      <thead><tr><th>no_ofld_reason</th><th>Response</th><th>Next command</th></tr></thead>
+      <tbody>
+        <tr><td>helper</td><td><span class="badge badge-blue">EXPECTED — STOP</span></td><td>None. Identify protocol, confirm helper is correct, move on.</td></tr>
+        <tr><td>software-tunnel</td><td><span class="badge badge-blue">EXPECTED — STOP</span></td><td>None unless you can switch to IPsec.</td></tr>
+        <tr><td>disabled-by-profile</td><td><span class="badge badge-amber">INVESTIGATE</span></td><td>Find the policy. Was proxy inspection intentional?</td></tr>
+        <tr><td>disabled-by-policy</td><td><span class="badge badge-red">FIX IT</span></td><td>Find the policy. Remove <code>set auto-asic-offload disable</code>.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout-green">
+      <strong>Senior engineer instinct:</strong> Read the evidence you already have before reaching for another command. The no_ofld_reason field is your first filter. It eliminates entire categories of investigation in one glance.
+    </div>
+
+    <div class="callout-amber">
+      <strong>Common trap:</strong> disabled-by-profile and disabled-by-policy look similar but have different root causes and different fixes. Profile means a proxy UTM profile is attached — change or remove the profile. Policy means auto-asic-offload was explicitly disabled — likely a forgotten troubleshooting override. Never confuse the two.
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">Verifying the fix — after removing proxy profile or re-enabling offload</div>
+      <pre><code><span class="hl-dim"># Clear existing sessions to force re-establishment</span>
+diagnose sys session clear
+
+<span class="hl-dim"># Verify new sessions are offloaded</span>
+diagnose sys session list
+
+<span class="hl-dim"># Look for:</span>
+<span class="hl-green">npu info: flag=0x81/0x81, offload=9/9</span>
+<span class="hl-dim"># No no_offload or no_ofld_reason lines = success</span></code></pre>
+    </div>
+
+    <div class="mental-note-block">
+      <div class="mental-note-block-icon">🧠</div>
+      <div class="mental-note-block-inner">
+        <div class="mental-note-block-label">MENTAL NOTE</div>
+        <div class="mental-note-block-text">Step 1 is always the reason code. It splits every investigation into two paths: expected behaviour (stop) or configuration problem (continue). The session entry you already have is the first diagnostic tool — not a stepping stone to another command.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-tools">
+    <div class="lesson-tools-grid">
+      <div>
+        <div class="tool-label">ASK A QUESTION</div>
+        <textarea class="tool-textarea" id="q-section-troubleshooting" placeholder="What are you unsure about?" rows="3"></textarea>
+        <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-troubleshooting','Troubleshooting')">Add Question</button></div>
+      </div>
+      <div>
+        <div class="tool-label">ADD A NOTE</div>
+        <textarea class="tool-textarea" id="note-section-troubleshooting" placeholder="Write a note..." rows="3"></textarea>
+        <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-troubleshooting')">+ Add Note</button></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<div class="page-nav">
+  <a class="page-nav-btn page-nav-prev" href="session-39-complete-hardware-acceleration.html">
+    <span class="page-nav-label">← PREVIOUS</span>
+    <span class="page-nav-title">Session 39 — Hardware Acceleration</span>
+  </a>
+  <a class="page-nav-btn page-nav-next" href="#">
+    <span class="page-nav-label">NEXT →</span>
+    <span class="page-nav-title">Session 41 — TBD</span>
+  </a>
+</div>
+
+<footer>NSE7 Enterprise Firewall 7.6<span>.</span> Session 40<span>.</span> SPU Offloading, Sessions &amp; Troubleshooting</footer>
+
+<script>
+const PAGE_KEY = 'nse7-s40-session-offload';
+const SECTIONS = {
+  'section-session-list': 'Session List',
+  'section-offload-values': 'Offload Values',
+  'section-constraints': 'Constraints vs Decisions',
+  'section-troubleshooting': 'Troubleshooting',
+};
+document.querySelectorAll('.socratic-header').forEach(function(h){h.addEventListener('click',function(){h.closest('.socratic-block').classList.toggle('soc-open');});});
+function getQArr(){return JSON.parse(localStorage.getItem(PAGE_KEY+'-qs')||'[]');}
+function saveQArr(qs){localStorage.setItem(PAGE_KEY+'-qs',JSON.stringify(qs));}
+function addQuestion(key,name){const ta=document.getElementById('q-'+key);const text=ta.value.trim();if(!text){ta.focus();return;}const qs=getQArr();qs.push({id:Date.now(),section:key,sectionName:name,text});saveQArr(qs);ta.value='';renderQPanel();if(!document.getElementById('qpanel-body').classList.contains('open'))toggleQPanel();}
+function deleteQ(id){saveQArr(getQArr().filter(q=>q.id!==id));renderQPanel();}
+function toggleQPanel(){const body=document.getElementById('qpanel-body');const header=document.getElementById('qpanel-header');const chevron=document.getElementById('qpanel-chevron');const open=body.classList.toggle('open');header.classList.toggle('open',open);chevron.textContent=open?'▴':'▾';localStorage.setItem(PAGE_KEY+'-qpanel-open',open);}
+function renderQPanel(){const qs=getQArr();const count=document.getElementById('qpanel-count');if(count){count.textContent=qs.length;count.style.display=qs.length?'inline':'none';}const body=document.getElementById('qpanel-body');if(!body)return;if(!qs.length){body.innerHTML='<p class="no-questions">No questions yet.</p>';return;}const groups=Object.fromEntries(Object.keys(SECTIONS).map(k=>[k,[]]));qs.forEach(q=>{if(groups[q.section])groups[q.section].push(q);});let html='';let num=0;Object.entries(groups).forEach(([key,items])=>{if(!items.length)return;html+=`<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;items.forEach(q=>{num++;html+=`<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${q.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteQ(${q.id})">✕</button></div>`;});html+='</div>';});body.innerHTML=html;}
+function getNotesArr(){return JSON.parse(localStorage.getItem(PAGE_KEY+'-notes')||'[]');}
+function saveNotesArr(ns){localStorage.setItem(PAGE_KEY+'-notes',JSON.stringify(ns));}
+function addNote(key){const ta=document.getElementById('note-'+key);const text=ta.value.trim();if(!text){ta.focus();return;}const ns=getNotesArr();ns.push({id:Date.now(),section:key,sectionName:SECTIONS[key]||key,text});saveNotesArr(ns);ta.value='';renderNotesPanel();if(!document.getElementById('notes-panel-body').classList.contains('open'))toggleNotesPanel();}
+function deleteNote(id){saveNotesArr(getNotesArr().filter(n=>n.id!==id));renderNotesPanel();}
+function toggleNotesPanel(){const body=document.getElementById('notes-panel-body');const header=document.getElementById('notes-panel-header');const chevron=document.getElementById('notes-panel-chevron');const open=body.classList.toggle('open');header.classList.toggle('open',open);chevron.textContent=open?'▴':'▾';localStorage.setItem(PAGE_KEY+'-notes-panel-open',open);}
+function renderNotesPanel(){const ns=getNotesArr();const count=document.getElementById('notes-panel-count');if(count){count.textContent=ns.length;count.style.display=ns.length?'inline':'none';}const body=document.getElementById('notes-panel-body');if(!body)return;if(!ns.length){body.innerHTML='<p class="no-questions">No notes yet.</p>';return;}const groups=Object.fromEntries(Object.keys(SECTIONS).map(k=>[k,[]]));ns.forEach(n=>{if(groups[n.section])groups[n.section].push(n);});let html='';let num=0;Object.entries(groups).forEach(([key,items])=>{if(!items.length)return;html+=`<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;items.forEach(n=>{num++;html+=`<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteNote(${n.id})">✕</button></div>`;});html+='</div>';});body.innerHTML=html;}
+function saveSocAnswer(btn){const area=btn.closest('.answer-area');const ta=area.querySelector('.answer-textarea');if(!ta.value.trim()){ta.focus();return;}const key=PAGE_KEY+'-socans-'+area.dataset.section;try{localStorage.setItem(key,ta.value);}catch(e){}ta.disabled=true;btn.textContent='✓ Answer saved';btn.disabled=true;const seeBtn=area.querySelector('.btn-see-answer');seeBtn.disabled=false;seeBtn.textContent='💡 See Model Answer';}
+function revealSocAnswer(btn){if(btn.disabled)return;const answers=btn.closest('.answer-area').querySelector('.model-answers');const isHidden=answers.style.display==='none'||!answers.style.display;answers.style.display=isHidden?'block':'none';btn.textContent=isHidden?'▲ Hide Model Answer':'💡 See Model Answer';}
+document.addEventListener('DOMContentLoaded',function(){renderQPanel();renderNotesPanel();if(localStorage.getItem(PAGE_KEY+'-qpanel-open')==='true')toggleQPanel();if(localStorage.getItem(PAGE_KEY+'-notes-panel-open')==='true')toggleNotesPanel();document.querySelectorAll('.answer-area').forEach(function(area){const key=PAGE_KEY+'-socans-'+area.dataset.section;try{const saved=localStorage.getItem(key);if(saved){const ta=area.querySelector('.answer-textarea');ta.value=saved;ta.disabled=true;const addBtn=area.querySelector('.btn-add-answer');addBtn.textContent='✓ Answer saved';addBtn.disabled=true;const seeBtn=area.querySelector('.btn-see-answer');seeBtn.disabled=false;seeBtn.textContent='💡 See Model Answer';}}catch(e){}});document.querySelectorAll('.analogy-box').forEach(function(box){if(box.dataset.collapsibleInit)return;box.dataset.collapsibleInit='1';box.classList.add('expanded');const label=box.querySelector(':scope > .analogy-label');if(label)label.addEventListener('click',()=>box.classList.toggle('expanded'));});});
+</script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 40 Study Bite — SPU Offloading & Session Troubleshooting</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#faf5e9;--surface:#fffdf5;--surface-2:#f5eed9;--border:#d4c89a;--border-dim:#ebe1c2;--text:#0a1838;--text-soft:#1e2f5a;--text-muted:#6b7794;--blue:#1e40af;--blue-light:#eff4fc;--blue-border:#b8cce8;--ink-dark:#0d1a3a;--ink-accent:#9bb8e6;--green:#1a7c4a;--green-light:#dff0e1;--green-border:#a7d8b0;--amber:#b45309;--amber-light:#fcf2c3;--amber-border:#f3d68a;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:40px 60px 32px;background:var(--ink-dark);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:40px;font-weight:700;line-height:1.05;color:#fbf7ec;margin-bottom:8px;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.55);line-height:1.6;}
+  main{max-width:960px;margin:0 auto;padding:40px 60px 60px;}
+  h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--text);margin:32px 0 14px;padding-left:14px;border-left:3px solid var(--blue);}
+  h2 em{font-style:italic;color:var(--blue);}
+  p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  p strong{color:var(--text);font-weight:600;}
+  .overview{background:var(--blue-light);border:1px solid var(--blue-border);border-left:3px solid var(--blue);border-radius:0 10px 10px 0;padding:18px 22px;margin-bottom:32px;font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--text-soft);line-height:1.7;}
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;vertical-align:top;}
+  .data-table tr:hover td{background:rgba(30,64,175,0.04);}
+  .data-table td:first-child{color:var(--text);font-weight:600;font-family:'SF Mono','Fira Code',monospace;font-size:13px;}
+  .code-block{background:var(--ink-dark);border-radius:10px;padding:0;margin:16px 0;overflow:hidden;border:1px solid var(--border);}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:8px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:16px;overflow-x:auto;}
+  .code-block code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12.5px;line-height:1.75;color:#e8efff;}
+  .hl-green{color:#6ee7a0;} .hl-red{color:#fca5a5;} .hl-dim{color:#6b7794;}
+  .badge{display:inline-block;padding:2px 10px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;}
+  .badge-green{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}
+  .badge-red{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+  .badge-amber{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border);}
+  .badge-blue{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border);}
+  .mental-note{border-radius:10px;padding:14px 18px;margin:20px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+  .callout-amber{border-left:3px solid var(--amber-border);background:var(--amber-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout-amber strong{color:var(--amber);font-weight:600;}
+  .callout-green{border-left:3px solid var(--green-border);background:var(--green-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout-green strong{color:var(--green);font-weight:600;}
+  .self-test{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-top:32px;}
+  .self-test-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px;}
+  .self-test ol{padding-left:20px;}
+  .self-test li{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;margin-bottom:8px;padding-left:6px;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-eyebrow"><span class="dot-live"></span> NSE7 EF 7.6 · SESSION 40 · STUDY BITE</div>
+  <h1>SPU Offloading, Sessions &amp; <em>Troubleshooting</em></h1>
+  <p>Rapid mental model reactivation — assumes you already understand the topic.</p>
+</header>
+
+<main>
+
+  <div class="overview">
+    <strong>The mental model in one paragraph:</strong> FortiGate offloads sessions to the NP7 after the first packet — the CPU installs a session key and steps aside. Whether a session is offloaded is visible in <code>diagnose sys session list</code> via the <code>npu info: offload=X/Y</code> field, where 9 = NP7 and 0 = CPU. When offload fails, the <code>no_ofld_reason</code> field immediately classifies the cause as either an architectural constraint (unfixable) or a configuration decision (reversible). Reading that field is always step one — before opening any other command.
+  </div>
+
+  <h2>The <em>Command & Key Line</em></h2>
+
+  <div class="code-block">
+    <div class="code-label">The verdict line — go here first</div>
+    <pre><code><span class="hl-dim">diagnose sys session list</span>
+
+<span class="hl-green">npu info: flag=0x81/0x81, offload=9/9</span><span class="hl-dim">, ips_offload=0/0</span>
+<span class="hl-dim">                          ↑ forward / reverse — 9=NP7, 0=CPU</span>
+
+<span class="hl-red">npu_state=0x000001 no_offload</span>
+<span class="hl-red">no_ofld_reason:  disabled-by-policy</span>
+<span class="hl-dim">                 ↑ tells you constraint vs decision immediately</span></code></pre>
+  </div>
+
+  <h2>Offload Value <em>Decode</em></h2>
+
+  <table class="data-table">
+    <thead><tr><th>offload value</th><th>Meaning</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>9/9</td><td>Both directions on NP7 — full fast path</td><td><span class="badge badge-green">OFFLOADED ✓</span></td></tr>
+      <tr><td>0/0</td><td>Both directions on CPU — slow path</td><td><span class="badge badge-red">NOT OFFLOADED</span></td></tr>
+      <tr><td>9/0</td><td>Asymmetric — investigate routing</td><td><span class="badge badge-amber">ASYMMETRIC</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Constraints vs <em>Decisions</em></h2>
+
+  <table class="data-table">
+    <thead><tr><th>no_ofld_reason</th><th>Type</th><th>Response</th></tr></thead>
+    <tbody>
+      <tr><td>helper</td><td><span class="badge badge-blue">CONSTRAINT</span></td><td>Expected. FTP/SIP/H.323. Do not chase. Move on.</td></tr>
+      <tr><td>software-tunnel</td><td><span class="badge badge-blue">CONSTRAINT</span></td><td>Expected. GRE/SSL VPN. IPsec is the exception.</td></tr>
+      <tr><td>(session too short)</td><td><span class="badge badge-blue">CONSTRAINT</span></td><td>DNS/ICMP complete before NP7 key is used. Normal.</td></tr>
+      <tr><td>disabled-by-profile</td><td><span class="badge badge-amber">DECISION</span></td><td>Proxy UTM profile attached. Intentional? If not, switch to flow.</td></tr>
+      <tr><td>disabled-by-policy</td><td><span class="badge badge-red">DECISION</span></td><td>auto-asic-offload explicitly disabled. Forgotten override. Fix it.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="mental-note">
+    <div class="mental-note-icon">🧠</div>
+    <div>
+      <div class="mental-note-label">Primary Mental Model</div>
+      <div class="mental-note-text">Constraint = cannot be configured away. Decision = a human made a choice. The reason code tells you which in one glance — before you open any other command.</div>
+    </div>
+  </div>
+
+  <h2>Troubleshooting <em>Checklist</em></h2>
+
+  <table class="data-table">
+    <thead><tr><th>Step</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Read <code>no_ofld_reason</code> — constraint or decision?</td></tr>
+      <tr><td>2</td><td>If helper or software-tunnel → stop. Expected behaviour.</td></tr>
+      <tr><td>3</td><td>If disabled-by-profile → find policy, check proxy profile attachment</td></tr>
+      <tr><td>4</td><td>If disabled-by-policy → find policy, remove <code>set auto-asic-offload disable</code></td></tr>
+      <tr><td>5</td><td>After fix: clear sessions, re-run list, confirm offload=9/9</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout-amber">
+    <strong>Common mistakes:</strong> Treating <code>no_ofld_reason: helper</code> as a problem to fix. Confusing disabled-by-profile (proxy profile) with disabled-by-policy (explicit override) — different causes, different fixes. Interpreting offload=9/9 as a packet count.
+  </div>
+
+  <div class="callout-green">
+    <strong>Exam signal:</strong> "Regardless of policy configuration" in a question eliminates the two decisions and points to the three constraints — helper, software-tunnel, session-too-short.
+  </div>
+
+  <div class="self-test">
+    <div class="self-test-label">Self-Test Questions — answer before looking at your notes</div>
+    <ol>
+      <li>A session entry shows <code>offload=9/9</code>. What does the number 9 represent, and what does the slash separate?</li>
+      <li>You see <code>no_ofld_reason: helper</code> on a trading VLAN session. What do you do?</li>
+      <li>What is the difference between <code>disabled-by-profile</code> and <code>disabled-by-policy</code>?</li>
+      <li>Name three session types that cannot be NP7-offloaded regardless of policy configuration.</li>
+      <li>A junior engineer asks why their DNS sessions show <code>offload=0/0</code> but no reason code. What explains this?</li>
+    </ol>
+  </div>
+
+</main>
+<footer>NSE7 Enterprise Firewall 7.6 · Session 40 · Study Bite · <span>SPU Offloading & Session Troubleshooting</span></footer>
+</body>
+</html>

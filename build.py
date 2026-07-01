@@ -1711,6 +1711,49 @@ def discover_completions():
         out[s["num"]] = entry
     return out
 
+# ── Canonical shell contract for complete.html
+# See SKILL.md → "Canonical complete.html contract". Every completion HTML sorted
+# from sorting-hat/ must contain each of these class markers at least once.
+COMPLETE_REQUIRED_MARKERS = (
+    "socratic-block",
+    "qpanel",
+    "notes-panel",
+    "lesson-tools",
+    "mental-note-block",
+    "page-nav",
+)
+
+def validate_complete_html(path):
+    """Return list of missing required class markers. Empty list == valid.
+
+    Used by the sort workflow BEFORE moving a session-NN-complete-*.html file,
+    and by main() as a second-layer warning at build time. See SKILL.md.
+    """
+    from pathlib import Path as _P
+    p = _P(path) if not isinstance(path, _P) else path
+    if not p.is_file():
+        return list(COMPLETE_REQUIRED_MARKERS)
+    text = p.read_text(encoding="utf-8", errors="ignore")
+    return [m for m in COMPLETE_REQUIRED_MARKERS if m not in text]
+
+def report_completion_validation(completions):
+    """Print a warning line for any tracked complete.html missing markers."""
+    problems = []
+    for s in SESSIONS:
+        entry = completions.get(s["num"])
+        if not entry or not entry.get("has_complete"):
+            continue
+        session_dir = SESSIONS_DIR / f"session-{s['num']:02d}-{s['slug']}"
+        missing = validate_complete_html(session_dir / "complete.html")
+        if missing:
+            problems.append((s["num"], missing))
+    if problems:
+        print("⚠  complete.html shell-contract warnings:")
+        for num, missing in problems:
+            print(f"    session {num:02d}: missing {', '.join(missing)}")
+    else:
+        print("✓ every complete.html passes the canonical shell contract")
+
 def render_summary_body(body):
     """Convert a summary body block to HTML paragraphs / bullet lists."""
     if not body.strip():
@@ -3162,6 +3205,7 @@ def main():
     print(f"Ensured images/hub/ and {len(SESSIONS)} per-session sessions/session-NN-slug/images/ folders")
     print(f"Wrote completed-sessions.html ({n_completed} completed, {n_summaries} summaries)")
     print(f"Wrote extras.html ({n_extras} session-linked + {n_standalone} standalone)")
+    report_completion_validation(completions)
 
 if __name__ == "__main__":
     main()

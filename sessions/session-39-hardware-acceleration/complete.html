@@ -140,6 +140,61 @@
   footer span{color:var(--blue);}
 
   @media(max-width:720px){header{padding:28px 24px;}header h1{font-size:34px;}.motivation-banner{padding:16px 24px;}main{padding:24px 24px 40px;}.proc-grid{grid-template-columns:1fr;}footer{padding:16px 24px;}}
+
+  /* Canonical shell — top panels (qpanel + notes-panel) */
+  .top-panels{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+  .top-panels .qpanel{border-bottom:none;border-right:1px solid var(--border);}
+  .top-panels .qpanel-header{padding-left:32px;padding-right:32px;}
+  .top-panels .qpanel-body{padding-left:32px;padding-right:32px;}
+  .qpanel{background:var(--surface);}
+  .qpanel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .qpanel-header:hover,.qpanel-header.open{background:var(--surface-2);}
+  .qpanel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .qpanel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .qpanel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .qpanel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .qpanel-body{display:none;padding:0 20px 22px;}
+  .qpanel-body.open{display:block;}
+  .notes-panel{background:var(--surface);}
+  .notes-panel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 32px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .notes-panel-header:hover,.notes-panel-header.open{background:var(--surface-2);}
+  .notes-panel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .notes-panel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .notes-panel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .notes-panel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .notes-panel-body{display:none;padding:0 32px 22px;}
+  .notes-panel-body.open{display:block;}
+  .q-group{margin-top:12px;}
+  .q-group:first-child{margin-top:0;}
+  .q-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--blue);text-transform:uppercase;margin-bottom:6px;}
+  .q-item{display:flex;gap:10px;padding:8px 10px;background:var(--surface-2);border:1px solid var(--border-dim);border-radius:8px;margin-bottom:6px;align-items:flex-start;}
+  .q-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;color:var(--blue);min-width:16px;padding-top:2px;}
+  .q-text{flex:1;font-family:'Cormorant Garamond',serif;font-size:14px;line-height:1.5;color:var(--text);white-space:pre-wrap;}
+  .q-del{background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;padding:2px 6px;}
+  .q-del:hover{color:var(--red,#991b1b);}
+  .no-questions{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--text-muted);font-size:14px;margin-top:8px;}
+  /* Mental-note block variant */
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+  /* Lesson tools */
+  .lesson-tools{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin:24px 0 8px;}
+  .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .tool-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;}
+  .tool-textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text);resize:vertical;}
+  .tool-row{margin-top:8px;display:flex;justify-content:flex-end;}
+  .btn-add-q{background:var(--blue);color:#fffdf5;border:none;border-radius:6px;padding:6px 14px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.08em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-q:hover{background:var(--blue-vivid,#2563eb);}
+  /* Page nav */
+  .page-nav{display:flex;border-top:2px solid var(--border);background:var(--surface);}
+  .page-nav-btn{flex:1;display:flex;flex-direction:column;gap:4px;padding:16px 28px;text-decoration:none;}
+  .page-nav-prev{border-right:1px solid var(--border);}
+  .page-nav-next{text-align:right;}
+  .page-nav-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);display:block;text-transform:uppercase;}
+  .page-nav-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;font-style:italic;color:var(--blue);display:block;}
+  @media(max-width:720px){.top-panels{grid-template-columns:1fr;}.lesson-tools-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -154,6 +209,28 @@
   <div class="motivation-text">The CPU is the bottleneck. <em>Silicon is the answer.</em></div>
   <div class="motivation-sub">Understanding hardware acceleration is understanding why enterprise FortiGate performs at scale — and why one policy change can bring it to its knees.</div>
 </div>
+
+<div class="top-panels">
+  <div class="qpanel" id="qpanel">
+    <button class="qpanel-header" onclick="toggleQPanel()" id="qpanel-header">
+      <span class="qpanel-title">MY QUESTIONS</span>
+      <span class="qpanel-count" id="qpanel-count">0</span>
+      <span class="qpanel-hint">— click to expand</span>
+      <span class="qpanel-chevron" id="qpanel-chevron">▾</span>
+    </button>
+    <div class="qpanel-body" id="qpanel-body"></div>
+  </div>
+  <div class="notes-panel" id="notes-panel">
+    <button class="notes-panel-header" onclick="toggleNotesPanel()" id="notes-panel-header">
+      <span class="notes-panel-title">MY NOTES</span>
+      <span class="notes-panel-count" id="notes-panel-count">0</span>
+      <span class="notes-panel-hint">— click to expand</span>
+      <span class="notes-panel-chevron" id="notes-panel-chevron">▾</span>
+    </button>
+    <div class="notes-panel-body" id="notes-panel-body"></div>
+  </div>
+</div>
+
 
 <nav class="section-nav">
   <a href="#why" class="nav-tab">Why It Exists</a>
@@ -183,6 +260,21 @@
       <div class="analogy-text">
         <p class="analogy-summary">One policy change. 3 AM. CPU at 94%.</p>
         <p>Vaultline Financial's trading VLAN ran at sub-millisecond latency because market data sessions were offloaded to the NP7. A single "quick security improvement" — adding a proxy-based profile to the policy — forced every one of those sessions onto the CPU slow path. Latency spiked to 8–12ms. The lesson: hardware acceleration is not a background feature. It is the architecture. Understanding it is mandatory for every enterprise firewall design decision.</p>
+      </div>
+    </div>
+  
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-why" placeholder="What are you unsure about?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('why','Why It Exists')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-why" placeholder="Write a note..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('why')">+ Add Note</button></div>
+        </div>
       </div>
     </div>
   </div>
@@ -251,6 +343,21 @@
     <div class="callout">
       <strong>Identify your silicon:</strong> <code>diagnose hardware lspci | grep 1a29</code> — NPID 4e36 = NP6, NPID 4e37 = NP7. For CP and SP: <code>get hardware status</code> — review ASIC version field.
     </div>
+  
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-processors" placeholder="What are you unsure about?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('processors','The Processors')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-processors" placeholder="Write a note..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('processors')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <hr class="div">
@@ -272,6 +379,21 @@
     </table>
 
     <p>FIN and RST packets are always handled by the CPU regardless of which path the session data is taking. This is normal and expected.</p>
+  
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-paths" placeholder="What are you unsure about?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('paths','Fast vs Slow Path')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-paths" placeholder="Write a note..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('paths')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <hr class="div">
@@ -316,15 +438,31 @@
       </div>
     </div>
 
-    <div class="mental-note">
-      <div>
-        <div class="mental-note-label">🧠 Critical Distinction</div>
-        <div class="mental-note-text">NTurbo is a transport optimisation — not a security feature. Disabling it never changes what the IPS engine inspects. It only changes how expensively packets get there. Same signatures. Same detection. Worse performance.</div>
+    <div class="mental-note-block">
+      <div class="mental-note-block-icon">🧠</div>
+      <div class="mental-note-block-inner">
+        <div class="mental-note-block-label">Critical Distinction</div>
+        <div class="mental-note-block-text">NTurbo is a transport optimisation — not a security feature. Disabling it never changes what the IPS engine inspects. It only changes how expensively packets get there. Same signatures. Same detection. Worse performance.</div>
       </div>
     </div>
 
     <div class="callout callout-amber">
       <strong>IPSA modes:</strong> Basic mode offloads standard pattern matching (default on devices with one CP8). Advanced mode offloads more pattern matching types (default on all other devices). Configure under <code>config ips global → set cp-accel-mode</code>.
+    </div>
+  
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-nturbo" placeholder="What are you unsure about?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('nturbo','NTurbo & IPSA')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-nturbo" placeholder="Write a note..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('nturbo')">+ Add Note</button></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -367,6 +505,21 @@
         </div>
       </li>
     </ul>
+  
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-triggers" placeholder="What are you unsure about?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('triggers','Slow Path Triggers')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-triggers" placeholder="Write a note..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('triggers')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <hr class="div">
@@ -402,6 +555,21 @@
     <div class="callout callout-green">
       <strong>Design solution:</strong> Split policies by inspection requirement. High-volume, latency-sensitive traffic gets a dedicated flow-based policy. Traffic requiring proxy-based features gets a separate policy. Never mix them on the same policy if performance matters.
     </div>
+  
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-mixed" placeholder="What are you unsure about?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('mixed','Mixed Policies')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-mixed" placeholder="Write a note..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('mixed')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <hr class="div">
@@ -428,6 +596,21 @@
 
     <div class="callout callout-red">
       <strong>Design warning:</strong> Never position a SoC4 device as a hub in a hub-and-spoke VPN topology. It lacks the dedicated NP7 crypto engines and session capacity required to terminate multiple IPsec tunnels while maintaining throughput. The hub becomes the bottleneck for the entire network.
+    </div>
+  
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-branch" placeholder="What are you unsure about?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('branch','SP5 & SoC4')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-branch" placeholder="Write a note..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('branch')">+ Add Note</button></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -487,6 +670,21 @@ end
     <div class="callout callout-amber">
       <strong>Troubleshooting workflow:</strong> Suspect slow path → confirm with session list → identify no_ofld_reason → address root cause → verify offload restored. Never leave np-acceleration disabled after troubleshooting.
     </div>
+  
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-tshoot" placeholder="What are you unsure about?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('tshoot','Troubleshooting')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-tshoot" placeholder="Write a note..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('tshoot')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <hr class="div">
@@ -541,11 +739,66 @@ end
         <tr><td>np-acceleration disabled</td><td>❌ CPU only</td><td>Explicit policy override</td></tr>
       </tbody>
     </table>
+  
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-exam" placeholder="What are you unsure about?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('exam','Exam Notes')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-exam" placeholder="Write a note..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('exam')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
   </div>
 
 </main>
 
+<div class="page-nav">
+  <a class="page-nav-btn page-nav-prev" href="../session-38-fabric-connectors-automation/index.html">
+    <span class="page-nav-label">← PREVIOUS</span>
+    <span class="page-nav-title">Session 38 — Fabric Connectors & Automation</span>
+  </a>
+  <a class="page-nav-btn page-nav-next" href="../session-40-spu-offload-troubleshooting/complete.html">
+    <span class="page-nav-label">NEXT →</span>
+    <span class="page-nav-title">Session 40 — SPU Offloading, Sessions &amp; Troubleshooting</span>
+  </a>
+</div>
+
+
 <footer>NSE7 Enterprise Firewall 7.6 · Session 39 · Complete Study Guide · <span>Hardware Acceleration</span></footer>
 
+
+<script>
+const PAGE_KEY = 'nse7-s39-hardware-acceleration';
+const SECTIONS = {
+  'why': 'Why It Exists',
+  'processors': 'The Processors',
+  'paths': 'Fast vs Slow Path',
+  'nturbo': 'NTurbo & IPSA',
+  'triggers': 'Slow Path Triggers',
+  'mixed': 'Mixed Policies',
+  'branch': 'SP5 & SoC4',
+  'tshoot': 'Troubleshooting',
+  'exam': 'Exam Notes',
+};
+function getQArr(){return JSON.parse(localStorage.getItem(PAGE_KEY+'-qs')||'[]');}
+function saveQArr(qs){localStorage.setItem(PAGE_KEY+'-qs',JSON.stringify(qs));}
+function addQuestion(key,name){const ta=document.getElementById('q-'+key);const text=ta.value.trim();if(!text){ta.focus();return;}const qs=getQArr();qs.push({id:Date.now(),section:key,sectionName:name,text});saveQArr(qs);ta.value='';renderQPanel();if(!document.getElementById('qpanel-body').classList.contains('open'))toggleQPanel();}
+function deleteQ(id){saveQArr(getQArr().filter(q=>q.id!==id));renderQPanel();}
+function toggleQPanel(){const body=document.getElementById('qpanel-body');const header=document.getElementById('qpanel-header');const chevron=document.getElementById('qpanel-chevron');const open=body.classList.toggle('open');header.classList.toggle('open',open);chevron.textContent=open?'▴':'▾';localStorage.setItem(PAGE_KEY+'-qpanel-open',open);}
+function renderQPanel(){const qs=getQArr();const count=document.getElementById('qpanel-count');if(count){count.textContent=qs.length;count.style.display=qs.length?'inline':'none';}const body=document.getElementById('qpanel-body');if(!body)return;if(!qs.length){body.innerHTML='<p class="no-questions">No questions yet.</p>';return;}const groups=Object.fromEntries(Object.keys(SECTIONS).map(k=>[k,[]]));qs.forEach(q=>{if(groups[q.section])groups[q.section].push(q);});let html='';let num=0;Object.entries(groups).forEach(([key,items])=>{if(!items.length)return;html+=`<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;items.forEach(q=>{num++;html+=`<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${q.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteQ(${q.id})">✕</button></div>`;});html+='</div>';});body.innerHTML=html;}
+function getNotesArr(){return JSON.parse(localStorage.getItem(PAGE_KEY+'-notes')||'[]');}
+function saveNotesArr(ns){localStorage.setItem(PAGE_KEY+'-notes',JSON.stringify(ns));}
+function addNote(key){const ta=document.getElementById('note-'+key);const text=ta.value.trim();if(!text){ta.focus();return;}const ns=getNotesArr();ns.push({id:Date.now(),section:key,sectionName:SECTIONS[key]||key,text});saveNotesArr(ns);ta.value='';renderNotesPanel();if(!document.getElementById('notes-panel-body').classList.contains('open'))toggleNotesPanel();}
+function deleteNote(id){saveNotesArr(getNotesArr().filter(n=>n.id!==id));renderNotesPanel();}
+function toggleNotesPanel(){const body=document.getElementById('notes-panel-body');const header=document.getElementById('notes-panel-header');const chevron=document.getElementById('notes-panel-chevron');const open=body.classList.toggle('open');header.classList.toggle('open',open);chevron.textContent=open?'▴':'▾';localStorage.setItem(PAGE_KEY+'-notes-panel-open',open);}
+function renderNotesPanel(){const ns=getNotesArr();const count=document.getElementById('notes-panel-count');if(count){count.textContent=ns.length;count.style.display=ns.length?'inline':'none';}const body=document.getElementById('notes-panel-body');if(!body)return;if(!ns.length){body.innerHTML='<p class="no-questions">No notes yet.</p>';return;}const groups=Object.fromEntries(Object.keys(SECTIONS).map(k=>[k,[]]));ns.forEach(n=>{if(groups[n.section])groups[n.section].push(n);});let html='';let num=0;Object.entries(groups).forEach(([key,items])=>{if(!items.length)return;html+=`<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;items.forEach(n=>{num++;html+=`<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteNote(${n.id})">✕</button></div>`;});html+='</div>';});body.innerHTML=html;}
+document.addEventListener('DOMContentLoaded',function(){renderQPanel();renderNotesPanel();if(localStorage.getItem(PAGE_KEY+'-qpanel-open')==='true')toggleQPanel();if(localStorage.getItem(PAGE_KEY+'-notes-panel-open')==='true')toggleNotesPanel();});
+</script>
 </body>
 </html>

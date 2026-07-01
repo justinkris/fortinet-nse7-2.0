@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 01 Study Bite — NSE7 Exam Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#faf5e9;--surface:#fffdf5;--surface-2:#f5eed9;--border:#d4c89a;--border-dim:#ebe1c2;--text:#0a1838;--text-soft:#1e2f5a;--text-muted:#6b7794;--blue:#1e40af;--blue-light:#eff4fc;--blue-border:#b8cce8;--ink-dark:#0d1a3a;--ink-accent:#9bb8e6;--green:#1a7c4a;--green-light:#dff0e1;--green-border:#a7d8b0;--amber:#b45309;--amber-light:#fcf2c3;--amber-border:#f3d68a;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:36px 48px 28px;background:var(--ink-dark);}
+  .eyebrow{font-family:'Outfit',sans-serif;font-size:10px;letter-spacing:0.14em;color:var(--ink-accent);text-transform:uppercase;margin-bottom:10px;}
+  header h1{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:#fbf7ec;line-height:1.1;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.5);margin-top:8px;}
+  .content{max-width:900px;margin:0 auto;padding:32px 48px 56px;}
+  h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--text);border-left:3px solid var(--blue);padding-left:14px;margin:28px 0 12px;}
+  h2 em{font-style:italic;color:var(--blue);}
+  p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:12px;}
+  p strong{color:var(--text);font-weight:600;}
+  .data-table{width:100%;border-collapse:collapse;margin:14px 0;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:9px 12px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:12px 18px;margin:14px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .mental-note{border-radius:10px;padding:13px 16px;margin:14px 0;display:flex;gap:10px;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-icon{font-size:17px;flex-shrink:0;}
+  .mental-note-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:3px;text-transform:uppercase;}
+  .mental-note-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.5;color:var(--text);}
+  .self-test{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-top:28px;}
+  .self-test-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--text-muted);text-transform:uppercase;margin-bottom:14px;}
+  .self-test ol{padding-left:20px;}
+  .self-test li{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--text-soft);line-height:1.7;margin-bottom:10px;}
+  .self-test li strong{color:var(--text);}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;padding:16px 48px;border-top:1px solid var(--border);background:var(--surface);}
+  @media(max-width:640px){header{padding:24px 20px 20px;}.content{padding:24px 20px 40px;}footer{padding:14px 20px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">NSE7 EF 7.6 · Session 01 · Study Bite · 5–10 min read</div>
+  <h1>NSE7 Roles, Audience <em>&amp; Exam Map</em></h1>
+  <p>Rapidly reactivate your mental model of what this certification tests and why three products form one system.</p>
+</header>
+
+<div class="content">
+
+  <h2>The <em>One-Paragraph Overview</em></h2>
+  <p>The NSE7 Enterprise Firewall exam is not a FortiGate features quiz. It tests whether you can reason about how <strong>FortiGate</strong> (enforce), <strong>FortiManager</strong> (define &amp; distribute), and <strong>FortiAnalyzer</strong> (record &amp; interpret) operate together as one accountable enterprise system. The format — 70 minutes, 30–40 questions — means roughly 90 seconds per question, which tests internalised understanding, not recall under pressure. The blueprint spans five domains: System Configuration, Central Management, Security Profiles, Routing, and VPN.</p>
+
+  <h2>The Problem <em>Each Product Solves</em></h2>
+  <table class="data-table">
+    <tr><th>Product</th><th>Problem It Solves</th><th>Without It</th></tr>
+    <tr><td>FortiGate</td><td>Enforces policy at the data plane</td><td>No enforcement — traffic flows unchecked</td></tr>
+    <tr><td>FortiManager</td><td>Single control plane for many devices</td><td>50 individual login sessions, policy drift, human error</td></tr>
+    <tr><td>FortiAnalyzer</td><td>Centralised log storage and interpretation</td><td>Security incidents span 40 devices — investigation is impractical</td></tr>
+  </table>
+
+  <h2>The <em>Five Blueprint Domains</em></h2>
+  <table class="data-table">
+    <tr><th>#</th><th>Domain</th><th>Key Topics</th></tr>
+    <tr><td>1</td><td>System Configuration</td><td>Security Fabric, Hardware Acceleration, HA, VLANs, VDOMs</td></tr>
+    <tr><td>2</td><td>Central Management</td><td>FortiManager, Policy Packages, Templates</td></tr>
+    <tr><td>3</td><td>Security Profiles</td><td>SSL Inspection, Web Filter, App Control, IPS, ISDB</td></tr>
+    <tr><td>4</td><td>Routing</td><td>OSPF, BGP</td></tr>
+    <tr><td>5</td><td>VPN</td><td>IPsec IKEv2, ADVPN</td></tr>
+  </table>
+
+  <h2>Candidate <em>Experience Profile</em></h2>
+  <table class="data-table">
+    <tr><th>Category</th><th>Required</th></tr>
+    <tr><td>Networking</td><td>3 years</td></tr>
+    <tr><td>Network security</td><td>3 years</td></tr>
+    <tr><td>Fortinet products (all three)</td><td>2 years</td></tr>
+  </table>
+
+  <div class="mental-note">
+    <div class="mental-note-icon">🧠</div>
+    <div>
+      <div class="mental-note-label">Primary Mental Model</div>
+      <div class="mental-note-text">FortiGate enforces. FortiManager distributes. FortiAnalyzer interprets. One system. Three responsibilities. The exam tests whether you can reason across all three simultaneously.</div>
+    </div>
+  </div>
+
+  <h2>Exam-Critical <em>Points</em></h2>
+  <div class="callout callout-amber"><strong>Cross-domain trap:</strong> ADVPN (Domain 5) requires routing knowledge (Domain 4), system design (Domain 1), and FortiManager skills (Domain 2). A question that looks like VPN may be testing routing. Always ask which domain the correct answer depends on.</div>
+  <div class="callout callout-amber"><strong>Experience trap:</strong> The Fortinet-specific requirement (2 years) names all three products — not just FortiGate. Candidates with FortiGate-only experience are underprepared.</div>
+  <div class="callout"><strong>Time trap:</strong> 90 seconds per question means you cannot reason through an unfamiliar concept at exam time. Understanding must already be internalised.</div>
+
+  <h2>Common <em>Mistakes</em></h2>
+  <div class="callout callout-amber"><strong>Studying domains in isolation.</strong> The hardest questions live at domain boundaries. Always connect new topics to the domains they depend on.</div>
+  <div class="callout callout-amber"><strong>Treating NSE7 as a FortiGate exam.</strong> Central Management (Domain 2) and the log analysis capabilities of FAZ are equally testable. Know all three products operationally.</div>
+
+  <h2>Troubleshooting <em>Checklist</em></h2>
+  <p>When you encounter any exam scenario question, work through this sequence before selecting an answer:</p>
+  <ol style="padding-left:22px;font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--text-soft);line-height:1.8;">
+    <li>Which blueprint domain does this question <em>appear</em> to test?</li>
+    <li>Which other domains does the correct answer depend on?</li>
+    <li>Which product owns the responsibility described in the scenario?</li>
+    <li>Are the distractor options correct for the wrong domain or wrong product?</li>
+  </ol>
+
+  <h2>Memorable <em>Analogy</em></h2>
+  <div class="callout callout-green">
+    <strong>Bank branch network.</strong> Each branch has a vault (FortiGate) that enforces who gets in. Head office (FortiManager) sets the security policy for every vault simultaneously — no branch manager invents their own rules. The compliance team (FortiAnalyzer) receives access logs from all branches, searches for suspicious patterns, and produces the quarterly audit report. Three roles. One security system. The NSE7 tests all three.
+  </div>
+
+  <div class="self-test">
+    <div class="self-test-label">Self-Test — Conceptual Questions</div>
+    <ol>
+      <li>A new malware signature is detected. The security team needs to know if any traffic matching it has passed through any firewall in the last 30 days. <strong>Which product answers this question — and why couldn't you answer it without it at scale?</strong></li>
+      <li>Name the five blueprint domains from memory. Which one contains the most sub-topics?</li>
+      <li>Why is the Fortinet-specific experience requirement (2 years) lower than the networking and security requirements (3 years each)?</li>
+      <li>A question asks about ADVPN troubleshooting. Before answering, which other domains should you draw on?</li>
+      <li>You have 90 seconds per question. A candidate who memorised CLI commands and a candidate who understood why features exist both sit the exam. Which one performs better on scenario questions — and why?</li>
+    </ol>
+  </div>
+
+</div>
+
+<footer>NSE7 Enterprise Firewall 7.6 · Session 01 Study Bite · NSE7-EF-7.6</footer>
+</body>
+</html>

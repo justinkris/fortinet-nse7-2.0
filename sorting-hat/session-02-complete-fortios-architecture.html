@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 02 — FortiOS Architecture Overview</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.005em;}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+
+  .top-panels{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+  .top-panels .qpanel{border-bottom:none;border-right:1px solid var(--border);}
+  .top-panels .qpanel-header{padding-left:32px;padding-right:32px;}
+  .top-panels .qpanel-body{padding-left:32px;padding-right:32px;}
+  .qpanel{background:var(--surface);}
+  .qpanel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .qpanel-header:hover,.qpanel-header.open{background:var(--surface-2);}
+  .qpanel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .qpanel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .qpanel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .qpanel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .qpanel-body{display:none;padding:0 20px 22px;}
+  .qpanel-body.open{display:block;}
+  .notes-panel{background:var(--surface);}
+  .notes-panel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 32px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .notes-panel-header:hover,.notes-panel-header.open{background:var(--surface-2);}
+  .notes-panel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .notes-panel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .notes-panel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .notes-panel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .notes-panel-body{display:none;padding:0 32px 22px;}
+  .notes-panel-body.open{display:block;}
+  .q-group{margin-bottom:16px;}
+  .q-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+  .q-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-dim);}
+  .q-item:last-child{border-bottom:none;}
+  .q-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;color:var(--blue);min-width:16px;margin-top:2px;}
+  .q-text{font-size:14px;color:var(--text-soft);line-height:1.5;flex:1;}
+  .q-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:0 4px;margin-top:1px;}
+  .q-del:hover{color:var(--blue);}
+  .no-questions{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);padding:8px 0;}
+  .btn-add-q{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-q:hover{opacity:0.85;}
+
+  .section-nav{position:sticky;top:0;z-index:90;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px;overflow-x:auto;}
+  .nav-tab{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:12px 18px;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s,border-color 0.15s;}
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+  main{max-width:1200px;margin:0 auto;padding:0;}
+  .main-content{padding:36px 60px 60px 60px;}
+
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:4px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+
+  .code-block{background:var(--ink-dark);border-radius:10px;padding:0;margin:16px 0;overflow:hidden;border:1px solid var(--border);}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:8px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:16px;overflow-x:auto;}
+  .code-block code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12.5px;line-height:1.65;color:#e8efff;}
+
+  .socratic-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:16px;border-top:3px solid var(--blue);}
+  .socratic-header{display:flex;align-items:center;gap:8px;margin-bottom:0;cursor:pointer;user-select:none;}
+  .socratic-header::after{content:'▸ Expand';margin-left:auto;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-block.soc-open .socratic-header{margin-bottom:10px;}
+  .socratic-block.soc-open .socratic-header::after{content:'▾ Collapse';}
+  .socratic-block:not(.soc-open) .socratic-insight,
+  .socratic-block:not(.soc-open) .socratic-questions,
+  .socratic-block:not(.soc-open) .answer-area{display:none;}
+  .socratic-icon{font-size:17px;flex-shrink:0;}
+  .socratic-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-insight{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;margin-bottom:12px;border-left:3px solid var(--border);padding-left:14px;font-style:italic;}
+  .socratic-questions{list-style:none;padding:0;margin:0;}
+  .socratic-questions li{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--border-dim);line-height:1.6;}
+  .socratic-questions li:last-child{border-bottom:none;}
+  .socratic-questions li::before{content:'?';position:absolute;left:0;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:16px;top:7px;color:var(--blue);}
+  .answer-area{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .answer-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .answer-textarea:focus{border-color:var(--blue);}
+  .answer-textarea:disabled{opacity:0.75;background:var(--surface-2);cursor:default;}
+  .answer-buttons{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .btn-add-answer{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-answer:hover:not(:disabled){opacity:0.85;}
+  .btn-add-answer:disabled{opacity:0.5;cursor:default;}
+  .btn-see-answer{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-see-answer:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-see-answer:not(:disabled){color:var(--blue);border-color:var(--blue);}
+  .btn-see-answer:hover:not(:disabled){background:var(--blue-glow);}
+  .model-answers{margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .model-answer-item{padding:10px 0;border-bottom:1px solid var(--border-dim);}
+  .model-answer-item:first-child{padding-top:0;}
+  .model-answer-item:last-child{border-bottom:none;padding-bottom:0;}
+  .model-answer-q{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;}
+  .model-answer-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;}
+
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+  .analogy-label{display:flex;align-items:center;gap:6px;user-select:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px;text-transform:uppercase;}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
+
+  .lesson-tools{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:40px;}
+  .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .tool-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .tool-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .tool-textarea:focus{border-color:var(--blue);}
+  .tool-row{margin-top:8px;display:flex;gap:8px;}
+
+  .page-nav{display:flex;border-top:2px solid var(--border);background:var(--surface);}
+  .page-nav-btn{flex:1;display:flex;flex-direction:column;gap:4px;padding:16px 28px;text-decoration:none;transition:background 0.15s;cursor:pointer;}
+  .page-nav-btn:hover:not(.page-nav-disabled){background:var(--surface-2);}
+  .page-nav-prev{border-right:1px solid var(--border);}
+  .page-nav-next{text-align:right;}
+  .page-nav-disabled{opacity:0.3;pointer-events:none;}
+  .page-nav-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);display:block;text-transform:uppercase;}
+  .page-nav-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;font-style:italic;color:var(--blue);display:block;}
+
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:34px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}.section-nav{padding:0 16px;}.top-panels{grid-template-columns:1fr;}.top-panels .qpanel{border-right:none;border-bottom:1px solid var(--border);}.lesson-tools-grid{grid-template-columns:1fr;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="breadcrumb">
+      <a href="#">NSE7 Enterprise Firewall 7.6</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="#">Session 02</a>
+      <span class="breadcrumb-sep">›</span>
+      FortiOS Architecture Overview
+    </div>
+    <div class="header-eyebrow"><span class="dot-live"></span> NSE7 EF 7.6 · Complete Study Guide</div>
+    <h1>FortiOS <em>Architecture Overview</em></h1>
+    <p>Why the session table is the central data structure — and how VDOMs contain the blast radius of every configuration decision.</p>
+  </div>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">The <em>session entry verdict</em> is set once at connection setup and governs everything that follows — inspection mode, offload destination, and egress path.</div>
+  <p class="motivation-sub">Understanding this single principle explains Friday's trading floor incident, the VDOM architecture decision, and will recur across HA failover, SD-WAN steering, and hardware acceleration topics throughout the course.</p>
+</div>
+
+<div class="top-panels">
+  <div class="qpanel" id="qpanel">
+    <button class="qpanel-header" onclick="toggleQPanel()" id="qpanel-header">
+      <span class="qpanel-title">MY QUESTIONS</span>
+      <span class="qpanel-count" id="qpanel-count">0</span>
+      <span class="qpanel-hint">— click to expand</span>
+      <span class="qpanel-chevron" id="qpanel-chevron">▾</span>
+    </button>
+    <div class="qpanel-body" id="qpanel-body"></div>
+  </div>
+  <div class="notes-panel" id="notes-panel">
+    <button class="notes-panel-header" onclick="toggleNotesPanel()" id="notes-panel-header">
+      <span class="notes-panel-title">MY NOTES</span>
+      <span class="notes-panel-count" id="notes-panel-count">0</span>
+      <span class="notes-panel-hint">— click to expand</span>
+      <span class="notes-panel-chevron" id="notes-panel-chevron">▾</span>
+    </button>
+    <div class="notes-panel-body" id="notes-panel-body"></div>
+  </div>
+</div>
+
+<nav class="section-nav" id="section-nav">
+  <a class="nav-tab active" href="#section-session-table">Session Table</a>
+  <a class="nav-tab" href="#section-flow-vs-proxy">Flow vs Proxy</a>
+  <a class="nav-tab" href="#section-vdoms">VDOMs</a>
+  <a class="nav-tab" href="#section-global-scope">Global Scope</a>
+  <a class="nav-tab" href="#section-troubleshooting">Troubleshooting</a>
+</nav>
+
+<main>
+  <div class="main-content">
+
+    <!-- SECTION 1: SESSION TABLE -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · THE SESSION TABLE</span>
+      </div>
+      <p class="socratic-insight">FortiOS doesn't evaluate every packet from scratch. The first packet in a connection is processed by the CPU, a decision is made, and subsequent packets follow that decision without re-evaluation. Where is that decision stored — and what does it contain?</p>
+      <ul class="socratic-questions">
+        <li>When a new TCP connection arrives, what decision does FortiOS need to make — and where does it record that decision so it doesn't have to repeat it for every subsequent packet?</li>
+        <li>If a policy changes after a session is already established, does the existing session entry update immediately or does the change only affect new connections?</li>
+      </ul>
+      <div class="answer-area" data-section="session-table">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">FortiOS creates a session entry in the session table. That entry records the session ID, source and destination addresses, matched policy, egress interface, and — critically — the offload verdict. The NP7 uses this verdict to handle all subsequent packets without involving the CPU again.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">The change only affects new connections. Existing session entries retain the verdict recorded at setup time. This is why a policy change causes gradual behaviour shifts rather than an immediate cut-over — old sessions expire naturally, new sessions pick up the new policy.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-session-table">
+      <div class="section-label">SECTION 01</div>
+      <h2>The <em>Session Table</em> — FortiOS's Central Data Structure</h2>
+
+      <p>Every forwarding decision FortiOS makes flows from one place: the session table. When the first packet of a new connection arrives, the CPU evaluates the matching policy, determines how the connection should be handled, and creates a session entry recording that verdict. Every subsequent packet in that connection follows the recorded verdict — the CPU is not consulted again.</p>
+
+      <p>A complete session entry contains more than most engineers expect. It holds the <strong>session ID</strong>, <strong>source and destination addresses and ports</strong>, <strong>protocol</strong>, <strong>matched policy ID</strong>, <strong>egress interface</strong>, <strong>NAT translation details</strong>, and — most importantly — the <strong>NP7 offload verdict</strong> encoded in the <code>npu info</code> fields. The offload verdict is binary in effect: either the NP7 handles subsequent packets at hardware speed, or the CPU handles them in software.</p>
+
+      <div class="callout">
+        <strong>Exam tip:</strong> The session table lives under <code>diagnose sys session list</code> — not under <code>get</code>. This is because the session table is raw engine state, not an operational summary. The exam distinguishes between <code>get</code> (clean operational output) and <code>diagnose</code> (raw internal engine state).
+      </div>
+
+      <p>The session-entry-as-verdict model explains a real-world phenomenon that confuses many engineers: <strong>policy changes take effect gradually, not instantly</strong>. When a security profile is added to a policy, existing sessions retain their original verdict until they expire naturally. New sessions pick up the new policy immediately. In a high-frequency trading environment with short-lived connections, this produces a gradual degradation rather than a sudden cliff — exactly what Vaultline Financial observed on Friday evening.</p>
+
+      <table class="data-table">
+        <thead><tr><th>Session Entry Field</th><th>What It Records</th><th>Why It Matters</th></tr></thead>
+        <tbody>
+          <tr><td>Session ID</td><td>Unique identifier for this flow</td><td>Correlates packets to a specific session</td></tr>
+          <tr><td>src / dst / proto</td><td>5-tuple identifying the flow</td><td>Used to match incoming packets to existing sessions</td></tr>
+          <tr><td>Policy ID</td><td>Which policy matched at setup</td><td>Determines inspection profile and action</td></tr>
+          <tr><td>Egress interface</td><td>Outbound interface for this flow</td><td>Routing decision made once, not per-packet</td></tr>
+          <tr><td>npu info / offload</td><td>NP7 offload verdict (9=NP7, 0=CPU)</td><td>Governs where all subsequent packets are processed</td></tr>
+          <tr><td>no_ofld_reason</td><td>Why offload was denied (if applicable)</td><td>First diagnostic step when offload=0/0</td></tr>
+          <tr><td>duration / expire</td><td>Session age and timeout</td><td>Session cleanup and idle timeout enforcement</td></tr>
+        </tbody>
+      </table>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">The session table verdict is set once — at connection setup — and governs everything that follows. A policy change never retroactively updates existing session entries. When you see unexpected behaviour after a policy change, always check whether you're looking at old sessions still running under the previous verdict.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-session-table" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-session-table','Session Table')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-session-table" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-session-table')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: FLOW VS PROXY -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · FLOW VS PROXY</span>
+      </div>
+      <p class="socratic-insight">FortiOS can inspect traffic in two fundamentally different ways. One inspects packets as they pass through. The other terminates the connection entirely and creates a new one to the destination. The choice between them is made at session setup and has profound consequences for performance, session count, and NP7 eligibility.</p>
+      <ul class="socratic-questions">
+        <li>If FortiOS acts as a proxy for a connection, how many session table entries exist for what the user experiences as a single connection — and where is each processed?</li>
+        <li>In FortiOS 7.6, does the administrator explicitly choose between flow mode and proxy mode per policy — or does something else determine which mode is used?</li>
+      </ul>
+      <div class="answer-area" data-section="flow-vs-proxy">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Two session entries. One from the client to FortiGate, one from FortiGate to the server. Both run on the CPU — the NP7 is a forwarding engine and cannot terminate TCP connections, buffer streams, or reassemble application data. Proxy mode is architecturally incompatible with NP7 offloading.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">In FortiOS 7.6, the inspection mode is inferred from the security profiles attached to the policy. If the attached profiles require proxy-based processing, the session uses proxy mode. If all profiles are flow-compatible, flow mode is used. The administrator controls this implicitly through profile selection, not through an explicit mode toggle.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-flow-vs-proxy">
+      <div class="section-label">SECTION 02</div>
+      <h2>Flow Mode vs Proxy Mode — <em>Why the Split Exists</em></h2>
+
+      <p><strong>Flow-based inspection</strong> treats FortiOS as a forwarder. Packets are inspected as they transit the device — the connection remains end-to-end between client and server. The NP7 can offload the session after setup, producing hardware-speed forwarding with minimal latency. Flow mode is the default and preferred mode for performance-sensitive traffic.</p>
+
+      <p><strong>Proxy-based inspection</strong> treats FortiOS as an endpoint. The client-side TCP connection terminates at FortiGate. FortiOS buffers the full application stream, performs deep content inspection, then establishes a new TCP connection to the server. This enables inspection capabilities impossible in flow mode — full SSL decryption, content reconstruction, application-level policy enforcement. The cost is significant: two CPU-bound session entries per user connection, no NP7 offloading possible, and measurably higher latency.</p>
+
+      <div class="callout callout-amber">
+        <strong>Critical exam point:</strong> Proxy mode is not a property of the policy — it is inferred from the security profiles attached to the policy. In FortiOS 7.6, attaching a proxy-requiring profile implicitly moves the entire session to proxy mode. The administrator who enables a profile may not realise they have also disabled NP7 offloading for every session matching that policy.
+      </div>
+
+      <table class="data-table">
+        <thead><tr><th>Characteristic</th><th>Flow Mode</th><th>Proxy Mode</th></tr></thead>
+        <tbody>
+          <tr><td>Connection model</td><td>End-to-end (pass-through)</td><td>Terminated and re-established</td></tr>
+          <tr><td>Session entries</td><td>One per connection</td><td>Two per connection (client→FGT, FGT→server)</td></tr>
+          <tr><td>NP7 offload eligible</td><td>Yes (if no other constraints)</td><td>No — architecturally incompatible</td></tr>
+          <tr><td>Inspection depth</td><td>Packet-level / stream reassembly</td><td>Full application stream reconstruction</td></tr>
+          <tr><td>CPU cost</td><td>Low (after offload)</td><td>High (all packets, both directions)</td></tr>
+          <tr><td>Latency profile</td><td>Near wire-speed when offloaded</td><td>Measurably higher; buffering introduces delay</td></tr>
+          <tr><td>Mode selected by</td><td>Inferred from attached profiles</td><td>Inferred from attached profiles</td></tr>
+        </tbody>
+      </table>
+
+      <div class="analogy-box">
+        <div class="analogy-label">Analogy</div>
+        <div class="analogy-text">
+          <p class="analogy-summary">Flow mode is a highway toll gate that scans your number plate as you pass through. Proxy mode is a customs checkpoint where you stop, get out, an inspector goes through your luggage, then you get back in a different car to continue your journey.</p>
+          <ul>
+            <li>Toll gate: fast, minimal interruption, but can only see what's visible from the outside</li>
+            <li>Customs: slower, full inspection possible, but you were a different "connection" before and after the checkpoint</li>
+            <li>The NP7 can manage the toll gate automatically. It cannot perform customs inspections.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">In proxy mode, FortiOS terminates the connection — so there are always two session table entries where the user sees one. Both are CPU-bound. This is not a configuration choice; it is an architectural constraint of what a proxy is. No setting can make a proxy session eligible for NP7 offloading.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-flow-vs-proxy" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-flow-vs-proxy','Flow vs Proxy')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-flow-vs-proxy" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-flow-vs-proxy')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: VDOMs -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · VIRTUAL DOMAINS</span>
+      </div>
+      <p class="socratic-insight">As an enterprise network grows — more zones, more compliance requirements, more administrative teams — a single flat FortiGate configuration becomes a liability. One routing table means one blast radius. One administrative scope means all-or-nothing access. VDOMs solve this by virtualising the firewall itself.</p>
+      <ul class="socratic-questions">
+        <li>In a single flat FortiGate configuration, why can't you give a compliance officer administrative access to manage only the PCI zone without also giving them access to the trading VLAN policies?</li>
+        <li>What is an inter-VDOM link, what does it look like to each VDOM, and what security property does it preserve?</li>
+      </ul>
+      <div class="answer-area" data-section="vdoms">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">In a flat configuration, administrative access is essentially all-or-nothing. There is one policy table, one routing table, and one configuration namespace. You cannot scope an administrator to a subset of policies. Any admin with access sees and can modify all zones.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">An inter-VDOM link is a virtual point-to-point connection between two VDOMs internal to the FortiGate. Each end appears to its VDOM as a regular interface — it has an IP address, participates in that VDOM's routing table, and traffic crossing it is subject to policy evaluation on both sides. This means two independent security policy checkpoints exist for inter-VDOM traffic.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-vdoms">
+      <div class="section-label">SECTION 03</div>
+      <h2>Virtual Domains — <em>Isolating the Blast Radius</em></h2>
+
+      <p>A Virtual Domain (VDOM) is a logically independent firewall instance running on a shared physical FortiGate. Each VDOM has its own <strong>policy table</strong>, <strong>routing table</strong>, <strong>interface assignments</strong>, and <strong>administrative scope</strong>. A change inside one VDOM cannot affect the session table, routing decisions, or policy enforcement of another VDOM. This is the architectural definition of blast radius containment.</p>
+
+      <p>VDOMs were not invented for complexity — they were invented to solve the operational problems that arise when a single flat configuration tries to serve multiple zones with different security requirements and different administrative teams. The compliance officer manages the PCI VDOM. Priya manages the trading VDOM. Neither can see or modify the other's configuration.</p>
+
+      <div class="callout callout-green">
+        <strong>Vaultline design outcome:</strong> By placing the trading VLAN in a dedicated VDOM with only flow-based profiles, every trading session is guaranteed NP7 offloading. A proxy profile added to the corporate VDOM cannot influence the trading VDOM's session table. Friday's incident becomes architecturally impossible.
+      </div>
+
+      <p>VDOMs connect to the outside world through physical interfaces assigned to them, and connect to each other through <strong>inter-VDOM links</strong>. An inter-VDOM link is a virtual point-to-point connection entirely internal to the FortiGate. Each end appears to its respective VDOM as an ordinary interface — it participates in that VDOM's routing table and is subject to that VDOM's policy enforcement. Traffic crossing an inter-VDOM link passes through two independent policy evaluation points, one in each VDOM.</p>
+
+      <table class="data-table">
+        <thead><tr><th>What Is Isolated Per VDOM</th><th>What This Means Operationally</th></tr></thead>
+        <tbody>
+          <tr><td>Policy table</td><td>Rules in VDOM A cannot affect traffic in VDOM B</td></tr>
+          <tr><td>Routing table</td><td>Route changes in one VDOM cannot redirect traffic in another</td></tr>
+          <tr><td>Session table</td><td>Sessions in VDOM A cannot be affected by profile changes in VDOM B</td></tr>
+          <tr><td>Administrative scope</td><td>VDOM admins can only see and modify their own VDOM</td></tr>
+          <tr><td>Interface assignment</td><td>Physical ports are assigned to exactly one VDOM</td></tr>
+        </tbody>
+      </table>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">VDOMs exist because blast radius must be bounded. Each VDOM has its own policy table, routing table, session table, and admin scope. An inter-VDOM link looks like a regular interface to each side — and policies apply to traffic crossing it, maintaining security boundaries even for internal traffic.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-vdoms" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-vdoms','VDOMs')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-vdoms" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-vdoms')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: GLOBAL SCOPE -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · GLOBAL SCOPE</span>
+      </div>
+      <p class="socratic-insight">If VDOMs are truly isolated, some configuration must exist above all VDOMs — things that belong to the physical device itself rather than to any logical instance. Knowing the boundary between global and VDOM scope is both an operational requirement and a frequently tested exam concept.</p>
+      <ul class="socratic-questions">
+        <li>Name four types of configuration that must live in global scope rather than inside a VDOM — and explain why each cannot belong to a VDOM.</li>
+        <li>What is the management VDOM, what is its purpose, and how many can exist on a single FortiGate?</li>
+      </ul>
+      <div class="answer-area" data-section="global-scope">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">VDOM creation and deletion (you cannot create a VDOM from inside a VDOM); physical interface definitions and VDOM assignment (a port exists as hardware before it is assigned to any VDOM); global administrator accounts (admins who manage multiple VDOMs must exist above all of them); firmware and licensing (these apply to the physical device, not to any logical instance).</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">The management VDOM is the designated VDOM through which the FortiGate's own management traffic exits — FortiManager connections, FortiAnalyzer log streams, firmware updates, DNS queries. Exactly one VDOM holds this designation at any time. You designate which VDOM it is; any VDOM can be selected.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-global-scope">
+      <div class="section-label">SECTION 04</div>
+      <h2>Global vs VDOM Scope — <em>Where Configuration Lives</em></h2>
+
+      <p>FortiOS configuration exists in one of two scopes: <strong>global</strong> or <strong>VDOM</strong>. Global scope contains configuration that applies to the physical device itself — things that exist before any VDOM is instantiated. VDOM scope contains configuration that is specific to one logical firewall instance and has no meaning outside it.</p>
+
+      <p>The practical test for global scope: if the configuration cannot logically belong to any single VDOM because it affects the entire device, it lives globally. Physical interface definitions live globally because a port is hardware — it must be assigned to a VDOM, not defined by one. VDOM creation lives globally because you cannot bootstrap a VDOM from inside a VDOM. Global administrator accounts live globally because multi-VDOM admins must have a scope that transcends any individual VDOM.</p>
+
+      <table class="data-table">
+        <thead><tr><th>Configuration Item</th><th>Scope</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>VDOM creation / deletion</td><td>Global</td><td>Cannot create a VDOM from inside a VDOM</td></tr>
+          <tr><td>Physical interface definitions</td><td>Global</td><td>Hardware exists before VDOM assignment</td></tr>
+          <tr><td>Interface → VDOM assignment</td><td>Global</td><td>Assignment is a device-level decision</td></tr>
+          <tr><td>Global admin accounts</td><td>Global</td><td>Must transcend individual VDOM scope</td></tr>
+          <tr><td>Firmware / licensing</td><td>Global</td><td>Apply to the physical device</td></tr>
+          <tr><td>HA configuration</td><td>Global</td><td>Cluster membership is device-level</td></tr>
+          <tr><td>Firewall policies</td><td>VDOM</td><td>Specific to one logical firewall instance</td></tr>
+          <tr><td>Routing table</td><td>VDOM</td><td>Each VDOM maintains independent routes</td></tr>
+          <tr><td>Security profiles</td><td>VDOM</td><td>Applied within one VDOM's policy context</td></tr>
+          <tr><td>VDOM admin accounts</td><td>VDOM</td><td>Scoped to one VDOM only</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <strong>Management VDOM:</strong> One designated VDOM handles all of the FortiGate's own management traffic — FortiManager connectivity, FortiAnalyzer log forwarding, firmware updates, NTP, DNS. Only one management VDOM can be active at any time. Any VDOM can be designated. This ensures management plane traffic follows a predictable, controlled routing path separate from user data traffic.
+      </div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Global scope = the physical device. VDOM scope = one logical firewall instance. If you can ask "which VDOM does this belong to?" and the question doesn't make sense, it's global. If the configuration only has meaning within one logical firewall context, it's VDOM-scoped. The management VDOM is exactly one — and any VDOM can hold that role.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-global-scope" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-global-scope','Global Scope')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-global-scope" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-global-scope')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: TROUBLESHOOTING -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · TROUBLESHOOTING</span>
+      </div>
+      <p class="socratic-insight">Priya sees offload=0/0 in a trading VDOM session entry despite having no proxy profiles on any policy. Before reaching for additional commands, a systematic engineer reads the evidence already in the session entry. The no_ofld_reason field tells you which category of problem you're dealing with before you run a single additional command.</p>
+      <ul class="socratic-questions">
+        <li>You see offload=0/0 with no_ofld_reason: helper in a trading VDOM session. Is this a problem requiring investigation, or expected behaviour — and how do you decide?</li>
+        <li>What four conditions can produce offload=0/0 in a session entry, and which of these cannot be resolved through configuration changes?</li>
+      </ul>
+      <div class="answer-area" data-section="troubleshooting">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Expected behaviour — if you confirm the protocol genuinely requires a session helper (FTP, SIP, H.323, etc.). Identify the protocol, confirm a helper is appropriate for it, and move on. Do not chase helper reason codes unless you suspect the wrong protocol is triggering a helper, or a helper is assigned to a protocol that doesn't need one.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">The four conditions: (1) proxy-based security profile attached — a configuration decision, reversible; (2) session helper required — an architectural constraint, cannot be configured away; (3) software tunnel interface — an architectural constraint for GRE/SSL VPN tunnels; (4) auto-asic-offload explicitly disabled on the policy — a configuration decision, reversible. Constraints 2 and 3 cannot be resolved by changing configuration.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-troubleshooting">
+      <div class="section-label">SECTION 05</div>
+      <h2>Troubleshooting <em>Session Offload</em> in a VDOM Environment</h2>
+
+      <p>When a trading VDOM session shows <code>offload=0/0</code> despite clean flow-based policies, the <code>no_ofld_reason</code> field in the session entry is your first diagnostic tool. Read it before running any additional commands. It immediately categorises the problem as either an architectural constraint (cannot be fixed by configuration) or a configuration decision (can be reversed).</p>
+
+      <table class="data-table">
+        <thead><tr><th>no_ofld_reason Value</th><th>Category</th><th>Correct Response</th></tr></thead>
+        <tbody>
+          <tr><td>helper</td><td>Architectural constraint</td><td>Identify protocol, confirm helper is appropriate, accept and move on</td></tr>
+          <tr><td>software-tunnel</td><td>Architectural constraint</td><td>Confirm interface type; GRE/SSL VPN cannot be offloaded — expected</td></tr>
+          <tr><td>ofld-disabled</td><td>Configuration decision</td><td>Check auto-asic-offload on the matching policy; enable if appropriate</td></tr>
+          <tr><td>proxy (or profile-based)</td><td>Configuration decision</td><td>Identify which attached profile forces proxy mode; evaluate whether it belongs on this policy</td></tr>
+          <tr><td>rsvd</td><td>Often short-lived session</td><td>Check session duration; if very short, offload evaluation may not have completed — usually benign</td></tr>
+        </tbody>
+      </table>
+
+      <p>The investigation sequence when <code>offload=0/0</code> appears unexpectedly in a trading VDOM:</p>
+      <ol>
+        <li>Read <code>no_ofld_reason</code> — categorise as constraint vs decision before doing anything else</li>
+        <li>Check session duration — is this a very short-lived session that expired before offload completed?</li>
+        <li>Identify the protocol — does it match a known session helper protocol (FTP, SIP, H.323)?</li>
+        <li>Check the ingress interface — is it a software tunnel (GRE, SSL VPN)?</li>
+        <li>Check the policy — is <code>auto-asic-offload</code> disabled?</li>
+        <li>Review attached profiles — is any profile implicitly forcing proxy mode?</li>
+      </ol>
+
+      <div class="callout callout-amber">
+        <strong>Exam trap:</strong> Questions that include the phrase "regardless of policy configuration" are pointing you toward architectural constraints — session helpers and software tunnels. These cannot be resolved by any policy change. Questions about configuration decisions will include words like "disabled" or "profile" as clues.
+      </div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Read no_ofld_reason before reaching for any other command. It costs nothing and immediately tells you whether you're dealing with a constraint (accept it) or a decision (investigate and potentially reverse it). The constraint vs decision framework is the single most valuable instinct in session offload troubleshooting.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-troubleshooting" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-troubleshooting','Troubleshooting')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-troubleshooting" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-troubleshooting')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="page-nav">
+  <a class="page-nav-btn page-nav-prev" href="session-01-complete-nse7-roles-exam-map.html">
+    <span class="page-nav-label">← PREVIOUS</span>
+    <span class="page-nav-title">Session 01 — NSE7 Roles & Exam Map</span>
+  </a>
+  <a class="page-nav-btn page-nav-next" href="#">
+    <span class="page-nav-label">NEXT →</span>
+    <span class="page-nav-title">Session 03 — Coming Soon</span>
+  </a>
+</div>
+
+<footer>
+  NSE7 Enterprise Firewall 7.6<span>.</span> Session 02<span>.</span> FortiOS Architecture Overview
+</footer>
+
+<script>
+const PAGE_KEY = 'nse7-s02-fortios-architecture';
+const SECTIONS = {
+  'section-session-table': 'Session Table',
+  'section-flow-vs-proxy': 'Flow vs Proxy',
+  'section-vdoms': 'VDOMs',
+  'section-global-scope': 'Global Scope',
+  'section-troubleshooting': 'Troubleshooting',
+};
+
+document.querySelectorAll('.socratic-header').forEach(function(h) {
+  h.addEventListener('click', function() { h.closest('.socratic-block').classList.toggle('soc-open'); });
+});
+function getQArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-qs') || '[]'); }
+function saveQArr(qs) { localStorage.setItem(PAGE_KEY+'-qs', JSON.stringify(qs)); }
+function addQuestion(key, name) {
+  const ta = document.getElementById('q-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const qs = getQArr(); qs.push({id: Date.now(), section: key, sectionName: name, text});
+  saveQArr(qs); ta.value = ''; renderQPanel();
+  if (!document.getElementById('qpanel-body').classList.contains('open')) toggleQPanel();
+}
+function deleteQ(id) { saveQArr(getQArr().filter(q => q.id !== id)); renderQPanel(); }
+function toggleQPanel() {
+  const body = document.getElementById('qpanel-body');
+  const header = document.getElementById('qpanel-header');
+  const chevron = document.getElementById('qpanel-chevron');
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-qpanel-open', open);
+}
+function renderQPanel() {
+  const qs = getQArr();
+  const count = document.getElementById('qpanel-count');
+  if (count) { count.textContent = qs.length; count.style.display = qs.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.qpanel-hint');
+  if (hint) hint.textContent = qs.length ? `— ${qs.length} question${qs.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('qpanel-body'); if (!body) return;
+  if (!qs.length) { body.innerHTML = '<p class="no-questions">No questions yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  qs.forEach(q => { if (groups[q.section]) groups[q.section].push(q); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(q => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${q.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteQ(${q.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function getNotesArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-notes') || '[]'); }
+function saveNotesArr(ns) { localStorage.setItem(PAGE_KEY+'-notes', JSON.stringify(ns)); }
+function addNote(key) {
+  const ta = document.getElementById('note-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const ns = getNotesArr(); ns.push({id: Date.now(), section: key, sectionName: SECTIONS[key]||key, text});
+  saveNotesArr(ns); ta.value = ''; renderNotesPanel();
+  if (!document.getElementById('notes-panel-body').classList.contains('open')) toggleNotesPanel();
+}
+function deleteNote(id) { saveNotesArr(getNotesArr().filter(n => n.id !== id)); renderNotesPanel(); }
+function toggleNotesPanel() {
+  const body = document.getElementById('notes-panel-body');
+  const header = document.getElementById('notes-panel-header');
+  const chevron = document.getElementById('notes-panel-chevron');
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-notes-panel-open', open);
+}
+function renderNotesPanel() {
+  const ns = getNotesArr();
+  const count = document.getElementById('notes-panel-count');
+  if (count) { count.textContent = ns.length; count.style.display = ns.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.notes-panel-hint');
+  if (hint) hint.textContent = ns.length ? `— ${ns.length} note${ns.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('notes-panel-body'); if (!body) return;
+  if (!ns.length) { body.innerHTML = '<p class="no-questions">No notes yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  ns.forEach(n => { if (groups[n.section]) groups[n.section].push(n); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(n => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteNote(${n.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function saveSocAnswer(btn) {
+  const area = btn.closest('.answer-area');
+  const ta = area.querySelector('.answer-textarea');
+  if (!ta.value.trim()) { ta.focus(); return; }
+  const key = PAGE_KEY+'-socans-'+area.dataset.section;
+  try { localStorage.setItem(key, ta.value); } catch(e) {}
+  ta.disabled = true; btn.textContent = '✓ Answer saved'; btn.disabled = true;
+  const seeBtn = area.querySelector('.btn-see-answer');
+  seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+}
+function revealSocAnswer(btn) {
+  if (btn.disabled) return;
+  const answers = btn.closest('.answer-area').querySelector('.model-answers');
+  const isHidden = answers.style.display === 'none' || !answers.style.display;
+  answers.style.display = isHidden ? 'block' : 'none';
+  btn.textContent = isHidden ? '▲ Hide Model Answer' : '💡 See Model Answer';
+}
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+document.addEventListener('DOMContentLoaded', function() {
+  renderQPanel(); renderNotesPanel();
+  if (localStorage.getItem(PAGE_KEY+'-qpanel-open') === 'true') toggleQPanel();
+  if (localStorage.getItem(PAGE_KEY+'-notes-panel-open') === 'true') toggleNotesPanel();
+  document.querySelectorAll('.answer-area').forEach(function(area) {
+    const key = PAGE_KEY+'-socans-'+area.dataset.section;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const ta = area.querySelector('.answer-textarea'); ta.value = saved; ta.disabled = true;
+        const addBtn = area.querySelector('.btn-add-answer'); addBtn.textContent = '✓ Answer saved'; addBtn.disabled = true;
+        const seeBtn = area.querySelector('.btn-see-answer'); seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+      }
+    } catch(e) {}
+  });
+});
+</script>
+</body>
+</html>

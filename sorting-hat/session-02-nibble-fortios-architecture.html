@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 02 Nibble — The Session Verdict Model</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  header{padding:28px 40px 22px;background:var(--ink-dark);}
+  .eyebrow{font-family:'Outfit',sans-serif;font-size:10px;color:var(--ink-accent);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;}
+  .nibble-tag{background:rgba(180,83,9,0.25);border:1px solid rgba(243,214,138,0.4);color:#fcd34d;padding:3px 10px;border-radius:12px;font-size:9px;margin-left:8px;letter-spacing:0.12em;}
+  header h1{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:#fbf7ec;line-height:1.1;}
+  header h1 em{font-style:italic;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:13px;font-style:italic;color:rgba(251,247,236,0.45);margin-top:6px;}
+
+  .content{max-width:800px;margin:0 auto;padding:28px 40px 48px;}
+
+  /* THE CENTRAL DIAGRAM */
+  .verdict-diagram{background:var(--ink-dark);border-radius:14px;padding:28px;margin-bottom:24px;}
+  .diag-title{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--ink-accent);text-transform:uppercase;text-align:center;margin-bottom:20px;}
+
+  .timeline{display:flex;align-items:flex-start;gap:0;position:relative;}
+  .timeline::before{content:'';position:absolute;top:22px;left:22px;right:22px;height:2px;background:rgba(155,184,230,0.25);z-index:0;}
+
+  .t-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1;}
+  .t-dot{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;border:2px solid rgba(155,184,230,0.4);background:var(--ink-dark);color:var(--ink-accent);margin-bottom:10px;flex-shrink:0;}
+  .t-dot.verdict{background:rgba(30,64,175,0.5);border-color:rgba(155,184,230,0.8);color:#fff;}
+  .t-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.1em;color:var(--ink-accent);text-transform:uppercase;text-align:center;margin-bottom:4px;}
+  .t-sub{font-family:'Cormorant Garamond',serif;font-size:12px;color:rgba(155,184,230,0.65);text-align:center;font-style:italic;line-height:1.4;}
+
+  .verdict-callout{background:rgba(30,64,175,0.2);border:1px solid rgba(155,184,230,0.4);border-radius:10px;padding:14px 18px;margin-top:18px;text-align:center;}
+  .verdict-callout p{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;color:#e8efff;}
+  .verdict-callout em{color:#fcd34d;}
+
+  /* COMPARISON GRID */
+  .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;}
+  .compare-card{border-radius:10px;padding:16px 18px;}
+  .compare-card.flow{background:var(--green-light);border:1px solid var(--green-border);}
+  .compare-card.proxy{background:var(--amber-light);border:1px solid var(--amber-border);}
+  .cc-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:8px;}
+  .cc-label.flow{color:var(--green);}
+  .cc-label.proxy{color:var(--amber);}
+  .cc-stat{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:4px;}
+  .cc-stat.flow{color:var(--green);}
+  .cc-stat.proxy{color:var(--amber);}
+  .cc-detail{font-family:'Cormorant Garamond',serif;font-size:14px;line-height:1.5;color:var(--text-soft);}
+
+  /* KEY RULES */
+  .rules{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:24px;}
+  .rules-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px;}
+  .rule-row{display:flex;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px solid #ebe1c2;}
+  .rule-row:last-child{border-bottom:none;}
+  .rule-num{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;color:var(--blue);min-width:20px;margin-top:1px;}
+  .rule-text{font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.55;color:var(--text-soft);}
+  .rule-text strong{color:var(--text);}
+
+  /* EXAM STRIP */
+  .exam-strip{background:var(--ink-dark);border-radius:10px;padding:16px 20px;display:flex;gap:16px;align-items:flex-start;margin-bottom:24px;}
+  .exam-icon{font-size:22px;flex-shrink:0;}
+  .exam-inner{flex:1;}
+  .exam-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-accent);margin-bottom:6px;}
+  .exam-text{font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.6;color:#e8efff;}
+  .exam-text em{color:#fcd34d;font-style:normal;font-weight:600;}
+
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:14px 40px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+
+  @media(max-width:620px){header{padding:20px 20px 16px;}.content{padding:20px 16px 36px;}.compare-grid{grid-template-columns:1fr;}.timeline{flex-direction:column;gap:16px;}.timeline::before{display:none;}footer{padding:12px 16px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">NSE7 EF 7.6 · Session 02<span class="nibble-tag">NIBBLE</span></div>
+  <h1>The <em>Session Verdict Model</em></h1>
+  <p>One decision. Set once. Governs everything. — Under 2 minutes.</p>
+</header>
+
+<div class="content">
+
+  <!-- TIMELINE DIAGRAM -->
+  <div class="verdict-diagram">
+    <div class="diag-title">What Happens When a Connection Arrives</div>
+    <div class="timeline">
+      <div class="t-step">
+        <div class="t-dot">1</div>
+        <div class="t-label">Packet 1</div>
+        <div class="t-sub">First packet of new connection</div>
+      </div>
+      <div class="t-step">
+        <div class="t-dot">2</div>
+        <div class="t-label">CPU Evaluates</div>
+        <div class="t-sub">Policy match, profile type, route lookup</div>
+      </div>
+      <div class="t-step">
+        <div class="t-dot verdict">⚡</div>
+        <div class="t-label">Verdict Written</div>
+        <div class="t-sub">Session entry created, offload decision recorded</div>
+      </div>
+      <div class="t-step">
+        <div class="t-dot">4</div>
+        <div class="t-label">Packets 2–N</div>
+        <div class="t-sub">Follow the recorded verdict. CPU not consulted.</div>
+      </div>
+    </div>
+    <div class="verdict-callout">
+      <p>The verdict is <em>permanent for the session's lifetime.</em> Policy changes only affect <em>new connections.</em></p>
+    </div>
+  </div>
+
+  <!-- FLOW vs PROXY -->
+  <div class="compare-grid">
+    <div class="compare-card flow">
+      <div class="cc-label flow">Flow Mode</div>
+      <div class="cc-stat flow">1 Session</div>
+      <div class="cc-detail">Pass-through. NP7 eligible. Low CPU. Near wire-speed after offload.</div>
+    </div>
+    <div class="compare-card proxy">
+      <div class="cc-label proxy">Proxy Mode</div>
+      <div class="cc-stat proxy">2 Sessions</div>
+      <div class="cc-detail">Connection terminated. Both entries CPU-bound. NP7 architecturally impossible.</div>
+    </div>
+  </div>
+
+  <!-- THE THREE RULES -->
+  <div class="rules">
+    <div class="rules-label">The Rules That Matter</div>
+    <div class="rule-row">
+      <div class="rule-num">1</div>
+      <div class="rule-text"><strong>Mode is inferred, not configured.</strong> FortiOS 7.6 reads the attached security profiles and infers flow or proxy. The engineer controls mode through profile selection — whether they know it or not.</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-num">2</div>
+      <div class="rule-text"><strong>Proxy is all-or-nothing per session.</strong> One proxy-requiring profile forces the entire session into proxy mode — both session entries, both directions, both on the CPU.</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-num">3</div>
+      <div class="rule-text"><strong>VDOMs isolate the verdict space.</strong> Each VDOM has its own session table and policy table. A proxy profile in VDOM A cannot change the offload verdict of sessions in VDOM B.</div>
+    </div>
+  </div>
+
+  <!-- EXAM STRIP -->
+  <div class="exam-strip">
+    <div class="exam-icon">🎯</div>
+    <div class="exam-inner">
+      <div class="exam-label">Exam Trigger Phrases</div>
+      <div class="exam-text">
+        <em>"regardless of policy configuration"</em> → architectural constraint (session helper or software tunnel) — cannot be fixed by config changes.<br><br>
+        <em>"all sessions on the policy"</em> + proxy profile → remember: the verdict affects all sessions, not just new packets.<br><br>
+        <em>"management VDOM"</em> → exactly one. Any VDOM can hold the role. One at a time.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  NSE7 EF 7.6<span>.</span> Session 02<span>.</span> Nibble<span>.</span> The Session Verdict Model
+</footer>
+
+</body>
+</html>

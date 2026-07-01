@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 02 Study Bite — FortiOS Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  header{padding:36px 48px 28px;background:var(--ink-dark);}
+  .eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:4px 12px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:10px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:12px;}
+  .bite-tag{background:rgba(26,124,74,0.2);border:1px solid rgba(26,124,74,0.4);color:#6ee7a8;padding:4px 12px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:10px;letter-spacing:0.1em;margin-left:8px;}
+  header h1{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;color:#fbf7ec;line-height:1.05;}
+  header h1 em{font-style:italic;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.5);margin-top:8px;}
+
+  .content{max-width:900px;margin:0 auto;padding:32px 48px 56px;}
+
+  .overview{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:0 10px 10px 0;padding:18px 22px;margin-bottom:28px;}
+  .overview-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--blue);text-transform:uppercase;margin-bottom:6px;}
+  .overview p{font-size:17px;line-height:1.7;color:var(--text-soft);}
+
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;}
+  .card-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;}
+  .card h3{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;}
+  .card p{font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.65;color:var(--text-soft);}
+  .card ul{padding-left:18px;}
+  .card li{font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.65;color:var(--text-soft);margin-bottom:3px;}
+  .card li strong{color:var(--text);}
+
+  .flow-diagram{background:var(--ink-dark);border-radius:12px;padding:24px;margin-bottom:28px;text-align:center;}
+  .flow-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-accent);margin-bottom:16px;}
+  .flow-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;}
+  .flow-box{background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.3);border-radius:8px;padding:8px 14px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;color:#e8efff;letter-spacing:0.06em;text-align:center;}
+  .flow-box.highlight{background:rgba(30,64,175,0.4);border-color:rgba(155,184,230,0.6);}
+  .flow-box.warn{background:rgba(180,83,9,0.3);border-color:rgba(243,214,138,0.5);color:#fcd34d;}
+  .flow-arrow{color:var(--ink-accent);font-size:16px;font-weight:700;}
+  .flow-note{font-family:'Cormorant Garamond',serif;font-size:13px;font-style:italic;color:rgba(155,184,230,0.6);margin-top:10px;}
+
+  table{width:100%;border-collapse:collapse;margin-bottom:28px;font-size:14px;}
+  th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  tr:hover td{background:rgba(30,64,175,0.04);}
+  td:first-child{color:var(--text);font-weight:600;}
+
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:13px 18px;margin-bottom:20px;font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+
+  .section-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:14px;padding-left:12px;border-left:3px solid var(--blue);}
+
+  .checklist{list-style:none;padding:0;margin-bottom:28px;}
+  .checklist li{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);padding:7px 0 7px 28px;position:relative;border-bottom:1px solid var(--border-dim);}
+  .checklist li:last-child{border-bottom:none;}
+  .checklist li::before{content:'☐';position:absolute;left:0;color:var(--blue);font-size:15px;top:8px;}
+
+  .self-test{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:28px;}
+  .self-test-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px;}
+  .q-item{padding:10px 0;border-bottom:1px solid var(--border-dim);font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.6;}
+  .q-item:last-child{border-bottom:none;}
+  .q-num-inline{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;color:var(--blue);margin-right:8px;}
+
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin-bottom:28px;}
+  .analogy-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);text-transform:uppercase;margin-bottom:6px;}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:16px 48px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+
+  @media(max-width:680px){header{padding:24px 24px 20px;}header h1{font-size:28px;}.content{padding:24px 20px 40px;}.two-col{grid-template-columns:1fr;}footer{padding:14px 20px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">NSE7 EF 7.6 · Session 02<span class="bite-tag">STUDY BITE</span></div>
+  <h1>FortiOS <em>Architecture Overview</em></h1>
+  <p>Rapid mental model reactivation — read time 5–8 minutes</p>
+</header>
+
+<div class="content">
+
+  <div class="overview">
+    <div class="overview-label">One-Paragraph Overview</div>
+    <p>FortiOS makes one critical decision when the first packet of a connection arrives: it evaluates the matching policy, determines the inspection mode and offload eligibility, and records the verdict in a session table entry. Every subsequent packet follows that recorded verdict — the CPU is not consulted again. If the policy uses a proxy-based profile, FortiOS terminates the connection and creates two CPU-bound session entries. If the policy uses flow-based profiles, the session becomes eligible for NP7 offloading. In FortiOS 7.6 this mode is inferred from the attached profiles, not explicitly configured. VDOMs isolate this session table and policy table per logical firewall instance, ensuring that configuration changes in one zone cannot affect the offload verdict of sessions in another.</p>
+  </div>
+
+  <!-- FLOW DIAGRAM: session setup decision -->
+  <div class="flow-diagram">
+    <div class="flow-label">Session Setup Decision — First Packet</div>
+    <div class="flow-row">
+      <div class="flow-box">First Packet Arrives</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box highlight">CPU Evaluates Policy</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Profile Type?</div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:60px;margin-top:16px;">
+      <div style="text-align:center;">
+        <div style="color:#6ee7a8;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;margin-bottom:8px;">FLOW PROFILES</div>
+        <div class="flow-box" style="background:rgba(26,124,74,0.25);border-color:rgba(110,231,168,0.4);color:#6ee7a8;">1 Session Entry</div>
+        <div class="flow-arrow" style="display:block;margin:6px 0;">↓</div>
+        <div class="flow-box" style="background:rgba(26,124,74,0.25);border-color:rgba(110,231,168,0.4);color:#6ee7a8;">NP7 Offload Eligible</div>
+        <div class="flow-arrow" style="display:block;margin:6px 0;">↓</div>
+        <div class="flow-box" style="background:rgba(26,124,74,0.25);border-color:rgba(110,231,168,0.4);color:#6ee7a8;">offload=9/9</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="color:#fcd34d;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;margin-bottom:8px;">PROXY PROFILES</div>
+        <div class="flow-box warn">2 Session Entries</div>
+        <div class="flow-arrow" style="display:block;margin:6px 0;">↓</div>
+        <div class="flow-box warn">CPU Only — No NP7</div>
+        <div class="flow-arrow" style="display:block;margin:6px 0;">↓</div>
+        <div class="flow-box warn">offload=0/0</div>
+      </div>
+    </div>
+    <div class="flow-note">Verdict recorded at session setup. Never re-evaluated per packet. Policy changes only affect new sessions.</div>
+  </div>
+
+  <!-- FLOW vs PROXY comparison -->
+  <div class="section-title">Flow vs Proxy — Key Differences</div>
+  <table>
+    <thead><tr><th>Characteristic</th><th>Flow Mode</th><th>Proxy Mode</th></tr></thead>
+    <tbody>
+      <tr><td>Connection model</td><td>Pass-through (end-to-end)</td><td>Terminated + re-established</td></tr>
+      <tr><td>Session entries</td><td>One</td><td>Two (client→FGT, FGT→server)</td></tr>
+      <tr><td>NP7 offload</td><td>Eligible</td><td>Never — architecturally impossible</td></tr>
+      <tr><td>CPU cost</td><td>Low after offload</td><td>High — all packets, both directions</td></tr>
+      <tr><td>Mode selected by</td><td>Inferred from attached profiles</td><td>Inferred from attached profiles</td></tr>
+    </tbody>
+  </table>
+
+  <!-- VDOMs -->
+  <div class="section-title">VDOMs — Blast Radius Isolation</div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-label">What Each VDOM Isolates</div>
+      <ul>
+        <li><strong>Policy table</strong> — rules cannot bleed between VDOMs</li>
+        <li><strong>Routing table</strong> — route changes stay contained</li>
+        <li><strong>Session table</strong> — verdicts are VDOM-specific</li>
+        <li><strong>Admin scope</strong> — VDOM admins see only their VDOM</li>
+        <li><strong>Interface assignment</strong> — ports belong to one VDOM</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-label">Inter-VDOM Link</div>
+      <p>A virtual point-to-point connection between two VDOMs, entirely internal to the FortiGate. Each end appears to its VDOM as a regular interface — IP address, routing participation, and policy enforcement apply. Traffic crossing the link passes through two independent policy checkpoints.</p>
+    </div>
+  </div>
+
+  <!-- Global vs VDOM scope -->
+  <div class="section-title">Global vs VDOM Scope</div>
+  <table>
+    <thead><tr><th>Configuration Item</th><th>Scope</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>VDOM creation / deletion</td><td>Global</td><td>Cannot bootstrap from inside a VDOM</td></tr>
+      <tr><td>Physical interface definitions</td><td>Global</td><td>Hardware exists before VDOM assignment</td></tr>
+      <tr><td>Global admin accounts</td><td>Global</td><td>Must transcend individual VDOM scope</td></tr>
+      <tr><td>HA configuration</td><td>Global</td><td>Cluster membership is device-level</td></tr>
+      <tr><td>Firewall policies</td><td>VDOM</td><td>Specific to one logical firewall instance</td></tr>
+      <tr><td>Routing table</td><td>VDOM</td><td>Each VDOM maintains independent routes</td></tr>
+      <tr><td>Management VDOM</td><td>Global designation</td><td>One VDOM designated for mgmt traffic — exactly one</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Exam points -->
+  <div class="callout callout-amber">
+    <strong>Exam-critical:</strong> In FortiOS 7.6, inspection mode is inferred from profile selection — not explicitly configured per policy. An engineer enabling a proxy-requiring profile implicitly disables NP7 offloading for all sessions on that policy. Questions using "regardless of policy configuration" point toward architectural constraints (session helpers, software tunnels) — not configuration decisions.
+  </div>
+
+  <div class="callout">
+    <strong>Common mistakes:</strong> (1) Assuming policy changes immediately affect existing sessions — they don't; only new sessions. (2) Assuming a proxy profile only affects the inspection portion — it affects the entire session's processing model. (3) Assuming you can explicitly set flow vs proxy mode in FortiOS 7.6 — you infer it through profile selection. (4) Assuming multiple management VDOMs can exist — exactly one at any time.
+  </div>
+
+  <!-- Troubleshooting checklist -->
+  <div class="section-title">Troubleshooting Checklist — offload=0/0</div>
+  <ul class="checklist">
+    <li>Read <code>no_ofld_reason</code> first — categorise as constraint vs decision before doing anything else</li>
+    <li>Check session duration — very short sessions may show rsvd before offload evaluation completes</li>
+    <li>Identify the protocol — does it require a session helper (FTP, SIP, H.323)?</li>
+    <li>Check ingress interface — is it a software tunnel (GRE, SSL VPN)?</li>
+    <li>Check policy — is <code>auto-asic-offload</code> disabled?</li>
+    <li>Review attached profiles — is any profile implicitly forcing proxy mode?</li>
+  </ul>
+
+  <!-- Analogy -->
+  <div class="analogy-box">
+    <div class="analogy-label">Analogy</div>
+    <div class="analogy-text">Flow mode is a highway toll gate — scans your plate as you drive through, barely slows you down. Proxy mode is a customs checkpoint — you stop, get out, an inspector opens every bag, then you get back in a different car for the rest of the journey. The NP7 can manage the toll gate automatically. It cannot do customs inspections. And once you've been through customs, the record says you arrived in two different vehicles.</div>
+  </div>
+
+  <!-- Self-test -->
+  <div class="self-test">
+    <div class="self-test-label">Self-Test — Conceptual Questions</div>
+    <div class="q-item"><span class="q-num-inline">1.</span>A junior engineer adds an IPS profile (flow-based) to a trading VLAN policy. What happens to the NP7 offload eligibility of sessions on that policy?</div>
+    <div class="q-item"><span class="q-num-inline">2.</span>You see offload=0/0 with no_ofld_reason: helper on a session in the trading VDOM. Is this a problem or expected behaviour — and what determines your answer?</div>
+    <div class="q-item"><span class="q-num-inline">3.</span>Vaultline wants to give a new PCI compliance officer admin access to manage only the PCI zone. Without VDOMs, why is this impossible? With VDOMs, how does it become possible?</div>
+    <div class="q-item"><span class="q-num-inline">4.</span>An engineer runs <code>config system interface</code> from the global CLI context. Can they see interfaces assigned to a specific VDOM? Why?</div>
+    <div class="q-item"><span class="q-num-inline">5.</span>A Friday policy change causes trading latency to climb gradually over two hours, then recover quickly after rollback. What does this tell you about how session tables handle policy changes — and what is the mechanism?</div>
+  </div>
+
+</div>
+
+<footer>
+  NSE7 EF 7.6<span>.</span> Session 02<span>.</span> Study Bite<span>.</span> FortiOS Architecture Overview
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 01 — NSE7 Roles, Audience & Exam Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.005em;}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+
+  .top-panels{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+  .top-panels .qpanel{border-bottom:none;border-right:1px solid var(--border);}
+  .top-panels .qpanel-header{padding-left:32px;padding-right:32px;}
+  .top-panels .qpanel-body{padding-left:32px;padding-right:32px;}
+  .qpanel{background:var(--surface);}
+  .qpanel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .qpanel-header:hover,.qpanel-header.open{background:var(--surface-2);}
+  .qpanel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .qpanel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .qpanel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .qpanel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .qpanel-body{display:none;padding:0 20px 22px;}
+  .qpanel-body.open{display:block;}
+  .notes-panel{background:var(--surface);}
+  .notes-panel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 32px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .notes-panel-header:hover,.notes-panel-header.open{background:var(--surface-2);}
+  .notes-panel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .notes-panel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .notes-panel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .notes-panel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .notes-panel-body{display:none;padding:0 32px 22px;}
+  .notes-panel-body.open{display:block;}
+  .q-group{margin-bottom:16px;}
+  .q-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+  .q-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-dim);}
+  .q-item:last-child{border-bottom:none;}
+  .q-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;color:var(--blue);min-width:16px;margin-top:2px;}
+  .q-text{font-size:14px;color:var(--text-soft);line-height:1.5;flex:1;}
+  .q-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:0 4px;margin-top:1px;}
+  .q-del:hover{color:var(--blue);}
+  .no-questions{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);padding:8px 0;}
+  .btn-add-q{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-q:hover{opacity:0.85;}
+
+  .section-nav{position:sticky;top:0;z-index:90;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px;overflow-x:auto;}
+  .nav-tab{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:12px 18px;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s,border-color 0.15s;}
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+  main{max-width:1200px;margin:0 auto;padding:0;}
+  .main-content{padding:36px 60px 60px 60px;}
+
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:4px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+
+  .socratic-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:16px;border-top:3px solid var(--blue);}
+  .socratic-header{display:flex;align-items:center;gap:8px;margin-bottom:0;cursor:pointer;user-select:none;}
+  .socratic-header::after{content:'▸ Expand';margin-left:auto;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-block.soc-open .socratic-header{margin-bottom:10px;}
+  .socratic-block.soc-open .socratic-header::after{content:'▾ Collapse';}
+  .socratic-block:not(.soc-open) .socratic-insight,
+  .socratic-block:not(.soc-open) .socratic-questions,
+  .socratic-block:not(.soc-open) .answer-area{display:none;}
+  .socratic-icon{font-size:17px;flex-shrink:0;}
+  .socratic-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-insight{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;margin-bottom:12px;border-left:3px solid var(--border);padding-left:14px;font-style:italic;}
+  .socratic-questions{list-style:none;padding:0;margin:0;}
+  .socratic-questions li{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--border-dim);line-height:1.6;}
+  .socratic-questions li:last-child{border-bottom:none;}
+  .socratic-questions li::before{content:'?';position:absolute;left:0;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:16px;top:7px;color:var(--blue);}
+  .answer-area{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .answer-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .answer-textarea:focus{border-color:var(--blue);}
+  .answer-textarea:disabled{opacity:0.75;background:var(--surface-2);cursor:default;}
+  .answer-buttons{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .btn-add-answer{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-answer:hover:not(:disabled){opacity:0.85;}
+  .btn-add-answer:disabled{opacity:0.5;cursor:default;}
+  .btn-see-answer{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-see-answer:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-see-answer:not(:disabled){color:var(--blue);border-color:var(--blue);}
+  .btn-see-answer:hover:not(:disabled){background:var(--blue-glow);}
+  .model-answers{margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .model-answer-item{padding:10px 0;border-bottom:1px solid var(--border-dim);}
+  .model-answer-item:first-child{padding-top:0;}
+  .model-answer-item:last-child{border-bottom:none;padding-bottom:0;}
+  .model-answer-q{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;}
+  .model-answer-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;}
+
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+  .analogy-label{display:flex;align-items:center;gap:6px;user-select:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px;text-transform:uppercase;}
+  .analogy-label::after{content:'▾  Reveal analogy';margin-left:auto;font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:none;opacity:0.75;}
+  .analogy-label:hover::after{opacity:1;}
+  .analogy-box.expanded>.analogy-label::after{content:'▴  Hide analogy';}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
+  .analogy-box>.analogy-body{display:none;}
+  .analogy-box.expanded>.analogy-body{display:block;}
+
+  .lesson-tools{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:40px;}
+  .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .tool-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .tool-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .tool-textarea:focus{border-color:var(--blue);}
+  .tool-row{margin-top:8px;display:flex;gap:8px;}
+
+  .page-nav{display:flex;border-top:2px solid var(--border);background:var(--surface);}
+  .page-nav-btn{flex:1;display:flex;flex-direction:column;gap:4px;padding:16px 28px;text-decoration:none;transition:background 0.15s;cursor:pointer;}
+  .page-nav-btn:hover:not(.page-nav-disabled){background:var(--surface-2);}
+  .page-nav-prev{border-right:1px solid var(--border);}
+  .page-nav-next{text-align:right;}
+  .page-nav-disabled{opacity:0.3;pointer-events:none;}
+  .page-nav-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);display:block;text-transform:uppercase;}
+  .page-nav-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;font-style:italic;color:var(--blue);display:block;}
+
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+
+  @media(max-width:768px){
+    header{padding:32px 24px 28px;}
+    header h1{font-size:32px;}
+    .motivation-banner{padding:18px 24px;}
+    .main-content{padding:24px 20px 40px;}
+    .lesson-tools-grid{grid-template-columns:1fr;}
+    .top-panels{grid-template-columns:1fr;}
+    footer{padding:16px 24px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="breadcrumb">
+      <span>NSE7 Enterprise Firewall 7.6</span>
+      <span class="breadcrumb-sep">›</span>
+      <span>Domain 1 — System Configuration</span>
+      <span class="breadcrumb-sep">›</span>
+      <span>Session 01</span>
+    </div>
+    <div class="header-eyebrow"><span class="dot-live"></span> Complete Study Guide</div>
+    <h1>NSE7 Roles, Audience <em>&amp; Exam Map</em></h1>
+    <p>Before the configs, before the labs — understand what this certification actually tests and why three products form one accountable system.</p>
+  </div>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">The NSE7 is not a features quiz — it is a <em>composition exam</em> testing how three products act as one system.</div>
+  <p class="motivation-sub">Every later session makes more sense when you have the blueprint map in your head from day one. This is that map.</p>
+</div>
+
+<div class="top-panels">
+  <div class="qpanel">
+    <button class="qpanel-header" onclick="toggleQPanel()" id="qpanel-header">
+      <span class="qpanel-title">MY QUESTIONS</span>
+      <span class="qpanel-count" id="qpanel-count">0</span>
+      <span class="qpanel-hint">— click to expand</span>
+      <span class="qpanel-chevron" id="qpanel-chevron">▾</span>
+    </button>
+    <div class="qpanel-body" id="qpanel-body"></div>
+  </div>
+  <div class="notes-panel" id="notes-panel">
+    <button class="notes-panel-header" onclick="toggleNotesPanel()" id="notes-panel-header">
+      <span class="notes-panel-title">MY NOTES</span>
+      <span class="notes-panel-count" id="notes-panel-count">0</span>
+      <span class="notes-panel-hint">— click to expand</span>
+      <span class="notes-panel-chevron" id="notes-panel-chevron">▾</span>
+    </button>
+    <div class="notes-panel-body" id="notes-panel-body"></div>
+  </div>
+</div>
+
+<nav class="section-nav" id="section-nav">
+  <a class="nav-tab active" href="#section-why-three">Why Three Products</a>
+  <a class="nav-tab" href="#section-exam-mechanics">Exam Mechanics</a>
+  <a class="nav-tab" href="#section-five-domains">Five Domains</a>
+  <a class="nav-tab" href="#section-cross-domain">Cross-Domain Thinking</a>
+</nav>
+
+<main>
+<div class="main-content">
+
+  <!-- SECTION 1 -->
+  <div class="socratic-block" onclick="this.classList.toggle('soc-open')">
+    <div class="socratic-header">
+      <span class="socratic-icon">💭</span>
+      <span class="socratic-label">THINK FIRST · WHY THREE PRODUCTS</span>
+    </div>
+    <p class="socratic-insight">A CTO hands you a scope of work. It names three Fortinet products — FortiGate, FortiManager, FortiAnalyzer. Before you read any documentation, you need to answer one question from first principles.</p>
+    <ul class="socratic-questions">
+      <li>If you were managing 50 firewalls across 20 sites with no centralised tool, what specific problems would you encounter that simply don't exist with a single firewall?</li>
+      <li>FortiAnalyzer serves two completely different audiences from the same log data. Who are they — and what does each actually need?</li>
+    </ul>
+    <div class="answer-area" data-section="why-three">
+      <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+      <div class="answer-buttons">
+        <button class="btn-add-answer" onclick="event.stopPropagation();saveSocAnswer(this)">+ Add My Answer</button>
+        <button class="btn-see-answer" onclick="event.stopPropagation();revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+      </div>
+      <div class="model-answers" style="display:none;">
+        <div class="model-answer-item">
+          <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+          <div class="model-answer-text">At 50 devices, every policy change requires 50 individual login sessions — and human error guarantees inconsistency. A single compromise in one branch exposes the entire estate before the team even knows. Log data is scattered across 50 devices, making incident investigation impractical. These are not inconveniences — they are architectural failures that scale creates.</div>
+        </div>
+        <div class="model-answer-item">
+          <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+          <div class="model-answer-text">Engineers need raw granular log data to trace specific sessions, identify blocked traffic, and diagnose faults. Executives need structured reports that translate log data into business narrative — compliance posture, threat trends, incident summaries. FortiAnalyzer serves both from one data source. At scale, it is not a convenience — it is the only practical way to search 30 days of logs across 40 devices in response to a security incident.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block" id="section-why-three">
+    <div class="section-label">SECTION 01</div>
+    <h2>Why Three Products — <em>Separation of Concerns</em></h2>
+
+    <p>The Fortinet enterprise stack answers a deceptively simple question: <strong>what happens when one firewall is no longer enough?</strong> The answer is not "buy a bigger firewall." The answer is to separate three distinct responsibilities that become unmanageable when a single device tries to own all of them at scale.</p>
+
+    <p><strong>FortiGate enforces policy</strong> at the data plane. It inspects packets, matches sessions against policies, and makes permit or deny decisions. This is its entire job — and it does it very well. But FortiGate has no awareness of other FortiGates on the network. Each device is an island.</p>
+
+    <p><strong>FortiManager defines and distributes policy</strong> from a single control plane. When a new application is approved company-wide, a policy change is built once in FortiManager and pushed simultaneously to every managed device. No individual login sessions. No inconsistency between sites. No human error at firewall number 37.</p>
+
+    <p><strong>FortiAnalyzer records and interprets</strong> what happens as a result of that policy. All logs from all devices flow to one place. An engineer can search across the entire estate in a single query. A manager can receive a structured compliance report without touching CLI on a single device.</p>
+
+    <div class="mental-note-block">
+      <div class="mental-note-block-icon">🧠</div>
+      <div class="mental-note-block-inner">
+        <div class="mental-note-block-label">Mental Model</div>
+        <div class="mental-note-block-text">FortiGate = enforce. FortiManager = define &amp; distribute. FortiAnalyzer = record &amp; interpret. Three responsibilities. Three products. One accountable system.</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Scale changes everything.</strong> At one device, logging locally and managing directly is fine. At 50 devices, FortiAnalyzer is not a nice-to-have — it is the only practical way to investigate a security incident that may span 40 devices and 30 days of log data.
+    </div>
+
+    <div class="analogy-box">
+      <div class="analogy-label">💡 Analogy</div>
+      <div class="analogy-body">
+        <div class="analogy-text">
+          <div class="analogy-summary">Think of a bank branch network.</div>
+          Each branch has a vault (FortiGate) that enforces who gets in and out. Head office (FortiManager) sets the security policy for every vault simultaneously — no branch manager invents their own rules. The compliance team (FortiAnalyzer) receives the access logs from all branches, searches them for suspicious patterns, and produces the quarterly audit report. Three roles. One security system.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-tools">
+    <div class="lesson-tools-grid">
+      <div>
+        <div class="tool-label">ASK A QUESTION</div>
+        <textarea class="tool-textarea" id="q-section-why-three" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+        <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-why-three','Why Three Products')">Add Question</button></div>
+      </div>
+      <div>
+        <div class="tool-label">ADD A NOTE</div>
+        <textarea class="tool-textarea" id="note-section-why-three" placeholder="Write a note about this section..." rows="3"></textarea>
+        <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-why-three')">+ Add Note</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div class="socratic-block" onclick="this.classList.toggle('soc-open')">
+    <div class="socratic-header">
+      <span class="socratic-icon">💭</span>
+      <span class="socratic-label">THINK FIRST · EXAM MECHANICS</span>
+    </div>
+    <p class="socratic-insight">70 minutes. 30–40 questions. Before looking at the domains, the time constraint itself tells you something important about what kind of questions this exam asks.</p>
+    <ul class="socratic-questions">
+      <li>What does roughly 90 seconds per question tell you about whether the exam tests recall or reasoning — and what does that mean for how you should study?</li>
+      <li>Fortinet publishes three separate experience requirements for this exam. What are the three categories, and why is one of them lower than you might expect?</li>
+    </ul>
+    <div class="answer-area" data-section="exam-mechanics">
+      <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+      <div class="answer-buttons">
+        <button class="btn-add-answer" onclick="event.stopPropagation();saveSocAnswer(this)">+ Add My Answer</button>
+        <button class="btn-see-answer" onclick="event.stopPropagation();revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+      </div>
+      <div class="model-answers" style="display:none;">
+        <div class="model-answer-item">
+          <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+          <div class="model-answer-text">90 seconds is not enough time to reason through an unfamiliar problem from scratch. The exam is testing whether your understanding is already internalised — not whether you can figure it out under pressure. This means studying for understanding, not memorisation. By exam day, the mental models must be built in so that recall feels natural.</div>
+        </div>
+        <div class="model-answer-item">
+          <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+          <div class="model-answer-text">3 years networking, 3 years network security, 2 years with Fortinet products. The Fortinet-specific requirement is lower because the exam assumes candidates arrive as already-experienced professionals. You don't need 3 years of Fortinet experience because your networking and security foundation is already solid. Notably, the Fortinet requirement names all three products — FortiGate, FortiManager, and FortiAnalyzer — not just FortiGate.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block" id="section-exam-mechanics">
+    <div class="section-label">SECTION 02</div>
+    <h2>Exam Mechanics — <em>What the Format Reveals</em></h2>
+
+    <table class="data-table">
+      <tr><th>Property</th><th>Detail</th></tr>
+      <tr><td>Duration</td><td>70 minutes</td></tr>
+      <tr><td>Questions</td><td>30–40 questions</td></tr>
+      <tr><td>Time per question</td><td>~90 seconds</td></tr>
+      <tr><td>Scoring</td><td>Pass / fail (no partial credit)</td></tr>
+      <tr><td>Languages</td><td>English, Japanese</td></tr>
+      <tr><td>Products tested</td><td>FortiOS 7.6, FortiManager 7.6, FortiAnalyzer 7.6</td></tr>
+    </table>
+
+    <p>The time constraint is not just an administrative detail — it tells you exactly what kind of knowledge the exam is testing. With roughly <strong>90 seconds per question</strong>, you cannot read a scenario, reason through an unfamiliar concept, and calculate the right answer. You can only apply understanding that is already solid.</p>
+
+    <p>This means a candidate who has memorised commands will stall on a scenario question. A candidate who genuinely understands <em>why</em> things exist will reason their way to the correct answer inside 90 seconds. That distinction defines the study approach for every session in this course.</p>
+
+    <table class="data-table">
+      <tr><th>Experience Category</th><th>Requirement</th><th>Why</th></tr>
+      <tr><td>General networking</td><td>3 years</td><td>OSPF, BGP, routing fundamentals are assumed</td></tr>
+      <tr><td>Network security</td><td>3 years</td><td>Policy design, threat models, inspection concepts are assumed</td></tr>
+      <tr><td>Fortinet products</td><td>2 years</td><td>Candidates arrive as experienced professionals — Fortinet-specific time is shorter</td></tr>
+    </table>
+
+    <div class="callout callout-amber">
+      <strong>Exam trap:</strong> The Fortinet experience requirement names FortiGate, FortiManager, <em>and</em> FortiAnalyzer explicitly. Candidates who only have FortiGate experience are underprepared — the exam expects operational familiarity with all three products.
+    </div>
+
+    <div class="mental-note-block">
+      <div class="mental-note-block-icon">🧠</div>
+      <div class="mental-note-block-inner">
+        <div class="mental-note-block-label">Mental Model</div>
+        <div class="mental-note-block-text">The exam tests whether your reasoning is already built in — not whether you can figure it out under pressure. Study for understanding. By exam day, recall should feel natural.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-tools">
+    <div class="lesson-tools-grid">
+      <div>
+        <div class="tool-label">ASK A QUESTION</div>
+        <textarea class="tool-textarea" id="q-section-exam-mechanics" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+        <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-exam-mechanics','Exam Mechanics')">Add Question</button></div>
+      </div>
+      <div>
+        <div class="tool-label">ADD A NOTE</div>
+        <textarea class="tool-textarea" id="note-section-exam-mechanics" placeholder="Write a note about this section..." rows="3"></textarea>
+        <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-exam-mechanics')">+ Add Note</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3 -->
+  <div class="socratic-block" onclick="this.classList.toggle('soc-open')">
+    <div class="socratic-header">
+      <span class="socratic-icon">💭</span>
+      <span class="socratic-label">THINK FIRST · FIVE DOMAINS</span>
+    </div>
+    <p class="socratic-insight">The NSE7 blueprint groups every exam topic into five domains. Rather than memorising them, try reasoning your way to them — you already know the exam covers routing, VPN, multi-product management, and next-gen security features.</p>
+    <ul class="socratic-questions">
+      <li>Based on everything you know about an enterprise multi-site FortiGate deployment, what five broad areas do you think the exam covers?</li>
+      <li>Which of those five domains do you think has the most dependencies on the others — and why?</li>
+    </ul>
+    <div class="answer-area" data-section="five-domains">
+      <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+      <div class="answer-buttons">
+        <button class="btn-add-answer" onclick="event.stopPropagation();saveSocAnswer(this)">+ Add My Answer</button>
+        <button class="btn-see-answer" onclick="event.stopPropagation();revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+      </div>
+      <div class="model-answers" style="display:none;">
+        <div class="model-answer-item">
+          <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+          <div class="model-answer-text">System Configuration (hardware, HA, Security Fabric, VLANs, VDOMs), Central Management (FortiManager), Security Profiles (SSL inspection, web filter, IPS, application control), Routing (OSPF, BGP), VPN (IPsec IKEv2, ADVPN). These five buckets cover every engineering responsibility in an enterprise Fortinet deployment.</div>
+        </div>
+        <div class="model-answer-item">
+          <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+          <div class="model-answer-text">VPN — specifically ADVPN. To implement it correctly you need routing protocol knowledge (BGP/OSPF for dynamic spoke route advertisement), system configuration understanding (HA and redundancy affect VPN design), and central management skills (ADVPN templates are deployed at scale via FortiManager). A question that appears to test VPN may actually be testing routing. This cross-domain dependency is where the hardest exam questions live.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block" id="section-five-domains">
+    <div class="section-label">SECTION 03</div>
+    <h2>The Five Blueprint Domains — <em>Your Mental Map</em></h2>
+
+    <p>The NSE7 Enterprise Firewall exam organises every topic into five domains. Every session in this course maps into one of these five buckets. Knowing the map before the content means you always know where you are in the larger architecture.</p>
+
+    <table class="data-table">
+      <tr><th>Domain</th><th>What It Covers</th><th>Key Technologies</th></tr>
+      <tr><td>1 — System Configuration</td><td>Foundational infrastructure; the broadest domain</td><td>Security Fabric, Hardware Acceleration, HA Clustering, VLANs, VDOMs</td></tr>
+      <tr><td>2 — Central Management</td><td>Managing many devices as one accountable system</td><td>FortiManager, Policy Packages, Templates, Device Groups</td></tr>
+      <tr><td>3 — Security Profiles</td><td>Next-generation inspection beyond packet filtering</td><td>SSL/SSH Inspection, Web Filter, Application Control, IPS, ISDB</td></tr>
+      <tr><td>4 — Routing</td><td>Dynamic routing in enterprise networks</td><td>OSPF, BGP</td></tr>
+      <tr><td>5 — VPN</td><td>Site-to-site and on-demand tunnels</td><td>IPsec IKEv2, ADVPN</td></tr>
+    </table>
+
+    <div class="callout callout-green">
+      <strong>You can reconstruct this table from reasoning.</strong> An enterprise network needs foundational infrastructure (D1), centralised management (D2), deep packet inspection (D3), dynamic routing (D4), and secure tunnels between sites (D5). The exam covers the exact responsibilities that define enterprise network engineering.
+    </div>
+
+    <div class="mental-note-block">
+      <div class="mental-note-block-icon">🧠</div>
+      <div class="mental-note-block-inner">
+        <div class="mental-note-block-label">Mental Model</div>
+        <div class="mental-note-block-text">Domain 1 is the broadest. Domain 5 (ADVPN) has the most cross-domain dependencies. Domain 2 is where everything is orchestrated. Always ask: which domain owns this responsibility — and which domains does it depend on?</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-tools">
+    <div class="lesson-tools-grid">
+      <div>
+        <div class="tool-label">ASK A QUESTION</div>
+        <textarea class="tool-textarea" id="q-section-five-domains" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+        <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-five-domains','Five Domains')">Add Question</button></div>
+      </div>
+      <div>
+        <div class="tool-label">ADD A NOTE</div>
+        <textarea class="tool-textarea" id="note-section-five-domains" placeholder="Write a note about this section..." rows="3"></textarea>
+        <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-five-domains')">+ Add Note</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4 -->
+  <div class="socratic-block" onclick="this.classList.toggle('soc-open')">
+    <div class="socratic-header">
+      <span class="socratic-icon">💭</span>
+      <span class="socratic-label">THINK FIRST · CROSS-DOMAIN THINKING</span>
+    </div>
+    <p class="socratic-insight">The hardest exam questions don't test one domain — they test whether you can see how domains interact. A question labelled "VPN" may actually require routing knowledge to answer correctly.</p>
+    <ul class="socratic-questions">
+      <li>Why does ADVPN specifically require knowledge from at least three other domains to implement correctly?</li>
+      <li>A question asks: "Which FortiManager feature ensures consistent IPS profiles across all branch firewalls?" Which domain is the question testing — and which domain is the prerequisite knowledge from?</li>
+    </ul>
+    <div class="answer-area" data-section="cross-domain">
+      <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+      <div class="answer-buttons">
+        <button class="btn-add-answer" onclick="event.stopPropagation();saveSocAnswer(this)">+ Add My Answer</button>
+        <button class="btn-see-answer" onclick="event.stopPropagation();revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+      </div>
+      <div class="model-answers" style="display:none;">
+        <div class="model-answer-item">
+          <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+          <div class="model-answer-text">ADVPN creates on-demand spoke-to-spoke tunnels dynamically. This requires: routing (BGP or OSPF to advertise spoke routes through the hub dynamically), system configuration (HA and redundancy design for the hub affects tunnel availability), and central management (ADVPN phase1/phase2 templates are deployed to many spokes simultaneously via FortiManager). Weakness in any one domain creates blind spots when diagnosing ADVPN failures.</div>
+        </div>
+        <div class="model-answer-item">
+          <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+          <div class="model-answer-text">The answer is a Domain 2 topic (Central Management — FortiManager policy packages or profile groups). But answering it correctly requires understanding what an IPS profile is and how it works — which is Domain 3 knowledge. Even a "pure" FortiManager question assumes you understand the security profile it is distributing. Domain 2 questions almost always have Domain 3 prerequisites.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block" id="section-cross-domain">
+    <div class="section-label">SECTION 04</div>
+    <h2>Cross-Domain Thinking — <em>Where the Hard Questions Live</em></h2>
+
+    <p>Candidates who study each domain in isolation will reach a ceiling on this exam. The hardest questions are engineered to sit at the boundary between domains — requiring knowledge of two or three areas simultaneously to reach the correct answer.</p>
+
+    <p><strong>ADVPN is the clearest example.</strong> It appears in Domain 5 (VPN), but implementing it correctly requires routing protocol knowledge (Domain 4), system design understanding (Domain 1), and FortiManager template skills (Domain 2). A candidate who only studied VPN configuration will get these questions wrong.</p>
+
+    <div class="callout callout-amber">
+      <strong>Exam reading strategy:</strong> When you encounter a scenario question, identify which domain the question <em>appears</em> to be testing — then ask yourself which other domains the correct answer depends on. The distractor options are usually correct for the wrong domain.
+    </div>
+
+    <p>The same pattern appears throughout the blueprint. A Central Management question about policy packages assumes you understand what the policies contain (Security Profiles). A routing question about OSPF redistribution assumes you understand what routes are being generated by VPN tunnels. <strong>The exam rewards engineers who think in systems, not in silos.</strong></p>
+
+    <div class="mental-note-block">
+      <div class="mental-note-block-icon">🧠</div>
+      <div class="mental-note-block-inner">
+        <div class="mental-note-block-label">Mental Model</div>
+        <div class="mental-note-block-text">Every session in this course: identify the blueprint domain first. Then ask — which other domains does this topic depend on? That cross-domain awareness is the difference between a passing score and a confident one.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-tools">
+    <div class="lesson-tools-grid">
+      <div>
+        <div class="tool-label">ASK A QUESTION</div>
+        <textarea class="tool-textarea" id="q-section-cross-domain" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+        <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-cross-domain','Cross-Domain Thinking')">Add Question</button></div>
+      </div>
+      <div>
+        <div class="tool-label">ADD A NOTE</div>
+        <textarea class="tool-textarea" id="note-section-cross-domain" placeholder="Write a note about this section..." rows="3"></textarea>
+        <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-cross-domain')">+ Add Note</button></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<div class="page-nav">
+  <span class="page-nav-btn page-nav-prev page-nav-disabled">
+    <span class="page-nav-label">← Previous</span>
+    <span class="page-nav-title">—</span>
+  </span>
+  <span class="page-nav-btn page-nav-next">
+    <span class="page-nav-label">Next →</span>
+    <span class="page-nav-title">Session 02 — Security Fabric</span>
+  </span>
+</div>
+
+<footer>NSE7 Enterprise Firewall 7.6 &nbsp;·&nbsp; Session 01 &nbsp;·&nbsp; <span>NSE7-EF-7.6</span></footer>
+
+<script>
+const PAGE_KEY = 'nse7-s01-exam-map';
+const SECTIONS = {
+  'section-why-three': 'Why Three Products',
+  'section-exam-mechanics': 'Exam Mechanics',
+  'section-five-domains': 'Five Domains',
+  'section-cross-domain': 'Cross-Domain Thinking'
+};
+function getQArr(){return JSON.parse(localStorage.getItem(PAGE_KEY+'-questions')||'[]');}
+function saveQArr(qs){localStorage.setItem(PAGE_KEY+'-questions',JSON.stringify(qs));}
+function addQuestion(key,label){
+  const ta=document.getElementById('q-'+key);const text=ta.value.trim();if(!text){ta.focus();return;}
+  const qs=getQArr();qs.push({id:Date.now(),section:key,sectionName:label,text});saveQArr(qs);ta.value='';renderQPanel();
+  if(!document.getElementById('qpanel-body').classList.contains('open'))toggleQPanel();
+}
+function deleteQ(id){saveQArr(getQArr().filter(q=>q.id!==id));renderQPanel();}
+function toggleQPanel(){
+  const body=document.getElementById('qpanel-body');const header=document.getElementById('qpanel-header');const chevron=document.getElementById('qpanel-chevron');
+  const open=body.classList.toggle('open');header.classList.toggle('open',open);chevron.textContent=open?'▴':'▾';
+}
+function renderQPanel(){
+  const qs=getQArr();const count=document.getElementById('qpanel-count');
+  if(count){count.textContent=qs.length;count.style.display=qs.length?'inline':'none';}
+  const body=document.getElementById('qpanel-body');if(!body)return;
+  if(!qs.length){body.innerHTML='<p class="no-questions">No questions yet.</p>';return;}
+  const groups=Object.fromEntries(Object.keys(SECTIONS).map(k=>[k,[]]));
+  qs.forEach(q=>{if(groups[q.section])groups[q.section].push(q);});
+  let html='';let num=0;
+  Object.entries(groups).forEach(([key,items])=>{if(!items.length)return;html+=`<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;items.forEach(q=>{num++;html+=`<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${q.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteQ(${q.id})">✕</button></div>`;});html+='</div>';});
+  body.innerHTML=html;
+}
+function getNotesArr(){return JSON.parse(localStorage.getItem(PAGE_KEY+'-notes')||'[]');}
+function saveNotesArr(ns){localStorage.setItem(PAGE_KEY+'-notes',JSON.stringify(ns));}
+function addNote(key){
+  const ta=document.getElementById('note-'+key);const text=ta.value.trim();if(!text){ta.focus();return;}
+  const ns=getNotesArr();ns.push({id:Date.now(),section:key,text});saveNotesArr(ns);ta.value='';renderNotesPanel();
+  if(!document.getElementById('notes-panel-body').classList.contains('open'))toggleNotesPanel();
+}
+function deleteNote(id){saveNotesArr(getNotesArr().filter(n=>n.id!==id));renderNotesPanel();}
+function toggleNotesPanel(){
+  const body=document.getElementById('notes-panel-body');const header=document.getElementById('notes-panel-header');const chevron=document.getElementById('notes-panel-chevron');
+  const open=body.classList.toggle('open');header.classList.toggle('open',open);chevron.textContent=open?'▴':'▾';
+}
+function renderNotesPanel(){
+  const ns=getNotesArr();const count=document.getElementById('notes-panel-count');
+  if(count){count.textContent=ns.length;count.style.display=ns.length?'inline':'none';}
+  const body=document.getElementById('notes-panel-body');if(!body)return;
+  if(!ns.length){body.innerHTML='<p class="no-questions">No notes yet.</p>';return;}
+  let html='';let num=0;ns.forEach(n=>{num++;html+=`<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteNote(${n.id})">✕</button></div>`;});
+  body.innerHTML=html;
+}
+function saveSocAnswer(btn){
+  const area=btn.closest('.answer-area');const ta=area.querySelector('.answer-textarea');if(!ta.value.trim()){ta.focus();return;}
+  try{localStorage.setItem(PAGE_KEY+'-socans-'+area.dataset.section,ta.value);}catch(e){}
+  ta.disabled=true;btn.textContent='✓ Answer saved';btn.disabled=true;
+  const seeBtn=area.querySelector('.btn-see-answer');seeBtn.disabled=false;seeBtn.textContent='💡 See Model Answer';
+}
+function revealSocAnswer(btn){
+  if(btn.disabled)return;const answers=btn.closest('.answer-area').querySelector('.model-answers');
+  const isHidden=answers.style.display==='none'||!answers.style.display;answers.style.display=isHidden?'block':'none';
+  btn.textContent=isHidden?'▲ Hide Model Answer':'💡 See Model Answer';
+}
+document.addEventListener('DOMContentLoaded',function(){
+  renderQPanel();renderNotesPanel();
+  document.querySelectorAll('.answer-area').forEach(function(area){
+    const key=PAGE_KEY+'-socans-'+area.dataset.section;
+    try{const saved=localStorage.getItem(key);if(saved){const ta=area.querySelector('.answer-textarea');ta.value=saved;ta.disabled=true;const addBtn=area.querySelector('.btn-add-answer');addBtn.textContent='✓ Answer saved';addBtn.disabled=true;const seeBtn=area.querySelector('.btn-see-answer');seeBtn.disabled=false;seeBtn.textContent='💡 See Model Answer';}}catch(e){}
+  });
+  document.querySelectorAll('.analogy-box').forEach(function(box){
+    const label=box.querySelector('.analogy-label');if(label)label.addEventListener('click',()=>box.classList.toggle('expanded'));
+  });
+  const navTabs=document.querySelectorAll('.nav-tab');
+  const observer=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const id=e.target.id;navTabs.forEach(t=>{t.classList.toggle('active',t.getAttribute('href')==='#'+id);});}});},{threshold:0.3});
+  document.querySelectorAll('.section-block').forEach(s=>observer.observe(s));
+});
+</script>
+</body>
+</html>
