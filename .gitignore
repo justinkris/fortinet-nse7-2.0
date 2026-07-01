@@ -4,4 +4,7 @@ __pycache__/
 
 build.py
 *.pdf
-*.txt
+
+reference/*.txt
+notes/*.txt
+sorting-hat/*.txt

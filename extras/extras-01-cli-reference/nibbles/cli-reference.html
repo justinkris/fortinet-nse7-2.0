@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Extras 01 Nibble — FortiOS CLI at a Glance</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Outfit:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#faf5e9;--surface:#fffdf5;--border:#d4c89a;--text:#0a1838;--text-soft:#1e2f5a;--text-muted:#6b7794;--blue:#1e40af;--blue-light:#eff4fc;--blue-border:#b8cce8;--ink-dark:#0d1a3a;--ink-accent:#9bb8e6;--green:#1a7c4a;--green-light:#dff0e1;--green-border:#a7d8b0;--amber:#b45309;--amber-light:#fcf2c3;--amber-border:#f3d68a;--red:#b91c1c;--red-light:#fee2e2;--red-border:#fca5a5;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:0;}
+  .page{max-width:860px;margin:0 auto;padding:32px 36px 48px;}
+  .eyebrow{font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  h1{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--text);line-height:1.1;margin-bottom:4px;}
+  h1 em{font-style:italic;color:var(--blue);}
+  .subtitle{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--text-muted);margin-bottom:28px;}
+
+  /* Command cards row */
+  .cmd-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px;}
+  .cmd-card{border-radius:10px;padding:14px 12px;text-align:center;border:1px solid var(--border);}
+  .cmd-card.config{background:#fee2e2;border-top:3px solid #b91c1c;}
+  .cmd-card.show{background:var(--blue-light);border-top:3px solid var(--blue);}
+  .cmd-card.get{background:#eff4fc;border-top:3px solid #3b82f6;}
+  .cmd-card.execute{background:var(--amber-light);border-top:3px solid var(--amber);}
+  .cmd-card.diagnose{background:var(--green-light);border-top:3px solid var(--green);}
+  .cmd-name{font-family:'SF Mono','Fira Code',monospace;font-size:14px;font-weight:700;margin-bottom:6px;}
+  .cmd-card.config .cmd-name{color:#b91c1c;}
+  .cmd-card.show .cmd-name{color:var(--blue);}
+  .cmd-card.get .cmd-name{color:#1d4ed8;}
+  .cmd-card.execute .cmd-name{color:var(--amber);}
+  .cmd-card.diagnose .cmd-name{color:var(--green);}
+  .cmd-purpose{font-size:11px;font-weight:600;color:var(--text-soft);margin-bottom:4px;}
+  .cmd-note{font-size:10px;color:var(--text-muted);line-height:1.4;}
+
+  /* Divider */
+  .divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
+
+  /* Two-col layout */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+
+  /* Mini table */
+  .mini-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .mini-table th{background:var(--ink-dark);color:var(--ink-accent);font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:7px 10px;text-align:left;}
+  .mini-table td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text-soft);vertical-align:top;line-height:1.4;}
+  .mini-table td:first-child{font-family:'SF Mono','Fira Code',monospace;font-size:11px;color:var(--text);font-weight:700;white-space:nowrap;}
+  .mini-table tr:last-child td{border-bottom:none;}
+
+  /* Section label */
+  .section-label{font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+
+  /* Warning box */
+  .warn{background:var(--red-light);border-left:3px solid var(--red-border);border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:#7f1d1d;line-height:1.5;}
+  .warn strong{color:#991b1b;}
+
+  /* Amber box */
+  .note{background:var(--amber-light);border-left:3px solid var(--amber-border);border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:#78350f;line-height:1.5;}
+  .note strong{color:#92400e;}
+
+  /* Green box */
+  .tip{background:var(--green-light);border-left:3px solid var(--green-border);border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:#14532d;line-height:1.5;}
+
+  /* Code inline */
+  code{font-family:'SF Mono','Fira Code',monospace;font-size:11px;background:rgba(30,64,175,0.08);padding:1px 5px;border-radius:4px;color:var(--blue);}
+
+  /* Flow steps */
+  .flow{display:flex;flex-direction:column;gap:6px;}
+  .flow-step{display:flex;align-items:flex-start;gap:10px;padding:7px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;}
+  .flow-num{background:var(--ink-dark);color:var(--ink-accent);font-size:10px;font-weight:700;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+  .flow-cmd{font-family:'SF Mono','Fira Code',monospace;font-size:11px;color:var(--blue);font-weight:700;margin-bottom:2px;}
+  .flow-desc{font-size:11px;color:var(--text-muted);}
+
+  footer{text-align:center;font-size:10px;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;padding:16px;border-top:1px solid var(--border);}
+  footer span{color:var(--blue);}
+
+  @media(max-width:600px){
+    .cmd-row{grid-template-columns:repeat(3,1fr);}
+    .two-col{grid-template-columns:1fr;}
+    .page{padding:20px 16px 36px;}
+    h1{font-size:24px;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="eyebrow">STUDY NIBBLE · EXTRAS 01</div>
+  <h1>FortiOS CLI — <em>At a Glance</em></h1>
+  <div class="subtitle">The five root commands, their purpose, and when to reach for each one</div>
+
+  <!-- Five Command Cards -->
+  <div class="cmd-row">
+    <div class="cmd-card config">
+      <div class="cmd-name">config</div>
+      <div class="cmd-purpose">Write Config</div>
+      <div class="cmd-note">Only command that modifies the database. Changes persist.</div>
+    </div>
+    <div class="cmd-card show">
+      <div class="cmd-name">show</div>
+      <div class="cmd-purpose">Read Config</div>
+      <div class="cmd-note">Explicit changes only. Defaults are invisible. Use full-configuration.</div>
+    </div>
+    <div class="cmd-card get">
+      <div class="cmd-name">get</div>
+      <div class="cmd-purpose">Read State</div>
+      <div class="cmd-note">Real-time operational state. Clean admin-friendly summaries.</div>
+    </div>
+    <div class="cmd-card execute">
+      <div class="cmd-name">execute</div>
+      <div class="cmd-purpose">Do Something</div>
+      <div class="cmd-note">Immediate action. Can be irreversible. Think first.</div>
+    </div>
+    <div class="cmd-card diagnose">
+      <div class="cmd-name">diagnose</div>
+      <div class="cmd-purpose">Look Inside</div>
+      <div class="cmd-note">Raw engine internals. Active tests. Deeper than get.</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="two-col">
+    <!-- Left: Key commands -->
+    <div>
+      <div class="section-label">Essential get Commands</div>
+      <table class="mini-table">
+        <thead><tr><th>Command</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>get system arp</td><td>Layer 2 / ARP cache</td></tr>
+          <tr><td>get system interface</td><td>Interface state & IPs</td></tr>
+          <tr><td>get system performance status</td><td>CPU / memory / sessions</td></tr>
+          <tr><td>get router info routing-table all</td><td>Full routing table</td></tr>
+          <tr><td>get router info routing-table details &lt;ip&gt;</td><td>Longest prefix match</td></tr>
+          <tr><td>get vpn ipsec tunnel summary</td><td>IPsec tunnel status</td></tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:14px;">
+        <div class="section-label">Sniffer Verbosity</div>
+        <table class="mini-table">
+          <thead><tr><th>Level</th><th>What you see</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>IP headers only</td></tr>
+            <tr><td>2</td><td>+ interface direction</td></tr>
+            <tr><td>3</td><td>+ ethernet frame</td></tr>
+            <tr><td>4</td><td>+ hex payload ← most used</td></tr>
+            <tr><td>6</td><td>+ ASCII payload</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right: Golden sequence -->
+    <div>
+      <div class="section-label">Golden Troubleshooting Sequence</div>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <div><div class="flow-cmd">get system arp</div><div class="flow-desc">Layer 2 working?</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">2</div>
+          <div><div class="flow-cmd">get system interface</div><div class="flow-desc">Interface UP?</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <div><div class="flow-cmd">get router info routing-table all</div><div class="flow-desc">Route present?</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">4</div>
+          <div><div class="flow-cmd">execute ping-options source + ping</div><div class="flow-desc">FGT can reach dest? (set source!)</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">5</div>
+          <div><div class="flow-cmd">diagnose sniffer packet any</div><div class="flow-desc">User traffic arriving?</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">6</div>
+          <div><div class="flow-cmd">diagnose debug flow</div><div class="flow-desc">What does FGT do with it?</div></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">7</div>
+          <div><div class="flow-cmd">diagnose sys session list</div><div class="flow-desc">Session created? Flags?</div></div>
+        </div>
+        <div class="flow-step" style="background:var(--red-light);border-color:var(--red-border);">
+          <div class="flow-num" style="background:#b91c1c;">!</div>
+          <div><div class="flow-cmd" style="color:#b91c1c;">diagnose debug disable</div><div class="flow-desc">ALWAYS. Every time.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Three critical rules -->
+  <div class="section-label">The Three Rules to Never Forget</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+    <div class="warn"><strong>Rule 1:</strong> Always run <code>diagnose debug disable</code> when finished. No exceptions.</div>
+    <div class="note"><strong>Rule 2:</strong> <code>show</code> silence on a setting = it's at default. Use <code>show full-configuration</code> to see it.</div>
+    <div class="note"><strong>Rule 3:</strong> A successful ping <em>from</em> FortiGate ≠ user traffic <em>through</em> FortiGate is permitted. Different path.</div>
+  </div>
+
+  <div class="tip"><strong>Sniffer tip:</strong> Use <code>any</code> as the interface to capture all interfaces simultaneously. Reveals the actual egress path and confirms NAT translation in a single capture.</div>
+
+</div>
+<footer>NSE7 EF 7.6 · <span>Extras 01 Nibble</span> · FortiOS CLI At a Glance</footer>
+</body>
+</html>

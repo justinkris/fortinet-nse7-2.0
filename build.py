@@ -1474,6 +1474,28 @@ assert not extra, f"Extra (non-blueprint) objectives: {extra}"
 print(f"OK: 100% coverage of {len(ALL_OBJECTIVES)} blueprint objectives across {len(SESSIONS)} sessions.")
 
 # ---------------------------------------------------------------------------
+# STANDALONE EXTRAS
+# ---------------------------------------------------------------------------
+# Extras are topics NOT tied to a session — Socratic explorations of standalone
+# subjects (CLI reference, protocol deep-dives, etc.). Each topic lives under
+# extras/extras-NN-slug/ with:
+#   index.html          — the main guide (long-form)
+#   bites/*.html        — focused single-concept explainers
+#   nibbles/*.html      — short reference cards
+# Register each topic here; folder + files are discovered from disk.
+
+EXTRAS = [
+    {
+        "num": 1,
+        "slug": "cli-reference",
+        "title": "FortiOS CLI Reference",
+        "tagline": "The five root commands and how to reason about which one to reach for.",
+    },
+]
+
+EXTRAS_DIR = ROOT / "extras"
+
+# ---------------------------------------------------------------------------
 # OBJECTIVE → SESSION INDEX (used in hub mapping table)
 # ---------------------------------------------------------------------------
 # NSE7 objectives map one-to-many. We collect *all* sessions that teach each
@@ -1556,13 +1578,175 @@ def build_claude_prompt(s: dict) -> str:
     return "\n".join(lines) + "\n"
 
 # ---------------------------------------------------------------------------
+# EXTRAS / COMPLETION / SUMMARY DISCOVERY
+# ---------------------------------------------------------------------------
+#
+# Extras, completed study guides, and session summaries are NOT stored in the
+# SESSIONS list. They are files that appear inside a session's folder after the
+# user runs the /build-study-plan "sort" workflow. build.py walks the filesystem
+# once per build and produces two lookup dicts consumed by the renderers.
+
+import re as _re
+
+EXTRA_KINDS = ("guides", "bites", "nibbles")
+_TITLE_STRIP_PREFIXES = (
+    "Study Bite — ", "Study Guide — ", "Guide — ", "Nibble — ",
+    "Bite — ", "Study Nibble — ",
+)
+
+def extract_html_title(path):
+    """Return the first <title> content or first <h1> text, minus common prefixes."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except Exception:
+        return None
+    m = _re.search(r"<title[^>]*>(.*?)</title>", text, _re.IGNORECASE | _re.DOTALL)
+    title = m.group(1).strip() if m else None
+    if not title:
+        m = _re.search(r"<h1[^>]*>(.*?)</h1>", text, _re.IGNORECASE | _re.DOTALL)
+        title = _re.sub(r"<[^>]+>", "", m.group(1)).strip() if m else None
+    if not title:
+        return None
+    # Strip prefixes like "Session 39 — " / "Extras 01 Bite — " and friendly labels
+    title = _re.sub(r"^Session\s+\d+\s+—\s+", "", title)
+    title = _re.sub(r"^Extras\s+\d+(?:\s+(?:Bite|Nibble|Guide))?\s+—\s+", "", title)
+    for pref in _TITLE_STRIP_PREFIXES:
+        if title.startswith(pref):
+            title = title[len(pref):]
+            break
+    return title.strip() or None
+
+def discover_extras():
+    """Return {session_num: {kind: [(slug, title, href_from_session_root)]}}."""
+    out = {}
+    for s in SESSIONS:
+        session_dir = SESSIONS_DIR / f"session-{s['num']:02d}-{s['slug']}"
+        for kind in EXTRA_KINDS:
+            kind_dir = session_dir / kind
+            if not kind_dir.is_dir():
+                continue
+            for html_file in sorted(kind_dir.glob("*.html")):
+                title = extract_html_title(html_file) or html_file.stem.replace("-", " ").title()
+                out.setdefault(s["num"], {}).setdefault(kind, []).append(
+                    (html_file.stem, title, f"{kind}/{html_file.name}")
+                )
+    return out
+
+def discover_standalone_extras():
+    """Return list of dicts for each EXTRAS topic that has content on disk.
+
+    Shape: [{"topic": <EXTRAS entry>, "guides": [(slug,title,href), ...],
+             "bites": [...], "nibbles": [...]}, ...]. `href` is relative to
+    the topic folder (e.g. "index.html", "bites/foo.html").
+    """
+    out = []
+    for e in EXTRAS:
+        topic_dir = EXTRAS_DIR / f"extras-{e['num']:02d}-{e['slug']}"
+        if not topic_dir.is_dir():
+            continue
+        entry = {"topic": e, "guides": [], "bites": [], "nibbles": []}
+        guide_path = topic_dir / "index.html"
+        if guide_path.is_file():
+            title = extract_html_title(guide_path) or e["title"]
+            entry["guides"].append(("index", title, "index.html"))
+        for kind in ("bites", "nibbles"):
+            kind_dir = topic_dir / kind
+            if not kind_dir.is_dir():
+                continue
+            for html_file in sorted(kind_dir.glob("*.html")):
+                title = extract_html_title(html_file) or html_file.stem.replace("-", " ").title()
+                entry[kind].append((html_file.stem, title, f"{kind}/{html_file.name}"))
+        if entry["guides"] or entry["bites"] or entry["nibbles"]:
+            out.append(entry)
+    return out
+
+def parse_summary_txt(path):
+    """Return list of (heading, body_text) tuples parsed from the summary."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except Exception:
+        return []
+    lines = text.splitlines()
+    sections = []
+    i = 0
+    while i < len(lines):
+        line = lines[i].rstrip()
+        # Heading is an ALL-CAPS-ish line followed by a line of `=` chars
+        if line and i + 1 < len(lines) and _re.fullmatch(r"=+", lines[i + 1].strip() or ""):
+            heading = line.strip()
+            j = i + 2
+            body_lines = []
+            while j < len(lines):
+                # Peek: is this the start of the next heading?
+                nxt = lines[j].rstrip()
+                if (nxt and j + 1 < len(lines)
+                        and _re.fullmatch(r"=+", lines[j + 1].strip() or "")):
+                    break
+                # Also break on horizontal rule "---"
+                if nxt.strip() == "---":
+                    j += 1
+                    continue
+                body_lines.append(lines[j])
+                j += 1
+            body = "\n".join(body_lines).strip("\n")
+            sections.append((heading, body))
+            i = j
+            continue
+        i += 1
+    return sections
+
+def discover_completions():
+    """Return {session_num: {"has_complete": bool, "has_summary": bool, "summary_sections": list}}."""
+    out = {}
+    for s in SESSIONS:
+        session_dir = SESSIONS_DIR / f"session-{s['num']:02d}-{s['slug']}"
+        has_complete = (session_dir / "complete.html").is_file()
+        summary_path = session_dir / "summary.txt"
+        has_summary = summary_path.is_file()
+        if not (has_complete or has_summary):
+            continue
+        entry = {"has_complete": has_complete, "has_summary": has_summary, "summary_sections": []}
+        if has_summary:
+            entry["summary_sections"] = parse_summary_txt(summary_path)
+        out[s["num"]] = entry
+    return out
+
+def render_summary_body(body):
+    """Convert a summary body block to HTML paragraphs / bullet lists."""
+    if not body.strip():
+        return ""
+    parts = []
+    current_ul = []
+    def _flush_ul():
+        if current_ul:
+            parts.append("<ul>" + "".join(f"<li>{html_escape(x)}</li>" for x in current_ul) + "</ul>")
+            current_ul.clear()
+    for raw in body.splitlines():
+        line = raw.rstrip()
+        if not line.strip():
+            _flush_ul()
+            continue
+        stripped = line.lstrip()
+        if stripped.startswith(("* ", "- ", "• ")):
+            current_ul.append(stripped[2:].strip())
+        else:
+            _flush_ul()
+            parts.append(f"<p>{html_escape(line.strip())}</p>")
+    _flush_ul()
+    return "".join(parts)
+
+# ---------------------------------------------------------------------------
 # SESSION PAGE TEMPLATE (cream/blue, derived from TEMPLATE-GUIDE-CREAM.html)
 # ---------------------------------------------------------------------------
 
-# We render each session with 3 template sections:
+# We render each session with 3 core template sections and up to 3 additional
+# post-completion blocks (Session Recap, Completion callout, Extras):
 #   S1 = Story Progression (hero image lives here)
 #   S2 = Why This Session Exists & Key Concepts
 #   S3 = Objectives, Prerequisites, Duration + Claude Session Prompt (blue callout)
+#   +   Completion callout (when complete.html exists) — right after motivation-banner
+#   +   Session Recap (when summary.txt exists) — after S3
+#   +   Extras (when any guide/bite/nibble sorted) — after Recap
 
 SESSION_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
@@ -1656,9 +1840,36 @@ SESSION_TEMPLATE = """<!DOCTYPE html>
   .page-nav-disabled{{opacity:0.3;pointer-events:none;}}
   .page-nav-label{{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);display:block;text-transform:uppercase;}}
   .page-nav-title{{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;font-style:italic;color:var(--blue);display:block;}}
+  /* Completed chip + completion callout */
+  .completed-chip{{display:inline-flex;align-items:center;gap:6px;background:var(--green-light);color:var(--green);border:1px solid var(--green-border);border-radius:20px;padding:4px 12px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;margin-left:14px;vertical-align:middle;font-style:normal;position:relative;top:-6px;}}
+  .completion-callout{{margin:0 60px;padding:20px 24px;background:var(--green-light);border-left:4px solid var(--green);border-radius:0 12px 12px 0;display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:24px;}}
+  .completion-callout-text{{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.55;color:var(--text);}}
+  .completion-callout-text strong{{color:var(--green);}}
+  .completion-callout-btn{{flex-shrink:0;display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#fff;padding:10px 18px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;}}
+  .completion-callout-btn:hover{{background:#155e37;}}
+  /* Session recap */
+  .recap-grid{{display:grid;gap:14px;}}
+  .recap-section{{background:var(--surface);border:1px solid var(--border-dim);border-radius:10px;padding:16px 20px;}}
+  .recap-section h3{{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:var(--blue);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px;}}
+  .recap-section p{{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);margin-bottom:8px;}}
+  .recap-section p:last-child{{margin-bottom:0;}}
+  .recap-section ul{{padding-left:20px;margin-bottom:6px;}}
+  .recap-section li{{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.6;color:var(--text-soft);margin-bottom:4px;}}
+  /* Extras list on session page */
+  .extras-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:8px;}}
+  .extras-card{{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;text-decoration:none;}}
+  .extras-card:hover{{border-color:var(--blue);}}
+  .extras-card-title{{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:var(--text);line-height:1.3;}}
+  .extras-card:hover .extras-card-title{{color:var(--blue);}}
+  .extras-kind-chip{{align-self:flex-start;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid;}}
+  .extras-kind-chip.guide{{background:var(--green-light);color:var(--green);border-color:var(--green-border);}}
+  .extras-kind-chip.bite{{background:var(--blue-light);color:var(--blue);border-color:var(--blue-border);}}
+  .extras-kind-chip.nibble{{background:var(--amber-light);color:var(--amber);border-color:var(--amber-border);}}
+  .extras-kind-group{{margin-bottom:24px;}}
+  .extras-kind-group h3{{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;}}
   footer{{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}}
   footer span{{color:var(--blue);}}
-  @media(max-width:720px){{header{{padding:28px 24px 24px;}}header h1{{font-size:34px;}}.motivation-banner{{padding:16px 24px;}}.main-content{{padding:24px 24px 40px;}}.section-nav{{padding:0 16px;}}footer{{padding:16px 24px;}}}}
+  @media(max-width:720px){{header{{padding:28px 24px 24px;}}header h1{{font-size:34px;}}.motivation-banner{{padding:16px 24px;}}.main-content{{padding:24px 24px 40px;}}.section-nav{{padding:0 16px;}}footer{{padding:16px 24px;}}.completion-callout{{margin:16px 24px 0;flex-direction:column;align-items:flex-start;}}}}
 </style>
 </head>
 <body>
@@ -1673,7 +1884,7 @@ SESSION_TEMPLATE = """<!DOCTYPE html>
       Session {num_pad}
     </div>
     <div class="header-eyebrow"><span class="dot-live"></span> Socratic Curriculum · NSE7 Enterprise Firewall 7.6</div>
-    <h1>{h1_plain_esc} <em>{h1_em_esc}</em></h1>
+    <h1>{h1_plain_esc} <em>{h1_em_esc}</em>{completed_chip}</h1>
     <p>{tagline_esc}</p>
   </div>
 </header>
@@ -1682,6 +1893,8 @@ SESSION_TEMPLATE = """<!DOCTYPE html>
   <div class="motivation-text">Session {num_pad} of 40 · <em>{phase_title_esc}</em></div>
   <p class="motivation-sub">{duration_esc} · This session naturally follows {prev_label} and prepares you for {next_label}.</p>
 </div>
+
+{completion_callout}
 
 <nav class="section-nav" id="section-nav">
   <a class="nav-tab active" href="#section-story">Story</a>
@@ -1755,6 +1968,9 @@ SESSION_TEMPLATE = """<!DOCTYPE html>
         <pre id="claude-prompt">{claude_prompt_esc}</pre>
       </div>
     </div>
+
+    {session_recap_block}
+    {extras_block}
 
   </div>
 </main>
@@ -1831,11 +2047,99 @@ def story_mental_note_for(s: dict) -> str:
         return "This is the entry point of the curriculum — start here."
     return " ".join(pieces) + " Every session is one link in a single continuous story."
 
-def render_session(s: dict):
+def build_completion_callout_html(s: dict, has_complete: bool) -> str:
+    if not has_complete:
+        return ""
+    return (
+        '<div class="completion-callout">'
+        '<div class="completion-callout-text">'
+        '<strong>You finished this session.</strong> '
+        'The polished study guide captures the full Socratic investigation, '
+        'exam-critical notes, and the workplace applications you discovered.'
+        '</div>'
+        '<a class="completion-callout-btn" href="complete.html">'
+        'Open completed study guide →'
+        '</a>'
+        '</div>'
+    )
+
+def build_session_recap_html(sections) -> str:
+    if not sections:
+        return ""
+    inner = []
+    for heading, body in sections:
+        body_html = render_summary_body(body)
+        if not body_html:
+            continue
+        inner.append(
+            f'<div class="recap-section"><h3>{html_escape(heading.title())}</h3>{body_html}</div>'
+        )
+    if not inner:
+        return ""
+    return (
+        '<div class="section-block" id="section-recap">'
+        '<div class="section-label">SECTION 04 · SESSION RECAP</div>'
+        '<h2>What We <em>Discovered Together</em></h2>'
+        '<p>Parsed from the persistent session summary produced at the end of the Socratic investigation. '
+        'Use it to rebuild context before a review or a lab.</p>'
+        '<div class="recap-grid">'
+        + "".join(inner) +
+        '</div>'
+        '</div>'
+    )
+
+def build_extras_block_html(extras_for_session) -> str:
+    if not extras_for_session:
+        return ""
+    kind_label = {"guides": "Guides", "bites": "Bites", "nibbles": "Nibbles"}
+    kind_singular = {"guides": "guide", "bites": "bite", "nibbles": "nibble"}
+    parts = []
+    for kind in EXTRA_KINDS:
+        items = extras_for_session.get(kind) or []
+        if not items:
+            continue
+        cards = []
+        for slug, title, href in items:
+            cards.append(
+                f'<a class="extras-card" href="{html_escape(href)}">'
+                f'<span class="extras-kind-chip {kind_singular[kind]}">{kind_singular[kind].upper()}</span>'
+                f'<span class="extras-card-title">{html_escape(title)}</span>'
+                f'</a>'
+            )
+        parts.append(
+            f'<div class="extras-kind-group">'
+            f'<h3>{kind_label[kind]}</h3>'
+            f'<div class="extras-grid">{"".join(cards)}</div>'
+            f'</div>'
+        )
+    if not parts:
+        return ""
+    return (
+        '<div class="section-block" id="section-extras">'
+        '<div class="section-label">SECTION 05 · EXTRAS FOR THIS SESSION</div>'
+        '<h2>Guides, Bites &amp; <em>Nibbles</em></h2>'
+        '<p>Additional resources sorted to this session — deeper guides, focused explainers, and quick-reference cards.</p>'
+        + "".join(parts) +
+        '</div>'
+    )
+
+def render_session(s: dict, extras=None, completions=None):
+    extras = extras or {}
+    completions = completions or {}
     phase = next(p for p in PHASES if p["num"] == s["phase"])
     by_num = {x["num"]: x for x in SESSIONS}
     prev_s = by_num.get(s["num"] - 1)
     next_s = by_num.get(s["num"] + 1)
+
+    completion = completions.get(s["num"], {})
+    has_complete = completion.get("has_complete", False)
+    summary_sections = completion.get("summary_sections") or []
+    session_extras = extras.get(s["num"], {})
+
+    completed_chip = ' <span class="completed-chip">✓ Completed</span>' if has_complete else ""
+    completion_callout = build_completion_callout_html(s, has_complete)
+    session_recap_block = build_session_recap_html(summary_sections)
+    extras_block = build_extras_block_html(session_extras)
 
     h1_plain, h1_em = split_title(s["title"])
 
@@ -1893,6 +2197,10 @@ def render_session(s: dict):
         next_href=next_href,
         next_title=next_title,
         next_disabled=next_disabled,
+        completed_chip=completed_chip,
+        completion_callout=completion_callout,
+        session_recap_block=session_recap_block,
+        extras_block=extras_block,
     )
 
     out_path = SESSIONS_DIR / session_filename(s)
@@ -1920,7 +2228,13 @@ OBJECTIVE_DESCRIPTIONS = {
     "5.2": "Implement ADVPN to enable on-demand VPN tunnels between sites",
 }
 
-def render_hub():
+def render_hub(extras=None, completions=None, standalone_extras=None):
+    extras = extras or {}
+    completions = completions or {}
+    standalone_extras = standalone_extras or []
+    completed_count = sum(1 for v in completions.values() if v.get("has_complete"))
+    extras_exist = any(bool(v) for v in extras.values()) or bool(standalone_extras)
+    has_extras = extras_exist
     # Phase sections
     phase_sections_html = []
     nav_tabs_html = []
@@ -2013,6 +2327,15 @@ def render_hub():
         '</button>'
     )
 
+    # Completed tab — pinned, external link to completed-sessions.html
+    side_entries.append(
+        f'<a class="hub-side-tab hub-side-tab-external" href="completed-sessions.html">'
+        f'<span class="hub-side-tab-icon">✓</span>'
+        f'<span class="hub-side-tab-title">Completed</span>'
+        f'<span class="hub-side-badge">{completed_count}/{len(SESSIONS)}</span>'
+        f'</a>'
+    )
+
     # Progress tab — pinned, always visible (not inside a collapsible group)
     side_entries.append(
         '<button class="hub-side-tab" data-target="progress">'
@@ -2065,6 +2388,26 @@ def render_hub():
         '</div>'
         '</div>'
     )
+
+    # Extras group — Guides / Bites / Nibbles anchors into extras.html (only when any extras exist)
+    if has_extras:
+        extras_items = [
+            '<a class="hub-side-tab hub-side-tab-external" href="extras.html#guides"><span class="hub-side-tab-icon">G</span><span class="hub-side-tab-title">Guides</span></a>',
+            '<a class="hub-side-tab hub-side-tab-external" href="extras.html#bites"><span class="hub-side-tab-icon">B</span><span class="hub-side-tab-title">Bites</span></a>',
+            '<a class="hub-side-tab hub-side-tab-external" href="extras.html#nibbles"><span class="hub-side-tab-icon">N</span><span class="hub-side-tab-title">Nibbles</span></a>',
+        ]
+        side_entries.append('<div class="hub-sidebar-divider"></div>')
+        side_entries.append(
+            '<div class="hub-sidebar-group" data-group="extras">'
+            '<button class="hub-side-group-head" data-group-toggle="extras">'
+            '<span class="hub-side-group-chevron">▾</span>'
+            '<span class="hub-side-group-label">Extras</span>'
+            '</button>'
+            '<div class="hub-sidebar-group-body">'
+            + "".join(extras_items) +
+            '</div>'
+            '</div>'
+        )
 
     sidebar_html = "\n        ".join(side_entries)
 
@@ -2175,6 +2518,8 @@ def render_hub():
   .hub-side-tab.active .hub-side-tab-sub{{color:var(--blue);}}
   .hub-side-badge{{background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:0.04em;font-family:'Outfit',sans-serif;}}
   .hub-side-tab.active .hub-side-badge{{background:var(--blue-deep);}}
+  a.hub-side-tab{{text-decoration:none;}}
+  .hub-side-tab-external:hover .hub-side-tab-title{{color:var(--blue);}}
   .hub-main{{flex:1;min-width:0;}}
   main{{margin:0;padding:0;}}
   .main-content{{padding:36px 48px 60px 48px;max-width:1080px;}}
@@ -2436,6 +2781,7 @@ function showSection(id, opts) {{
 }}
 document.querySelectorAll('.hub-side-tab').forEach(function(tab) {{
   tab.addEventListener('click', function(e) {{
+    if (!tab.dataset.target) return;  /* external anchor (Completed / Extras) — let the browser navigate */
     e.preventDefault();
     showSection(tab.dataset.target);
   }});
@@ -2559,6 +2905,186 @@ renderProgress();
     (ROOT / "study-plan.html").write_text(hub_html, encoding="utf-8")
 
 # ---------------------------------------------------------------------------
+# STANDALONE HUB PAGES: completed-sessions.html, extras.html
+# ---------------------------------------------------------------------------
+
+_STANDALONE_HUB_STYLES = """
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  header h1{font-family:'Playfair Display',serif;font-size:46px;font-weight:700;color:#fbf7ec;margin-bottom:12px;line-height:1.02;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:rgba(251,247,236,0.7);max-width:780px;line-height:1.6;}
+  .breadcrumb{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.12em;color:var(--ink-accent);margin-bottom:8px;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb a:hover{color:#fff;}
+  .breadcrumb-sep{margin:0 8px;opacity:0.6;}
+  main{padding:40px 60px 60px;max-width:1200px;margin:0 auto;}
+  .anchor-section{margin-bottom:52px;scroll-margin-top:20px;}
+  .anchor-section h2{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--text);border-left:3px solid var(--blue);padding-left:16px;margin-bottom:8px;line-height:1.15;}
+  .anchor-section h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-lede{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.65;margin:0 0 20px 19px;max-width:760px;}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+  .hub-card{display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;text-decoration:none;transition:border-color .15s;}
+  .hub-card:hover{border-color:var(--blue);}
+  .hub-card-chip{align-self:flex-start;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid;}
+  .chip-guide{background:var(--green-light);color:var(--green);border-color:var(--green-border);}
+  .chip-bite{background:var(--blue-light);color:var(--blue);border-color:var(--blue-border);}
+  .chip-nibble{background:var(--amber-light);color:var(--amber);border-color:var(--amber-border);}
+  .chip-complete{background:var(--green-light);color:var(--green);border-color:var(--green-border);}
+  .hub-card-title{font-family:'Playfair Display',serif;font-size:19px;font-weight:600;color:var(--text);line-height:1.28;}
+  .hub-card:hover .hub-card-title{color:var(--blue);}
+  .hub-card-sub{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.1em;color:var(--text-muted);text-transform:uppercase;}
+  .hub-card-hint{font-family:'Outfit',sans-serif;font-size:9px;letter-spacing:0.14em;color:var(--green);text-transform:uppercase;background:var(--green-light);border:1px solid var(--green-border);border-radius:20px;padding:2px 9px;align-self:flex-start;}
+  .empty-state{background:var(--surface);border:1px dashed var(--border);border-radius:12px;padding:24px;color:var(--text-muted);font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.6;font-style:italic;}
+  .empty-state code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--text);font-style:normal;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:24px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+</style>
+""".strip()
+
+_STANDALONE_FONTS = (
+    '<link href="https://fonts.googleapis.com/css2?'
+    'family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500'
+    '&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500'
+    '&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">'
+)
+
+def _standalone_page(title, header_h1, header_sub, body_html):
+    return (
+        f'<!DOCTYPE html>\n<html lang="en">\n<head>\n'
+        f'<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+        f'<title>{title}</title>\n{_STANDALONE_FONTS}\n{_STANDALONE_HUB_STYLES}\n</head>\n<body>\n'
+        f'<header>\n'
+        f'<div class="breadcrumb"><a href="study-plan.html">NSE7 EF 7.6 Curriculum</a>'
+        f'<span class="breadcrumb-sep">›</span>{title}</div>\n'
+        f'<div class="header-eyebrow">Post-session artifacts · NSE7 Enterprise Firewall 7.6</div>\n'
+        f'<h1>{header_h1}</h1>\n'
+        f'<p>{header_sub}</p>\n'
+        f'</header>\n<main>\n{body_html}\n</main>\n'
+        f'<footer>NSE7 EF 7.6<span>.</span> Post-session artifacts</footer>\n'
+        f'</body>\n</html>\n'
+    )
+
+def render_completed_hub(completions):
+    completed_sessions = []
+    for s in SESSIONS:
+        entry = completions.get(s["num"])
+        if entry and entry.get("has_complete"):
+            completed_sessions.append((s, entry))
+
+    total = len(SESSIONS)
+    done = len(completed_sessions)
+
+    if not completed_sessions:
+        body = (
+            '<div class="anchor-section">'
+            '<h2>Completed <em>Study Guides</em></h2>'
+            '<p class="section-lede">Every finished Socratic session lands here — the polished HTML study guide, one card per completion.</p>'
+            '<div class="empty-state">'
+            'No completed sessions yet — finish a session in Claude and drop '
+            '<code>session-NN-complete-&lt;slug&gt;.html</code> + <code>session-NN-&lt;slug&gt;.txt</code> '
+            'into <code>sorting-hat/</code> to see this page fill in.'
+            '</div>'
+            '</div>'
+        )
+    else:
+        cards = []
+        for s, entry in completed_sessions:
+            summary_hint = '<span class="hub-card-hint">Recap available</span>' if entry.get("has_summary") else ""
+            slug = f"session-{s['num']:02d}-{s['slug']}"
+            title = html_escape(s["title"])
+            cards.append(
+                f'<a class="hub-card" href="sessions/{slug}/complete.html">'
+                f'<span class="hub-card-chip chip-complete">Completed</span>'
+                f'<span class="hub-card-sub">Session {s["num"]:02d}</span>'
+                f'<span class="hub-card-title">{title}</span>'
+                f'{summary_hint}'
+                f'</a>'
+            )
+        body = (
+            '<div class="anchor-section">'
+            f'<h2>Completed <em>Study Guides · {done} of {total}</em></h2>'
+            '<p class="section-lede">Every finished Socratic session — polished HTML study guides produced at the end of each Claude session, linked to the source session page.</p>'
+            f'<div class="card-grid">{"".join(cards)}</div>'
+            '</div>'
+        )
+
+    html = _standalone_page(
+        title=f"Completed Study Guides · NSE7 EF 7.6",
+        header_h1='Completed <em>Study Guides</em>',
+        header_sub='Polished HTML study guides produced at the end of each Socratic session.',
+        body_html=body,
+    )
+    (ROOT / "completed-sessions.html").write_text(html, encoding="utf-8")
+
+def render_extras_hub(extras, standalone_extras=None):
+    standalone_extras = standalone_extras or []
+    kind_meta = [
+        ("guides", "Guides", "chip-guide", "Long-form companion pages that dive deeper than a session can — includes standalone Extras topics."),
+        ("bites", "Bites", "chip-bite", "Focused single-concept explainers — read after a session to nail down one thing."),
+        ("nibbles", "Nibbles", "chip-nibble", "Short reference cards / cheat sheets — for quick lookup during review or lab work."),
+    ]
+    singular = lambda label: label[:-1] if label.endswith("s") else label
+
+    sections_html = []
+    for kind, label, chip_class, lede in kind_meta:
+        cards = []
+        # Session-linked items
+        for s in SESSIONS:
+            for slug, title, href in (extras.get(s["num"], {}).get(kind) or []):
+                session_dir = f"session-{s['num']:02d}-{s['slug']}"
+                cards.append(
+                    f'<a class="hub-card" href="sessions/{session_dir}/{html_escape(href)}">'
+                    f'<span class="hub-card-chip {chip_class}">{singular(label)}</span>'
+                    f'<span class="hub-card-sub">Session {s["num"]:02d}</span>'
+                    f'<span class="hub-card-title">{html_escape(title)}</span>'
+                    f'</a>'
+                )
+        # Standalone extras items
+        for entry in standalone_extras:
+            e = entry["topic"]
+            topic_dir = f"extras-{e['num']:02d}-{e['slug']}"
+            for slug, title, href in entry.get(kind, []):
+                cards.append(
+                    f'<a class="hub-card" href="extras/{topic_dir}/{html_escape(href)}">'
+                    f'<span class="hub-card-chip {chip_class}">{singular(label)}</span>'
+                    f'<span class="hub-card-sub">Extras {e["num"]:02d} · {html_escape(e["title"])}</span>'
+                    f'<span class="hub-card-title">{html_escape(title)}</span>'
+                    f'</a>'
+                )
+        if cards:
+            body_inner = f'<div class="card-grid">{"".join(cards)}</div>'
+        else:
+            body_inner = f'<div class="empty-state">No {kind} sorted yet.</div>'
+        sections_html.append(
+            f'<div class="anchor-section" id="{kind}">'
+            f'<h2>{label}<em></em></h2>'
+            f'<p class="section-lede">{lede}</p>'
+            f'{body_inner}'
+            f'</div>'
+        )
+    html = _standalone_page(
+        title=f"Extras — Guides · Bites · Nibbles · NSE7 EF 7.6",
+        header_h1='Guides, Bites &amp; <em>Nibbles</em>',
+        header_sub='Supplementary study artifacts — session-linked and standalone Extras topics. Anchors: #guides, #bites, #nibbles.',
+        body_html="".join(sections_html),
+    )
+    (ROOT / "extras.html").write_text(html, encoding="utf-8")
+
+# ---------------------------------------------------------------------------
 # IMAGE PROMPTS FILE
 # ---------------------------------------------------------------------------
 
@@ -2612,16 +3138,30 @@ def main():
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
     ensure_image_folders()
 
-    for s in SESSIONS:
-        render_session(s)
+    # Discover post-completion artifacts once
+    extras = discover_extras()
+    completions = discover_completions()
+    standalone_extras = discover_standalone_extras()
 
-    render_hub()
+    for s in SESSIONS:
+        render_session(s, extras=extras, completions=completions)
+
+    render_hub(extras=extras, completions=completions, standalone_extras=standalone_extras)
+    render_completed_hub(completions)
+    render_extras_hub(extras, standalone_extras=standalone_extras)
     write_prompts_file()
+
+    n_extras = sum(len(items) for kinds in extras.values() for items in kinds.values())
+    n_standalone = sum(len(e[k]) for e in standalone_extras for k in ("guides", "bites", "nibbles"))
+    n_completed = sum(1 for v in completions.values() if v.get("has_complete"))
+    n_summaries = sum(1 for v in completions.values() if v.get("has_summary"))
 
     print(f"Wrote study-plan.html")
     print(f"Wrote {len(SESSIONS)} session pages to sessions/session-NN-slug/index.html")
     print(f"Wrote images/prompts.txt with {len(PHASES) + len(SESSIONS)} prompts")
     print(f"Ensured images/hub/ and {len(SESSIONS)} per-session sessions/session-NN-slug/images/ folders")
+    print(f"Wrote completed-sessions.html ({n_completed} completed, {n_summaries} summaries)")
+    print(f"Wrote extras.html ({n_extras} session-linked + {n_standalone} standalone)")
 
 if __name__ == "__main__":
     main()

@@ -76,6 +76,8 @@
   .hub-side-tab.active .hub-side-tab-sub{color:var(--blue);}
   .hub-side-badge{background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:0.04em;font-family:'Outfit',sans-serif;}
   .hub-side-tab.active .hub-side-badge{background:var(--blue-deep);}
+  a.hub-side-tab{text-decoration:none;}
+  .hub-side-tab-external:hover .hub-side-tab-title{color:var(--blue);}
   .hub-main{flex:1;min-width:0;}
   main{margin:0;padding:0;}
   .main-content{padding:36px 48px 60px 48px;max-width:1080px;}
@@ -188,11 +190,14 @@
     <div class="hub-sidebar-label">Navigate</div>
         <button class="hub-side-collapse" id="hub-side-collapse" aria-label="Toggle sidebar"><span class="hub-side-collapse-chevron">«</span><span class="hub-side-collapse-label">Collapse</span></button>
         <button class="hub-side-tab" data-target="how-to-use"><span class="hub-side-tab-icon">?</span><span class="hub-side-tab-title">How to Use</span></button>
+        <a class="hub-side-tab hub-side-tab-external" href="completed-sessions.html"><span class="hub-side-tab-icon">✓</span><span class="hub-side-tab-title">Completed</span><span class="hub-side-badge">1/40</span></a>
         <button class="hub-side-tab" data-target="progress"><span class="hub-side-tab-icon">P</span><span class="hub-side-tab-title">Progress</span><span class="hub-side-badge" id="side-progress-badge">0/40</span></button>
         <div class="hub-sidebar-divider"></div>
         <div class="hub-sidebar-group" data-group="curriculum"><button class="hub-side-group-head" data-group-toggle="curriculum"><span class="hub-side-group-chevron">▾</span><span class="hub-side-group-label">The Curriculum</span></button><div class="hub-sidebar-group-body"><button class="hub-side-tab" data-target="phase-01"><span class="hub-side-tab-icon">01</span><span class="hub-side-tab-title">Phase 01 — Network Security Architecture</span><span class="hub-side-tab-sub">5</span></button><button class="hub-side-tab" data-target="phase-02"><span class="hub-side-tab-icon">02</span><span class="hub-side-tab-title">Phase 02 — FortiManager &amp; FortiAnalyzer</span><span class="hub-side-tab-sub">5</span></button><button class="hub-side-tab" data-target="phase-03"><span class="hub-side-tab-icon">03</span><span class="hub-side-tab-title">Phase 03 — VLANs &amp; VDOMs</span><span class="hub-side-tab-sub">4</span></button><button class="hub-side-tab" data-target="phase-04"><span class="hub-side-tab-icon">04</span><span class="hub-side-tab-title">Phase 04 — FGCP, FGSP, VRRP</span><span class="hub-side-tab-sub">5</span></button><button class="hub-side-tab" data-target="phase-05"><span class="hub-side-tab-icon">05</span><span class="hub-side-tab-title">Phase 05 — OSPF &amp; BGP</span><span class="hub-side-tab-sub">7</span></button><button class="hub-side-tab" data-target="phase-06"><span class="hub-side-tab-icon">06</span><span class="hub-side-tab-title">Phase 06 — SSL, Web, App, IPS</span><span class="hub-side-tab-sub">5</span></button><button class="hub-side-tab" data-target="phase-07"><span class="hub-side-tab-icon">07</span><span class="hub-side-tab-title">Phase 07 — IPsec &amp; ADVPN</span><span class="hub-side-tab-sub">5</span></button><button class="hub-side-tab" data-target="phase-08"><span class="hub-side-tab-icon">08</span><span class="hub-side-tab-title">Phase 08 — Security Fabric + Hardware Offload</span><span class="hub-side-tab-sub">4</span></button></div></div>
         <div class="hub-sidebar-divider"></div>
         <div class="hub-sidebar-group" data-group="reference"><button class="hub-side-group-head" data-group-toggle="reference"><span class="hub-side-group-chevron">▾</span><span class="hub-side-group-label">Reference</span></button><div class="hub-sidebar-group-body"><button class="hub-side-tab" data-target="roadmap"><span class="hub-side-tab-icon">R</span><span class="hub-side-tab-title">Roadmap</span></button><button class="hub-side-tab" data-target="objective-map"><span class="hub-side-tab-icon">O</span><span class="hub-side-tab-title">Objective Map</span></button><button class="hub-side-tab" data-target="journey"><span class="hub-side-tab-icon">J</span><span class="hub-side-tab-title">The Journey</span></button></div></div>
+        <div class="hub-sidebar-divider"></div>
+        <div class="hub-sidebar-group" data-group="extras"><button class="hub-side-group-head" data-group-toggle="extras"><span class="hub-side-group-chevron">▾</span><span class="hub-side-group-label">Extras</span></button><div class="hub-sidebar-group-body"><a class="hub-side-tab hub-side-tab-external" href="extras.html#guides"><span class="hub-side-tab-icon">G</span><span class="hub-side-tab-title">Guides</span></a><a class="hub-side-tab hub-side-tab-external" href="extras.html#bites"><span class="hub-side-tab-icon">B</span><span class="hub-side-tab-title">Bites</span></a><a class="hub-side-tab hub-side-tab-external" href="extras.html#nibbles"><span class="hub-side-tab-icon">N</span><span class="hub-side-tab-title">Nibbles</span></a></div></div>
   </aside>
 
   <main class="hub-main">
@@ -1015,6 +1020,7 @@ function showSection(id, opts) {
 }
 document.querySelectorAll('.hub-side-tab').forEach(function(tab) {
   tab.addEventListener('click', function(e) {
+    if (!tab.dataset.target) return;  /* external anchor (Completed / Extras) — let the browser navigate */
     e.preventDefault();
     showSection(tab.dataset.target);
   });

@@ -1,0 +1,176 @@
+SESSION INFORMATION
+===================
+Session Number: 39
+Topic: Hardware Acceleration — NP, CP, SP & SoC
+Date: July 2026
+Certification: Fortinet NSE7 Enterprise Firewall 7.6
+
+---
+
+STORY PROGRESS
+==============
+Setting: Vaultline Financial — a mid-sized investment firm running a FortiGate 900G at their primary data centre.
+
+The session opened at 2:47 AM with a call from Marcus, the NOC engineer on overnight shift. The trading floor reported latency spikes from under 1ms to 8–12ms. Firewall CPU was sitting at 94%. A "quick security improvement" had been pushed to the trading VLAN firewall policy shortly before the incident.
+
+Through structured investigation the student identified that a proxy-based security profile had been added to a previously flow-based policy, forcing all trading VLAN sessions off the NP7 fast path and onto the CPU slow path. The immediate fix was to remove the proxy-based profiles and return the policy to flow-based inspection. The CPU dropped immediately and latency recovered.
+
+The longer-term engineering solution identified was to split the trading VLAN policy into two: one flow-based policy for high-volume machine-to-machine market data feeds, and one proxy-based policy for user workstation traffic where deeper inspection is genuinely needed.
+
+A junior engineer scenario was introduced — someone who disabled NTurbo globally claiming it would "improve security." The student correctly identified this as flawed reasoning: NTurbo is a transport optimisation, not a security feature. Disabling it never changes what the IPS engine inspects — only how expensively packets reach it.
+
+Outstanding: The security team at Vaultline still wants deeper inspection on the trading VLAN. The split-policy solution has been proposed but not yet implemented. This is a natural continuation point.
+
+Characters: Marcus (NOC overnight engineer), unnamed senior manager who questioned the rollback decision.
+
+---
+
+CONCEPTS LEARNED
+================
+
+1. Why Hardware Acceleration Exists
+The CPU cannot sustainably handle every packet in a high-throughput enterprise environment. Fortinet built purpose-built silicon (SPU — Security Processing Unit) to offload specific tasks from the CPU. This is the same principle as switch ASICs — dedicated hardware for dedicated functions.
+
+2. The Three Processor Types (High-End)
+- NP7 (Network Processor): Works at the interface level. Handles session forwarding, NAT, IPsec encryption/decryption, ACL, HPE, and IP integrity checking. Supports up to 12 million sessions. Once the session key is installed, subsequent packets bypass the CPU entirely.
+- CP9/CP10 (Content Processor): Acts as a coprocessor to the CPU. Handles pattern matching for flow-based UTM (via IPSA), SSL/TLS encryption and decryption for deep inspection, and IPsec Diffie-Hellman key exchange. Works in both flow and proxy modes.
+- CPU: Orchestrates everything. Mandatory for proxy-based inspection, session helpers, and software tunnel interfaces.
+
+3. NTurbo
+NTurbo is a dedicated driver that bridges the NP7 and the IPS engine when flow-based security profiles are active. Without NTurbo, adding any security profile would force the entire session to the CPU. NTurbo creates a special data path: NP7 → NTurbo driver → IPS engine → NTurbo driver → NP7. The CPU orchestrates but does not bottleneck forwarding. NTurbo is a transport optimisation — not a security feature.
+
+4. IPSA (IPS Acceleration)
+When packets reach the IPS engine via NTurbo, IPSA offloads pattern matching to the CP9. Advanced mode (default on most devices) offloads more pattern matching types than basic mode. Devices with only one CP8 are limited to basic mode.
+
+5. Fast Path vs Slow Path
+- Fast path: Traffic handled by NP7, bypassing the CPU after session establishment.
+- Slow path: Traffic handled by the CPU. Always used for the first TCP handshake (3-way) or first UDP packet. Also used whenever offload conditions are not met.
+
+6. Four Slow Path Triggers — NP7 Will Not Offload When:
+1. Proxy-based security profiles are on the policy
+2. The session requires a FortiOS session helper (FTP, SIP, PPTP etc)
+3. Tunnelled interfaces are involved — SSL VPN, GRE (IPsec VPN is the exception)
+4. NP acceleration is explicitly disabled on the policy (np-acceleration disable)
+
+7. The Mixed Policy Rule
+A firewall policy containing both flow-based and proxy-based profiles never offloads to the NP7. It is all or nothing. The proxy requirement always wins. Some features are inherently proxy-only (web category quota, certain DLP options, VoIP inspection) and silently force proxy mode even on an otherwise flow-based policy.
+
+8. SP5 and SoC4
+For entry-level and mid-range devices, Fortinet integrates NP and CP functions onto a single chip — the SP5 (also called SoC5) and SoC4. This reduces cost, size, and power consumption. The trade-off is lower throughput and session capacity compared to dedicated NP7 + CP9. SoC4 devices are designed for branch deployments and should never be positioned as hubs in large hub-and-spoke topologies.
+
+9. Session Helpers
+Protocols like FTP open secondary dynamic connections. The port for the secondary connection is negotiated inside the application payload of the control connection. FortiOS uses session helpers — software running on the CPU — to track this negotiation and dynamically open pinholes. Any session requiring a helper cannot be offloaded to the NP7.
+
+---
+
+MY UNDERSTANDING
+================
+
+Strong Areas:
+- Immediately connected the CPU spike to the policy change — good causal instinct
+- Correctly identified that the CPU should not be handling all data centre traffic
+- Independently arrived at the split-policy solution for balancing performance and security
+- Correctly reasoned that disabling NTurbo removes the bridge without improving inspection
+- Correctly positioned SP5/SoC4 as branch devices unsuitable for hub roles
+
+Initial Struggles:
+- Initially confused the direction of the inspection mode change (flow → proxy vs proxy → flow)
+- Was unsure of the four slow-path triggers initially — needed guided discovery
+- Did not know NTurbo by name — arrived at the concept through reasoning before the name was revealed
+
+Misconceptions Corrected:
+- Flow-based inspection does NOT only read headers. It inspects full Layer 7 payload in real time. The difference from proxy is timing, not depth.
+- Integrating NP and CP onto one chip (SP5) does not eliminate the need for a bridge to the IPS engine — the IPS engine is still software on the CPU.
+
+Moments of Strong Reasoning:
+- Correctly predicted that Fortinet would build different chips for different jobs
+- Correctly identified session helpers as a slow-path trigger through the FTP example
+- Correctly challenged the junior engineer's reasoning about NTurbo and security
+
+---
+
+TROUBLESHOOTING EXPERIENCE
+==========================
+
+Fault Scenario: Vaultline Financial — Trading floor latency spike, CPU at 94%
+
+Troubleshooting Process:
+1. Connected CPU spike to recent policy change — causal reasoning
+2. Formed hypothesis: proxy-based inspection forced sessions to slow path
+3. Identified verification command: diagnose sys session list — look for no_offload and no_ofld_reason fields
+4. Confirmed hypothesis before touching configuration
+5. Identified rollback as immediate fix — removed proxy-based profiles
+6. Proposed split-policy architecture as sustainable long-term solution
+
+Key Lessons:
+- Always investigate before changing. Confirm the hypothesis with CLI evidence first.
+- diagnose sys session list is the primary tool for confirming NP7 offload status
+- npu info: offload=9/9 confirms NP7 offloading (code 9 = NP7)
+- no_ofld_reason: disabled-by-policy confirms explicit policy override
+- Always re-enable np-acceleration after troubleshooting packet captures
+
+Mistakes to Avoid:
+- Never disable NTurbo globally in production — even temporarily without a plan to re-enable
+- Never assume a mixed policy splits work between NP7 and CPU — it doesn't
+- Never position SoC4 devices as VPN hubs in large topologies
+
+---
+
+CONNECTIONS
+===========
+
+Previous Sessions:
+- Builds on general FortiGate policy architecture understanding
+- Connects to IPsec VPN concepts — NP7 can offload IPsec but not SSL VPN
+- Connects to inspection mode concepts — flow vs proxy is a recurring design decision
+
+Future Topics:
+- SD-WAN policy design will need to account for hardware offload implications
+- HA clustering and session synchronisation interact with NP offloading
+- FortiGate chassis and SP/ISF architecture for high-end platforms
+
+---
+
+IMPORTANT TAKEAWAYS
+===================
+
+1. The difference between flow-based and proxy-based is TIMING, not depth. Both read Layer 7. Only proxy buffers the complete stream before deciding.
+
+2. Any proxy-based profile on a policy kills NP7 offloading for the ENTIRE session — not just the proxy portion. All or nothing.
+
+3. NTurbo is a transport optimisation, not a security feature. Disabling it never improves what gets inspected.
+
+4. Four slow-path triggers: proxy profiles, session helpers, software tunnels (not IPsec), explicit disable.
+
+5. IPsec VPN is the one tunnel exception — NP7 has native crypto engines for it.
+
+6. SP5/SoC4 = integrated NP+CP for branch. Lower throughput. Never use as a hub.
+
+7. diagnose sys session list is your primary offload verification tool.
+
+---
+
+FUTURE SESSION NOTES
+====================
+
+Concepts Requiring Reinforcement:
+- SP5/SoC4 architecture — covered briefly, worth a dedicated scenario
+- IPSA modes (basic vs advanced) — introduced but not deeply tested
+- NP direct architecture and ultralow latency interfaces on NP7 — mentioned but not explored
+- IPsec npu_flag values (00/01/02/03/20) — introduced from study guide, not yet tested in scenario
+
+Spaced Repetition Recommendations:
+- In 2 sessions: revisit the four slow-path triggers with a policy prediction exercise
+- In 3 sessions: test mixed policy scenarios with increasingly subtle combinations
+- In 5 sessions: full hardware acceleration troubleshooting scenario from scratch
+
+Story Elements to Continue:
+- Vaultline's security team still wants deeper inspection on trading VLAN
+- The split-policy solution needs to be implemented and validated
+- Marcus as a recurring character — good vehicle for troubleshooting scenarios
+- The "junior engineer" character could return with another well-intentioned mistake
+
+Natural Opportunities for Future NSE7 Topics:
+- HA and session failover — does NP offload survive an HA failover?
+- SD-WAN — how does hardware acceleration interact with SD-WAN steering decisions?
+- FortiManager policy deployment — how do you audit offload configuration at scale?

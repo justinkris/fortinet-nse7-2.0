@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Extras 01 Bite — FortiOS CLI Quick Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#faf5e9;--surface:#fffdf5;--surface-2:#f5eed9;--border:#d4c89a;--border-dim:#ebe1c2;--text:#0a1838;--text-soft:#1e2f5a;--text-muted:#6b7794;--blue:#1e40af;--blue-light:#eff4fc;--blue-border:#b8cce8;--ink-dark:#0d1a3a;--ink-accent:#9bb8e6;--green:#1a7c4a;--green-light:#dff0e1;--green-border:#a7d8b0;--amber:#b45309;--amber-light:#fcf2c3;--amber-border:#f3d68a;--red:#b91c1c;--red-light:#fee2e2;--red-border:#fca5a5;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:36px 48px 28px;background:var(--ink-dark);}
+  .eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:4px 12px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:10px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:12px;}
+  header h1{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:#fbf7ec;line-height:1.1;}
+  header h1 em{font-style:italic;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.5);margin-top:8px;}
+  .content{max-width:900px;margin:0 auto;padding:32px 48px 56px;}
+  h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--text);margin:28px 0 12px;padding-left:12px;border-left:3px solid var(--blue);}
+  h2 em{font-style:italic;color:var(--blue);}
+  p{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.7;color:var(--text-soft);margin-bottom:12px;}
+  p strong{color:var(--text);}
+  .data-table{width:100%;border-collapse:collapse;margin:12px 0 20px;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:9px 12px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;vertical-align:top;}
+  .data-table tr:hover td{background:rgba(30,64,175,0.04);}
+  .data-table td:first-child{font-family:'SF Mono','Fira Code',monospace;font-size:12px;color:var(--text);font-weight:700;white-space:nowrap;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 8px 8px 0;padding:12px 16px;margin:12px 0;font-size:15px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .callout-red{border-left-color:var(--red-border);background:var(--red-light);}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .code-block{background:var(--ink-dark);border-radius:8px;padding:0;margin:12px 0;overflow:hidden;}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:7px 14px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:14px;}
+  .code-block code{font-family:'SF Mono','Fira Code',monospace;font-size:12px;line-height:1.65;color:#e8efff;}
+  .mental-note{border-radius:8px;padding:12px 16px;margin:12px 0;display:flex;gap:10px;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:3px;text-transform:uppercase;}
+  .mental-note-text{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;line-height:1.5;color:var(--text);}
+  .self-test{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-top:24px;}
+  .self-test-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px;}
+  .self-test ol{padding-left:20px;}
+  .self-test li{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);margin-bottom:8px;}
+  footer{font-family:'Outfit',sans-serif;font-size:10px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:16px 48px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:600px){header{padding:24px 20px;}.content{padding:20px 20px 40px;}header h1{font-size:26px;}}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">STUDY BITE · EXTRAS 01</div>
+  <h1>FortiOS CLI — <em>Quick Reference</em></h1>
+  <p>Reactivate your mental model in 5–10 minutes</p>
+</header>
+
+<div class="content">
+
+  <h2>The <em>One-Paragraph Overview</em></h2>
+  <p>FortiOS organises its CLI into five root commands, each with a fundamentally different purpose. <strong>config</strong> is the only command that writes to the configuration database. <strong>show</strong> reads stored configuration but only displays settings that differ from factory defaults — use <strong>show full-configuration</strong> to see everything. <strong>get</strong> reads real-time operational state as clean, administrator-friendly summaries. <strong>execute</strong> performs immediate actions — some irreversible. <strong>diagnose</strong> exposes raw internal engine state and runs active tests, going far deeper than get. Knowing which root command to reach for — and why — is what lets you navigate the CLI by reasoning rather than memory.</p>
+
+  <h2>The <em>Five Root Commands</em></h2>
+  <table class="data-table">
+    <thead><tr><th>Command</th><th>Purpose</th><th>Writes?</th><th>Key insight</th></tr></thead>
+    <tbody>
+      <tr><td>config</td><td>Write configuration to database</td><td>Yes</td><td>Only root command that changes stored config</td></tr>
+      <tr><td>show</td><td>Read explicit configuration only</td><td>No</td><td>Silent on defaults — use show full-configuration</td></tr>
+      <tr><td>get</td><td>Read real-time operational state</td><td>No</td><td>Clean summaries — dashboard view</td></tr>
+      <tr><td>execute</td><td>Perform immediate action</td><td>No*</td><td>Can be irreversible — think before running</td></tr>
+      <tr><td>diagnose</td><td>Raw engine internals + active tests</td><td>No</td><td>Reaches inside running engines — far deeper than get</td></tr>
+    </tbody>
+  </table>
+
+  <div class="mental-note">
+    <div>
+      <div class="mental-note-label">Primary Mental Model</div>
+      <div class="mental-note-text">config = write · show = read config · get = read state · execute = do something · diagnose = look inside the engine</div>
+    </div>
+  </div>
+
+  <h2>The Two <em>Critical Distinctions</em></h2>
+
+  <div class="callout callout-amber">
+    <strong>show vs show full-configuration:</strong> A setting at its default value is invisible to <code>show</code>. Engineers have missed real bugs because they trusted <code>show</code> and the default culprit never appeared. When in doubt, use <code>show full-configuration</code> — or search it with <code>show full-configuration | grep -f &lt;term&gt;</code>.
+  </div>
+
+  <div class="callout callout-amber">
+    <strong>The execute ping trap:</strong> A successful ping FROM FortiGate only tests FortiGate's own traffic (local-out path). User traffic THROUGH FortiGate hits security policies, NAT, and UTM inspection. These are entirely separate paths. Successful ping ≠ users can browse.
+  </div>
+
+  <h2>The Two <em>Must-Know Diagnose Commands</em></h2>
+
+  <div class="code-block">
+    <div class="code-label">Packet Sniffer</div>
+    <pre><code>diagnose sniffer packet &lt;interface&gt; '&lt;BPF filter&gt;' &lt;verbosity&gt; &lt;count&gt;
+
+# Most common usage:
+diagnose sniffer packet any 'host 192.168.1.10 and port 80' 4 100
+
+# Verbosity: 1=headers · 2=+direction · 3=+ethernet · 4=+hex · 6=+ASCII</code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-label">Debug Flow — Always Follow This Sequence</div>
+    <pre><code>diagnose debug flow filter addr &lt;ip&gt;
+diagnose debug flow show console enable
+diagnose debug enable
+diagnose debug flow trace start 100
+# ... reproduce the issue ...
+diagnose debug flow trace stop
+diagnose debug disable          ← NEVER forget this</code></pre>
+  </div>
+
+  <div class="callout callout-red">
+    <strong>Rule #1:</strong> Always run <code>diagnose debug disable</code> when finished. Debug output consumes CPU and memory on production firewalls. No exceptions.
+  </div>
+
+  <h2>The Golden <em>Troubleshooting Sequence</em></h2>
+  <table class="data-table">
+    <thead><tr><th>Step</th><th>Command</th><th>What you're confirming</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>get system arp</td><td>Layer 2 reachability to gateway</td></tr>
+      <tr><td>2</td><td>get system interface</td><td>Interface UP, correct IP assigned</td></tr>
+      <tr><td>3</td><td>get router info routing-table all</td><td>Route present in table</td></tr>
+      <tr><td>4</td><td>execute ping-options source + execute ping</td><td>FortiGate can reach destination (set source first!)</td></tr>
+      <tr><td>5</td><td>diagnose sniffer packet any '...' 4 100</td><td>User traffic is actually arriving</td></tr>
+      <tr><td>6</td><td>diagnose debug flow</td><td>What FortiGate decides to do with it</td></tr>
+      <tr><td>7</td><td>diagnose sys session list</td><td>Session created? Any unusual flags?</td></tr>
+      <tr><td>8</td><td>diagnose debug disable</td><td>Always. Every time.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Common <em>Mistakes</em></h2>
+  <table class="data-table">
+    <thead><tr><th>Mistake</th><th>Why it's wrong</th></tr></thead>
+    <tbody>
+      <tr><td>Trusting show for all config</td><td>Default settings are invisible — use show full-configuration</td></tr>
+      <tr><td>Forgetting diagnose debug disable</td><td>CPU/memory impact on production firewall</td></tr>
+      <tr><td>Pinging from FortiGate to prove user traffic works</td><td>Different path — FortiGate's own traffic bypasses security policies</td></tr>
+      <tr><td>Sniffer on a single interface</td><td>Miss the egress path — use "any" to see both sides</td></tr>
+      <tr><td>execute ping without setting source</td><td>FortiGate chooses source — may not represent user traffic path</td></tr>
+    </tbody>
+  </table>
+
+  <div class="self-test">
+    <div class="self-test-label">Self-Test — Answer Without Looking Up</div>
+    <ol>
+      <li>Which command shows you settings that are still at factory default?</li>
+      <li>Why does the session table live under <code>diagnose</code> rather than <code>get</code>?</li>
+      <li>What verbosity level gives you hex payload in the packet sniffer?</li>
+      <li>You see packets arriving on the sniffer but never leaving. Which tool do you reach for next?</li>
+      <li>What are the two commands you must always run at the end of a debug flow session?</li>
+    </ol>
+  </div>
+
+</div>
+<footer>NSE7 EF 7.6 · <span>Extras 01 Bite</span> · FortiOS CLI Quick Reference</footer>
+</body>
+</html>
