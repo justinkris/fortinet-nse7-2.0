@@ -71,7 +71,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-01-nse7-story-exam-map/hero.png
+sessions/session-01-nse7-story-exam-map/images/hero.png
 
 An illustrated exam-blueprint wall poster pinned to a corkboard, drawn in storybook style. Five vertical lanes labelled 'System Config', 'Central Mgmt', 'Security Profiles', 'Routing', 'VPN'. Inside each lane: small icons of the topics it covers (HA, VLAN, VDOM, FortiManager, FortiAnalyzer, OSPF, BGP, IPsec, ADVPN, IPS, web filter). Above the poster a small clock shows 70:00 and a badge reads '30-40 questions'.
 
@@ -79,7 +79,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-02-fortios-architecture/hero.png
+sessions/session-02-fortios-architecture/images/hero.png
 
 A cutaway of a FortiGate appliance showing FortiOS internals. Kernel layer at the bottom with the session table drawn as a large database icon. User-space daemons (ipsmonitor, scanunitd, urlfilter, sslvpnd) drawn as small workers above the kernel. A packet enters the kernel, gets routed; one variant flows fully in kernel (flow-mode arrow), another is diverted up to a proxy daemon (proxy arrow) before returning to kernel.
 
@@ -87,7 +87,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-03-enterprise-deployment-patterns/hero.png
+sessions/session-03-enterprise-deployment-patterns/images/hero.png
 
 Four quadrants showing a FortiGate in each canonical role. Top-left: a perimeter HA cluster at the WAN edge. Top-right: an ISFW inserted between two internal LAN segments. Bottom-left: a data-centre stack in a server room rack with high-throughput interfaces. Bottom-right: a small branch FortiGate with SD-WAN links to two ISPs.
 
@@ -95,7 +95,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-04-use-case-scenarios/hero.png
+sessions/session-04-use-case-scenarios/images/hero.png
 
 Five enterprise scenario cards laid out like puzzle pieces — Department Segmentation, East-West Protection, Branch Connectivity, Centralised Logging, Compliance. Each card paired with the Fortinet device icon that solves it (FortiGate VDOMs, ISFW FortiGate, FortiGate ADVPN, FortiAnalyzer, FortiManager).
 
@@ -103,7 +103,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-05-lab-mindset-topology/hero.png
+sessions/session-05-lab-mindset-topology/images/hero.png
 
 A wide enterprise reference topology. HQ FortiGate HA cluster at the centre, two branch FortiGates at the sides, ISP cloud at the top, FortiManager and FortiAnalyzer pinned below. Each device labelled with hostname and WAN IP. A small troubleshooting toolbox sits on a desk in the foreground listing 'diag sniffer / debug flow / diag sys session'.
 
@@ -111,7 +111,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-06-central-management-why/hero.png
+sessions/session-06-central-management-why/images/hero.png
 
 Two panels. Left: an exhausted admin in front of 12 browser tabs, each a different FortiGate GUI, with red 'drift' markers between tabs. Right: the same admin in front of one FortiManager console with one tab, all 12 FortiGates listed neatly inside, a green 'in sync' badge across the top.
 
@@ -119,7 +119,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-07-fortimanager-adoms-workspace/hero.png
+sessions/session-07-fortimanager-adoms-workspace/images/hero.png
 
 FortiManager console in the centre with two ADOM 'rooms' drawn as labelled boxes: 'HQ-ADOM' (containing 4 FortiGate icons) and 'Branch-ADOM' (containing 8 FortiGate icons). A small 'workspace lock' icon hangs over HQ-ADOM with one engineer's badge attached to it. A second engineer's badge queues outside the locked room.
 
@@ -127,7 +127,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-08-policy-packages-installation/hero.png
+sessions/session-08-policy-packages-installation/images/hero.png
 
 A FortiManager Policy Package shown as a stack of layered cards (Address Objects → Service Objects → Firewall Policies). On the right, an 'install preview' panel shows green '+' lines for new objects, amber '~' lines for modifications, and one red '!' conflict highlighted with a magnifier.
 
@@ -135,7 +135,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-09-fortianalyzer-logging/hero.png
+sessions/session-09-fortianalyzer-logging/images/hero.png
 
 A FortiGate on the left streaming a thick line of logs into a FortiAnalyzer on the right. Inside the FortiAnalyzer, two storage compartments labelled 'Analytics' (small SSD icon) and 'Archive' (large spinning-disk icon) with a 'rotation' arrow between them. A small report PDF icon pops out the top of the FortiAnalyzer.
 
@@ -143,7 +143,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-10-soc-view-reports/hero.png
+sessions/session-10-soc-view-reports/images/hero.png
 
 FortiAnalyzer dashboard with three tiles on top — 'Threats' (red), 'Users at risk' (amber), 'Compromised hosts' (terracotta). Below them, a timeline of events with one incident clicked open showing related logs in a side panel. A small 'export to SIEM' arrow leaves the screen.
 
@@ -151,7 +151,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-11-vlans-on-fortigate/hero.png
+sessions/session-11-vlans-on-fortigate/images/hero.png
 
 A FortiGate with port5 highlighted. Above it, three VLAN sub-interface 'badges' (VLAN 10 red, VLAN 20 blue, VLAN 30 yellow) each going to a different switch access port. A small 'firewall policy' icon between each pair of VLANs shows that inter-VLAN traffic must traverse a policy.
 
@@ -159,7 +159,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-12-vdoms-multi-tenant/hero.png
+sessions/session-12-vdoms-multi-tenant/images/hero.png
 
 A FortiGate chassis sliced vertically into three labelled VDOMs: 'Mgmt', 'Tenant-A', 'Tenant-B'. Each VDOM has its own miniature CLI prompt and its own routing table inset. A bold 'global' band runs across the top of all three VDOMs with shared system config icons (interfaces, admin).
 
@@ -167,7 +167,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-13-nat-vs-transparent-vdom/hero.png
+sessions/session-13-nat-vs-transparent-vdom/images/hero.png
 
 Left half: a NAT-mode VDOM acting as a router between two subnets, with a NAT-translation balloon over a flowing packet. Right half: a Transparent-mode VDOM inserted between a core switch and an upstream router; both endpoints remain on the same subnet, and the FortiGate is shown as 'invisible' (dashed outline) inline.
 
@@ -175,7 +175,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-14-inter-vdom-links/hero.png
+sessions/session-14-inter-vdom-links/images/hero.png
 
 Three VDOMs inside one FortiGate chassis. Two short 'patch cables' (inter-VDOM links) drawn between Mgmt↔Tenant-A and Mgmt↔Tenant-B. No direct link between A and B (a red 'X' between them). A small DNS server icon sits inside Mgmt, accessible by both tenants through the links.
 
@@ -183,7 +183,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-15-ha-problem/hero.png
+sessions/session-15-ha-problem/images/hero.png
 
 Three stacked HA scenarios. Top: FGCP A-P pair with heartbeat cable and a 'stateful' badge. Middle: FGSP pair with independent control planes and a shared session-table icon. Bottom: VRRP pair sharing one virtual IP, with priority badges. Each labelled with its primary use case in a small caption.
 
@@ -191,7 +191,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-16-fgcp-active-passive/hero.png
+sessions/session-16-fgcp-active-passive/images/hero.png
 
 Two FortiGates side-by-side labelled 'Primary (priority 200)' and 'Secondary (priority 150)'. A heartbeat cable bundle between them shows HA1 and HA2 links. On the LAN side, a shared 'virtual MAC' badge floats above both devices. The primary's monitored interface has a small 'eye' icon.
 
@@ -199,7 +199,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-17-fgcp-active-active/hero.png
+sessions/session-17-fgcp-active-active/images/hero.png
 
 FGCP A-A cluster with two FortiGates. Inbound traffic arrives at the primary; flows are then split: HTTP proxy sessions arc over to the secondary (blue arrow), plain TCP sessions stay on the primary (cream arrow). A balance scale labelled 'UTM only' sits between them.
 
@@ -207,7 +207,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-18-fgsp-session-sync/hero.png
+sessions/session-18-fgsp-session-sync/images/hero.png
 
 Two FortiGates in different sites, each with its own FortiManager icon (separate management planes), connected by a 'session-sync' line. An external load balancer at top distributes incoming traffic to both. A shared session database icon between them shows synchronised flow state.
 
@@ -215,7 +215,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-19-vrrp-and-failover/hero.png
+sessions/session-19-vrrp-and-failover/images/hero.png
 
 Three FortiGates running VRRP, sharing one virtual IP. One device wears a 'priority 200' badge; the others wear 'priority 100' badges. A clock at top shows 1-second advert intervals. A small 'session pickup' toggle drawn as a labelled switch in the ON position sits to the side.
 
@@ -223,7 +223,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-20-why-dynamic-routing-on-firewall/hero.png
+sessions/session-20-why-dynamic-routing-on-firewall/images/hero.png
 
 A FortiGate at centre with two arrows leaving it. One labelled 'OSPF' enters an enterprise cloud (HQ + branches). The other labelled 'BGP' enters an ISP cloud upstream. A small 'Administrative Distance' inset table shows Static=10, OSPF=110, eBGP=20, iBGP=200.
 
@@ -231,7 +231,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-21-ospf-areas-lsas-neighbors/hero.png
+sessions/session-21-ospf-areas-lsas-neighbors/images/hero.png
 
 Two FortiGates exchanging OSPF Hellos across a 'broadcast' link. A state-machine ladder below them: Down → Init → 2-Way → ExStart → Exchange → Loading → Full. Behind the FortiGates, an Area 0 cloud and an Area 1 cloud connected only via an ABR-FortiGate in the middle.
 
@@ -239,7 +239,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-22-ospf-auth-summarization-stub/hero.png
+sessions/session-22-ospf-auth-summarization-stub/images/hero.png
 
 A FortiGate ABR at centre. To the left, Area 0 with a small 'shield' (auth) icon hovering over the link. To the right, a totally stubby Area 2 (small label 'stub') receiving only a default route. An 'area range 10.10.0.0/16' annotation summarises many internal prefixes into one LSA crossing the ABR.
 
@@ -247,7 +247,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-23-bgp-fundamentals/hero.png
+sessions/session-23-bgp-fundamentals/images/hero.png
 
 A FortiGate labelled 'AS 65010' peering eBGP with an ISP labelled 'AS 65001'. The same prefix 198.51.100.0/24 arrives from two ISPs with different AS-paths shown as chains of beads. A 'best-path' funnel ranks them and only one survives into the routing table inset on the right.
 
@@ -255,7 +255,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-24-ibgp-ebgp-route-reflectors/hero.png
+sessions/session-24-ibgp-ebgp-route-reflectors/images/hero.png
 
 Left: five iBGP routers in a tangled full mesh (ten sessions, messy lines). Right: the same five routers around a central RR with only five sessions (clean star). A small 'originator-ID' tag floats over one reflected route.
 
@@ -263,7 +263,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-25-route-maps-prefix-lists/hero.png
+sessions/session-25-route-maps-prefix-lists/images/hero.png
 
 An illustrated horizontal conveyor-belt scene. Little prefix parcels enter on the left and flow right through a stack of route-map clauses: 'set local-pref 200' / 'match community 65010:100' / 'deny' / 'permit' / 'set as-path prepend'. Some prefixes pop out the right side; others fall through small trapdoors below.
 
@@ -271,7 +271,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-26-redistribution-and-troubleshooting/hero.png
+sessions/session-26-redistribution-and-troubleshooting/images/hero.png
 
 An OSPF cloud and a BGP cloud connected by a single FortiGate in the middle. Arrows show 'redistribute' going in both directions through the FortiGate. A small 'tag=100' label sits on routes leaving OSPF→BGP; a matching 'match tag 100 → deny' filter blocks those routes from re-entering OSPF, preventing a loop.
 
@@ -279,7 +279,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-27-ssl-ssh-deep-inspection/hero.png
+sessions/session-27-ssl-ssh-deep-inspection/images/hero.png
 
 A user laptop connecting to https://gmail.com via a FortiGate. The TLS connection is 'opened' at the FortiGate into two legs — one to the user (signed by enterprise CA) and one to gmail (original cert chain). A 'CA cert' badge sits on the laptop. A small exemption list on the side lists 'banking.com → bypass'.
 
@@ -287,7 +287,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-28-web-filtering/hero.png
+sessions/session-28-web-filtering/images/hero.png
 
 A FortiGate with a web-filter profile open. A category list shows 'Social Networking → block (red)', 'Streaming → warn (amber)', 'Business → allow (green)'. Three user-role icons below — Staff, Engineering, Marketing — each connecting to a different policy decision branch.
 
@@ -295,7 +295,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-29-application-control-isdb/hero.png
+sessions/session-29-application-control-isdb/images/hero.png
 
 A FortiGate firewall policy with a destination of 'ISDB: Microsoft Office 365' instead of an IP. Adjacent to it, an App-Control profile lists 'Telegram = block'. Traffic on port 443 is sliced into 'Microsoft 365' (allowed-green) and 'Telegram' (blocked-red) by signature recognition.
 
@@ -303,7 +303,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-30-ips-engine-signatures/hero.png
+sessions/session-30-ips-engine-signatures/images/hero.png
 
 Traffic streams entering a FortiGate from the left. Inside, an 'IPS engine' funnel marked with signature rules. One packet carries a malicious payload — a red 'EXPLOIT-CVE-2024-xxxx' alarm fires and the packet is dropped into a trash icon. Other packets continue through the funnel cleanly.
 
@@ -311,7 +311,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-31-profile-performance-tuning/hero.png
+sessions/session-31-profile-performance-tuning/images/hero.png
 
 A FortiGate cutaway with two parallel inspection lanes — top: a flow-based lane (single CPU pass, fast). Bottom: a proxy lane (multiple daemons stacked, slower). A profile picker on the left chooses which lane each policy enters. A throughput meter on the right shows the cost of each choice.
 
@@ -319,7 +319,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-32-ipsec-ikev2-fundamentals/hero.png
+sessions/session-32-ipsec-ikev2-fundamentals/images/hero.png
 
 Two FortiGates at opposite ends of a glass-tube 'tunnel'. Inside the tube, four labelled IKEv2 messages flow back and forth: IKE_SA_INIT, IKE_SA_INIT (resp), IKE_AUTH, IKE_AUTH (resp). The tube itself is shown in two concentric colours marking the Phase 1 outer SA and the Phase 2 (CHILD_SA) inner tunnel.
 
@@ -327,7 +327,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-33-route-based-vs-policy-based-vpn/hero.png
+sessions/session-33-route-based-vs-policy-based-vpn/images/hero.png
 
 Left half: a policy-based VPN — a single firewall policy with action='IPsec' highlighted. Right half: a route-based VPN — an IPsec virtual interface in the interface list, a static route 'to_branch via vpn1', and a normal firewall policy referencing the vpn1 interface. A bold arrow between the panels reads 'why route-based wins'.
 
@@ -335,7 +335,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-34-advpn-concept/hero.png
+sessions/session-34-advpn-concept/images/hero.png
 
 A hub FortiGate at the centre with three spoke FortiGates around it. Permanent IPsec tunnels are thick lines from each spoke to the hub. When Spoke-A wants to reach Spoke-B, a dashed 'shortcut request' flows Spoke-A → Hub → Spoke-B; then a thinner direct shortcut tunnel appears between A and B, bypassing the hub.
 
@@ -343,7 +343,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-35-advpn-shortcut-tunnels/hero.png
+sessions/session-35-advpn-shortcut-tunnels/images/hero.png
 
 A FortiGate hub at the top with a dialog balloon: 'auto-discovery-sender enable'. Three spoke FortiGates below, each labelled 'auto-discovery-receiver enable'. A dashed shortcut tunnel between two of the spokes is annotated 'auto-discovery-shortcuts enable'.
 
@@ -351,7 +351,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-36-dynamic-routing-over-advpn/hero.png
+sessions/session-36-dynamic-routing-over-advpn/images/hero.png
 
 ADVPN topology with one hub (RR-enabled badge) and three spokes. iBGP sessions ride each permanent IPsec tunnel between hub and spoke. When spoke-A learns spoke-B's loopback via the hub, the route's next-hop is preserved as 'B's tunnel IP' (a small 'next-hop-unchanged' badge) so a direct shortcut can form.
 
@@ -359,7 +359,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-37-security-fabric-topology/hero.png
+sessions/session-37-security-fabric-topology/images/hero.png
 
 A Fortinet Security Fabric tree. A 'root' FortiGate at the top branches down to two downstream FortiGates. Lateral lines connect FortiAnalyzer, FortiManager, FortiClient EMS and FortiSandbox into the tree. Small 'authorize' handshake icons on each link show the trust propagation.
 
@@ -367,7 +367,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-38-fabric-connectors-automation/hero.png
+sessions/session-38-fabric-connectors-automation/images/hero.png
 
 An 'automation stitch' shown as a horizontal chain of three links. TRIGGER: 'IPS event, severity=critical'. ACTION 1: 'CLI — execute user-quarantine src 1.2.3.4'. ACTION 2: 'webhook to SIEM'. A small clock '1h' floats over the ban duration.
 
@@ -375,7 +375,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-39-hardware-acceleration/hero.png
+sessions/session-39-hardware-acceleration/images/hero.png
 
 A FortiGate motherboard cutaway with three labelled chips — NP7 (network, large), CP9 (content, medium), SP (security/switch, small). Traffic flows are shown as coloured arrows: simple TCP → NP7 fast path (green), SSL inspected → through CP9 (amber), proxy-mode features → slow CPU path (red). A small 'auto-asic-offload' switch sits on the side.
 
@@ -383,7 +383,7 @@ Detailed hand-drawn storybook illustration with a warm picture-book sensibility 
 
 ============================================================
 
-images/session-40-spu-offload-troubleshooting/hero.png
+sessions/session-40-spu-offload-troubleshooting/images/hero.png
 
 A `diag sys session list` output card displayed prominently. Two highlighted sessions: the top one has 'npu_state=0x00' with a green check 'offloaded'; the bottom one has 'npu_state=0x4001' with an amber warning 'proxy-forced'. Captions to the side tag each session with its cause.
 

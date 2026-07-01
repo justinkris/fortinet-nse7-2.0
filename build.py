@@ -4,13 +4,15 @@ NSE7 Enterprise Firewall 7.6 Socratic Curriculum Generator.
 
 Produces:
   - study-plan.html (hub: 8 phases + roadmap + objective map + journey narrative)
-  - sessions/session-NN-slug.html (40 per-session pages)
+  - sessions/session-NN-slug/index.html (40 per-session pages)
+  - sessions/session-NN-slug/images/ (per-session image folder, holds hero.png)
+  - images/hub/ (shared phase hero images used by the hub page)
   - images/prompts.txt (master image-prompt file)
-  - images/hub/ + images/session-NN-slug/ (folders ready for PNGs)
 
-Source materials (in this folder):
+Source materials (in reference/):
   - Enterprise_Firewall_7.6_Administrator_Study_Guide-Online.pdf  (Fortinet course PDF)
   - NSE7-Exam-Blueprint.pdf                                       (official exam blueprint)
+  - blueprint.txt                                                 (extracted objective list)
 
 Run:  python3 build.py
 """
@@ -1234,7 +1236,12 @@ def html_escape(text: str) -> str:
     return (text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
 
 def session_filename(s: dict) -> str:
-    return f"session-{s['num']:02d}-{s['slug']}.html"
+    """Path from sessions/ (used by hub links)."""
+    return f"session-{s['num']:02d}-{s['slug']}/index.html"
+
+def sibling_session_href(s: dict) -> str:
+    """Path from another session folder (used by prev/next/prereqs)."""
+    return f"../session-{s['num']:02d}-{s['slug']}/index.html"
 
 def session_pagekey(s: dict) -> str:
     return f"nse7-ef-session-{s['num']:02d}-{s['slug']}"
@@ -1254,7 +1261,7 @@ def render_prereqs(nums) -> str:
     by_num = {s["num"]: s for s in SESSIONS}
     for n in nums:
         s = by_num[n]
-        parts.append(f'<a href="{session_filename(s)}">Session {n:02d}: {html_escape(s["title"])}</a>')
+        parts.append(f'<a href="{sibling_session_href(s)}">Session {n:02d}: {html_escape(s["title"])}</a>')
     return ", ".join(parts)
 
 def build_claude_prompt(s: dict) -> str:
@@ -1403,9 +1410,9 @@ SESSION_TEMPLATE = """<!DOCTYPE html>
 <header>
   <div class="header-left">
     <div class="breadcrumb">
-      <a href="../study-plan.html">NSE7 EF 7.6 Curriculum</a>
+      <a href="../../study-plan.html">NSE7 EF 7.6 Curriculum</a>
       <span class="breadcrumb-sep">›</span>
-      <a href="../study-plan.html#phase-{phase_num_pad}">Phase {phase_num} — {phase_title_esc}</a>
+      <a href="../../study-plan.html#phase-{phase_num_pad}">Phase {phase_num} — {phase_title_esc}</a>
       <span class="breadcrumb-sep">›</span>
       Session {num_pad}
     </div>
@@ -1434,12 +1441,12 @@ SESSION_TEMPLATE = """<!DOCTYPE html>
       <div class="section-label">SECTION 01 · STORY PROGRESSION</div>
       <h2>Where We Are in the <em>NSE7 Journey</em></h2>
       <div class="section-img-wrap">
-        <img src="../images/session-{num_pad}-{slug}/hero.png" class="section-img"
+        <img src="images/hero.png" class="section-img"
              alt="{hero_alt_esc}"
              onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');this.parentElement.querySelector('.img-caption').style.display='none';">
         <p class="img-caption">{hero_caption_esc}</p>
         <div class="si-placeholder">
-          <span class="si-filename">images/session-{num_pad}-{slug}/hero.png</span>
+          <span class="si-filename">sessions/session-{num_pad}-{slug}/images/hero.png</span>
           <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
           <div class="prompt-content" hidden>{hero_prompt_esc}</div>
         </div>
@@ -1578,23 +1585,23 @@ def render_session(s: dict):
 
     if prev_s:
         prev_label = f"Session {prev_s['num']:02d}"
-        prev_href = session_filename(prev_s)
+        prev_href = sibling_session_href(prev_s)
         prev_title = html_escape(prev_s["title"])
         prev_disabled = ""
     else:
         prev_label = "the Curriculum Hub"
-        prev_href = "../study-plan.html"
+        prev_href = "../../study-plan.html"
         prev_title = "NSE7 EF 7.6 Curriculum"
         prev_disabled = ""
 
     if next_s:
         next_label = f"Session {next_s['num']:02d}"
-        next_href = session_filename(next_s)
+        next_href = sibling_session_href(next_s)
         next_title = html_escape(next_s["title"])
         next_disabled = ""
     else:
         next_label = "the Curriculum Hub"
-        next_href = "../study-plan.html"
+        next_href = "../../study-plan.html"
         next_title = "Back to Curriculum Hub"
         next_disabled = ""
 
@@ -1632,7 +1639,9 @@ def render_session(s: dict):
         next_disabled=next_disabled,
     )
 
-    (SESSIONS_DIR / session_filename(s)).write_text(html, encoding="utf-8")
+    out_path = SESSIONS_DIR / session_filename(s)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(html, encoding="utf-8")
 
 # ---------------------------------------------------------------------------
 # HUB PAGE (study-plan.html)
@@ -2241,7 +2250,7 @@ def write_prompts_file():
 
     # Per-session hero images
     for s in SESSIONS:
-        blocks.append(f"images/session-{s['num']:02d}-{s['slug']}/hero.png")
+        blocks.append(f"sessions/session-{s['num']:02d}-{s['slug']}/images/hero.png")
         blocks.append("")
         blocks.append(s["image_prompt"] + "\n\n" + STYLE_PREAMBLE)
         blocks.append("")
@@ -2257,7 +2266,7 @@ def write_prompts_file():
 def ensure_image_folders():
     (IMAGES_DIR / "hub").mkdir(parents=True, exist_ok=True)
     for s in SESSIONS:
-        (IMAGES_DIR / f"session-{s['num']:02d}-{s['slug']}").mkdir(parents=True, exist_ok=True)
+        (SESSIONS_DIR / f"session-{s['num']:02d}-{s['slug']}" / "images").mkdir(parents=True, exist_ok=True)
 
 # ---------------------------------------------------------------------------
 # MAIN
@@ -2275,9 +2284,9 @@ def main():
     write_prompts_file()
 
     print(f"Wrote study-plan.html")
-    print(f"Wrote {len(SESSIONS)} session pages to sessions/")
+    print(f"Wrote {len(SESSIONS)} session pages to sessions/session-NN-slug/index.html")
     print(f"Wrote images/prompts.txt with {len(PHASES) + len(SESSIONS)} prompts")
-    print(f"Created {len(SESSIONS) + 1} image subfolders under images/")
+    print(f"Ensured images/hub/ and {len(SESSIONS)} per-session sessions/session-NN-slug/images/ folders")
 
 if __name__ == "__main__":
     main()

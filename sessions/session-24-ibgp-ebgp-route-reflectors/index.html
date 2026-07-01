@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 24 — iBGP vs eBGP &amp; Route Reflectors</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb a:hover{text-decoration:underline;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.005em;}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+  .section-nav{position:sticky;top:0;z-index:90;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px;overflow-x:auto;}
+  .nav-tab{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:12px 18px;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s,border-color 0.15s;}
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+  main{max-width:1200px;margin:0 auto;padding:0;}
+  .main-content{padding:36px 60px 60px 60px;}
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:4px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .callout-prompt{border-left:3px solid var(--blue);background:var(--blue-light);border-radius:0 10px 10px 0;padding:18px 22px;margin:16px 0;}
+  .callout-prompt .prompt-head{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--blue);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .callout-prompt pre{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:13px;line-height:1.6;color:var(--text);white-space:pre-wrap;background:rgba(255,255,255,0.55);border:1px solid var(--blue-border);border-radius:8px;padding:14px 16px;overflow-x:auto;}
+  .copy-btn{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:6px;padding:6px 12px;font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .copy-btn:hover{opacity:0.85;}
+  .copy-btn.copied{background:var(--green);color:#fff;}
+  .img-caption{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}
+  .section-img-wrap{margin:0 0 20px;display:flex;flex-direction:column;align-items:center;}
+  .section-img{width:260px;max-width:100%;border-radius:12px;cursor:zoom-in;transition:width 0.3s ease;border:1px solid var(--border);display:block;}
+  .section-img.si-expanded{width:100%;cursor:zoom-out;border-radius:16px;}
+  .si-placeholder{display:none;width:260px;max-width:100%;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}
+  .si-placeholder.si-show{display:flex;}
+  .si-filename{font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--text-muted);font-family:'SF Mono','Fira Code',monospace;}
+  .prompt-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}
+  .prompt-toggle:hover{color:var(--text);border-color:var(--text);}
+  .prompt-content{margin-top:10px;padding:10px 14px;background:rgba(0,0,0,0.04);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.65;text-align:left;}
+  .prompt-content[hidden]{display:none;}
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+  .meta-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:15px;}
+  .meta-table td{font-family:'Cormorant Garamond',serif;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;vertical-align:top;}
+  .meta-table td:first-child{color:var(--text);font-weight:600;font-family:'Outfit',sans-serif;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;width:180px;background:var(--surface-2);}
+  .page-nav{display:flex;border-top:2px solid var(--border);background:var(--surface);}
+  .page-nav-btn{flex:1;display:flex;flex-direction:column;gap:4px;padding:16px 28px;text-decoration:none;transition:background 0.15s;cursor:pointer;}
+  .page-nav-btn:hover:not(.page-nav-disabled){background:var(--surface-2);}
+  .page-nav-prev{border-right:1px solid var(--border);}
+  .page-nav-next{text-align:right;}
+  .page-nav-disabled{opacity:0.3;pointer-events:none;}
+  .page-nav-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);display:block;text-transform:uppercase;}
+  .page-nav-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;font-style:italic;color:var(--blue);display:block;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:34px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}.section-nav{padding:0 16px;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="breadcrumb">
+      <a href="../../study-plan.html">NSE7 EF 7.6 Curriculum</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="../../study-plan.html#phase-05">Phase 5 — Dynamic Routing: OSPF &amp; BGP</a>
+      <span class="breadcrumb-sep">›</span>
+      Session 24
+    </div>
+    <div class="header-eyebrow"><span class="dot-live"></span> Socratic Curriculum · NSE7 Enterprise Firewall 7.6</div>
+    <h1>Session <em>iBGP vs eBGP &amp; Route Reflectors</em></h1>
+    <p>Inside an AS, the BGP rules change.</p>
+  </div>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">Session 24 of 40 · <em>Dynamic Routing: OSPF &amp; BGP</em></div>
+  <p class="motivation-sub">25-30 minutes · This session naturally follows Session 23 and prepares you for Session 25.</p>
+</div>
+
+<nav class="section-nav" id="section-nav">
+  <a class="nav-tab active" href="#section-story">Story</a>
+  <a class="nav-tab" href="#section-why">Why &amp; Key Concepts</a>
+  <a class="nav-tab" href="#section-prompt">Objectives &amp; Prompt</a>
+</nav>
+
+<main>
+  <div class="main-content">
+
+    <!-- SECTION 1: STORY -->
+    <div class="section-block" id="section-story">
+      <div class="section-label">SECTION 01 · STORY PROGRESSION</div>
+      <h2>Where We Are in the <em>NSE7 Journey</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/hero.png" class="section-img"
+             alt="Illustration for Session 24 — iBGP vs eBGP &amp; Route Reflectors"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');this.parentElement.querySelector('.img-caption').style.display='none';">
+        <p class="img-caption">Left: five iBGP routers in a tangled full mesh (ten sessions, messy lines).</p>
+        <div class="si-placeholder">
+          <span class="si-filename">sessions/session-24-ibgp-ebgp-route-reflectors/images/hero.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Left: five iBGP routers in a tangled full mesh (ten sessions, messy lines). Right: the same five routers around a central RR with only five sessions (clean star). A small 'originator-ID' tag floats over one reflected route.
+
+Detailed hand-drawn storybook illustration with a warm picture-book sensibility — soft painterly shading, gentle watercolor washes layered over confident pencil or ink outlines, a subtle paper-grain texture. Friendly inviting palette: soft cream background, muted blues, Fortinet red accents, sage green, mustard yellow. Not flat vector, not photorealism, not 3D rendering, not anime — think a tender, slightly whimsical children's-book illustration that still reads as professional and educational. Render FortiGate, FortiManager and FortiAnalyzer as friendly, lightly anthropomorphised 1U rackmount appliances (personality shown through posture or small expressive details rather than cartoon faces), placed inside richly drawn scenes — server rooms with cabling and ceiling tiles, branch offices with desks and windows, campuses with people walking by, data centres with cool blue lighting. The setting should feel like a real place: props, background characters, lighting, depth. Keep the concept readable at a glance through composition and colour hierarchy. Hand-drawn flow lines and arrows show direction of traffic or policy. Add small sparing labels in a hand-lettered style only where they truly aid understanding (interface names, VDOM names, IP ranges, route flags, IPsec phase numbers, VLAN IDs, ADOM names, session counts). Beautiful and detailed, but never busy — every element earns its place.</div>
+        </div>
+      </div>
+      <p>Inside an AS, the BGP rules change. The full-mesh requirement surfaces and immediately becomes a scaling problem we solve with route reflectors.</p>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">Mental Note</div>
+          <div class="mental-note-block-text">Builds on Session 23. Sets up Session 25. Every session is one link in a single continuous story.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: WHY & KEY CONCEPTS -->
+    <div class="section-block" id="section-why">
+      <div class="section-label">SECTION 02 · WHY THIS SESSION EXISTS</div>
+      <h2>The Problem We're <em>Solving Today</em></h2>
+      <p>Route reflectors are a top NSE7 BGP topic because they invert default iBGP behaviour. Knowing where the RR fits into a FortiGate-as-edge design is essential.</p>
+
+      <div class="callout">
+        <strong>Session goal:</strong> Convert an N-router iBGP full mesh into a single-RR design and explain how the RR avoids creating loops.
+      </div>
+
+      <h2 style="margin-top:32px;">Key <em>Concepts</em></h2>
+      <ul>
+      <li>iBGP full-mesh rule and why it exists</li>
+      <li>Route reflector (RR) concept and benefits</li>
+      <li>Originator-ID and Cluster-list loop prevention</li>
+      <li>FortiGate as iBGP RR or as RR-client</li>
+      <li>Confederations as the other answer (briefly)</li>
+      </ul>
+    </div>
+
+    <!-- SECTION 3: PROMPT & OBJECTIVES -->
+    <div class="section-block" id="section-prompt">
+      <div class="section-label">SECTION 03 · OBJECTIVES &amp; CLAUDE SESSION PROMPT</div>
+      <h2>Ready to <em>Begin the Session</em></h2>
+
+      <table class="meta-table">
+        <tr><td>Official NSE7 EF Blueprint Objectives</td><td><ul style="padding-left:18px;margin:0;">
+      <li><strong>4.2</strong></li>
+        </ul></td></tr>
+        <tr><td>Prerequisites</td><td><a href="../session-23-bgp-fundamentals/index.html">Session 23: BGP Fundamentals — AS, Path Attributes</a></td></tr>
+        <tr><td>Estimated Duration</td><td>25-30 minutes</td></tr>
+        <tr><td>Phase</td><td>Phase 5 — Dynamic Routing: OSPF &amp; BGP</td></tr>
+      </table>
+
+      <div class="callout-prompt">
+        <div class="prompt-head">
+          <span>Session context — paste into your Claude NSE7 tutor</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">Copy</button>
+        </div>
+        <pre id="claude-prompt">Session 24 — iBGP vs eBGP &amp; Route Reflectors
+
+Where we are in the NSE7 journey:
+Inside an AS, the BGP rules change. The full-mesh requirement surfaces and immediately becomes a scaling problem we solve with route reflectors.
+
+The problem we're solving today:
+Route reflectors are a top NSE7 BGP topic because they invert default iBGP behaviour. Knowing where the RR fits into a FortiGate-as-edge design is essential.
+
+Session goal:
+Convert an N-router iBGP full mesh into a single-RR design and explain how the RR avoids creating loops.
+
+Key concepts:
+  • iBGP full-mesh rule and why it exists
+  • Route reflector (RR) concept and benefits
+  • Originator-ID and Cluster-list loop prevention
+  • FortiGate as iBGP RR or as RR-client
+  • Confederations as the other answer (briefly)
+</pre>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="page-nav">
+  <a class="page-nav-btn page-nav-prev" href="../session-23-bgp-fundamentals/index.html">
+    <span class="page-nav-label">← Previous</span>
+    <span class="page-nav-title">BGP Fundamentals — AS, Path Attributes</span>
+  </a>
+  <a class="page-nav-btn page-nav-next" href="../session-25-route-maps-prefix-lists/index.html">
+    <span class="page-nav-label">Next →</span>
+    <span class="page-nav-title">Route Maps, Prefix Lists &amp; Filters</span>
+  </a>
+</div>
+
+<footer>
+  NSE7 EF 7.6<span>.</span> Session 24 of 40<span>.</span> iBGP vs eBGP &amp; Route Reflectors
+</footer>
+
+<script>
+function togglePrompt(btn) {
+  const c = btn.nextElementSibling;
+  const isHidden = c.hasAttribute('hidden');
+  if (isHidden) { c.removeAttribute('hidden'); btn.textContent = '▴ Hide prompt'; }
+  else { c.setAttribute('hidden', ''); btn.textContent = '▾ Show image prompt'; }
+}
+function copyPrompt(btn) {
+  const text = document.getElementById('claude-prompt').textContent;
+  navigator.clipboard.writeText(text).then(function() {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = orig; btn.classList.remove('copied'); }, 1800);
+  });
+}
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+document.querySelectorAll('.section-img').forEach(function(img) {
+  img.addEventListener('click', () => img.classList.toggle('si-expanded'));
+});
+</script>
+</body>
+</html>
