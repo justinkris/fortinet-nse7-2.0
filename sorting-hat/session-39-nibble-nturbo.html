@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Nibble — NTurbo</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  header{padding:36px 48px 28px;background:var(--ink-dark);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:4px 12px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:10px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:12px;}
+  header h1{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;color:#fbf7ec;line-height:1.05;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.5);margin-top:8px;}
+
+  main{max-width:900px;margin:0 auto;padding:36px 48px 56px;}
+
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  h2{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--text);margin-bottom:14px;padding-left:14px;border-left:3px solid var(--blue);}
+  h2 em{font-style:italic;color:var(--blue);}
+  p{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.7;color:var(--text-soft);margin-bottom:12px;}
+  p strong{color:var(--text);font-weight:600;}
+
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:12px 18px;margin:14px 0;font-size:15px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+
+  .mental-note{border-radius:10px;padding:12px 16px;margin:14px 0;display:flex;gap:10px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:3px;text-transform:uppercase;}
+  .mental-note-text{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;line-height:1.5;color:var(--text);}
+
+  /* FLOW DIAGRAM */
+  .flow-diagram{margin:20px 0;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px 20px;overflow-x:auto;}
+  .flow-title{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:18px;text-align:center;}
+  .flow-row{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:nowrap;min-width:600px;}
+  .flow-node{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;}
+  .flow-box{border-radius:10px;padding:10px 14px;text-align:center;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;min-width:90px;}
+  .flow-box-np{background:var(--ink-dark);color:var(--ink-accent);border:2px solid var(--ink-accent);}
+  .flow-box-nturbo{background:#7c3aed;color:#fff;border:2px solid #a78bfa;}
+  .flow-box-ips{background:var(--green-light);color:var(--green);border:2px solid var(--green-border);}
+  .flow-box-cp{background:var(--amber-light);color:var(--amber);border:2px solid var(--amber-border);}
+  .flow-box-cpu{background:var(--blue-light);color:var(--blue);border:2px dashed var(--blue-border);}
+  .flow-sublabel{font-family:'Outfit',sans-serif;font-size:9px;color:var(--text-muted);letter-spacing:0.08em;text-align:center;max-width:90px;}
+  .flow-arrow{font-size:18px;color:var(--text-muted);padding:0 4px;flex-shrink:0;align-self:center;margin-bottom:18px;}
+  .flow-arrow-return{color:#7c3aed;}
+  .cpu-supervisor{margin-top:18px;text-align:center;padding:10px 20px;background:var(--blue-light);border:1px dashed var(--blue-border);border-radius:8px;font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;color:var(--blue);letter-spacing:0.1em;}
+
+  /* IMAGE PLACEHOLDER */
+  .img-placeholder{border:2px dashed var(--amber-border);border-radius:12px;background:rgba(255,255,255,0.5);padding:20px;margin:16px 0;}
+  .img-placeholder-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;color:var(--amber);text-transform:uppercase;margin-bottom:8px;}
+  .img-placeholder-prompt{font-family:'Cormorant Garamond',serif;font-size:14px;color:#5c3d09;line-height:1.7;font-style:italic;}
+
+  .section-divider{border:none;border-top:1px solid var(--border-dim);margin:32px 0;}
+
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:16px 48px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+
+  @media(max-width:680px){header{padding:24px 20px;}main{padding:24px 20px 40px;}footer{padding:14px 20px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-eyebrow">NSE7 EF 7.6 · Session 39 · Study Nibble</div>
+  <h1>NTurbo — The <em>IPS Bridge</em></h1>
+  <p>How the NP7 stays involved when flow-based security profiles are active.</p>
+</header>
+
+<main>
+
+  <div class="section-label">The Problem NTurbo Solves</div>
+  <h2>Security Profiles <em>Kill the Fast Path</em> — Unless…</h2>
+
+  <p>Normally, adding any security inspection forces the NP7 to step back entirely. Every packet goes to the CPU. NTurbo is Fortinet's answer — a dedicated driver that <strong>bridges the NP7 and the IPS engine</strong>, keeping hardware acceleration alive for flow-based inspection.</p>
+
+  <!-- PACKET FLOW DIAGRAM -->
+  <div class="flow-diagram">
+    <div class="flow-title">NTurbo Packet Flow — Flow-Based IPS Session</div>
+    <div class="flow-row">
+      <div class="flow-node">
+        <div class="flow-box flow-box-np">NP7</div>
+        <div class="flow-sublabel">Receives packet<br>fast path</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <div class="flow-box flow-box-nturbo">NTurbo<br>Driver</div>
+        <div class="flow-sublabel">Bridges NP7<br>↔ IPS engine</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <div class="flow-box flow-box-ips">IPS<br>Engine</div>
+        <div class="flow-sublabel">Security<br>inspection</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <div class="flow-box flow-box-cp">CP9</div>
+        <div class="flow-sublabel">Pattern matching<br>offloaded here</div>
+      </div>
+      <div class="flow-arrow flow-arrow-return">→</div>
+      <div class="flow-node">
+        <div class="flow-box flow-box-nturbo">NTurbo<br>Driver</div>
+        <div class="flow-sublabel">Returns packet<br>to NP7</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <div class="flow-box flow-box-np">NP7</div>
+        <div class="flow-sublabel">Forwards out<br>egress interface</div>
+      </div>
+    </div>
+    <div class="cpu-supervisor">🖥️ CPU — Orchestrates but does not bottleneck the forwarding path</div>
+  </div>
+
+  <!-- IMAGE PLACEHOLDER -->
+  <div class="img-placeholder">
+    <div class="img-placeholder-label">📷 Image Placeholder — Generate with the prompt below</div>
+    <div class="img-placeholder-prompt">
+      <strong>Image generation prompt:</strong><br><br>
+      Flat minimalist cartoon illustration, cream background. A horizontal pipeline showing packet flow through a firewall. On the left: a dark blue chip labelled "NP7" receiving a packet stream. In the centre: a glowing purple bridge structure labelled "NTurbo" connecting the NP7 to a green box labelled "IPS Engine". The IPS Engine connects to an amber box labelled "CP9" with a small lightning bolt showing offload. An arrow returns from NTurbo back to the NP7 on the right which forwards packets out. A small blue dashed box labelled "CPU" hovers above the diagram with dotted supervision lines — present but not in the main flow. Simple geometric style, muted colour palette, no decorative elements.
+    </div>
+  </div>
+
+  <hr class="section-divider">
+
+  <div class="section-label">Key Facts</div>
+  <h2>What You Need to <em>Remember</em></h2>
+
+  <div class="callout">
+    <strong>NTurbo only works with flow-based profiles.</strong> The moment a proxy-based profile is added to the policy, NTurbo cannot help. The entire session drops to the CPU slow path.
+  </div>
+
+  <div class="callout callout-amber">
+    <strong>CP9 + IPSA:</strong> When packets reach the IPS engine via NTurbo, the CP9 offloads <em>pattern matching</em> via a feature called IPSA (IPS Acceleration). The CPU still orchestrates but the compute-heavy signature matching is handled in silicon. Advanced mode (default on most devices) offloads more pattern types than basic mode.
+  </div>
+
+  <div class="callout callout-green">
+    <strong>NTurbo is enabled by default.</strong> To disable globally: <code>set np-accel-mode none</code> under <code>config ips global</code>. To disable per-policy: <code>set np-acceleration disable</code> on the firewall policy. Useful for troubleshooting — not production.
+  </div>
+
+  <div class="mental-note">
+    <div>
+      <div class="mental-note-label">🧠 One-Line Mental Model</div>
+      <div class="mental-note-text">NTurbo = the bridge that lets the NP7 keep forwarding while the IPS engine inspects. CP9 = the engine that handles the pattern matching so the CPU doesn't have to.</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>NSE7 Enterprise Firewall 7.6 · Session 39 · Study Nibble · <span>NTurbo</span></footer>
+
+</body>
+</html>

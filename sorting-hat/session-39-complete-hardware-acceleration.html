@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 39 — Hardware Acceleration: NP, CP, SP & SoC</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9;--surface:#fffdf5;--surface-2:#f5eed9;
+    --border:#d4c89a;--border-dim:#ebe1c2;
+    --text:#0a1838;--text-soft:#1e2f5a;--text-muted:#6b7794;
+    --blue:#1e40af;--blue-vivid:#2563eb;--blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8;--blue-deep:#0c1f5c;--blue-light:#eff4fc;--blue-border:#b8cce8;
+    --ink-dark:#0d1a3a;--ink-accent:#9bb8e6;
+    --green:#1a7c4a;--green-light:#dff0e1;--green-border:#a7d8b0;
+    --amber:#b45309;--amber-light:#fcf2c3;--amber-border:#f3d68a;
+    --red:#991b1b;--red-light:#fee2e2;--red-border:#fca5a5;
+  }
+  html{scroll-behavior:smooth;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  header{padding:48px 60px 36px;background:var(--ink-dark);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:52px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+
+  .motivation-banner{padding:22px 60px;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);}
+  .motivation-text em{font-style:italic;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);margin-top:6px;}
+
+  .section-nav{position:sticky;top:0;z-index:90;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px;overflow-x:auto;}
+  .nav-tab{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:12px 18px;border-bottom:2px solid transparent;white-space:nowrap;}
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+  main{max-width:1100px;margin:0 auto;padding:40px 60px 80px;}
+
+  .section-block{margin-bottom:56px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:18px;padding-left:16px;border-left:3px solid var(--blue);}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.75;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:6px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+
+  hr.div{border:none;border-top:1px solid var(--border-dim);margin:40px 0;}
+
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .callout-red{border-left-color:var(--red-border);background:var(--red-light);}
+
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;vertical-align:top;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+
+  .mental-note{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:16px 20px;margin:16px 0;}
+  .analogy-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:8px;text-transform:uppercase;}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:8px;font-size:17px;}
+
+  /* PROCESSOR CARDS */
+  .proc-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;}
+  .proc-card{border-radius:12px;padding:20px 22px;border:1px solid var(--border);}
+  .proc-np{background:var(--ink-dark);border-color:#2a3f6f;}
+  .proc-cp{background:var(--amber-light);border-color:var(--amber-border);}
+  .proc-sp{background:var(--green-light);border-color:var(--green-border);}
+  .proc-cpu{background:var(--blue-light);border-color:var(--blue-border);}
+  .proc-title{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:6px;}
+  .proc-np .proc-title{color:var(--ink-accent);}
+  .proc-cp .proc-title{color:var(--amber);}
+  .proc-sp .proc-title{color:var(--green);}
+  .proc-cpu .proc-title{color:var(--blue);}
+  .proc-subtitle{font-family:'Cormorant Garamond',serif;font-size:13px;margin-bottom:10px;font-style:italic;}
+  .proc-np .proc-subtitle{color:rgba(155,184,230,0.7);}
+  .proc-cp .proc-subtitle,.proc-sp .proc-subtitle{color:#7a4f0c;}
+  .proc-cpu .proc-subtitle{color:var(--text-muted);}
+  .proc-list{list-style:none;padding:0;}
+  .proc-list li{font-family:'Cormorant Garamond',serif;font-size:14px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.06);}
+  .proc-list li:last-child{border-bottom:none;}
+  .proc-np .proc-list li{color:rgba(251,247,236,0.8);border-color:rgba(255,255,255,0.08);}
+  .proc-cp .proc-list li,.proc-sp .proc-list li{color:#5c3d09;}
+  .proc-cpu .proc-list li{color:var(--text-soft);}
+  .proc-list li::before{content:'· ';}
+
+  /* FLOW DIAGRAM */
+  .flow-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px 16px;margin:16px 0;overflow-x:auto;}
+  .flow-title{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:16px;text-align:center;}
+  .flow-row{display:flex;align-items:center;justify-content:center;flex-wrap:nowrap;min-width:580px;gap:0;}
+  .flow-node{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;}
+  .fbox{border-radius:9px;padding:9px 13px;text-align:center;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;min-width:85px;}
+  .fbox-np{background:var(--ink-dark);color:var(--ink-accent);border:2px solid var(--ink-accent);}
+  .fbox-nturbo{background:#7c3aed;color:#fff;border:2px solid #a78bfa;}
+  .fbox-ips{background:var(--green-light);color:var(--green);border:2px solid var(--green-border);}
+  .fbox-cp{background:var(--amber-light);color:var(--amber);border:2px solid var(--amber-border);}
+  .fbox-cpu{background:var(--blue-light);color:var(--blue);border:2px dashed var(--blue-border);}
+  .fbox-proxy{background:var(--red-light);color:var(--red);border:2px solid var(--red-border);}
+  .fsub{font-family:'Outfit',sans-serif;font-size:9px;color:var(--text-muted);text-align:center;max-width:85px;margin-top:2px;}
+  .farr{font-size:17px;color:var(--text-muted);padding:0 3px;align-self:center;margin-bottom:16px;}
+  .cpu-note{text-align:center;margin-top:14px;padding:9px 16px;background:var(--blue-light);border:1px dashed var(--blue-border);border-radius:8px;font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;color:var(--blue);letter-spacing:0.08em;}
+
+  /* SLOW PATH TRIGGERS */
+  .trigger-list{list-style:none;padding:0;margin:16px 0;}
+  .trigger-item{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--border-dim);}
+  .trigger-item:last-child{border-bottom:none;}
+  .trigger-num{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;font-style:italic;color:var(--blue);min-width:32px;line-height:1;}
+  .trigger-content{}
+  .trigger-title{font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.1em;color:var(--text);margin-bottom:4px;text-transform:uppercase;}
+  .trigger-desc{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.6;}
+
+  /* CODE */
+  .code-block{background:var(--ink-dark);border-radius:10px;padding:0;margin:14px 0;overflow:hidden;border:1px solid var(--border);}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:7px 14px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:14px;}
+  .code-block code{font-family:'SF Mono','Fira Code',monospace;font-size:12px;line-height:1.65;color:#e8efff;}
+
+  /* EXAM FLAGS */
+  .exam-flag{display:flex;gap:10px;align-items:flex-start;background:var(--red-light);border:1px solid var(--red-border);border-left:3px solid var(--red);border-radius:0 10px 10px 0;padding:12px 16px;margin:12px 0;}
+  .exam-flag-icon{font-size:16px;flex-shrink:0;margin-top:2px;}
+  .exam-flag-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--red);line-height:1.6;}
+  .exam-flag-text strong{font-weight:700;}
+
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+
+  @media(max-width:720px){header{padding:28px 24px;}header h1{font-size:34px;}.motivation-banner{padding:16px 24px;}main{padding:24px 24px 40px;}.proc-grid{grid-template-columns:1fr;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-eyebrow"><span class="dot"></span> NSE7 Enterprise Firewall 7.6 · Session 39 · Complete Study Guide</div>
+  <h1>Hardware <em>Acceleration</em></h1>
+  <p>NP · CP · SP · SoC — why Fortinet built specialised silicon, and how to predict which path any packet will take.</p>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">The CPU is the bottleneck. <em>Silicon is the answer.</em></div>
+  <div class="motivation-sub">Understanding hardware acceleration is understanding why enterprise FortiGate performs at scale — and why one policy change can bring it to its knees.</div>
+</div>
+
+<nav class="section-nav">
+  <a href="#why" class="nav-tab">Why It Exists</a>
+  <a href="#processors" class="nav-tab">The Processors</a>
+  <a href="#paths" class="nav-tab">Fast vs Slow Path</a>
+  <a href="#nturbo" class="nav-tab">NTurbo & IPSA</a>
+  <a href="#triggers" class="nav-tab">Slow Path Triggers</a>
+  <a href="#mixed" class="nav-tab">Mixed Policies</a>
+  <a href="#branch" class="nav-tab">SP5 & SoC4</a>
+  <a href="#tshoot" class="nav-tab">Troubleshooting</a>
+  <a href="#exam" class="nav-tab">Exam Notes</a>
+</nav>
+
+<main>
+
+  <!-- SECTION 1: WHY -->
+  <div class="section-block" id="why">
+    <div class="section-label">Section 01</div>
+    <h2>Why Hardware Acceleration <em>Exists</em></h2>
+
+    <p>A general-purpose CPU was never designed to inspect millions of network packets per second while simultaneously running an operating system, maintaining session tables, evaluating firewall policies, and running threat detection engines. Under high throughput, the CPU becomes the bottleneck — and in enterprise environments, that bottleneck costs latency, drops sessions, and reduces security effectiveness.</p>
+
+    <p>Fortinet's answer is the same principle that transformed switching: <strong>purpose-built silicon for purpose-built tasks.</strong> Just as a switch ASIC handles MAC address lookups at wire speed without touching the switch CPU, Fortinet's SPU (Security Processing Unit) handles specific security tasks at hardware speed without touching the firewall CPU.</p>
+
+    <div class="analogy-box">
+      <div class="analogy-label">🏢 The Vaultline Lesson</div>
+      <div class="analogy-text">
+        <p class="analogy-summary">One policy change. 3 AM. CPU at 94%.</p>
+        <p>Vaultline Financial's trading VLAN ran at sub-millisecond latency because market data sessions were offloaded to the NP7. A single "quick security improvement" — adding a proxy-based profile to the policy — forced every one of those sessions onto the CPU slow path. Latency spiked to 8–12ms. The lesson: hardware acceleration is not a background feature. It is the architecture. Understanding it is mandatory for every enterprise firewall design decision.</p>
+      </div>
+    </div>
+  </div>
+
+  <hr class="div">
+
+  <!-- SECTION 2: PROCESSORS -->
+  <div class="section-block" id="processors">
+    <div class="section-label">Section 02</div>
+    <h2>The Four <em>Processors</em></h2>
+
+    <p>High-end FortiGate devices separate network and content processing onto dedicated chips. Entry-level devices integrate both onto a single chip. Understanding which device has which silicon is essential for both design and exam scenarios.</p>
+
+    <div class="proc-grid">
+      <div class="proc-card proc-np">
+        <div class="proc-title">NP7 — Network Processor</div>
+        <div class="proc-subtitle">FortiGate 900G · Latest generation</div>
+        <ul class="proc-list">
+          <li>Session forwarding — fast path</li>
+          <li>NAT (source and destination)</li>
+          <li>IPsec VPN encryption / decryption</li>
+          <li>ACL, HPE, IP integrity header checking</li>
+          <li>Up to 12 million sessions</li>
+          <li>Bypasses CPU after session key installed</li>
+          <li>Works with flow-based profiles via NTurbo</li>
+        </ul>
+      </div>
+      <div class="proc-card proc-cp">
+        <div class="proc-title">CP9 / CP10 — Content Processor</div>
+        <div class="proc-subtitle">FortiGate 200G+ · Coprocessor to CPU</div>
+        <ul class="proc-list">
+          <li>Pattern matching via IPSA</li>
+          <li>SSL/TLS encryption and decryption</li>
+          <li>IPsec Diffie-Hellman key exchange</li>
+          <li>Works in both flow and proxy modes</li>
+          <li>CPU determines what gets offloaded</li>
+          <li>Advanced IPSA mode by default (except single CP8)</li>
+        </ul>
+      </div>
+      <div class="proc-card proc-sp">
+        <div class="proc-title">SP5 / SoC4 — Integrated Chip</div>
+        <div class="proc-subtitle">FortiGate 90G / 91G · Branch devices</div>
+        <ul class="proc-list">
+          <li>NP + CP functions on one chip</li>
+          <li>Lower throughput than dedicated NP7 + CP9</li>
+          <li>Designed for branch and mid-range</li>
+          <li>IPS engine still runs on CPU</li>
+          <li>Never position as VPN hub</li>
+          <li>SoC4 = most constrained (entry-level)</li>
+        </ul>
+      </div>
+      <div class="proc-card proc-cpu">
+        <div class="proc-title">CPU — Main Processor</div>
+        <div class="proc-subtitle">All FortiGate models · Always present</div>
+        <ul class="proc-list">
+          <li>Orchestrates all processing</li>
+          <li>Mandatory for proxy-based inspection</li>
+          <li>Mandatory for session helpers</li>
+          <li>Mandatory for SSL VPN / GRE tunnels</li>
+          <li>Handles FIN / RST packets always</li>
+          <li>Handles first TCP handshake always</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Identify your silicon:</strong> <code>diagnose hardware lspci | grep 1a29</code> — NPID 4e36 = NP6, NPID 4e37 = NP7. For CP and SP: <code>get hardware status</code> — review ASIC version field.
+    </div>
+  </div>
+
+  <hr class="div">
+
+  <!-- SECTION 3: FAST VS SLOW PATH -->
+  <div class="section-block" id="paths">
+    <div class="section-label">Section 03</div>
+    <h2>Fast Path vs <em>Slow Path</em></h2>
+
+    <p>Every session begins on the slow path. The CPU always processes the first TCP three-way handshake (or first UDP packet) to determine whether offload conditions are met. If they are, the session key is installed in the NP7 and subsequent packets bypass the CPU entirely — the fast path.</p>
+
+    <table class="data-table">
+      <thead><tr><th>Path</th><th>Who Handles It</th><th>When</th><th>Performance</th></tr></thead>
+      <tbody>
+        <tr><td>Slow path</td><td>CPU</td><td>Always — first packets of every session. Also all proxy sessions, helpers, software tunnels.</td><td>Lower throughput — CPU bound</td></tr>
+        <tr><td>Fast path</td><td>NP7</td><td>After session establishment — when offload conditions are met</td><td>Wire-speed — CPU not involved</td></tr>
+        <tr><td>NTurbo path</td><td>NP7 + IPS + CP9</td><td>Flow-based security profiles active — NTurbo bridges NP7 to IPS engine</td><td>Accelerated — CPU orchestrates only</td></tr>
+      </tbody>
+    </table>
+
+    <p>FIN and RST packets are always handled by the CPU regardless of which path the session data is taking. This is normal and expected.</p>
+  </div>
+
+  <hr class="div">
+
+  <!-- SECTION 4: NTURBO & IPSA -->
+  <div class="section-block" id="nturbo">
+    <div class="section-label">Section 04</div>
+    <h2>NTurbo and <em>IPSA</em></h2>
+
+    <p>Without NTurbo, any session with a security profile would be forced entirely to the CPU. NTurbo solves this by creating a dedicated data path between the NP7 and the IPS engine — allowing the NP7 to keep forwarding while the IPS engine inspects.</p>
+
+    <div class="flow-wrap">
+      <div class="flow-title">NTurbo Flow — Flow-Based IPS Session</div>
+      <div class="flow-row">
+        <div class="flow-node"><div class="fbox fbox-np">NP7</div><div class="fsub">Receives packet</div></div>
+        <div class="farr">→</div>
+        <div class="flow-node"><div class="fbox fbox-nturbo">NTurbo</div><div class="fsub">Bridge to IPS</div></div>
+        <div class="farr">→</div>
+        <div class="flow-node"><div class="fbox fbox-ips">IPS Engine</div><div class="fsub">Inspects</div></div>
+        <div class="farr">→</div>
+        <div class="flow-node"><div class="fbox fbox-cp">CP9</div><div class="fsub">Pattern matching<br>via IPSA</div></div>
+        <div class="farr">→</div>
+        <div class="flow-node"><div class="fbox fbox-nturbo">NTurbo</div><div class="fsub">Returns to NP7</div></div>
+        <div class="farr">→</div>
+        <div class="flow-node"><div class="fbox fbox-np">NP7</div><div class="fsub">Forwards out</div></div>
+      </div>
+      <div class="cpu-note">🖥️ CPU — Orchestrates the session. Does not bottleneck forwarding.</div>
+    </div>
+
+    <div class="flow-wrap">
+      <div class="flow-title">Proxy-Based Session — CPU Slow Path</div>
+      <div class="flow-row">
+        <div class="flow-node"><div class="fbox fbox-np">NP7</div><div class="fsub">Early checks only<br>ACL / HPE</div></div>
+        <div class="farr">→</div>
+        <div class="flow-node"><div class="fbox fbox-cpu">CPU</div><div class="fsub">Full session<br>CPU bound</div></div>
+        <div class="farr">→</div>
+        <div class="flow-node"><div class="fbox fbox-ips">IPS Engine</div><div class="fsub">Single-pass<br>inspection</div></div>
+        <div class="farr">→</div>
+        <div class="flow-node"><div class="fbox fbox-proxy">Proxy</div><div class="fsub">Buffers &amp;<br>reassembles</div></div>
+        <div class="farr">→</div>
+        <div class="flow-node"><div class="fbox fbox-cp">CP9</div><div class="fsub">SSL crypto<br>if configured</div></div>
+      </div>
+    </div>
+
+    <div class="mental-note">
+      <div>
+        <div class="mental-note-label">🧠 Critical Distinction</div>
+        <div class="mental-note-text">NTurbo is a transport optimisation — not a security feature. Disabling it never changes what the IPS engine inspects. It only changes how expensively packets get there. Same signatures. Same detection. Worse performance.</div>
+      </div>
+    </div>
+
+    <div class="callout callout-amber">
+      <strong>IPSA modes:</strong> Basic mode offloads standard pattern matching (default on devices with one CP8). Advanced mode offloads more pattern matching types (default on all other devices). Configure under <code>config ips global → set cp-accel-mode</code>.
+    </div>
+  </div>
+
+  <hr class="div">
+
+  <!-- SECTION 5: SLOW PATH TRIGGERS -->
+  <div class="section-block" id="triggers">
+    <div class="section-label">Section 05</div>
+    <h2>The Four <em>Slow Path Triggers</em></h2>
+
+    <p>Even when NP acceleration is enabled on a policy, four conditions force sessions to the CPU slow path. Memorise these — the exam tests them frequently and in combination.</p>
+
+    <ul class="trigger-list">
+      <li class="trigger-item">
+        <div class="trigger-num">1</div>
+        <div class="trigger-content">
+          <div class="trigger-title">Proxy-Based Security Profiles</div>
+          <div class="trigger-desc">Any proxy-based profile on a policy forces the entire session to the CPU. The NP7 cannot buffer and reassemble full traffic streams — that fundamentally requires the CPU to remain in the loop for every packet.</div>
+        </div>
+      </li>
+      <li class="trigger-item">
+        <div class="trigger-num">2</div>
+        <div class="trigger-content">
+          <div class="trigger-title">Session Helpers Required</div>
+          <div class="trigger-desc">Protocols like FTP, SIP, and PPTP negotiate dynamic secondary connections inside the application payload. FortiOS uses software session helpers to track this negotiation and open dynamic pinholes. The CPU must stay involved for the entire session — the NP7 cannot do application-layer protocol tracking.</div>
+        </div>
+      </li>
+      <li class="trigger-item">
+        <div class="trigger-num">3</div>
+        <div class="trigger-content">
+          <div class="trigger-title">Tunnelled Interfaces — Except IPsec</div>
+          <div class="trigger-desc">SSL VPN and GRE are software-defined logical interfaces managed entirely by the CPU. The NP7 cannot take over sessions on software tunnel interfaces. IPsec VPN is the exception — the NP7 has dedicated hardware crypto engines that natively handle IPsec encryption and decryption.</div>
+        </div>
+      </li>
+      <li class="trigger-item">
+        <div class="trigger-num">4</div>
+        <div class="trigger-content">
+          <div class="trigger-title">NP Acceleration Explicitly Disabled</div>
+          <div class="trigger-desc">Setting <code>np-acceleration disable</code> on a firewall policy is a direct hardware override. All sessions matching that policy go to the CPU regardless of their profile type. Used legitimately for troubleshooting packet captures — dangerous if left enabled in production.</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <hr class="div">
+
+  <!-- SECTION 6: MIXED POLICIES -->
+  <div class="section-block" id="mixed">
+    <div class="section-label">Section 06</div>
+    <h2>The Mixed Policy <em>Trap</em></h2>
+
+    <p>This is the most exam-tested concept in the entire hardware acceleration domain. When a firewall policy contains both flow-based and proxy-based profiles, there is no splitting of work between NP7 and CPU.</p>
+
+    <div class="exam-flag">
+      <div class="exam-flag-icon">🚨</div>
+      <div class="exam-flag-text"><strong>All or nothing:</strong> Any proxy-based profile on a policy forces the entire session to the CPU slow path. The NP7 is excluded completely — not partially. A policy with flow-based IPS and proxy-based DLP = CPU only for every session.</div>
+    </div>
+
+    <p>The hidden version of this trap: some features are <strong>inherently proxy-only</strong> even when the policy inspection mode is set to flow-based. Adding them silently forces the entire policy to proxy mode.</p>
+
+    <table class="data-table">
+      <thead><tr><th>Feature</th><th>Mode</th><th>Impact if Added to Flow Policy</th></tr></thead>
+      <tbody>
+        <tr><td>Web Category Usage Quota</td><td>Proxy-only</td><td>Entire policy forced to proxy — NP7 offload lost</td></tr>
+        <tr><td>Web Profile Override</td><td>Proxy-only</td><td>Entire policy forced to proxy — NP7 offload lost</td></tr>
+        <tr><td>VoIP Inspection</td><td>Proxy-only</td><td>Entire policy forced to proxy — NP7 offload lost</td></tr>
+        <tr><td>Antispam</td><td>Proxy-only</td><td>Entire policy forced to proxy — NP7 offload lost</td></tr>
+        <tr><td>IPS</td><td>Flow-based</td><td>Compatible with NP7 via NTurbo</td></tr>
+        <tr><td>Application Control</td><td>Flow-based</td><td>Compatible with NP7 via NTurbo</td></tr>
+        <tr><td>Antivirus (flow mode)</td><td>Flow-based</td><td>Compatible with NP7 via NTurbo</td></tr>
+        <tr><td>Antivirus (proxy mode)</td><td>Proxy-only</td><td>Entire policy forced to proxy — NP7 offload lost</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout-green">
+      <strong>Design solution:</strong> Split policies by inspection requirement. High-volume, latency-sensitive traffic gets a dedicated flow-based policy. Traffic requiring proxy-based features gets a separate policy. Never mix them on the same policy if performance matters.
+    </div>
+  </div>
+
+  <hr class="div">
+
+  <!-- SECTION 7: BRANCH SILICON -->
+  <div class="section-block" id="branch">
+    <div class="section-label">Section 07</div>
+    <h2>SP5 and SoC4 — <em>Branch Silicon</em></h2>
+
+    <p>Entry-level and mid-range FortiGate devices replace the separate NP7 and CP9 with a single integrated chip — the SP5 (also called SoC5) or SoC4. This reduces cost, power consumption, and physical size — making it suitable for branch office deployments.</p>
+
+    <table class="data-table">
+      <thead><tr><th>Characteristic</th><th>NP7 + CP9 (High-End)</th><th>SP5 / SoC4 (Branch)</th></tr></thead>
+      <tbody>
+        <tr><td>Architecture</td><td>Separate dedicated chips</td><td>Integrated single chip</td></tr>
+        <tr><td>Throughput</td><td>Very high — parallel processing</td><td>Lower — shared silicon</td></tr>
+        <tr><td>Session capacity</td><td>Up to 12M sessions (NP7)</td><td>Significantly lower</td></tr>
+        <tr><td>IPsec VPN</td><td>Hardware offloaded — NP7 crypto engines</td><td>Hardware offloaded — integrated</td></tr>
+        <tr><td>IPS engine</td><td>Software on CPU — bridged via NTurbo</td><td>Software on CPU — same challenge</td></tr>
+        <tr><td>Deployment role</td><td>Data centre, campus core, VPN hub</td><td>Branch office, remote site only</td></tr>
+        <tr><td>Example device</td><td>FortiGate 900G</td><td>FortiGate 90G / 91G</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout-red">
+      <strong>Design warning:</strong> Never position a SoC4 device as a hub in a hub-and-spoke VPN topology. It lacks the dedicated NP7 crypto engines and session capacity required to terminate multiple IPsec tunnels while maintaining throughput. The hub becomes the bottleneck for the entire network.
+    </div>
+  </div>
+
+  <hr class="div">
+
+  <!-- SECTION 8: TROUBLESHOOTING -->
+  <div class="section-block" id="tshoot">
+    <div class="section-label">Section 08</div>
+    <h2>Troubleshooting <em>Hardware Acceleration</em></h2>
+
+    <p>The primary diagnostic tool for confirming whether a session is offloaded is the session list. This is your first stop whenever you suspect a performance issue caused by unexpected slow-path processing.</p>
+
+    <div class="code-block">
+      <div class="code-label">Confirm NP7 offload status</div>
+      <pre><code>diagnose sys session list
+
+# Offloaded session — look for:
+npu info: flag=0x81/0x91, offload=9/9, ips_offload=0/0
+# Code 9 = NP7
+
+# Not offloaded — look for:
+npu_state=0x000001 no_offload
+no_ofld_reason: disabled-by-policy</code></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">Confirm IPsec SA offload status</div>
+      <pre><code>diagnose vpn tunnel list name &lt;tunnel-name&gt;
+
+# npu_flag=00  Both SAs in kernel — not yet offloaded
+# npu_flag=01  Outbound SA copied to NPU
+# npu_flag=02  Inbound SA copied to NPU
+# npu_flag=03  Both SAs offloaded — fully accelerated
+# npu_flag=20  Unsupported cipher — cannot offload</code></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">Temporarily disable offload for packet capture</div>
+      <pre><code>config firewall policy
+    edit &lt;policy_id&gt;
+        set np-acceleration disable   # Forces to CPU — sniffer can now see traffic
+    next
+end
+# Run your capture, then immediately re-enable:
+        set np-acceleration enable</code></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">Disable NTurbo globally (troubleshooting only)</div>
+      <pre><code>config ips global
+    set np-accel-mode none     # Disables NTurbo globally
+    set cp-accel-mode none     # Disables IPSA globally
+end
+# Default values: np-accel-mode basic, cp-accel-mode advanced</code></pre>
+    </div>
+
+    <div class="callout callout-amber">
+      <strong>Troubleshooting workflow:</strong> Suspect slow path → confirm with session list → identify no_ofld_reason → address root cause → verify offload restored. Never leave np-acceleration disabled after troubleshooting.
+    </div>
+  </div>
+
+  <hr class="div">
+
+  <!-- SECTION 9: EXAM NOTES -->
+  <div class="section-block" id="exam">
+    <div class="section-label">Section 09</div>
+    <h2>Exam-Critical <em>Notes</em></h2>
+
+    <div class="exam-flag">
+      <div class="exam-flag-icon">🚨</div>
+      <div class="exam-flag-text"><strong>Most tested concept:</strong> Mixed flow + proxy policies. The exam expects you to know that any proxy profile kills NP7 offloading for the ENTIRE session — not just the proxy portion.</div>
+    </div>
+
+    <div class="exam-flag">
+      <div class="exam-flag-icon">🚨</div>
+      <div class="exam-flag-text"><strong>Common misconception:</strong> Flow-based inspection only reads headers. Wrong. Both modes read full Layer 7 payload. The difference is TIMING — flow acts in real time, proxy buffers the complete stream first.</div>
+    </div>
+
+    <div class="exam-flag">
+      <div class="exam-flag-icon">🚨</div>
+      <div class="exam-flag-text"><strong>IPsec exception:</strong> IPsec VPN CAN be offloaded to the NP7. SSL VPN and GRE cannot. Know this cold — the exam tests it as a distractor.</div>
+    </div>
+
+    <div class="exam-flag">
+      <div class="exam-flag-icon">🚨</div>
+      <div class="exam-flag-text"><strong>NTurbo misconception:</strong> Disabling NTurbo does NOT improve security. It is a transport optimisation. The IPS engine runs the same signatures regardless. Disabling NTurbo only degrades performance.</div>
+    </div>
+
+    <div class="exam-flag">
+      <div class="exam-flag-icon">🚨</div>
+      <div class="exam-flag-text"><strong>CP9 in proxy mode:</strong> Even when proxy mode forces sessions to the CPU, the CP9 can still offload SSL/TLS crypto. The NP7 is excluded — the CP9 is not.</div>
+    </div>
+
+    <div class="exam-flag">
+      <div class="exam-flag-icon">🚨</div>
+      <div class="exam-flag-text"><strong>SoC4 as hub:</strong> A common exam trap is positioning entry-level SoC4 devices as VPN hubs. The correct answer is always that this is a design error — SoC4 lacks the NP7 session capacity and dedicated crypto engines for hub roles.</div>
+    </div>
+
+    <table class="data-table" style="margin-top:20px;">
+      <thead><tr><th>Scenario</th><th>NP7 Offload?</th><th>Reason</th></tr></thead>
+      <tbody>
+        <tr><td>No security profiles</td><td>✅ Full offload</td><td>Pure forwarding — NP7 handles entirely</td></tr>
+        <tr><td>Flow-based IPS only</td><td>✅ NTurbo</td><td>NTurbo bridges NP7 to IPS engine</td></tr>
+        <tr><td>Flow IPS + flow AV</td><td>✅ NTurbo</td><td>All flow-based — NTurbo active</td></tr>
+        <tr><td>Proxy AV only</td><td>❌ CPU only</td><td>Proxy profile — entire session to CPU</td></tr>
+        <tr><td>Flow IPS + proxy DLP</td><td>❌ CPU only</td><td>Any proxy profile = all sessions to CPU</td></tr>
+        <tr><td>Flow policy + web quota</td><td>❌ CPU only</td><td>Quota is proxy-only — silently overrides</td></tr>
+        <tr><td>IPsec VPN traffic</td><td>✅ Offloaded</td><td>NP7 has native IPsec crypto engines</td></tr>
+        <tr><td>SSL VPN traffic</td><td>❌ CPU only</td><td>Software tunnel — CPU manages it</td></tr>
+        <tr><td>FTP through firewall</td><td>❌ CPU only</td><td>Session helper required for dynamic ports</td></tr>
+        <tr><td>np-acceleration disabled</td><td>❌ CPU only</td><td>Explicit policy override</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<footer>NSE7 Enterprise Firewall 7.6 · Session 39 · Complete Study Guide · <span>Hardware Acceleration</span></footer>
+
+</body>
+</html>

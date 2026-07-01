@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Bite — Flow-Based vs Proxy-Based Functions</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --blue-glow:rgba(30,64,175,0.07);
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+    --red:#991b1b; --red-light:#fee2e2; --red-border:#fca5a5;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  header{padding:44px 60px 32px;background:var(--ink-dark);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:42px;font-weight:700;color:#fbf7ec;line-height:1.05;margin-bottom:8px;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.5);line-height:1.6;}
+
+  .banner{padding:20px 60px;border-bottom:1px solid var(--border);background:var(--surface);}
+  .banner-text{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:var(--text);}
+  .banner-text em{font-style:italic;color:var(--blue);}
+  .banner-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);margin-top:4px;}
+
+  main{max-width:1020px;margin:0 auto;padding:38px 60px 60px;}
+
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  h2{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:14px;border-left:3px solid var(--blue);}
+  h2 em{font-style:italic;color:var(--blue);}
+  p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:12px;}
+  p strong{color:var(--text);font-weight:600;}
+
+  .section-block{margin-bottom:44px;}
+  hr.divider{border:none;border-top:1px solid var(--border-dim);margin:36px 0;}
+
+  /* COMPARISON TABLE */
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;vertical-align:top;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .tag{display:inline-block;padding:2px 8px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.06em;}
+  .tag-flow{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}
+  .tag-proxy{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border);}
+  .tag-both{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border);}
+  .tag-no{background:var(--red-light);color:var(--red);border:1px solid var(--red-border);}
+
+  /* FEATURE GRID */
+  .feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;}
+  .feature-card{border-radius:12px;padding:18px 20px;border:1px solid var(--border);}
+  .feature-card-flow{background:var(--green-light);border-color:var(--green-border);}
+  .feature-card-proxy{background:var(--amber-light);border-color:var(--amber-border);}
+  .feature-card-title{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:12px;}
+  .feature-card-flow .feature-card-title{color:var(--green);}
+  .feature-card-proxy .feature-card-title{color:var(--amber);}
+  .feature-list{list-style:none;padding:0;}
+  .feature-list li{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text-soft);padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.06);line-height:1.5;}
+  .feature-list li:last-child{border-bottom:none;}
+  .feature-list li::before{content:'✓ ';font-weight:700;}
+  .feature-card-flow .feature-list li::before{color:var(--green);}
+  .feature-card-proxy .feature-list li::before{color:var(--amber);}
+
+  /* CALLOUTS */
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:13px 18px;margin:14px 0;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-red{border-left-color:var(--red-border);background:var(--red-light);}
+
+  /* MENTAL NOTE */
+  .mental-note{border-radius:10px;padding:13px 16px;margin:14px 0;display:flex;gap:10px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-inner .label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:3px;text-transform:uppercase;}
+  .mental-note-inner .text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.5;color:var(--text);}
+
+  /* SELF TEST */
+  .selftest{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:12px;border-top:3px solid var(--blue);}
+  .selftest-q{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--text);line-height:1.6;margin-bottom:10px;}
+  .selftest-q::before{content:'? ';font-family:'Playfair Display',serif;font-weight:700;font-style:italic;color:var(--blue);}
+  .selftest-answer{display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.65;margin-top:8px;}
+  .selftest-answer.visible{display:block;}
+  .btn-reveal{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:7px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-reveal:hover{opacity:0.85;}
+
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:18px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+
+  @media(max-width:720px){
+    header{padding:28px 24px 24px;}header h1{font-size:32px;}
+    .banner{padding:14px 24px;}main{padding:24px 24px 40px;}
+    .feature-grid{grid-template-columns:1fr;}footer{padding:14px 24px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-eyebrow"><span class="dot"></span> NSE7 EF 7.6 · Session 39 · Study Bite</div>
+  <h1>What Runs Where — <em>Flow vs Proxy Functions</em></h1>
+  <p>Know which features live in which mode — and what it costs you in hardware acceleration.</p>
+</header>
+
+<div class="banner">
+  <div class="banner-text">The mode determines the <em>path.</em> The path determines the <em>performance.</em></div>
+  <div class="banner-sub">Every security feature you enable is a choice between depth of inspection and hardware offload.</div>
+</div>
+
+<main>
+
+  <!-- SECTION 1: THE TWO MODES -->
+  <div class="section-block">
+    <div class="section-label">Core Distinction</div>
+    <h2>Two Modes, <em>One Critical Difference</em></h2>
+
+    <p>Both flow-based and proxy-based inspection read full packet payloads — including Layer 7 application content. The difference is not depth. It is <strong>timing</strong>.</p>
+
+    <div class="feature-grid">
+      <div class="feature-card feature-card-flow">
+        <div class="feature-card-title">⚡ Flow-Based — Real-Time</div>
+        <ul class="feature-list">
+          <li>IPS / Intrusion Prevention</li>
+          <li>Application Control</li>
+          <li>Antivirus (flow mode)</li>
+          <li>Web Filtering (flow mode)</li>
+          <li>DNS Filtering</li>
+          <li>Botnet C&C detection</li>
+          <li>SSL Deep Inspection (flow)</li>
+          <li>File Filter (flow mode)</li>
+        </ul>
+      </div>
+      <div class="feature-card feature-card-proxy">
+        <div class="feature-card-title">🔍 Proxy-Based — Buffer First</div>
+        <ul class="feature-list">
+          <li>Antivirus (proxy mode — full file)</li>
+          <li>Web Filtering (with quota)</li>
+          <li>Web Category Usage Quota</li>
+          <li>Web Profile Override</li>
+          <li>Antispam</li>
+          <li>Data Loss Prevention (DLP)</li>
+          <li>VoIP Inspection</li>
+          <li>Explicit Web Proxy</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout callout-amber">
+      <strong>Hidden trap:</strong> Some features appear in both modes but behave differently. Antivirus in flow mode scans as data streams through. Antivirus in proxy mode buffers the complete file before scanning — catching threats that only appear when fully assembled. Same feature name, completely different behaviour and hardware path.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- SECTION 2: NP7 OFFLOAD IMPACT -->
+  <div class="section-block">
+    <div class="section-label">Hardware Acceleration Impact</div>
+    <h2>Which Mode Gets <em>NP7 Offload?</em></h2>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Policy Configuration</th>
+          <th>NP7 Offload</th>
+          <th>CP9 Involved</th>
+          <th>Path</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>No security profiles</td>
+          <td><span class="tag tag-flow">✅ Full offload</span></td>
+          <td>No</td>
+          <td>NP7 fast path</td>
+        </tr>
+        <tr>
+          <td>Flow-based IPS / App Control</td>
+          <td><span class="tag tag-flow">✅ NTurbo</span></td>
+          <td>Yes — IPSA pattern matching</td>
+          <td>NP7 → NTurbo → IPS → CP9 → NP7</td>
+        </tr>
+        <tr>
+          <td>Flow-based SSL deep inspection</td>
+          <td><span class="tag tag-flow">✅ NTurbo</span></td>
+          <td>Yes — SSL crypto offload</td>
+          <td>NP7 → NTurbo → IPS → CP9 → NP7</td>
+        </tr>
+        <tr>
+          <td>Proxy-based any profile</td>
+          <td><span class="tag tag-no">❌ None</span></td>
+          <td>Yes — SSL crypto only</td>
+          <td>CPU slow path entirely</td>
+        </tr>
+        <tr>
+          <td>Mixed flow + proxy profiles</td>
+          <td><span class="tag tag-no">❌ None</span></td>
+          <td>Yes — SSL crypto only</td>
+          <td>CPU slow path — proxy wins</td>
+        </tr>
+        <tr>
+          <td>np-acceleration disabled</td>
+          <td><span class="tag tag-no">❌ None</span></td>
+          <td>Possible</td>
+          <td>CPU slow path — explicit override</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout-red">
+      <strong>Exam-critical — All or Nothing:</strong> A policy with mixed flow-based and proxy-based profiles does <strong>not</strong> split traffic between NP7 and CPU. The entire session goes to the CPU. Any proxy profile on a policy kills NP7 offload for every session matching that policy.
+    </div>
+
+    <div class="mental-note">
+      <div class="mental-note-inner">
+        <div class="label">🧠 Mental Model</div>
+        <div class="text">Flow-based = inspect as it flows → NP7 can help via NTurbo. Proxy-based = buffer everything first → CPU only, no exceptions.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- SECTION 3: PROCESSOR ROLES -->
+  <div class="section-block">
+    <div class="section-label">Who Does What</div>
+    <h2>The Three Processors and <em>Their Jobs</em></h2>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Processor</th>
+          <th>Primary Role</th>
+          <th>Works With</th>
+          <th>Cannot Do</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>NP7</td>
+          <td>Session forwarding, NAT, IPsec crypto, ACL, HPE, IP integrity</td>
+          <td>Flow-based profiles via NTurbo</td>
+          <td>Proxy-based inspection, session helpers, SSL VPN / GRE tunnels</td>
+        </tr>
+        <tr>
+          <td>CP9</td>
+          <td>Pattern matching (IPSA), SSL/TLS crypto for deep inspection, IPsec DH key exchange</td>
+          <td>Both flow and proxy modes</td>
+          <td>Full session forwarding — it is a coprocessor, not a forwarder</td>
+        </tr>
+        <tr>
+          <td>CPU</td>
+          <td>Orchestrates everything. Mandatory for proxy mode, session helpers, tunnels</td>
+          <td>Everything</td>
+          <td>Nothing — but becomes a bottleneck when overloaded</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout-green">
+      <strong>CP9 works in both modes:</strong> Even when a proxy-based policy forces everything to the CPU, the CP9 can still offload SSL/TLS encryption and decryption if deep inspection is configured. The NP7 is excluded — the CP9 is not.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- SECTION 4: FOUR SLOW PATH TRIGGERS -->
+  <div class="section-block">
+    <div class="section-label">Slow Path Triggers</div>
+    <h2>Four Reasons <em>NP7 Won't Offload</em></h2>
+
+    <table class="data-table">
+      <thead>
+        <tr><th>#</th><th>Trigger</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Proxy-based security profiles on the policy</td><td>Buffering requires CPU — hardware cannot hold full streams</td></tr>
+        <tr><td>2</td><td>Session helpers required (FTP, SIP, PPTP etc)</td><td>Dynamic port negotiation requires CPU to read application payload mid-session</td></tr>
+        <tr><td>3</td><td>Tunnelled interfaces — SSL VPN, GRE (not IPsec)</td><td>Software-defined logical interfaces managed entirely by CPU</td></tr>
+        <tr><td>4</td><td>np-acceleration explicitly disabled on the policy</td><td>Direct hardware override — useful for troubleshooting, dangerous in production</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>IPsec is the exception:</strong> IPsec VPN tunnels <em>can</em> be offloaded to the NP7 because the NP7 has dedicated crypto engines that understand IPsec natively. SSL VPN and GRE cannot — they are pure software constructs.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- SECTION 5: SELF TEST -->
+  <div class="section-block">
+    <div class="section-label">Self-Test</div>
+    <h2>Reconstruct the <em>Mental Model</em></h2>
+
+    <div class="selftest">
+      <div class="selftest-q">A policy has flow-based IPS and proxy-based DLP. Which path does traffic take?</div>
+      <button class="btn-reveal" onclick="reveal(this)">Reveal Answer</button>
+      <div class="selftest-answer">CPU slow path entirely. Any proxy-based profile on a policy kills NP7 offloading for every session matching that policy. It is all or nothing — there is no splitting of work between NP7 and CPU.</div>
+    </div>
+
+    <div class="selftest">
+      <div class="selftest-q">Can the CP9 ever help with a proxy-based policy?</div>
+      <button class="btn-reveal" onclick="reveal(this)">Reveal Answer</button>
+      <div class="selftest-answer">Yes. Even in proxy mode the CP9 can offload SSL/TLS encryption and decryption if deep SSL inspection is configured. The NP7 is excluded from session forwarding — but the CP9 still assists the CPU with crypto operations.</div>
+    </div>
+
+    <div class="selftest">
+      <div class="selftest-q">Why can FTP sessions not be offloaded to the NP7?</div>
+      <button class="btn-reveal" onclick="reveal(this)">Reveal Answer</button>
+      <div class="selftest-answer">FTP uses a session helper. The helper must read inside the application payload of the control connection to extract the dynamically negotiated data port, then open a pinhole for the secondary connection. This requires CPU involvement for the entire session — the NP7 silicon cannot do application-layer protocol tracking.</div>
+    </div>
+
+    <div class="selftest">
+      <div class="selftest-q">What is the one tunnel type that CAN be offloaded to the NP7 — and why?</div>
+      <button class="btn-reveal" onclick="reveal(this)">Reveal Answer</button>
+      <div class="selftest-answer">IPsec VPN. The NP7 has dedicated hardware crypto engines that natively understand IPsec encryption and decryption. SSL VPN and GRE are software-defined logical interfaces managed entirely by the CPU and cannot be offloaded.</div>
+    </div>
+
+    <div class="selftest">
+      <div class="selftest-q">Name two features that are proxy-only and would silently break NP7 offloading if added to a flow-based policy.</div>
+      <button class="btn-reveal" onclick="reveal(this)">Reveal Answer</button>
+      <div class="selftest-answer">Web category usage quota and VoIP inspection are both inherently proxy-only. Adding either to an otherwise flow-based policy forces the entire policy to proxy mode, killing NP7 offloading for all sessions. The policy inspection mode setting is only the default — individual features can override it silently.</div>
+    </div>
+
+  </div>
+
+</main>
+
+<footer>NSE7 Enterprise Firewall 7.6 · Session 39 · Study Bite · <span>Flow-Based vs Proxy-Based Functions</span></footer>
+
+<script>
+function reveal(btn){
+  const a=btn.nextElementSibling;
+  a.classList.toggle('visible');
+  btn.textContent=a.classList.contains('visible')?'Hide Answer':'Reveal Answer';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Bite — Flow-Based vs Proxy-Based Inspection</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:44px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+
+  .motivation-banner{padding:22px 60px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--text);}
+  .motivation-text em{font-style:italic;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);margin-top:6px;}
+
+  main{max-width:1000px;margin:0 auto;padding:40px 60px 60px;}
+
+  .section-block{margin-bottom:44px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block ul{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:4px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+  .analogy-label{display:flex;align-items:center;gap:6px;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:8px;text-transform:uppercase;}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
+
+  /* Image placeholder */
+  .img-placeholder{border:2px dashed var(--amber-border);border-radius:12px;background:rgba(255,255,255,0.5);padding:24px 20px;margin:16px 0;display:flex;flex-direction:column;align-items:flex-start;gap:10px;}
+  .img-placeholder-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;color:var(--amber);text-transform:uppercase;}
+  .img-placeholder-prompt{font-family:'Cormorant Garamond',serif;font-size:15px;color:#5c3d09;line-height:1.7;font-style:italic;}
+
+  /* Comparison panels */
+  .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;}
+  .compare-card{border-radius:12px;padding:18px 20px;border:1px solid var(--border);}
+  .compare-card-flow{background:var(--green-light);border-color:var(--green-border);}
+  .compare-card-proxy{background:var(--amber-light);border-color:var(--amber-border);}
+  .compare-card-title{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:10px;}
+  .compare-card-flow .compare-card-title{color:var(--green);}
+  .compare-card-proxy .compare-card-title{color:var(--amber);}
+  .compare-card p{font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.6;color:var(--text-soft);margin-bottom:8px;}
+  .compare-card p:last-child{margin-bottom:0;}
+  .compare-card strong{color:var(--text);font-weight:600;}
+
+  /* Self-test */
+  .selftest-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:14px;border-top:3px solid var(--blue);}
+  .selftest-q{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--text);line-height:1.6;margin-bottom:12px;}
+  .selftest-q::before{content:'? ';font-family:'Playfair Display',serif;font-weight:700;font-style:italic;color:var(--blue);}
+  .selftest-answer{display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.65;margin-top:8px;}
+  .selftest-answer.visible{display:block;}
+  .btn-reveal{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:7px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-reveal:hover{opacity:0.85;}
+
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+
+  @media(max-width:720px){
+    header{padding:28px 24px 24px;}
+    header h1{font-size:32px;}
+    .motivation-banner{padding:16px 24px;}
+    main{padding:24px 24px 40px;}
+    .compare-grid{grid-template-columns:1fr;}
+    footer{padding:16px 24px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="header-eyebrow"><span class="dot-live"></span> NSE7 EF 7.6 — Session 39 Study Bite</div>
+    <h1>Flow-Based vs <em>Proxy-Based</em> Inspection</h1>
+    <p>The difference isn't how deep they look — it's when they decide.</p>
+  </div>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">One concept. <em>Five minutes.</em> Mental model reactivated.</div>
+  <div class="motivation-sub">This bite covers the single most important distinction for predicting NP7 offload behaviour on the NSE7 exam.</div>
+</div>
+
+<main>
+
+  <!-- SECTION 1: THE CORE DISTINCTION -->
+  <div class="section-block">
+    <div class="section-label">Core Concept</div>
+    <h2>Same Depth, <em>Different Timing</em></h2>
+
+    <p>The most common misconception about flow-based inspection is that it only reads headers. <strong>It doesn't.</strong> Flow-based inspection reads full packet payloads — it can see Layer 7 content, application signatures, and threat patterns. So can proxy-based inspection.</p>
+
+    <p>The difference is not <em>what</em> they inspect. It is <em>when</em> they decide.</p>
+
+    <div class="compare-grid">
+      <div class="compare-card compare-card-flow">
+        <div class="compare-card-title">⚡ Flow-Based</div>
+        <p><strong>Inspects as packets stream through.</strong> Makes decisions in real time on each packet as it passes.</p>
+        <p>Does not wait for the complete data stream. Acts immediately.</p>
+        <p><strong>Can be NP7 offloaded</strong> via NTurbo.</p>
+      </div>
+      <div class="compare-card compare-card-proxy">
+        <div class="compare-card-title">🔍 Proxy-Based</div>
+        <p><strong>Buffers the entire stream first.</strong> Reassembles the full content before making a decision.</p>
+        <p>Waits for completeness. Acts after the fact.</p>
+        <p><strong>Cannot be NP7 offloaded.</strong> CPU only.</p>
+      </div>
+    </div>
+
+    <div class="mental-note-block">
+      <div class="mental-note-block-icon">🧠</div>
+      <div class="mental-note-block-inner">
+        <div class="mental-note-block-label">Mental Model</div>
+        <div class="mental-note-block-text">The distinction is timing and completeness — not depth. Both modes read Layer 7 content. Only one buffers the entire conversation before acting.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: THE ANALOGY -->
+  <div class="section-block">
+    <div class="section-label">The Analogy</div>
+    <h2>The Security Guard <em>vs The Waiting Room</em></h2>
+
+    <div class="analogy-box">
+      <div class="analogy-label">🏢 Real-World Analogy</div>
+      <div class="analogy-text">
+        <p class="analogy-summary">Two inspectors. Same information. Different moment of decision.</p>
+        <p><strong>Flow-based = Security guard in a corridor.</strong> Watches each person as they walk through. Makes an instant call — pass or stop — on every individual, in real time. Never pauses the queue.</p>
+        <p><strong>Proxy-based = Waiting room inspector.</strong> Stops everyone. Collects all documents. Reads everything in full. Only then decides who may proceed. No one moves until the full picture is assembled.</p>
+        <p>Both inspectors read the same information. The guard acts faster. The waiting room inspector catches things that only appear when the full picture is assembled — like a document that seems legitimate page by page but contains a forged signature on the last page.</p>
+      </div>
+    </div>
+
+    <!-- IMAGE PLACEHOLDER -->
+    <div class="img-placeholder">
+      <div class="img-placeholder-label">📷 Image Placeholder — Generate with the prompt below</div>
+      <div class="img-placeholder-prompt">
+        <strong>Image generation prompt:</strong><br><br>
+        Flat minimalist cartoon illustration, cream background, two side-by-side scenes. Left scene: a calm security guard standing in a corridor checking each person's badge as they walk past in a continuous stream — labelled "Flow-Based". Right scene: a waiting room where all visitors are seated holding documents while an inspector reads a large stack of papers at a desk before anyone moves — labelled "Proxy-Based". Simple geometric figures, no text inside the image except the two labels. Muted blue, amber, and cream colour palette. Clean editorial style.
+      </div>
+    </div>
+
+    <!-- WHAT PROXY SEES THAT FLOW DOESN'T -->
+    <div class="callout callout-amber">
+      <strong>What does the proxy inspector see that the flow inspector misses?</strong><br><br>
+      Because proxy-based inspection buffers the <em>complete</em> data stream before deciding, it can detect threats that only become visible when the full content is assembled. Examples include:<br><br>
+      <ul style="padding-left:18px;margin-top:6px;">
+        <li>A malicious file that is split across many packets — only recognisable when fully reassembled</li>
+        <li>Encoded or obfuscated payloads where the threat only reveals itself after the full object is decoded</li>
+        <li>Quota-based controls — you cannot enforce a "30-minute category limit" without tracking the full session over time</li>
+        <li>Certain antivirus signatures that require the complete file before matching</li>
+      </ul><br>
+      Flow-based inspection acts on what it sees <em>now</em>. Proxy-based inspection waits until it can see <em>everything</em>. The trade-off: completeness costs CPU time and latency.
+    </div>
+  </div>
+
+  <!-- SECTION 3: NP7 OFFLOAD IMPACT -->
+  <div class="section-block">
+    <div class="section-label">Hardware Acceleration Impact</div>
+    <h2>Why This Choice <em>Changes Everything</em></h2>
+
+    <p>This distinction is not just academic. It directly determines whether the NP7 silicon can accelerate your traffic — or whether every packet must be processed by the main CPU.</p>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>NP7 Offload?</th>
+          <th>Why</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>No security profiles</td>
+          <td>✅ Yes — full offload</td>
+          <td>Pure forwarding — NP7 handles entirely after session setup</td>
+        </tr>
+        <tr>
+          <td>Flow-based IPS / App Control</td>
+          <td>✅ Yes — via NTurbo</td>
+          <td>NTurbo bridges NP7 and IPS engine; CP handles pattern matching</td>
+        </tr>
+        <tr>
+          <td>Proxy-based any profile</td>
+          <td>❌ No — CPU only</td>
+          <td>Buffering requires CPU to hold and reassemble the full stream</td>
+        </tr>
+        <tr>
+          <td>Mixed flow + proxy profiles</td>
+          <td>❌ No — CPU only</td>
+          <td>Any proxy profile on a policy forces the entire session to CPU</td>
+        </tr>
+        <tr>
+          <td>np-acceleration disabled on policy</td>
+          <td>❌ No — CPU only</td>
+          <td>Explicitly overrides hardware offload regardless of profile type</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>Exam-critical:</strong> A firewall policy with a mix of flow-based <em>and</em> proxy-based profiles does <strong>not</strong> split the work between NP7 and CPU. The entire session goes to the CPU. It is all or nothing.
+    </div>
+
+    <div class="callout callout-amber">
+      <strong>Hidden trap:</strong> Some security profile <em>features</em> are inherently proxy-only — web rating quota, certain DLP options, VoIP inspection. Enabling these on an otherwise flow-based policy silently forces proxy mode for the entire policy. The inspection mode setting on the policy is the default, but individual features can override it.
+    </div>
+  </div>
+
+  <!-- SECTION 4: SELF-TEST -->
+  <div class="section-block">
+    <div class="section-label">Self-Test</div>
+    <h2>Reconstruct the <em>Mental Model</em></h2>
+
+    <div class="selftest-block">
+      <div class="selftest-q">A policy has flow-based IPS and flow-based antivirus enabled. Can NP7 offload this session?</div>
+      <button class="btn-reveal" onclick="reveal(this)">Reveal Answer</button>
+      <div class="selftest-answer">Yes. Flow-based profiles are compatible with NP7 acceleration via NTurbo. The NP7 handles forwarding, the IPS engine handles inspection, and the CP9 offloads pattern matching via IPSA. The CPU orchestrates but does not bottleneck the forwarding path.</div>
+    </div>
+
+    <div class="selftest-block">
+      <div class="selftest-q">Someone adds a web category quota feature to an existing flow-based policy. What happens to NP7 offloading?</div>
+      <button class="btn-reveal" onclick="reveal(this)">Reveal Answer</button>
+      <div class="selftest-answer">Web category quota is inherently proxy-only. The moment it is added, the entire policy is forced to proxy-based inspection — even if everything else is flow-based. NP7 offloading is lost for all sessions matching that policy. The CPU must now handle everything.</div>
+    </div>
+
+    <div class="selftest-block">
+      <div class="selftest-q">What is the single most important reason proxy-based inspection cannot be offloaded to the NP7?</div>
+      <button class="btn-reveal" onclick="reveal(this)">Reveal Answer</button>
+      <div class="selftest-answer">Proxy-based inspection requires buffering the complete traffic stream before making a decision. The NP7 is a hardware forwarding chip — it cannot hold and reassemble full conversations. That buffering and reassembly fundamentally requires the CPU to remain in the loop for every packet.</div>
+    </div>
+
+    <div class="selftest-block">
+      <div class="selftest-q">A policy has proxy-based antivirus. Can the CP9 still help anywhere?</div>
+      <button class="btn-reveal" onclick="reveal(this)">Reveal Answer</button>
+      <div class="selftest-answer">Yes. Even in proxy-based mode, the CP9 can assist with SSL/TLS encryption and decryption for deep SSL inspection. The NP7 is excluded from session offloading, but the CP9 still acts as a coprocessor to the CPU for crypto operations. The NP7 can also still handle early packet inspection (ACL, HPE, IP integrity) and IPsec encryption/decryption if applicable.</div>
+    </div>
+
+    <div class="selftest-block">
+      <div class="selftest-q">Name one thing proxy-based inspection can detect that flow-based might miss — and explain why.</div>
+      <button class="btn-reveal" onclick="reveal(this)">Reveal Answer</button>
+      <div class="selftest-answer">A malicious file that is split across many packets and only recognisable when fully reassembled. Flow-based inspection makes decisions in real time on each packet as it passes — it does not wait for the complete object. Proxy-based inspection buffers the entire file before scanning, so it sees the complete content and can match signatures that only appear in the assembled whole.</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>NSE7 Enterprise Firewall 7.6 &nbsp;·&nbsp; Session 39 &nbsp;·&nbsp; Study Bite &nbsp;·&nbsp; <span>Flow-Based vs Proxy-Based Inspection</span></footer>
+
+<script>
+function reveal(btn) {
+  const answer = btn.nextElementSibling;
+  answer.classList.toggle('visible');
+  btn.textContent = answer.classList.contains('visible') ? 'Hide Answer' : 'Reveal Answer';
+}
+</script>
+</body>
+</html>
