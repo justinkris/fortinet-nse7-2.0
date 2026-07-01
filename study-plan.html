@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NSE7 Enterprise Firewall 7.6 — Socratic Curriculum</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:56px 60px 40px;background:var(--ink-dark);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:56px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:14px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:rgba(251,247,236,0.65);max-width:780px;line-height:1.6;}
+  .motivation-banner{padding:24px 60px;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--text);}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+  /* LAYOUT: left sidebar + right main pane */
+  .hub-layout{display:flex;align-items:flex-start;max-width:1440px;margin:0 auto;}
+  .hub-sidebar{width:300px;flex-shrink:0;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--surface);border-right:1px solid var(--border);padding:24px 16px 32px;display:flex;flex-direction:column;gap:4px;transition:width 0.18s ease, padding 0.18s ease;}
+  /* Top-level collapse toggle */
+  .hub-side-collapse{display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:none;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:6px 14px 12px;cursor:pointer;}
+  .hub-side-collapse:hover{color:var(--text);}
+  .hub-side-collapse-chevron{display:inline-block;font-size:14px;line-height:1;transition:transform 0.18s ease;}
+  /* Collapsible groups */
+  .hub-sidebar-group{display:flex;flex-direction:column;gap:4px;}
+  .hub-side-group-head{display:flex;align-items:center;gap:8px;width:100%;background:transparent;border:none;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:6px 14px;cursor:pointer;text-align:left;}
+  .hub-side-group-head:hover{color:var(--text);}
+  .hub-side-group-chevron{display:inline-block;font-size:10px;line-height:1;width:10px;text-align:center;transition:transform 0.15s ease;}
+  .hub-sidebar-group.group-collapsed .hub-side-group-chevron{transform:rotate(-90deg);}
+  .hub-sidebar-group-body{display:flex;flex-direction:column;gap:4px;}
+  .hub-sidebar-group.group-collapsed .hub-sidebar-group-body{display:none;}
+  /* Tab icon (hidden by default; shown only when sidebar is collapsed) */
+  .hub-side-tab-icon{display:none;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.04em;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:3px 0;min-width:32px;text-align:center;flex-shrink:0;}
+  .hub-side-tab.active .hub-side-tab-icon{color:var(--blue);border-color:var(--blue);background:var(--blue-light);}
+  /* COLLAPSED sidebar — thin icon rail */
+  .hub-sidebar.collapsed{width:64px;padding:24px 6px 32px;}
+  .hub-sidebar.collapsed .hub-side-collapse{justify-content:center;padding:6px 0 12px;}
+  .hub-sidebar.collapsed .hub-side-collapse-label{display:none;}
+  .hub-sidebar.collapsed .hub-side-collapse-chevron{transform:scaleX(-1);}
+  .hub-sidebar.collapsed .hub-side-group-head,
+  .hub-sidebar.collapsed .hub-sidebar-divider,
+  .hub-sidebar.collapsed .hub-sidebar-label{display:none;}
+  /* When sidebar is collapsed, always show group bodies regardless of group-collapsed */
+  .hub-sidebar.collapsed .hub-sidebar-group.group-collapsed .hub-sidebar-group-body{display:flex;}
+  .hub-sidebar.collapsed .hub-side-tab{justify-content:center;padding:8px 4px;border-radius:8px;border-left:none;}
+  .hub-sidebar.collapsed .hub-side-tab.active{background:var(--blue-light);}
+  .hub-sidebar.collapsed .hub-side-tab-title,
+  .hub-sidebar.collapsed .hub-side-tab-sub,
+  .hub-sidebar.collapsed .hub-side-badge{display:none;}
+  .hub-sidebar.collapsed .hub-side-tab-icon{display:inline-flex;align-items:center;justify-content:center;}
+  .hub-sidebar-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);padding:0 14px;margin-bottom:8px;}
+  .hub-sidebar-divider{height:1px;background:var(--border-dim);margin:10px 14px;}
+  .hub-side-tab{display:flex;align-items:center;gap:8px;width:100%;background:transparent;border:none;border-left:3px solid transparent;color:var(--text-soft);font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.06em;text-align:left;padding:10px 14px;cursor:pointer;border-radius:0 8px 8px 0;transition:background 0.15s, color 0.15s, border-color 0.15s;}
+  .hub-side-tab:hover{background:var(--blue-glow);color:var(--text);}
+  .hub-side-tab.active{background:var(--blue-light);color:var(--blue);border-left-color:var(--blue);}
+  .hub-side-tab-title{flex:1;line-height:1.3;}
+  .hub-side-tab-sub{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:0.04em;}
+  .hub-side-tab.active .hub-side-tab-sub{color:var(--blue);}
+  .hub-side-badge{background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:0.04em;font-family:'Outfit',sans-serif;}
+  .hub-side-tab.active .hub-side-badge{background:var(--blue-deep);}
+  .hub-main{flex:1;min-width:0;}
+  main{margin:0;padding:0;}
+  .main-content{padding:36px 48px 60px 48px;max-width:1080px;}
+  /* one-section-at-a-time view */
+  .section-block{display:none;}
+  .section-block.active-section{display:block;}
+  @media(max-width:900px){
+    .hub-layout{flex-direction:column;}
+    .hub-sidebar{position:static;width:100%;height:auto;max-height:none;flex-direction:row;overflow-x:auto;overflow-y:hidden;border-right:none;border-bottom:1px solid var(--border);padding:10px 12px;gap:6px;}
+    .hub-sidebar.collapsed{width:100%;padding:10px 12px;}
+    .hub-sidebar-label,.hub-sidebar-divider,.hub-side-collapse,.hub-side-group-head{display:none;}
+    .hub-sidebar-group,.hub-sidebar-group-body{display:contents;}
+    .hub-sidebar-group.group-collapsed .hub-sidebar-group-body{display:contents;}
+    .hub-side-tab{flex-shrink:0;border-left:none;border-bottom:3px solid transparent;border-radius:8px 8px 0 0;padding:8px 14px;white-space:nowrap;}
+    .hub-side-tab.active{border-left-color:transparent;border-bottom-color:var(--blue);}
+    .main-content{padding:24px 24px 40px;}
+  }
+  .section-block{margin-bottom:56px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .session-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:20px;}
+  .session-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;flex-direction:column;gap:6px;transition:border-color 0.15s, transform 0.15s;}
+  .session-card:hover{border-color:var(--blue);transform:translateY(-2px);}
+  .session-card-num{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);}
+  .session-card-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--text);text-decoration:none;line-height:1.25;}
+  .session-card-title:hover{color:var(--blue);}
+  .session-card-meta{font-family:'Outfit',sans-serif;font-size:10px;letter-spacing:0.06em;color:var(--text-muted);}
+  .session-card-why{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-soft);line-height:1.55;margin:0;}
+  .img-caption{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}
+  .section-img-wrap{margin:0 0 20px;display:flex;flex-direction:column;align-items:center;}
+  .section-img{width:340px;max-width:100%;border-radius:12px;cursor:zoom-in;transition:width 0.3s ease;border:1px solid var(--border);display:block;}
+  .section-img.si-expanded{width:100%;cursor:zoom-out;border-radius:16px;}
+  .si-placeholder{display:none;width:340px;max-width:100%;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}
+  .si-placeholder.si-show{display:flex;}
+  .si-filename{font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--text-muted);font-family:'SF Mono','Fira Code',monospace;}
+  .prompt-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}
+  .prompt-toggle:hover{color:var(--text);border-color:var(--text);}
+  .prompt-content{margin-top:10px;padding:10px 14px;background:rgba(0,0,0,0.04);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.65;text-align:left;}
+  .prompt-content[hidden]{display:none;}
+  .data-table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+  .data-table th{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;background:var(--surface-2);color:var(--text);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:8px 14px;border-bottom:1px solid var(--border-dim);color:var(--text-soft);}
+  .data-table td a{color:var(--blue);text-decoration:none;}
+  .data-table td a:hover{text-decoration:underline;}
+  .data-table .phase-row{background:var(--ink-dark);color:#fbf7ec;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;}
+  .progress-summary{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin:16px 0 24px;}
+  .progress-stats{display:flex;align-items:center;gap:18px;font-family:'Outfit',sans-serif;font-size:13px;color:var(--text);}
+  .progress-stats em{font-style:italic;color:var(--text-muted);font-family:'Cormorant Garamond',serif;font-size:14px;}
+  .progress-count-block{font-weight:700;color:var(--blue);font-size:18px;}
+  .progress-reset{margin-left:auto;font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);background:transparent;border:1px solid var(--border);border-radius:6px;padding:5px 12px;cursor:pointer;}
+  .progress-reset:hover{color:var(--text);border-color:var(--text);}
+  .progress-bar-wrap{width:100%;height:8px;background:var(--surface-2);border-radius:8px;overflow:hidden;}
+  .progress-bar-fill{height:100%;background:var(--blue);transition:width 0.25s ease;}
+  .progress-phases{display:flex;flex-direction:column;gap:16px;}
+  .progress-phase{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 18px;}
+  .progress-phase-head{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text);margin-bottom:8px;display:flex;justify-content:space-between;}
+  .progress-phase-stats{font-weight:600;color:var(--blue);letter-spacing:0.06em;}
+  .progress-row{display:flex;align-items:center;gap:12px;padding:6px 0;cursor:pointer;}
+  .progress-row.completed .progress-title{text-decoration:line-through;color:var(--text-muted);}
+  .progress-check{appearance:none;width:18px;height:18px;border:1.5px solid var(--border);border-radius:4px;cursor:pointer;flex-shrink:0;background:var(--surface);position:relative;}
+  .progress-check:hover{border-color:var(--blue);}
+  .progress-check:checked{background:var(--blue);border-color:var(--blue);}
+  .progress-check:checked::after{content:'✓';position:absolute;color:#fff;font-size:13px;font-weight:700;top:-1px;left:3px;}
+  .progress-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:2px 6px;min-width:30px;text-align:center;}
+  .progress-title{flex:1;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);text-decoration:none;line-height:1.4;}
+  .progress-title:hover{color:var(--blue);}
+  .progress-dur{font-family:'Outfit',sans-serif;font-size:10px;color:var(--text-muted);letter-spacing:0.04em;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:24px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:32px 24px 24px;}header h1{font-size:36px;}.main-content{padding:24px 24px 40px;}.section-nav{padding:0 16px;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-eyebrow"><span class="dot-live"></span> Socratic Curriculum · NSE7 Enterprise Firewall 7.6</div>
+  <h1>NSE7 Enterprise Firewall 7.6 <em>Socratic Curriculum</em></h1>
+  <p>Forty structured 20–30 minute Socratic sessions, organised as one continuous learning story. Every blueprint objective is taught across the curriculum. Every session opens by solving the problem the previous session left unfinished.</p>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">From a single FortiGate to a <em>fully orchestrated security fabric</em>.</div>
+  <p class="motivation-sub">Eight phases · 40 sessions · 100% blueprint coverage · One continuous story.</p>
+</div>
+
+<div class="hub-layout">
+
+  <aside class="hub-sidebar" id="hub-sidebar">
+    <div class="hub-sidebar-label">Navigate</div>
+        <button class="hub-side-collapse" id="hub-side-collapse" aria-label="Toggle sidebar"><span class="hub-side-collapse-chevron">«</span><span class="hub-side-collapse-label">Collapse</span></button>
+        <button class="hub-side-tab" data-target="progress"><span class="hub-side-tab-icon">P</span><span class="hub-side-tab-title">Progress</span><span class="hub-side-badge" id="side-progress-badge">0/40</span></button>
+        <div class="hub-sidebar-divider"></div>
+        <div class="hub-sidebar-group" data-group="curriculum"><button class="hub-side-group-head" data-group-toggle="curriculum"><span class="hub-side-group-chevron">▾</span><span class="hub-side-group-label">The Curriculum</span></button><div class="hub-sidebar-group-body"><button class="hub-side-tab" data-target="phase-01"><span class="hub-side-tab-icon">01</span><span class="hub-side-tab-title">Phase 01 — Network Security Architecture</span><span class="hub-side-tab-sub">5</span></button><button class="hub-side-tab" data-target="phase-02"><span class="hub-side-tab-icon">02</span><span class="hub-side-tab-title">Phase 02 — FortiManager &amp; FortiAnalyzer</span><span class="hub-side-tab-sub">5</span></button><button class="hub-side-tab" data-target="phase-03"><span class="hub-side-tab-icon">03</span><span class="hub-side-tab-title">Phase 03 — VLANs &amp; VDOMs</span><span class="hub-side-tab-sub">4</span></button><button class="hub-side-tab" data-target="phase-04"><span class="hub-side-tab-icon">04</span><span class="hub-side-tab-title">Phase 04 — FGCP, FGSP, VRRP</span><span class="hub-side-tab-sub">5</span></button><button class="hub-side-tab" data-target="phase-05"><span class="hub-side-tab-icon">05</span><span class="hub-side-tab-title">Phase 05 — OSPF &amp; BGP</span><span class="hub-side-tab-sub">7</span></button><button class="hub-side-tab" data-target="phase-06"><span class="hub-side-tab-icon">06</span><span class="hub-side-tab-title">Phase 06 — SSL, Web, App, IPS</span><span class="hub-side-tab-sub">5</span></button><button class="hub-side-tab" data-target="phase-07"><span class="hub-side-tab-icon">07</span><span class="hub-side-tab-title">Phase 07 — IPsec &amp; ADVPN</span><span class="hub-side-tab-sub">5</span></button><button class="hub-side-tab" data-target="phase-08"><span class="hub-side-tab-icon">08</span><span class="hub-side-tab-title">Phase 08 — Security Fabric + Hardware Offload</span><span class="hub-side-tab-sub">4</span></button></div></div>
+        <div class="hub-sidebar-divider"></div>
+        <div class="hub-sidebar-group" data-group="reference"><button class="hub-side-group-head" data-group-toggle="reference"><span class="hub-side-group-chevron">▾</span><span class="hub-side-group-label">Reference</span></button><div class="hub-sidebar-group-body"><button class="hub-side-tab" data-target="roadmap"><span class="hub-side-tab-icon">R</span><span class="hub-side-tab-title">Roadmap</span></button><button class="hub-side-tab" data-target="objective-map"><span class="hub-side-tab-icon">O</span><span class="hub-side-tab-title">Objective Map</span></button><button class="hub-side-tab" data-target="journey"><span class="hub-side-tab-icon">J</span><span class="hub-side-tab-title">The Journey</span></button></div></div>
+  </aside>
+
+  <main class="hub-main">
+  <div class="main-content">
+
+    <!-- PROGRESS -->
+    <div class="section-block" id="progress">
+      <div class="section-label">YOUR PROGRESS</div>
+      <h2>Track Your <em>Journey</em></h2>
+      <p>Check off each session as you finish it. Your progress is saved in this browser only — clear your site data and it resets.</p>
+      <div class="progress-summary">
+        <div class="progress-stats">
+          <span class="progress-count-block"><span id="progress-count">0</span> <em>of 40 complete</em></span>
+          <span><span id="progress-pct">0%</span></span>
+          <button class="progress-reset" onclick="resetProgress()">Reset progress</button>
+        </div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+      </div>
+      <div class="progress-phases">
+        <div class="progress-phase"><div class="progress-phase-head">PHASE 01 — Foundations: Network Security Architecture <span class="progress-phase-stats" data-phase="1">0 / 5</span></div><label class="progress-row" data-session="1"><input type="checkbox" class="progress-check" data-session="1"><span class="progress-num">01</span><a class="progress-title" href="sessions/session-01-nse7-story-exam-map.html">The NSE7 Story — Roles, Audience &amp; Exam Map</a><span class="progress-dur">25-30 minutes</span></label><label class="progress-row" data-session="2"><input type="checkbox" class="progress-check" data-session="2"><span class="progress-num">02</span><a class="progress-title" href="sessions/session-02-fortios-architecture.html">FortiOS 7.6 — Architecture Overview</a><span class="progress-dur">25 minutes</span></label><label class="progress-row" data-session="3"><input type="checkbox" class="progress-check" data-session="3"><span class="progress-num">03</span><a class="progress-title" href="sessions/session-03-enterprise-deployment-patterns.html">Enterprise Deployment Patterns</a><span class="progress-dur">25 minutes</span></label><label class="progress-row" data-session="4"><input type="checkbox" class="progress-check" data-session="4"><span class="progress-num">04</span><a class="progress-title" href="sessions/session-04-use-case-scenarios.html">Use Case Scenarios — Securing the Enterprise</a><span class="progress-dur">30 minutes</span></label><label class="progress-row" data-session="5"><input type="checkbox" class="progress-check" data-session="5"><span class="progress-num">05</span><a class="progress-title" href="sessions/session-05-lab-mindset-topology.html">Lab Mindset, Reference Topology &amp; Troubleshooting</a><span class="progress-dur">20-25 minutes</span></label></div><div class="progress-phase"><div class="progress-phase-head">PHASE 02 — Central Management: FortiManager &amp; FortiAnalyzer <span class="progress-phase-stats" data-phase="2">0 / 5</span></div><label class="progress-row" data-session="6"><input type="checkbox" class="progress-check" data-session="6"><span class="progress-num">06</span><a class="progress-title" href="sessions/session-06-central-management-why.html">Why Central Management — The Scale Problem</a><span class="progress-dur">20-25 minutes</span></label><label class="progress-row" data-session="7"><input type="checkbox" class="progress-check" data-session="7"><span class="progress-num">07</span><a class="progress-title" href="sessions/session-07-fortimanager-adoms-workspace.html">FortiManager — Onboarding, ADOMs &amp; Workspace Mode</a><span class="progress-dur">25-30 minutes</span></label><label class="progress-row" data-session="8"><input type="checkbox" class="progress-check" data-session="8"><span class="progress-num">08</span><a class="progress-title" href="sessions/session-08-policy-packages-installation.html">Policy Packages, Object Database &amp; Installation</a><span class="progress-dur">25-30 minutes</span></label><label class="progress-row" data-session="9"><input type="checkbox" class="progress-check" data-session="9"><span class="progress-num">09</span><a class="progress-title" href="sessions/session-09-fortianalyzer-logging.html">FortiAnalyzer — Logging, Indexing &amp; Storage</a><span class="progress-dur">25 minutes</span></label><label class="progress-row" data-session="10"><input type="checkbox" class="progress-check" data-session="10"><span class="progress-num">10</span><a class="progress-title" href="sessions/session-10-soc-view-reports.html">SOC View, Reports &amp; Fabric Insights</a><span class="progress-dur">25 minutes</span></label></div><div class="progress-phase"><div class="progress-phase-head">PHASE 03 — Segmentation: VLANs &amp; VDOMs <span class="progress-phase-stats" data-phase="3">0 / 4</span></div><label class="progress-row" data-session="11"><input type="checkbox" class="progress-check" data-session="11"><span class="progress-num">11</span><a class="progress-title" href="sessions/session-11-vlans-on-fortigate.html">VLANs on FortiGate</a><span class="progress-dur">25-30 minutes</span></label><label class="progress-row" data-session="12"><input type="checkbox" class="progress-check" data-session="12"><span class="progress-num">12</span><a class="progress-title" href="sessions/session-12-vdoms-multi-tenant.html">VDOMs — Multi-Tenant Firewalls</a><span class="progress-dur">25-30 minutes</span></label><label class="progress-row" data-session="13"><input type="checkbox" class="progress-check" data-session="13"><span class="progress-num">13</span><a class="progress-title" href="sessions/session-13-nat-vs-transparent-vdom.html">NAT vs Transparent VDOM Modes</a><span class="progress-dur">25 minutes</span></label><label class="progress-row" data-session="14"><input type="checkbox" class="progress-check" data-session="14"><span class="progress-num">14</span><a class="progress-title" href="sessions/session-14-inter-vdom-links.html">Inter-VDOM Links, Routing &amp; Sharing Resources</a><span class="progress-dur">25 minutes</span></label></div><div class="progress-phase"><div class="progress-phase-head">PHASE 04 — High Availability: FGCP, FGSP, VRRP <span class="progress-phase-stats" data-phase="4">0 / 5</span></div><label class="progress-row" data-session="15"><input type="checkbox" class="progress-check" data-session="15"><span class="progress-num">15</span><a class="progress-title" href="sessions/session-15-ha-problem.html">The HA Problem — Why One FortiGate Isn't Enough</a><span class="progress-dur">20-25 minutes</span></label><label class="progress-row" data-session="16"><input type="checkbox" class="progress-check" data-session="16"><span class="progress-num">16</span><a class="progress-title" href="sessions/session-16-fgcp-active-passive.html">FGCP Fundamentals — Active-Passive</a><span class="progress-dur">30 minutes</span></label><label class="progress-row" data-session="17"><input type="checkbox" class="progress-check" data-session="17"><span class="progress-num">17</span><a class="progress-title" href="sessions/session-17-fgcp-active-active.html">FGCP Active-Active &amp; Load Balancing</a><span class="progress-dur">25 minutes</span></label><label class="progress-row" data-session="18"><input type="checkbox" class="progress-check" data-session="18"><span class="progress-num">18</span><a class="progress-title" href="sessions/session-18-fgsp-session-sync.html">FGSP — Session Synchronization</a><span class="progress-dur">25-30 minutes</span></label><label class="progress-row" data-session="19"><input type="checkbox" class="progress-check" data-session="19"><span class="progress-num">19</span><a class="progress-title" href="sessions/session-19-vrrp-and-failover.html">VRRP, Failover Timers &amp; Session Pickup</a><span class="progress-dur">25 minutes</span></label></div><div class="progress-phase"><div class="progress-phase-head">PHASE 05 — Dynamic Routing: OSPF &amp; BGP <span class="progress-phase-stats" data-phase="5">0 / 7</span></div><label class="progress-row" data-session="20"><input type="checkbox" class="progress-check" data-session="20"><span class="progress-num">20</span><a class="progress-title" href="sessions/session-20-why-dynamic-routing-on-firewall.html">Why Dynamic Routing on a Firewall</a><span class="progress-dur">20-25 minutes</span></label><label class="progress-row" data-session="21"><input type="checkbox" class="progress-check" data-session="21"><span class="progress-num">21</span><a class="progress-title" href="sessions/session-21-ospf-areas-lsas-neighbors.html">OSPF — Areas, LSAs &amp; Neighbor States</a><span class="progress-dur">30 minutes</span></label><label class="progress-row" data-session="22"><input type="checkbox" class="progress-check" data-session="22"><span class="progress-num">22</span><a class="progress-title" href="sessions/session-22-ospf-auth-summarization-stub.html">OSPF Authentication, Summarization &amp; Stub Areas</a><span class="progress-dur">25-30 minutes</span></label><label class="progress-row" data-session="23"><input type="checkbox" class="progress-check" data-session="23"><span class="progress-num">23</span><a class="progress-title" href="sessions/session-23-bgp-fundamentals.html">BGP Fundamentals — AS, Path Attributes</a><span class="progress-dur">30 minutes</span></label><label class="progress-row" data-session="24"><input type="checkbox" class="progress-check" data-session="24"><span class="progress-num">24</span><a class="progress-title" href="sessions/session-24-ibgp-ebgp-route-reflectors.html">iBGP vs eBGP &amp; Route Reflectors</a><span class="progress-dur">25-30 minutes</span></label><label class="progress-row" data-session="25"><input type="checkbox" class="progress-check" data-session="25"><span class="progress-num">25</span><a class="progress-title" href="sessions/session-25-route-maps-prefix-lists.html">Route Maps, Prefix Lists &amp; Filters</a><span class="progress-dur">30 minutes</span></label><label class="progress-row" data-session="26"><input type="checkbox" class="progress-check" data-session="26"><span class="progress-num">26</span><a class="progress-title" href="sessions/session-26-redistribution-and-troubleshooting.html">Redistribution &amp; Routing Troubleshooting</a><span class="progress-dur">30 minutes</span></label></div><div class="progress-phase"><div class="progress-phase-head">PHASE 06 — Security Profiles: SSL, Web, App, IPS <span class="progress-phase-stats" data-phase="6">0 / 5</span></div><label class="progress-row" data-session="27"><input type="checkbox" class="progress-check" data-session="27"><span class="progress-num">27</span><a class="progress-title" href="sessions/session-27-ssl-ssh-deep-inspection.html">SSL/SSH Deep Inspection</a><span class="progress-dur">30 minutes</span></label><label class="progress-row" data-session="28"><input type="checkbox" class="progress-check" data-session="28"><span class="progress-num">28</span><a class="progress-title" href="sessions/session-28-web-filtering.html">Web Filtering — Categories, Quotas &amp; Overrides</a><span class="progress-dur">25-30 minutes</span></label><label class="progress-row" data-session="29"><input type="checkbox" class="progress-check" data-session="29"><span class="progress-num">29</span><a class="progress-title" href="sessions/session-29-application-control-isdb.html">Application Control &amp; ISDB</a><span class="progress-dur">25-30 minutes</span></label><label class="progress-row" data-session="30"><input type="checkbox" class="progress-check" data-session="30"><span class="progress-num">30</span><a class="progress-title" href="sessions/session-30-ips-engine-signatures.html">IPS — Engine, Signatures, Rate-Based &amp; Custom</a><span class="progress-dur">30 minutes</span></label><label class="progress-row" data-session="31"><input type="checkbox" class="progress-check" data-session="31"><span class="progress-num">31</span><a class="progress-title" href="sessions/session-31-profile-performance-tuning.html">Tuning Profile Performance — Flow vs Proxy</a><span class="progress-dur">25-30 minutes</span></label></div><div class="progress-phase"><div class="progress-phase-head">PHASE 07 — VPN: IPsec &amp; ADVPN <span class="progress-phase-stats" data-phase="7">0 / 5</span></div><label class="progress-row" data-session="32"><input type="checkbox" class="progress-check" data-session="32"><span class="progress-num">32</span><a class="progress-title" href="sessions/session-32-ipsec-ikev2-fundamentals.html">IPsec Fundamentals — IKEv2, Phase 1 &amp; Phase 2</a><span class="progress-dur">30 minutes</span></label><label class="progress-row" data-session="33"><input type="checkbox" class="progress-check" data-session="33"><span class="progress-num">33</span><a class="progress-title" href="sessions/session-33-route-based-vs-policy-based-vpn.html">Route-Based vs Policy-Based VPN</a><span class="progress-dur">25-30 minutes</span></label><label class="progress-row" data-session="34"><input type="checkbox" class="progress-check" data-session="34"><span class="progress-num">34</span><a class="progress-title" href="sessions/session-34-advpn-concept.html">ADVPN Concept — On-Demand Tunnels</a><span class="progress-dur">25-30 minutes</span></label><label class="progress-row" data-session="35"><input type="checkbox" class="progress-check" data-session="35"><span class="progress-num">35</span><a class="progress-title" href="sessions/session-35-advpn-shortcut-tunnels.html">ADVPN Shortcut Tunnels &amp; Hub-Spoke Build</a><span class="progress-dur">30 minutes</span></label><label class="progress-row" data-session="36"><input type="checkbox" class="progress-check" data-session="36"><span class="progress-num">36</span><a class="progress-title" href="sessions/session-36-dynamic-routing-over-advpn.html">Dynamic Routing Over ADVPN (BGP &amp; OSPF)</a><span class="progress-dur">30 minutes</span></label></div><div class="progress-phase"><div class="progress-phase-head">PHASE 08 — Fabric &amp; Acceleration: Security Fabric + Hardware Offload <span class="progress-phase-stats" data-phase="8">0 / 4</span></div><label class="progress-row" data-session="37"><input type="checkbox" class="progress-check" data-session="37"><span class="progress-num">37</span><a class="progress-title" href="sessions/session-37-security-fabric-topology.html">Security Fabric — Topology, Root &amp; Trust</a><span class="progress-dur">25-30 minutes</span></label><label class="progress-row" data-session="38"><input type="checkbox" class="progress-check" data-session="38"><span class="progress-num">38</span><a class="progress-title" href="sessions/session-38-fabric-connectors-automation.html">Fabric Connectors &amp; Automation Stitches</a><span class="progress-dur">25 minutes</span></label><label class="progress-row" data-session="39"><input type="checkbox" class="progress-check" data-session="39"><span class="progress-num">39</span><a class="progress-title" href="sessions/session-39-hardware-acceleration.html">Hardware Acceleration — NP, CP, SP &amp; SoC</a><span class="progress-dur">30 minutes</span></label><label class="progress-row" data-session="40"><input type="checkbox" class="progress-check" data-session="40"><span class="progress-num">40</span><a class="progress-title" href="sessions/session-40-spu-offload-troubleshooting.html">SPU Offloading, Sessions &amp; Troubleshooting</a><span class="progress-dur">25-30 minutes</span></label></div>
+      </div>
+    </div>
+
+
+    <div class="section-block" id="phase-01">
+      <div class="section-label">PHASE 01</div>
+      <h2>Foundations — <em>Network Security Architecture</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/hub/phase-01-foundations.png" class="section-img"
+             alt="Illustration for Phase 1 — Foundations: Network Security Architecture"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');this.parentElement.querySelector('.img-caption').style.display='none';">
+        <p class="img-caption">Where the FortiGate fits and what each Fortinet device exists to solve.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/hub/phase-01-foundations.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>An enterprise security architecture scene illustrated as a small storybook map. HQ campus at center with a FortiGate HA cluster at the WAN edge, FortiManager and FortiAnalyzer in a management VDOM behind it, two branch sites connecting in via WAN, and a small cloud workload (FortiGate-VM) at the top. Each device is labeled with its role; arrows show policy push from FortiManager and log flow into FortiAnalyzer.
+
+Detailed hand-drawn storybook illustration with a warm picture-book sensibility — soft painterly shading, gentle watercolor washes layered over confident pencil or ink outlines, a subtle paper-grain texture. Friendly inviting palette: soft cream background, muted blues, Fortinet red accents, sage green, mustard yellow. Not flat vector, not photorealism, not 3D rendering, not anime — think a tender, slightly whimsical children's-book illustration that still reads as professional and educational. Render FortiGate, FortiManager and FortiAnalyzer as friendly, lightly anthropomorphised 1U rackmount appliances (personality shown through posture or small expressive details rather than cartoon faces), placed inside richly drawn scenes — server rooms with cabling and ceiling tiles, branch offices with desks and windows, campuses with people walking by, data centres with cool blue lighting. The setting should feel like a real place: props, background characters, lighting, depth. Keep the concept readable at a glance through composition and colour hierarchy. Hand-drawn flow lines and arrows show direction of traffic or policy. Add small sparing labels in a hand-lettered style only where they truly aid understanding (interface names, VDOM names, IP ranges, route flags, IPsec phase numbers, VLAN IDs, ADOM names, session counts). Beautiful and detailed, but never busy — every element earns its place.</div>
+        </div>
+      </div>
+      <p>Where the FortiGate fits and what each Fortinet device exists to solve.</p>
+      <div class="session-grid">
+
+        <div class="session-card">
+          <div class="session-card-num">SESSION 01</div>
+          <a class="session-card-title" href="sessions/session-01-nse7-story-exam-map.html">The NSE7 Story — Roles, Audience &amp; Exam Map</a>
+          <div class="session-card-meta">25-30 minutes · Objectives: 1.5</div>
+          <p class="session-card-why">The NSE7 EF exam is not a features quiz.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 02</div>
+          <a class="session-card-title" href="sessions/session-02-fortios-architecture.html">FortiOS 7.6 — Architecture Overview</a>
+          <div class="session-card-meta">25 minutes · Objectives: 1.5</div>
+          <p class="session-card-why">Understanding flow-mode vs proxy-mode, the central session table, and the per-VDOM virtualization model lets you reason about *what is offloaded and what isn't*.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 03</div>
+          <a class="session-card-title" href="sessions/session-03-enterprise-deployment-patterns.html">Enterprise Deployment Patterns</a>
+          <div class="session-card-meta">25 minutes · Objectives: 1.5</div>
+          <p class="session-card-why">The blueprint expects you to design, not just configure.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 04</div>
+          <a class="session-card-title" href="sessions/session-04-use-case-scenarios.html">Use Case Scenarios — Securing the Enterprise</a>
+          <div class="session-card-meta">30 minutes · Objectives: 1.5</div>
+          <p class="session-card-why">Use-case framing is the single hardest skill on NSE7.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 05</div>
+          <a class="session-card-title" href="sessions/session-05-lab-mindset-topology.html">Lab Mindset, Reference Topology &amp; Troubleshooting</a>
+          <div class="session-card-meta">20-25 minutes · Objectives: <em>story / transition</em></div>
+          <p class="session-card-why">Without a stable mental lab, every session feels free-floating.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="phase-02">
+      <div class="section-label">PHASE 02</div>
+      <h2>Central Management — <em>FortiManager &amp; FortiAnalyzer</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/hub/phase-02-central-management.png" class="section-img"
+             alt="Illustration for Phase 2 — Central Management: FortiManager &amp; FortiAnalyzer"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');this.parentElement.querySelector('.img-caption').style.display='none';">
+        <p class="img-caption">Managing dozens of FortiGates and an ocean of logs from one console.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/hub/phase-02-central-management.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>A FortiManager console window at center showing three ADOMs (HQ-ADOM, Branch-ADOM, Cloud-ADOM). A Policy Package installation arrow flows from FortiManager to a row of four FortiGate icons below it. To the right, a FortiAnalyzer ingesting log streams from all four FortiGates with a SOC dashboard preview on top (Threats, Users at risk, Compromised hosts tiles).
+
+Detailed hand-drawn storybook illustration with a warm picture-book sensibility — soft painterly shading, gentle watercolor washes layered over confident pencil or ink outlines, a subtle paper-grain texture. Friendly inviting palette: soft cream background, muted blues, Fortinet red accents, sage green, mustard yellow. Not flat vector, not photorealism, not 3D rendering, not anime — think a tender, slightly whimsical children's-book illustration that still reads as professional and educational. Render FortiGate, FortiManager and FortiAnalyzer as friendly, lightly anthropomorphised 1U rackmount appliances (personality shown through posture or small expressive details rather than cartoon faces), placed inside richly drawn scenes — server rooms with cabling and ceiling tiles, branch offices with desks and windows, campuses with people walking by, data centres with cool blue lighting. The setting should feel like a real place: props, background characters, lighting, depth. Keep the concept readable at a glance through composition and colour hierarchy. Hand-drawn flow lines and arrows show direction of traffic or policy. Add small sparing labels in a hand-lettered style only where they truly aid understanding (interface names, VDOM names, IP ranges, route flags, IPsec phase numbers, VLAN IDs, ADOM names, session counts). Beautiful and detailed, but never busy — every element earns its place.</div>
+        </div>
+      </div>
+      <p>Managing dozens of FortiGates and an ocean of logs from one console.</p>
+      <div class="session-grid">
+
+        <div class="session-card">
+          <div class="session-card-num">SESSION 06</div>
+          <a class="session-card-title" href="sessions/session-06-central-management-why.html">Why Central Management — The Scale Problem</a>
+          <div class="session-card-meta">20-25 minutes · Objectives: 2.1</div>
+          <p class="session-card-why">Central management isn't a luxury — it's the only sustainable model at scale.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 07</div>
+          <a class="session-card-title" href="sessions/session-07-fortimanager-adoms-workspace.html">FortiManager — Onboarding, ADOMs &amp; Workspace Mode</a>
+          <div class="session-card-meta">25-30 minutes · Objectives: 2.1</div>
+          <p class="session-card-why">ADOMs are the most-tested FortiManager concept — and the most-misconfigured one.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 08</div>
+          <a class="session-card-title" href="sessions/session-08-policy-packages-installation.html">Policy Packages, Object Database &amp; Installation</a>
+          <div class="session-card-meta">25-30 minutes · Objectives: 2.1</div>
+          <p class="session-card-why">Misunderstanding install preview vs install diff is a top source of NSE7-level outages.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 09</div>
+          <a class="session-card-title" href="sessions/session-09-fortianalyzer-logging.html">FortiAnalyzer — Logging, Indexing &amp; Storage</a>
+          <div class="session-card-meta">25 minutes · Objectives: 2.1</div>
+          <p class="session-card-why">Without FortiAnalyzer, log retention falls back to local disk and ~24-hour rotation.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 10</div>
+          <a class="session-card-title" href="sessions/session-10-soc-view-reports.html">SOC View, Reports &amp; Fabric Insights</a>
+          <div class="session-card-meta">25 minutes · Objectives: 2.1</div>
+          <p class="session-card-why">The exam tests your ability to point at the FortiAnalyzer screen that answers a given question: 'How did the threat enter?' 'Which users are affected?' 'Has this happened before?'.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="phase-03">
+      <div class="section-label">PHASE 03</div>
+      <h2>Segmentation — <em>VLANs &amp; VDOMs</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/hub/phase-03-segmentation.png" class="section-img"
+             alt="Illustration for Phase 3 — Segmentation: VLANs &amp; VDOMs"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');this.parentElement.querySelector('.img-caption').style.display='none';">
+        <p class="img-caption">Carving one FortiGate into many logical firewalls.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/hub/phase-03-segmentation.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>A single physical FortiGate chassis sliced vertically into three labeled VDOMs (Mgmt, Tenant-A, Tenant-B). VLAN-tagged frames travel on an 802.1Q trunk from a switch into the FortiGate (VLAN 10 red, VLAN 20 blue, VLAN 30 yellow). An inter-VDOM link is shown as a tiny patch cord between Mgmt and Tenant-A. A small DNS server icon sits inside Mgmt.
+
+Detailed hand-drawn storybook illustration with a warm picture-book sensibility — soft painterly shading, gentle watercolor washes layered over confident pencil or ink outlines, a subtle paper-grain texture. Friendly inviting palette: soft cream background, muted blues, Fortinet red accents, sage green, mustard yellow. Not flat vector, not photorealism, not 3D rendering, not anime — think a tender, slightly whimsical children's-book illustration that still reads as professional and educational. Render FortiGate, FortiManager and FortiAnalyzer as friendly, lightly anthropomorphised 1U rackmount appliances (personality shown through posture or small expressive details rather than cartoon faces), placed inside richly drawn scenes — server rooms with cabling and ceiling tiles, branch offices with desks and windows, campuses with people walking by, data centres with cool blue lighting. The setting should feel like a real place: props, background characters, lighting, depth. Keep the concept readable at a glance through composition and colour hierarchy. Hand-drawn flow lines and arrows show direction of traffic or policy. Add small sparing labels in a hand-lettered style only where they truly aid understanding (interface names, VDOM names, IP ranges, route flags, IPsec phase numbers, VLAN IDs, ADOM names, session counts). Beautiful and detailed, but never busy — every element earns its place.</div>
+        </div>
+      </div>
+      <p>Carving one FortiGate into many logical firewalls.</p>
+      <div class="session-grid">
+
+        <div class="session-card">
+          <div class="session-card-num">SESSION 11</div>
+          <a class="session-card-title" href="sessions/session-11-vlans-on-fortigate.html">VLANs on FortiGate</a>
+          <div class="session-card-meta">25-30 minutes · Objectives: 1.4</div>
+          <p class="session-card-why">VLAN sub-interfaces on a FortiGate are subtly different from a switch's VLAN port — and knowing the difference avoids hours of asymmetric-routing pain.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 12</div>
+          <a class="session-card-title" href="sessions/session-12-vdoms-multi-tenant.html">VDOMs — Multi-Tenant Firewalls</a>
+          <div class="session-card-meta">25-30 minutes · Objectives: 1.4</div>
+          <p class="session-card-why">Multi-tenant deployments, managed-service providers and most large enterprises run VDOMs.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 13</div>
+          <a class="session-card-title" href="sessions/session-13-nat-vs-transparent-vdom.html">NAT vs Transparent VDOM Modes</a>
+          <div class="session-card-meta">25 minutes · Objectives: 1.4</div>
+          <p class="session-card-why">Transparent mode is how you insert a FortiGate into a legacy network *without renumbering anything*.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 14</div>
+          <a class="session-card-title" href="sessions/session-14-inter-vdom-links.html">Inter-VDOM Links, Routing &amp; Sharing Resources</a>
+          <div class="session-card-meta">25 minutes · Objectives: 1.4</div>
+          <p class="session-card-why">Inter-VDOM links plus the management-VDOM trick are how multi-tenant boxes share an internet uplink without breaking isolation.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="phase-04">
+      <div class="section-label">PHASE 04</div>
+      <h2>High Availability — <em>FGCP, FGSP, VRRP</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/hub/phase-04-high-availability.png" class="section-img"
+             alt="Illustration for Phase 4 — High Availability: FGCP, FGSP, VRRP"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');this.parentElement.querySelector('.img-caption').style.display='none';">
+        <p class="img-caption">Surviving a FortiGate failure without dropping a single session.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/hub/phase-04-high-availability.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Three side-by-side HA scenarios. Left: an FGCP Active-Passive pair with a thick heartbeat cable between primary and secondary, virtual-MAC label floating above. Center: an FGSP pair in two different sites, each with its own management plane, sharing a session table icon. Right: a VRRP pair sharing a virtual IP, priority badges on each device, a clock showing 1-second adverts.
+
+Detailed hand-drawn storybook illustration with a warm picture-book sensibility — soft painterly shading, gentle watercolor washes layered over confident pencil or ink outlines, a subtle paper-grain texture. Friendly inviting palette: soft cream background, muted blues, Fortinet red accents, sage green, mustard yellow. Not flat vector, not photorealism, not 3D rendering, not anime — think a tender, slightly whimsical children's-book illustration that still reads as professional and educational. Render FortiGate, FortiManager and FortiAnalyzer as friendly, lightly anthropomorphised 1U rackmount appliances (personality shown through posture or small expressive details rather than cartoon faces), placed inside richly drawn scenes — server rooms with cabling and ceiling tiles, branch offices with desks and windows, campuses with people walking by, data centres with cool blue lighting. The setting should feel like a real place: props, background characters, lighting, depth. Keep the concept readable at a glance through composition and colour hierarchy. Hand-drawn flow lines and arrows show direction of traffic or policy. Add small sparing labels in a hand-lettered style only where they truly aid understanding (interface names, VDOM names, IP ranges, route flags, IPsec phase numbers, VLAN IDs, ADOM names, session counts). Beautiful and detailed, but never busy — every element earns its place.</div>
+        </div>
+      </div>
+      <p>Surviving a FortiGate failure without dropping a single session.</p>
+      <div class="session-grid">
+
+        <div class="session-card">
+          <div class="session-card-num">SESSION 15</div>
+          <a class="session-card-title" href="sessions/session-15-ha-problem.html">The HA Problem — Why One FortiGate Isn't Enough</a>
+          <div class="session-card-meta">20-25 minutes · Objectives: 1.3</div>
+          <p class="session-card-why">The blueprint expects you to choose between FGCP, FGSP and VRRP for a given scenario.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 16</div>
+          <a class="session-card-title" href="sessions/session-16-fgcp-active-passive.html">FGCP Fundamentals — Active-Passive</a>
+          <div class="session-card-meta">30 minutes · Objectives: 1.3</div>
+          <p class="session-card-why">FGCP A-P is the default and most common HA mode.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 17</div>
+          <a class="session-card-title" href="sessions/session-17-fgcp-active-active.html">FGCP Active-Active &amp; Load Balancing</a>
+          <div class="session-card-meta">25 minutes · Objectives: 1.3</div>
+          <p class="session-card-why">A-A is heavily misconstrued.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 18</div>
+          <a class="session-card-title" href="sessions/session-18-fgsp-session-sync.html">FGSP — Session Synchronization</a>
+          <div class="session-card-meta">25-30 minutes · Objectives: 1.3</div>
+          <p class="session-card-why">FGSP is the answer when devices live in different sites, are managed independently, or sit behind an external load balancer.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 19</div>
+          <a class="session-card-title" href="sessions/session-19-vrrp-and-failover.html">VRRP, Failover Timers &amp; Session Pickup</a>
+          <div class="session-card-meta">25 minutes · Objectives: 1.3</div>
+          <p class="session-card-why">VRRP is the lowest common denominator, used when FGCP/FGSP can't run (mixed vendor scenarios).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="phase-05">
+      <div class="section-label">PHASE 05</div>
+      <h2>Dynamic Routing — <em>OSPF &amp; BGP</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/hub/phase-05-dynamic-routing.png" class="section-img"
+             alt="Illustration for Phase 5 — Dynamic Routing: OSPF &amp; BGP"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');this.parentElement.querySelector('.img-caption').style.display='none';">
+        <p class="img-caption">Letting the FortiGate learn the enterprise topology automatically.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/hub/phase-05-dynamic-routing.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>A FortiGate at center exchanging OSPF Hellos with two internal neighbours (Area 0 cloud on the left) and a BGP UPDATE with an upstream ISP (AS 65001 cloud on the right). A magnified routing-table inset shows colour-coded routes: Connected (green), Static (sage), OSPF (terracotta), BGP (blue). One redistribution arrow with a 'tag=100' badge connects OSPF and BGP through the FortiGate.
+
+Detailed hand-drawn storybook illustration with a warm picture-book sensibility — soft painterly shading, gentle watercolor washes layered over confident pencil or ink outlines, a subtle paper-grain texture. Friendly inviting palette: soft cream background, muted blues, Fortinet red accents, sage green, mustard yellow. Not flat vector, not photorealism, not 3D rendering, not anime — think a tender, slightly whimsical children's-book illustration that still reads as professional and educational. Render FortiGate, FortiManager and FortiAnalyzer as friendly, lightly anthropomorphised 1U rackmount appliances (personality shown through posture or small expressive details rather than cartoon faces), placed inside richly drawn scenes — server rooms with cabling and ceiling tiles, branch offices with desks and windows, campuses with people walking by, data centres with cool blue lighting. The setting should feel like a real place: props, background characters, lighting, depth. Keep the concept readable at a glance through composition and colour hierarchy. Hand-drawn flow lines and arrows show direction of traffic or policy. Add small sparing labels in a hand-lettered style only where they truly aid understanding (interface names, VDOM names, IP ranges, route flags, IPsec phase numbers, VLAN IDs, ADOM names, session counts). Beautiful and detailed, but never busy — every element earns its place.</div>
+        </div>
+      </div>
+      <p>Letting the FortiGate learn the enterprise topology automatically.</p>
+      <div class="session-grid">
+
+        <div class="session-card">
+          <div class="session-card-num">SESSION 20</div>
+          <a class="session-card-title" href="sessions/session-20-why-dynamic-routing-on-firewall.html">Why Dynamic Routing on a Firewall</a>
+          <div class="session-card-meta">20-25 minutes · Objectives: 4.1, 4.2</div>
+          <p class="session-card-why">Static routing scales to roughly three sites before manual labour breaks ops.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 21</div>
+          <a class="session-card-title" href="sessions/session-21-ospf-areas-lsas-neighbors.html">OSPF — Areas, LSAs &amp; Neighbor States</a>
+          <div class="session-card-meta">30 minutes · Objectives: 4.1</div>
+          <p class="session-card-why">The exam tests not the SPF algorithm but the *operational* OSPF: hello/dead intervals, area types, LSA flooding scope, and the neighbor state machine.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 22</div>
+          <a class="session-card-title" href="sessions/session-22-ospf-auth-summarization-stub.html">OSPF Authentication, Summarization &amp; Stub Areas</a>
+          <div class="session-card-meta">25-30 minutes · Objectives: 4.1</div>
+          <p class="session-card-why">These three features (auth, area-type, summarisation) are the OSPF tools the exam most often hides inside a 'why is this not working?' scenario.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 23</div>
+          <a class="session-card-title" href="sessions/session-23-bgp-fundamentals.html">BGP Fundamentals — AS, Path Attributes</a>
+          <div class="session-card-meta">30 minutes · Objectives: 4.2</div>
+          <p class="session-card-why">BGP is a policy protocol, not a topology protocol.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 24</div>
+          <a class="session-card-title" href="sessions/session-24-ibgp-ebgp-route-reflectors.html">iBGP vs eBGP &amp; Route Reflectors</a>
+          <div class="session-card-meta">25-30 minutes · Objectives: 4.2</div>
+          <p class="session-card-why">Route reflectors are a top NSE7 BGP topic because they invert default iBGP behaviour.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 25</div>
+          <a class="session-card-title" href="sessions/session-25-route-maps-prefix-lists.html">Route Maps, Prefix Lists &amp; Filters</a>
+          <div class="session-card-meta">30 minutes · Objectives: 4.1, 4.2</div>
+          <p class="session-card-why">Almost every BGP-related exam scenario hides a route-map line.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 26</div>
+          <a class="session-card-title" href="sessions/session-26-redistribution-and-troubleshooting.html">Redistribution &amp; Routing Troubleshooting</a>
+          <div class="session-card-meta">30 minutes · Objectives: 4.1, 4.2</div>
+          <p class="session-card-why">Redistribution mistakes are catastrophic and the exam knows it.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="phase-06">
+      <div class="section-label">PHASE 06</div>
+      <h2>Security Profiles — <em>SSL, Web, App, IPS</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/hub/phase-06-security-profiles.png" class="section-img"
+             alt="Illustration for Phase 6 — Security Profiles: SSL, Web, App, IPS"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');this.parentElement.querySelector('.img-caption').style.display='none';">
+        <p class="img-caption">Looking inside encrypted traffic and stopping known and unknown threats.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/hub/phase-06-security-profiles.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>A traffic stream entering a FortiGate from the left. Inside, the stream passes through four sequential 'gates': SSL Deep Inspection (with a CA cert badge), Web Filter (categories list), Application Control (app icons), and an IPS engine. One packet with a red 'CVE' marker is dropped at the IPS gate; the rest continues out the right side cleaned.
+
+Detailed hand-drawn storybook illustration with a warm picture-book sensibility — soft painterly shading, gentle watercolor washes layered over confident pencil or ink outlines, a subtle paper-grain texture. Friendly inviting palette: soft cream background, muted blues, Fortinet red accents, sage green, mustard yellow. Not flat vector, not photorealism, not 3D rendering, not anime — think a tender, slightly whimsical children's-book illustration that still reads as professional and educational. Render FortiGate, FortiManager and FortiAnalyzer as friendly, lightly anthropomorphised 1U rackmount appliances (personality shown through posture or small expressive details rather than cartoon faces), placed inside richly drawn scenes — server rooms with cabling and ceiling tiles, branch offices with desks and windows, campuses with people walking by, data centres with cool blue lighting. The setting should feel like a real place: props, background characters, lighting, depth. Keep the concept readable at a glance through composition and colour hierarchy. Hand-drawn flow lines and arrows show direction of traffic or policy. Add small sparing labels in a hand-lettered style only where they truly aid understanding (interface names, VDOM names, IP ranges, route flags, IPsec phase numbers, VLAN IDs, ADOM names, session counts). Beautiful and detailed, but never busy — every element earns its place.</div>
+        </div>
+      </div>
+      <p>Looking inside encrypted traffic and stopping known and unknown threats.</p>
+      <div class="session-grid">
+
+        <div class="session-card">
+          <div class="session-card-num">SESSION 27</div>
+          <a class="session-card-title" href="sessions/session-27-ssl-ssh-deep-inspection.html">SSL/SSH Deep Inspection</a>
+          <div class="session-card-meta">30 minutes · Objectives: 3.1</div>
+          <p class="session-card-why">SSL inspection is the most operationally painful Fortinet feature.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 28</div>
+          <a class="session-card-title" href="sessions/session-28-web-filtering.html">Web Filtering — Categories, Quotas &amp; Overrides</a>
+          <div class="session-card-meta">25-30 minutes · Objectives: 3.2</div>
+          <p class="session-card-why">Web-filter configuration is heavily tested because the same problem has multiple valid configs.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 29</div>
+          <a class="session-card-title" href="sessions/session-29-application-control-isdb.html">Application Control &amp; ISDB</a>
+          <div class="session-card-meta">25-30 minutes · Objectives: 3.2</div>
+          <p class="session-card-why">Application Control and the Internet Service Database (ISDB) are exam favourites because they replace IP-based policies with identity-based ones.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 30</div>
+          <a class="session-card-title" href="sessions/session-30-ips-engine-signatures.html">IPS — Engine, Signatures, Rate-Based &amp; Custom</a>
+          <div class="session-card-meta">30 minutes · Objectives: 3.3</div>
+          <p class="session-card-why">IPS is the security feature most likely to misfire.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 31</div>
+          <a class="session-card-title" href="sessions/session-31-profile-performance-tuning.html">Tuning Profile Performance — Flow vs Proxy</a>
+          <div class="session-card-meta">25-30 minutes · Objectives: 3.1, 3.2, 3.3</div>
+          <p class="session-card-why">The exam quietly tests performance trade-offs.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="phase-07">
+      <div class="section-label">PHASE 07</div>
+      <h2>VPN — <em>IPsec &amp; ADVPN</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/hub/phase-07-vpn.png" class="section-img"
+             alt="Illustration for Phase 7 — VPN: IPsec &amp; ADVPN"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');this.parentElement.querySelector('.img-caption').style.display='none';">
+        <p class="img-caption">Site-to-site tunnels and the dynamic mesh that follows.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/hub/phase-07-vpn.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>A hub FortiGate at center with three spoke FortiGates around it. Permanent IPsec tunnels (thick lines) connect each spoke to the hub. A dashed 'shortcut request' arrow goes Spoke-A → Hub → Spoke-B, and a thinner direct shortcut tunnel appears between A and B. Above one spoke: a small Phase 1 / Phase 2 negotiation cloud showing IKE_SA_INIT and IKE_AUTH messages.
+
+Detailed hand-drawn storybook illustration with a warm picture-book sensibility — soft painterly shading, gentle watercolor washes layered over confident pencil or ink outlines, a subtle paper-grain texture. Friendly inviting palette: soft cream background, muted blues, Fortinet red accents, sage green, mustard yellow. Not flat vector, not photorealism, not 3D rendering, not anime — think a tender, slightly whimsical children's-book illustration that still reads as professional and educational. Render FortiGate, FortiManager and FortiAnalyzer as friendly, lightly anthropomorphised 1U rackmount appliances (personality shown through posture or small expressive details rather than cartoon faces), placed inside richly drawn scenes — server rooms with cabling and ceiling tiles, branch offices with desks and windows, campuses with people walking by, data centres with cool blue lighting. The setting should feel like a real place: props, background characters, lighting, depth. Keep the concept readable at a glance through composition and colour hierarchy. Hand-drawn flow lines and arrows show direction of traffic or policy. Add small sparing labels in a hand-lettered style only where they truly aid understanding (interface names, VDOM names, IP ranges, route flags, IPsec phase numbers, VLAN IDs, ADOM names, session counts). Beautiful and detailed, but never busy — every element earns its place.</div>
+        </div>
+      </div>
+      <p>Site-to-site tunnels and the dynamic mesh that follows.</p>
+      <div class="session-grid">
+
+        <div class="session-card">
+          <div class="session-card-num">SESSION 32</div>
+          <a class="session-card-title" href="sessions/session-32-ipsec-ikev2-fundamentals.html">IPsec Fundamentals — IKEv2, Phase 1 &amp; Phase 2</a>
+          <div class="session-card-meta">30 minutes · Objectives: 5.1</div>
+          <p class="session-card-why">IKEv2 is now the exam default.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 33</div>
+          <a class="session-card-title" href="sessions/session-33-route-based-vs-policy-based-vpn.html">Route-Based vs Policy-Based VPN</a>
+          <div class="session-card-meta">25-30 minutes · Objectives: 5.1</div>
+          <p class="session-card-why">Route-based VPN unlocks dynamic routing over IPsec.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 34</div>
+          <a class="session-card-title" href="sessions/session-34-advpn-concept.html">ADVPN Concept — On-Demand Tunnels</a>
+          <div class="session-card-meta">25-30 minutes · Objectives: 5.2</div>
+          <p class="session-card-why">ADVPN is the headline VPN feature of this exam.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 35</div>
+          <a class="session-card-title" href="sessions/session-35-advpn-shortcut-tunnels.html">ADVPN Shortcut Tunnels &amp; Hub-Spoke Build</a>
+          <div class="session-card-meta">30 minutes · Objectives: 5.2</div>
+          <p class="session-card-why">The exam asks you to read a real ADVPN config and predict whether shortcuts will or won't form.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 36</div>
+          <a class="session-card-title" href="sessions/session-36-dynamic-routing-over-advpn.html">Dynamic Routing Over ADVPN (BGP &amp; OSPF)</a>
+          <div class="session-card-meta">30 minutes · Objectives: 5.2, 4.2</div>
+          <p class="session-card-why">Pairing ADVPN with BGP (or sometimes OSPF) is the final and most-tested integration in the VPN domain.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="phase-08">
+      <div class="section-label">PHASE 08</div>
+      <h2>Fabric &amp; Acceleration — <em>Security Fabric + Hardware Offload</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/hub/phase-08-fabric-acceleration.png" class="section-img"
+             alt="Illustration for Phase 8 — Fabric &amp; Acceleration: Security Fabric + Hardware Offload"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');this.parentElement.querySelector('.img-caption').style.display='none';">
+        <p class="img-caption">Tying the Fortinet stack together and running it at line rate.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/hub/phase-08-fabric-acceleration.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Top half: a Fortinet Security Fabric tree with a root FortiGate at the top connecting to two downstream FortiGates, FortiAnalyzer, FortiManager, FortiClient EMS and FortiSandbox. Bottom half: a FortiGate motherboard cutaway showing NP7, CP9 and SP chips, with traffic flows: simple TCP offloaded onto NP7 (fast lane), SSL-inspected through CP9, slow path going via CPU.
+
+Detailed hand-drawn storybook illustration with a warm picture-book sensibility — soft painterly shading, gentle watercolor washes layered over confident pencil or ink outlines, a subtle paper-grain texture. Friendly inviting palette: soft cream background, muted blues, Fortinet red accents, sage green, mustard yellow. Not flat vector, not photorealism, not 3D rendering, not anime — think a tender, slightly whimsical children's-book illustration that still reads as professional and educational. Render FortiGate, FortiManager and FortiAnalyzer as friendly, lightly anthropomorphised 1U rackmount appliances (personality shown through posture or small expressive details rather than cartoon faces), placed inside richly drawn scenes — server rooms with cabling and ceiling tiles, branch offices with desks and windows, campuses with people walking by, data centres with cool blue lighting. The setting should feel like a real place: props, background characters, lighting, depth. Keep the concept readable at a glance through composition and colour hierarchy. Hand-drawn flow lines and arrows show direction of traffic or policy. Add small sparing labels in a hand-lettered style only where they truly aid understanding (interface names, VDOM names, IP ranges, route flags, IPsec phase numbers, VLAN IDs, ADOM names, session counts). Beautiful and detailed, but never busy — every element earns its place.</div>
+        </div>
+      </div>
+      <p>Tying the Fortinet stack together and running it at line rate.</p>
+      <div class="session-grid">
+
+        <div class="session-card">
+          <div class="session-card-num">SESSION 37</div>
+          <a class="session-card-title" href="sessions/session-37-security-fabric-topology.html">Security Fabric — Topology, Root &amp; Trust</a>
+          <div class="session-card-meta">25-30 minutes · Objectives: 1.1</div>
+          <p class="session-card-why">Security Fabric is the most architectural domain.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 38</div>
+          <a class="session-card-title" href="sessions/session-38-fabric-connectors-automation.html">Fabric Connectors &amp; Automation Stitches</a>
+          <div class="session-card-meta">25 minutes · Objectives: 1.1</div>
+          <p class="session-card-why">Automation stitches are the closest thing to SOAR that the NSE7 exam asks about.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 39</div>
+          <a class="session-card-title" href="sessions/session-39-hardware-acceleration.html">Hardware Acceleration — NP, CP, SP &amp; SoC</a>
+          <div class="session-card-meta">30 minutes · Objectives: 1.2</div>
+          <p class="session-card-why">Hardware acceleration is a top-tier NSE7 domain.</p>
+        </div>
+        <div class="session-card">
+          <div class="session-card-num">SESSION 40</div>
+          <a class="session-card-title" href="sessions/session-40-spu-offload-troubleshooting.html">SPU Offloading, Sessions &amp; Troubleshooting</a>
+          <div class="session-card-meta">25-30 minutes · Objectives: 1.2</div>
+          <p class="session-card-why">Closing the curriculum on offload visibility ties hardware acceleration back to every domain we've covered.</p>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ROADMAP -->
+    <div class="section-block" id="roadmap">
+      <div class="section-label">CURRICULUM ROADMAP</div>
+      <h2>All 40 Sessions, <em>In Order</em></h2>
+      <table class="data-table">
+        <thead><tr><th>#</th><th>Session</th><th>Duration</th></tr></thead>
+        <tbody>
+          <tr><td colspan="3" class="phase-row">PHASE 01 — Foundations: Network Security Architecture</td></tr><tr><td>01</td><td><a href="sessions/session-01-nse7-story-exam-map.html">The NSE7 Story — Roles, Audience &amp; Exam Map</a></td><td>25-30 minutes</td></tr><tr><td>02</td><td><a href="sessions/session-02-fortios-architecture.html">FortiOS 7.6 — Architecture Overview</a></td><td>25 minutes</td></tr><tr><td>03</td><td><a href="sessions/session-03-enterprise-deployment-patterns.html">Enterprise Deployment Patterns</a></td><td>25 minutes</td></tr><tr><td>04</td><td><a href="sessions/session-04-use-case-scenarios.html">Use Case Scenarios — Securing the Enterprise</a></td><td>30 minutes</td></tr><tr><td>05</td><td><a href="sessions/session-05-lab-mindset-topology.html">Lab Mindset, Reference Topology &amp; Troubleshooting</a></td><td>20-25 minutes</td></tr><tr><td colspan="3" class="phase-row">PHASE 02 — Central Management: FortiManager &amp; FortiAnalyzer</td></tr><tr><td>06</td><td><a href="sessions/session-06-central-management-why.html">Why Central Management — The Scale Problem</a></td><td>20-25 minutes</td></tr><tr><td>07</td><td><a href="sessions/session-07-fortimanager-adoms-workspace.html">FortiManager — Onboarding, ADOMs &amp; Workspace Mode</a></td><td>25-30 minutes</td></tr><tr><td>08</td><td><a href="sessions/session-08-policy-packages-installation.html">Policy Packages, Object Database &amp; Installation</a></td><td>25-30 minutes</td></tr><tr><td>09</td><td><a href="sessions/session-09-fortianalyzer-logging.html">FortiAnalyzer — Logging, Indexing &amp; Storage</a></td><td>25 minutes</td></tr><tr><td>10</td><td><a href="sessions/session-10-soc-view-reports.html">SOC View, Reports &amp; Fabric Insights</a></td><td>25 minutes</td></tr><tr><td colspan="3" class="phase-row">PHASE 03 — Segmentation: VLANs &amp; VDOMs</td></tr><tr><td>11</td><td><a href="sessions/session-11-vlans-on-fortigate.html">VLANs on FortiGate</a></td><td>25-30 minutes</td></tr><tr><td>12</td><td><a href="sessions/session-12-vdoms-multi-tenant.html">VDOMs — Multi-Tenant Firewalls</a></td><td>25-30 minutes</td></tr><tr><td>13</td><td><a href="sessions/session-13-nat-vs-transparent-vdom.html">NAT vs Transparent VDOM Modes</a></td><td>25 minutes</td></tr><tr><td>14</td><td><a href="sessions/session-14-inter-vdom-links.html">Inter-VDOM Links, Routing &amp; Sharing Resources</a></td><td>25 minutes</td></tr><tr><td colspan="3" class="phase-row">PHASE 04 — High Availability: FGCP, FGSP, VRRP</td></tr><tr><td>15</td><td><a href="sessions/session-15-ha-problem.html">The HA Problem — Why One FortiGate Isn't Enough</a></td><td>20-25 minutes</td></tr><tr><td>16</td><td><a href="sessions/session-16-fgcp-active-passive.html">FGCP Fundamentals — Active-Passive</a></td><td>30 minutes</td></tr><tr><td>17</td><td><a href="sessions/session-17-fgcp-active-active.html">FGCP Active-Active &amp; Load Balancing</a></td><td>25 minutes</td></tr><tr><td>18</td><td><a href="sessions/session-18-fgsp-session-sync.html">FGSP — Session Synchronization</a></td><td>25-30 minutes</td></tr><tr><td>19</td><td><a href="sessions/session-19-vrrp-and-failover.html">VRRP, Failover Timers &amp; Session Pickup</a></td><td>25 minutes</td></tr><tr><td colspan="3" class="phase-row">PHASE 05 — Dynamic Routing: OSPF &amp; BGP</td></tr><tr><td>20</td><td><a href="sessions/session-20-why-dynamic-routing-on-firewall.html">Why Dynamic Routing on a Firewall</a></td><td>20-25 minutes</td></tr><tr><td>21</td><td><a href="sessions/session-21-ospf-areas-lsas-neighbors.html">OSPF — Areas, LSAs &amp; Neighbor States</a></td><td>30 minutes</td></tr><tr><td>22</td><td><a href="sessions/session-22-ospf-auth-summarization-stub.html">OSPF Authentication, Summarization &amp; Stub Areas</a></td><td>25-30 minutes</td></tr><tr><td>23</td><td><a href="sessions/session-23-bgp-fundamentals.html">BGP Fundamentals — AS, Path Attributes</a></td><td>30 minutes</td></tr><tr><td>24</td><td><a href="sessions/session-24-ibgp-ebgp-route-reflectors.html">iBGP vs eBGP &amp; Route Reflectors</a></td><td>25-30 minutes</td></tr><tr><td>25</td><td><a href="sessions/session-25-route-maps-prefix-lists.html">Route Maps, Prefix Lists &amp; Filters</a></td><td>30 minutes</td></tr><tr><td>26</td><td><a href="sessions/session-26-redistribution-and-troubleshooting.html">Redistribution &amp; Routing Troubleshooting</a></td><td>30 minutes</td></tr><tr><td colspan="3" class="phase-row">PHASE 06 — Security Profiles: SSL, Web, App, IPS</td></tr><tr><td>27</td><td><a href="sessions/session-27-ssl-ssh-deep-inspection.html">SSL/SSH Deep Inspection</a></td><td>30 minutes</td></tr><tr><td>28</td><td><a href="sessions/session-28-web-filtering.html">Web Filtering — Categories, Quotas &amp; Overrides</a></td><td>25-30 minutes</td></tr><tr><td>29</td><td><a href="sessions/session-29-application-control-isdb.html">Application Control &amp; ISDB</a></td><td>25-30 minutes</td></tr><tr><td>30</td><td><a href="sessions/session-30-ips-engine-signatures.html">IPS — Engine, Signatures, Rate-Based &amp; Custom</a></td><td>30 minutes</td></tr><tr><td>31</td><td><a href="sessions/session-31-profile-performance-tuning.html">Tuning Profile Performance — Flow vs Proxy</a></td><td>25-30 minutes</td></tr><tr><td colspan="3" class="phase-row">PHASE 07 — VPN: IPsec &amp; ADVPN</td></tr><tr><td>32</td><td><a href="sessions/session-32-ipsec-ikev2-fundamentals.html">IPsec Fundamentals — IKEv2, Phase 1 &amp; Phase 2</a></td><td>30 minutes</td></tr><tr><td>33</td><td><a href="sessions/session-33-route-based-vs-policy-based-vpn.html">Route-Based vs Policy-Based VPN</a></td><td>25-30 minutes</td></tr><tr><td>34</td><td><a href="sessions/session-34-advpn-concept.html">ADVPN Concept — On-Demand Tunnels</a></td><td>25-30 minutes</td></tr><tr><td>35</td><td><a href="sessions/session-35-advpn-shortcut-tunnels.html">ADVPN Shortcut Tunnels &amp; Hub-Spoke Build</a></td><td>30 minutes</td></tr><tr><td>36</td><td><a href="sessions/session-36-dynamic-routing-over-advpn.html">Dynamic Routing Over ADVPN (BGP &amp; OSPF)</a></td><td>30 minutes</td></tr><tr><td colspan="3" class="phase-row">PHASE 08 — Fabric &amp; Acceleration: Security Fabric + Hardware Offload</td></tr><tr><td>37</td><td><a href="sessions/session-37-security-fabric-topology.html">Security Fabric — Topology, Root &amp; Trust</a></td><td>25-30 minutes</td></tr><tr><td>38</td><td><a href="sessions/session-38-fabric-connectors-automation.html">Fabric Connectors &amp; Automation Stitches</a></td><td>25 minutes</td></tr><tr><td>39</td><td><a href="sessions/session-39-hardware-acceleration.html">Hardware Acceleration — NP, CP, SP &amp; SoC</a></td><td>30 minutes</td></tr><tr><td>40</td><td><a href="sessions/session-40-spu-offload-troubleshooting.html">SPU Offloading, Sessions &amp; Troubleshooting</a></td><td>25-30 minutes</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- OBJECTIVE MAP -->
+    <div class="section-block" id="objective-map">
+      <div class="section-label">OFFICIAL OBJECTIVE → SESSION MAP</div>
+      <h2>Every NSE7 EF 7.6 <em>Objective Covered</em></h2>
+      <p>The Fortinet blueprint lists thirteen learning objectives across five domains. The table below maps each to every session of this curriculum that teaches it.</p>
+      <table class="data-table">
+        <thead><tr><th>Objective</th><th>Description</th><th>Taught in</th></tr></thead>
+        <tbody>
+          <tr><td><strong>1.1</strong></td><td>Implement the Fortinet Security Fabric</td><td><a href="sessions/session-37-security-fabric-topology.html">S37</a>, <a href="sessions/session-38-fabric-connectors-automation.html">S38</a></td></tr><tr><td><strong>1.2</strong></td><td>Configure hardware acceleration on FortiGate</td><td><a href="sessions/session-39-hardware-acceleration.html">S39</a>, <a href="sessions/session-40-spu-offload-troubleshooting.html">S40</a></td></tr><tr><td><strong>1.3</strong></td><td>Configure different operation modes for an HA cluster</td><td><a href="sessions/session-15-ha-problem.html">S15</a>, <a href="sessions/session-16-fgcp-active-passive.html">S16</a>, <a href="sessions/session-17-fgcp-active-active.html">S17</a>, <a href="sessions/session-18-fgsp-session-sync.html">S18</a>, <a href="sessions/session-19-vrrp-and-failover.html">S19</a></td></tr><tr><td><strong>1.4</strong></td><td>Implement enterprise networks using VLANs and VDOMs</td><td><a href="sessions/session-11-vlans-on-fortigate.html">S11</a>, <a href="sessions/session-12-vdoms-multi-tenant.html">S12</a>, <a href="sessions/session-13-nat-vs-transparent-vdom.html">S13</a>, <a href="sessions/session-14-inter-vdom-links.html">S14</a></td></tr><tr><td><strong>1.5</strong></td><td>Explain various use case scenarios using Fortinet solutions</td><td><a href="sessions/session-01-nse7-story-exam-map.html">S01</a>, <a href="sessions/session-02-fortios-architecture.html">S02</a>, <a href="sessions/session-03-enterprise-deployment-patterns.html">S03</a>, <a href="sessions/session-04-use-case-scenarios.html">S04</a></td></tr><tr><td><strong>2.1</strong></td><td>Implement central management (FortiManager + FortiAnalyzer)</td><td><a href="sessions/session-06-central-management-why.html">S06</a>, <a href="sessions/session-07-fortimanager-adoms-workspace.html">S07</a>, <a href="sessions/session-08-policy-packages-installation.html">S08</a>, <a href="sessions/session-09-fortianalyzer-logging.html">S09</a>, <a href="sessions/session-10-soc-view-reports.html">S10</a></td></tr><tr><td><strong>3.1</strong></td><td>Manage SSL/SSH inspection profiles, based on a scenario</td><td><a href="sessions/session-27-ssl-ssh-deep-inspection.html">S27</a>, <a href="sessions/session-31-profile-performance-tuning.html">S31</a></td></tr><tr><td><strong>3.2</strong></td><td>Use web filters, application control, and ISDB to secure a network</td><td><a href="sessions/session-28-web-filtering.html">S28</a>, <a href="sessions/session-29-application-control-isdb.html">S29</a>, <a href="sessions/session-31-profile-performance-tuning.html">S31</a></td></tr><tr><td><strong>3.3</strong></td><td>Integrate IPS to perform security checks</td><td><a href="sessions/session-30-ips-engine-signatures.html">S30</a>, <a href="sessions/session-31-profile-performance-tuning.html">S31</a></td></tr><tr><td><strong>4.1</strong></td><td>Implement OSPF to route enterprise traffic</td><td><a href="sessions/session-20-why-dynamic-routing-on-firewall.html">S20</a>, <a href="sessions/session-21-ospf-areas-lsas-neighbors.html">S21</a>, <a href="sessions/session-22-ospf-auth-summarization-stub.html">S22</a>, <a href="sessions/session-25-route-maps-prefix-lists.html">S25</a>, <a href="sessions/session-26-redistribution-and-troubleshooting.html">S26</a></td></tr><tr><td><strong>4.2</strong></td><td>Implement BGP to route enterprise traffic</td><td><a href="sessions/session-20-why-dynamic-routing-on-firewall.html">S20</a>, <a href="sessions/session-23-bgp-fundamentals.html">S23</a>, <a href="sessions/session-24-ibgp-ebgp-route-reflectors.html">S24</a>, <a href="sessions/session-25-route-maps-prefix-lists.html">S25</a>, <a href="sessions/session-26-redistribution-and-troubleshooting.html">S26</a>, <a href="sessions/session-36-dynamic-routing-over-advpn.html">S36</a></td></tr><tr><td><strong>5.1</strong></td><td>Implement IPsec VPN IKE version 2</td><td><a href="sessions/session-32-ipsec-ikev2-fundamentals.html">S32</a>, <a href="sessions/session-33-route-based-vs-policy-based-vpn.html">S33</a></td></tr><tr><td><strong>5.2</strong></td><td>Implement ADVPN to enable on-demand VPN tunnels between sites</td><td><a href="sessions/session-34-advpn-concept.html">S34</a>, <a href="sessions/session-35-advpn-shortcut-tunnels.html">S35</a>, <a href="sessions/session-36-dynamic-routing-over-advpn.html">S36</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- JOURNEY -->
+    <div class="section-block" id="journey">
+      <div class="section-label">THE CONTINUOUS LEARNING JOURNEY</div>
+      <h2>How the 40 Sessions Form <em>One Story</em></h2>
+      
+      <p>This curriculum is one continuous story. We begin with the question <em>"who is responsible when something breaks at 2 a.m.?"</em> and end with a single automation stitch isolating an attacker across three FortiGates and a FortiNAC — all from one FortiAnalyzer event.</p>
+      <p>Every session deliberately ends with a problem the next one solves. One FortiGate can't manage itself at scale → FortiManager. One firewall can't survive a hardware failure → FGCP, FGSP, VRRP. Static routes can't follow link changes → OSPF and BGP. The internet is encrypted, so policies see nothing → SSL deep inspection. The N² mesh of static IPsec doesn't scale → ADVPN. The CPU is the bottleneck at line rate → NPU, CP, SP offload. The Fortinet stack is bigger than the FortiGate — and only the Security Fabric ties it together.</p>
+      <p>If you finish all 40 sessions in order, you will not just have memorised the NSE7 EF blueprint — you will have walked the same intellectual path that turned the Fortinet portfolio from one chassis into an integrated security platform. Each phase will feel less like a list of features and more like an inevitable next step.</p>
+
+    </div>
+
+  </div>
+  </main>
+</div>
+
+<footer>
+  NSE7 EF 7.6<span>.</span> 40-Session Socratic Curriculum<span>.</span> 100% Blueprint Coverage
+</footer>
+
+<script>
+function togglePrompt(btn) {
+  const c = btn.nextElementSibling;
+  const isHidden = c.hasAttribute('hidden');
+  if (isHidden) { c.removeAttribute('hidden'); btn.textContent = '▴ Hide prompt'; }
+  else { c.setAttribute('hidden', ''); btn.textContent = '▾ Show image prompt'; }
+}
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+document.querySelectorAll('.section-img').forEach(function(img) {
+  img.addEventListener('click', () => img.classList.toggle('si-expanded'));
+});
+
+/* ── Section routing (left-sidebar single-pane view) ── */
+const VALID_SECTIONS = new Set(['progress','phase-01','phase-02','phase-03','phase-04','phase-05','phase-06','phase-07','phase-08','roadmap','objective-map','journey']);
+const DEFAULT_SECTION = 'progress';
+function showSection(id, opts) {
+  if (!VALID_SECTIONS.has(id)) id = DEFAULT_SECTION;
+  document.querySelectorAll('.section-block').forEach(function(b) {
+    b.classList.toggle('active-section', b.id === id);
+  });
+  document.querySelectorAll('.hub-side-tab').forEach(function(t) {
+    t.classList.toggle('active', t.dataset.target === id);
+  });
+  /* Intentionally NO scroll — clicking a sidebar tab preserves the user's
+     current scroll position in both the main pane and the document. */
+  if (opts && opts.updateHash !== false) {
+    const newHash = '#' + id;
+    if (location.hash !== newHash) history.pushState(null, '', newHash);
+  }
+}
+document.querySelectorAll('.hub-side-tab').forEach(function(tab) {
+  tab.addEventListener('click', function(e) {
+    e.preventDefault();
+    showSection(tab.dataset.target);
+  });
+});
+window.addEventListener('hashchange', function() {
+  const id = (location.hash || '#' + DEFAULT_SECTION).slice(1);
+  showSection(id, {updateHash: false});
+});
+
+/* Initial section from hash, or default */
+(function() {
+  const initial = (location.hash || '#' + DEFAULT_SECTION).slice(1);
+  if (!VALID_SECTIONS.has(initial)) {
+    history.replaceState(null, '', '#' + DEFAULT_SECTION);
+    showSection(DEFAULT_SECTION, {updateHash: false});
+  } else {
+    showSection(initial, {updateHash: false});
+  }
+})();
+
+/* ── Sidebar collapse + group collapse (persistent via localStorage) ── */
+const SIDEBAR_KEY = 'nse7-ef-sidebar-collapsed';
+const GROUP_KEY_PREFIX = 'nse7-ef-sidebar-group-';
+const hubSidebar = document.getElementById('hub-sidebar');
+const sidebarCollapseBtn = document.getElementById('hub-side-collapse');
+function applySidebarCollapsed(collapsed) {
+  if (!hubSidebar) return;
+  hubSidebar.classList.toggle('collapsed', collapsed);
+  if (collapsed) localStorage.setItem(SIDEBAR_KEY, '1');
+  else localStorage.removeItem(SIDEBAR_KEY);
+}
+function applyGroupCollapsed(group, collapsed) {
+  const el = document.querySelector('.hub-sidebar-group[data-group="' + group + '"]');
+  if (!el) return;
+  el.classList.toggle('group-collapsed', collapsed);
+  if (collapsed) localStorage.setItem(GROUP_KEY_PREFIX + group, '1');
+  else localStorage.removeItem(GROUP_KEY_PREFIX + group);
+}
+if (sidebarCollapseBtn) {
+  sidebarCollapseBtn.addEventListener('click', function() {
+    applySidebarCollapsed(!hubSidebar.classList.contains('collapsed'));
+  });
+}
+document.querySelectorAll('.hub-side-group-head').forEach(function(head) {
+  head.addEventListener('click', function() {
+    const group = head.dataset.groupToggle;
+    const el = document.querySelector('.hub-sidebar-group[data-group="' + group + '"]');
+    if (!el) return;
+    applyGroupCollapsed(group, !el.classList.contains('group-collapsed'));
+  });
+});
+/* Apply persisted states immediately (default = expanded) */
+if (localStorage.getItem(SIDEBAR_KEY) === '1') applySidebarCollapsed(true);
+['curriculum','reference'].forEach(function(g) {
+  if (localStorage.getItem(GROUP_KEY_PREFIX + g) === '1') applyGroupCollapsed(g, true);
+});
+
+/* ── Progress tracking ── */
+const PROGRESS_KEY = 'nse7-ef-curriculum-progress';
+function getProgress() {
+  try { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+function saveProgress(arr) {
+  localStorage.setItem(PROGRESS_KEY, JSON.stringify(arr));
+}
+function renderProgress() {
+  const done = new Set(getProgress());
+  const total = 40;
+  const count = done.size;
+  const pct = Math.round((count / total) * 100);
+  document.getElementById('progress-count').textContent = count;
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+  const badge = document.getElementById('side-progress-badge');
+  if (badge) badge.textContent = count + '/' + total;
+  document.querySelectorAll('.progress-check').forEach(function(cb) {
+    const n = Number(cb.dataset.session);
+    cb.checked = done.has(n);
+    cb.closest('.progress-row').classList.toggle('completed', done.has(n));
+  });
+  document.querySelectorAll('.progress-phase-stats').forEach(function(el) {
+    const phase = Number(el.dataset.phase);
+    const rows = el.closest('.progress-phase').querySelectorAll('.progress-check');
+    let phaseDone = 0;
+    rows.forEach(function(cb) { if (done.has(Number(cb.dataset.session))) phaseDone++; });
+    el.textContent = phaseDone + ' / ' + rows.length;
+  });
+}
+function toggleSession(n, checked) {
+  const set = new Set(getProgress());
+  if (checked) set.add(n); else set.delete(n);
+  saveProgress(Array.from(set).sort((a, b) => a - b));
+  renderProgress();
+}
+function resetProgress() {
+  if (!confirm('Reset all session progress?')) return;
+  saveProgress([]);
+  renderProgress();
+}
+document.querySelectorAll('.progress-check').forEach(function(cb) {
+  cb.addEventListener('change', function(e) {
+    e.stopPropagation();
+    toggleSession(Number(cb.dataset.session), cb.checked);
+  });
+});
+document.querySelectorAll('.progress-row').forEach(function(row) {
+  row.addEventListener('click', function(e) {
+    if (e.target.tagName === 'A' || e.target.tagName === 'INPUT') return;
+    const cb = row.querySelector('.progress-check');
+    cb.checked = !cb.checked;
+    toggleSession(Number(cb.dataset.session), cb.checked);
+  });
+});
+renderProgress();
+</script>
+</body>
+</html>
