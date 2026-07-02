@@ -3140,6 +3140,118 @@ def render_extras_hub(extras, standalone_extras=None):
     (ROOT / "extras.html").write_text(html, encoding="utf-8")
 
 # ---------------------------------------------------------------------------
+# LANDING PAGE (index.html) — one-stop front door to every hub
+# ---------------------------------------------------------------------------
+
+def render_landing(extras, completions, standalone_extras):
+    n_sessions = len(SESSIONS)
+    n_phases = len(PHASES)
+    n_completed = sum(1 for v in completions.values() if v.get("has_complete"))
+
+    def _count_kind(kind):
+        session_count = sum(len(extras.get(s["num"], {}).get(kind, [])) for s in SESSIONS)
+        standalone_count = sum(len(e[kind]) for e in standalone_extras)
+        return session_count + standalone_count
+
+    n_guides = _count_kind("guides")
+    n_bites = _count_kind("bites")
+    n_nibbles = _count_kind("nibbles")
+    n_extras_total = n_guides + n_bites + n_nibbles
+
+    tiles = [
+        ("study-plan.html", "PLAN",      "chip-plan",     "Study Plan",              f"{n_sessions} sessions across {n_phases} phases — the full curriculum hub."),
+        ("completed-sessions.html", "COMPLETED", "chip-complete", "Completed Study Guides", f"{n_completed} of {n_sessions} sessions finished — polished HTML study guides."),
+        ("extras.html#guides",  "GUIDE",   "chip-guide",   "Guides",                  f"{n_guides} long-form companion pages that dive deeper than a session can."),
+        ("extras.html#bites",   "BITE",    "chip-bite",    "Bites",                   f"{n_bites} focused single-concept explainers."),
+        ("extras.html#nibbles", "NIBBLE",  "chip-nibble",  "Nibbles",                 f"{n_nibbles} short reference cards / cheat sheets."),
+        ("extras.html",         "ALL",     "chip-all",     "Extras (all)",            f"{n_extras_total} items — combined guides · bites · nibbles."),
+    ]
+
+    tiles_html = "".join(
+        f'<a class="tile" href="{href}">'
+        f'<span class="tile-chip {chip_class}">{chip}</span>'
+        f'<span class="tile-title">{html_escape(title)}</span>'
+        f'<span class="tile-desc">{html_escape(desc)}</span>'
+        f'<span class="tile-arrow">→</span>'
+        f'</a>'
+        for href, chip, chip_class, title, desc in tiles
+    )
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NSE7 Enterprise Firewall 7.6 — Socratic Curriculum</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {{
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+    --plum:#7c1a5f; --plum-light:#f7e5f0; --plum-border:#d8a7c5;
+  }}
+  *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0;}}
+  html,body{{min-height:100vh;}}
+  body{{font-family:'Cormorant Garamond',serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}}
+  header{{padding:56px 60px 40px;background:var(--ink-dark);color:#fbf7ec;}}
+  .eyebrow{{display:inline-flex;align-items:center;gap:8px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.12em;margin-bottom:16px;text-transform:uppercase;}}
+  .dot-live{{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}}
+  @keyframes blink{{0%,100%{{opacity:1}}50%{{opacity:0.3}}}}
+  header h1{{font-family:'Playfair Display',serif;font-size:56px;font-weight:700;line-height:1.02;letter-spacing:-0.015em;margin-bottom:12px;}}
+  header h1 em{{font-style:italic;font-weight:500;color:var(--ink-accent);}}
+  header p{{font-family:'Cormorant Garamond',serif;font-size:19px;font-style:italic;color:rgba(251,247,236,0.6);max-width:760px;line-height:1.55;}}
+  main{{flex:1;padding:48px 60px 72px;}}
+  .tile-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;max-width:1200px;margin:0 auto;}}
+  .tile{{position:relative;display:flex;flex-direction:column;gap:12px;padding:26px 28px 30px;background:var(--surface);border:1px solid var(--border);border-radius:14px;text-decoration:none;color:var(--text);transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;overflow:hidden;}}
+  .tile:hover{{transform:translateY(-2px);box-shadow:0 8px 24px -12px rgba(10,24,56,0.18);border-color:var(--blue);}}
+  .tile-chip{{align-self:flex-start;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;padding:4px 10px;border-radius:12px;text-transform:uppercase;}}
+  .chip-plan{{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border);}}
+  .chip-complete{{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}}
+  .chip-guide{{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}}
+  .chip-bite{{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border);}}
+  .chip-nibble{{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border);}}
+  .chip-all{{background:var(--plum-light);color:var(--plum);border:1px solid var(--plum-border);}}
+  .tile-title{{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.15;}}
+  .tile-desc{{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.55;}}
+  .tile-arrow{{position:absolute;right:22px;bottom:20px;font-family:'Outfit',sans-serif;font-size:22px;color:var(--blue);transition:transform .18s ease;}}
+  .tile:hover .tile-arrow{{transform:translateX(4px);}}
+  footer{{padding:18px 60px;border-top:1px solid var(--border);background:var(--surface);font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;text-align:center;}}
+  footer span{{color:var(--blue);}}
+  @media(max-width:640px){{
+    header{{padding:36px 24px 28px;}}
+    header h1{{font-size:36px;}}
+    header p{{font-size:16px;}}
+    main{{padding:28px 20px 44px;}}
+    .tile-grid{{grid-template-columns:1fr;gap:14px;}}
+    .tile{{padding:22px 22px 26px;}}
+    .tile-title{{font-size:22px;}}
+    footer{{padding:14px 24px;}}
+  }}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow"><span class="dot-live"></span>Socratic Curriculum · NSE7 EF 7.6</div>
+  <h1>NSE7 Enterprise <em>Firewall 7.6</em></h1>
+  <p>One door to every study surface — the plan, the finished guides, and every extra you've built along the way.</p>
+</header>
+<main>
+  <div class="tile-grid">
+    {tiles_html}
+  </div>
+</main>
+<footer>NSE7 EF 7.6 <span>·</span> Socratic Curriculum <span>·</span> {n_sessions} sessions <span>·</span> {n_completed}/{n_sessions} completed <span>·</span> {n_extras_total} extras</footer>
+</body>
+</html>
+"""
+    (ROOT / "index.html").write_text(html, encoding="utf-8")
+
+# ---------------------------------------------------------------------------
 # IMAGE PROMPTS FILE
 # ---------------------------------------------------------------------------
 
@@ -3204,6 +3316,7 @@ def main():
     render_hub(extras=extras, completions=completions, standalone_extras=standalone_extras)
     render_completed_hub(completions)
     render_extras_hub(extras, standalone_extras=standalone_extras)
+    render_landing(extras, completions, standalone_extras)
     write_prompts_file()
 
     n_extras = sum(len(items) for kinds in extras.values() for items in kinds.values())
@@ -3217,6 +3330,7 @@ def main():
     print(f"Ensured images/hub/ and {len(SESSIONS)} per-session sessions/session-NN-slug/images/ folders")
     print(f"Wrote completed-sessions.html ({n_completed} completed, {n_summaries} summaries)")
     print(f"Wrote extras.html ({n_extras} session-linked + {n_standalone} standalone)")
+    print(f"Wrote index.html (landing page)")
     report_completion_validation(completions)
 
 if __name__ == "__main__":
