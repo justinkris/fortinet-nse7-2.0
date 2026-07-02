@@ -1640,25 +1640,26 @@ TOPOLOGY = {
 
 LABS = [
     {
-        "num": 1,
-        "slug": "network-security-architecture",
-        "title": "Network Security Architecture — Concepts Only",
-        "goal": "No hands-on exercise in the PDF for this chapter. Review the concepts in Session 01 before starting Lab 02.",
+        "num": 0,
+        "slug": "pod-setup-and-overview",
+        "title": "Pod Setup & Curriculum Overview",
+        "goal": "Get oriented with the shared lab topology and the arc of the nine hands-on labs before you start Lab 01.",
         "learn_targets": [
-            "The Enterprise Firewall product family and where each product fits",
-            "How the study curriculum and the lab pod map to each other",
+            "Every device in the pod — role, model, interfaces, IPs, and how they connect",
+            "The lab-mode Claude Instructions prompt and how to load it into a Claude Project",
+            "What each subsequent lab teaches, in one line, so you know what's coming",
         ],
         "prereqs": {"labs": [], "sessions": [1]},
-        "topology_devices": [],
+        "topology_devices": [d["name"] for d in TOPOLOGY.get("devices", [])],
         "duration": "read-only",
         "steps": [],
         "verification": [],
         "cleanup": "",
-        "concept_only": True,
+        "is_orientation": True,
         "image_prompt": "",
     },
     {
-        "num": 2,
+        "num": 1,
         "slug": "central-management",
         "title": "Central Management with FortiManager",
         "goal": "Use FortiManager to run scripts and provisioning templates against branch FortiGates without touching them directly.",
@@ -1670,17 +1671,341 @@ LABS = [
         "prereqs": {"labs": [], "sessions": [6, 7, 8]},
         "topology_devices": ["HQ-FMG-1", "BR1-FGT", "BR2-FGT"],
         "duration": "60-90 minutes",
-        "steps": [],
-        "verification": [
-            "A script from FortiManager runs successfully on the target FortiGate (revision recorded)",
-            "BR2-FGT (and BR3 if used) appears as a managed device in FortiManager",
-            "A metadata variable in the pre-CLI template resolves to different values per device on install",
+        "steps": [
+            # ─── Exercise 1: Running Remote, Device, and Policy Scripts ───
+            {
+                "num": 1,
+                "goal": "Run a Remote CLI script (ACME Certificate) against HQ-DCFW",
+                "think_first": (
+                    "The script's target is 'Remote FortiGate Directly (via CLI).' "
+                    "Before running it, predict: does the certificate land on HQ-DCFW's live config, on the FortiManager device database, or both? "
+                    "What will the sync status between them look like afterwards?"
+                ),
+                "commands": [
+                    "# On FortiManager GUI (admin / Fortinet1!):",
+                    "# 1. Select 'EFW' ADOM",
+                    "# 2. Device Manager > Scripts",
+                    "# 3. Check the 'ACME Certificate' script (Type: CLI, Target: Remote FortiGate Directly via CLI)",
+                    "# 4. Click 'Run Script'",
+                    "# 5. Move HQ-DCFW from Available Entries to Selected Entries",
+                    "# 6. Click 'Run Now' → OK → Close",
+                ],
+                "verify": (
+                    "Device Manager > Device & Groups > Managed FortiGate > HQ-DCFW > Dashboard > Summary > "
+                    "Configuration and Installation widget > Revision > Total Revision > Revision History icon"
+                ),
+                "expected": "A new revision row created by 'script_manager' with Installation = 'Retrieved'.",
+                "reflect": (
+                    "The lab guide warns: 'You should avoid using the remote method to modify, delete, or create objects that are used in firewall policies.' "
+                    "Why? What breaks in FortiManager's model if a firewall object lives on the device but not in the ADOM policy package?"
+                ),
+            },
+            {
+                "num": 2,
+                "goal": "Verify the certificate is visible in the FortiManager device database",
+                "think_first": (
+                    "The Remote script bypassed FortiManager — so how did the ACME certificate become visible under HQ-DCFW > System > Certificates *inside FortiManager*? "
+                    "What automatic step did FortiManager perform right after the script ran?"
+                ),
+                "commands": [
+                    "# 1. HQ-DCFW > Feature Visibility > enable 'Certificates' > OK",
+                    "# 2. HQ-DCFW > System > Certificates",
+                    "# 3. Scroll to Local Certificates and locate 'acmetest'",
+                ],
+                "verify": "Local Certificates list on HQ-DCFW",
+                "expected": "acmetest certificate present in Local Certificates.",
+                "reflect": (
+                    "After the retrieve, HQ-DCFW shows Config Status 'Synchronized' and Policy Package Status 'DCFW' — both green. "
+                    "What would 'Modified' or 'Out of Sync' have meant here instead?"
+                ),
+            },
+            {
+                "num": 3,
+                "goal": "Run a Device Database script (Static Route) against HQ-DCFW",
+                "think_first": (
+                    "This script's target is 'Device Database' (not the remote FortiGate). "
+                    "Predict: after you run it, will HQ-DCFW's live routing table show the new route immediately? Where will the change actually land?"
+                ),
+                "commands": [
+                    "# 1. Device Manager > Scripts",
+                    "# 2. Check the 'Static Route' script (Type: CLI, Target: Device Database)",
+                    "# 3. Click 'Run Script'",
+                    "# 4. Move HQ-DCFW to Selected Entries > Run Now → OK → Close",
+                    "# 5. Device Manager > Device & Groups > Managed FortiGate",
+                ],
+                "verify": "Managed FortiGate list — check HQ-DCFW's Config Status column",
+                "expected": "HQ-DCFW shows 'Modified' with an orange warning triangle.",
+                "reflect": (
+                    "Contrast with Step 1: the Remote script left HQ-DCFW 'Synchronized' immediately; this script left it 'Modified'. "
+                    "What does that difference tell you about *what the two script scopes actually do* and *who owns the change until you install it*?"
+                ),
+            },
+            {
+                "num": 4,
+                "goal": "Install the Device DB change to HQ-DCFW",
+                "think_first": (
+                    "You only changed the device layer (a static route). But the Install Wizard offers 'Install Policy Package & Device Settings.' "
+                    "Predict: why does the lab guide recommend installing the policy package too, even when your change was device-layer only?"
+                ),
+                "commands": [
+                    "# 1. Managed FortiGate > select HQ-DCFW checkbox",
+                    "# 2. Install > Install Wizard",
+                    "# 3. 'Install Policy Package & Device Settings' → Policy Package: DCFW",
+                    "# 4. Next → Next → Install preview → Close → Install → Finish",
+                ],
+                "verify": "Managed FortiGate — HQ-DCFW row",
+                "expected": "Config Status 'Synchronized' and Policy Package Status 'DCFW' — both green.",
+                "reflect": (
+                    "If the install preview showed 'No commands to be installed' or 'No preview' — what would that be telling you, and would it be a problem?"
+                ),
+            },
+            {
+                "num": 5,
+                "goal": "Run a Policy Package script (Firewall rule) against the DCFW policy package",
+                "think_first": (
+                    "First open Policy & Objects > Policy Packages > DCFW > Firewall Policy and count what's there. "
+                    "Predict: after the 'Firewall rule' script runs, where will the new policy appear — on HQ-DCFW's live config, in the DCFW policy package, or both?"
+                ),
+                "commands": [
+                    "# 1. Policy & Objects > Policy Packages > DCFW > Firewall Policy",
+                    "#    (should see 1 policy: 'Internet')",
+                    "# 2. Device Manager > Scripts",
+                    "# 3. Check 'Firewall rule' (Type: CLI, Target: Policy Package or ADOM Database)",
+                    "# 4. Run Script → Run script on policy package: DCFW → Run Now → OK → Close",
+                    "# 5. Return to Policy & Objects > Policy Packages > DCFW > Firewall Policy",
+                ],
+                "verify": "Count firewall policies in the DCFW package",
+                "expected": "2 policies now: 'Internet' and 'To HQ-Web-1'.",
+                "reflect": (
+                    "If your script only needed to create firewall addresses or service objects (not tied to any specific policy), "
+                    "what policy package should you target — and why does it not actually matter?"
+                ),
+            },
+            {
+                "num": 6,
+                "goal": "Re-install the policy package to push the new firewall rule to HQ-DCFW",
+                "think_first": (
+                    "The Install Wizard has two modes now: 'Install Wizard' and 'Re-install Policy.' "
+                    "Predict: what's the difference — when do you use each — and which preview will show 'copy only' vs actual command diffs?"
+                ),
+                "commands": [
+                    "# 1. Policy & Objects > Policy Packages > Install Wizard dropdown > 'Re-install Policy'",
+                    "# 2. OK to confirm",
+                    "# 3. Install Preview (see what will push to HQ-DCFW) → Close",
+                    "# 4. Next → Finish",
+                ],
+                "verify": "Managed FortiGate — HQ-DCFW row",
+                "expected": "Config Status 'Synchronized' and Policy Package Status 'DCFW' — both green.",
+                "reflect": (
+                    "Summarise the three script scopes in one sentence each — Remote / Device DB / Policy-Package — capturing (a) where the change lands and (b) what install action, if any, you must run next."
+                ),
+            },
+            # ─── Exercise 2: Configuring LTP (Low-Touch Provisioning) ───
+            {
+                "num": 7,
+                "goal": "Create the IP_port2 metadata variable in the EFW ADOM",
+                "think_first": (
+                    "The lab has 6 metadata variables in total; five are pre-created and you're adding IP_port2. "
+                    "What does 'metadata variable' actually mean here — and how is it different from just typing an IP directly into a CLI template you'd apply to one device?"
+                ),
+                "commands": [
+                    "# 1. FortiManager GUI (admin / Fortinet1!) > select 'EFW' ADOM",
+                    "# 2. Policy & Objects > Advanced > Metadata Variables > Create New",
+                    "# 3. Configure:",
+                    "#      Name          = IP_port2",
+                    "#      Description   = (blank)",
+                    "#      Default Value = (blank)",
+                    "# 4. OK",
+                ],
+                "verify": "Policy & Objects > Advanced > Metadata Variables",
+                "expected": "IP_port2 present in the list alongside GW, Hostname, IP_port1, IP_port4, LAN_BR (and vm_interface_number).",
+                "reflect": (
+                    "Default Value is left blank on purpose. What behaviour does that produce at install time on a device where you haven't yet bound a per-device mapping — and why is that the safer default here?"
+                ),
+            },
+            {
+                "num": 8,
+                "goal": "Reference $(IP_port2) inside the port2 stanza of the Pre-CLI Template",
+                "think_first": (
+                    "Syntax is `$(varname)` — a dollar sign then parentheses. "
+                    "Predict what happens at install time if you type `$IP_port2` without parentheses. What about `(IP_port2)` without the dollar sign?"
+                ),
+                "commands": [
+                    "# 1. Device Manager > Provisioning Templates > CLI",
+                    "# 2. Expand 'Pre-Run CLI Template' > right-click 'Pre-CLI Template' > Edit",
+                    "# 3. In Script Details, in the port2 section, on the 'set ip' line, type $",
+                    "# 4. From the list that appears, select (IP_port2)",
+                    "# 5. Confirm the line now reads: set ip $(IP_port2)",
+                    "# 6. Click OK",
+                ],
+                "verify": "Reopen the Pre-CLI Template → port2 stanza",
+                "expected": "Line 4 shows: set ip $(IP_port2)",
+                "reflect": (
+                    "The lab guide explicitly warns: 'The dollar sign ($) must precede any metadata variable (enclosed in parentheses). Otherwise, you will receive an error.' "
+                    "Why do you think FortiManager insists on both — what would ambiguously typed values collide with in a normal FortiGate CLI?"
+                ),
+            },
+            {
+                "num": 9,
+                "goal": "Add BR2-FGT-1 as a model device and bind per-device metadata mappings",
+                "think_first": (
+                    "You're adding a device that isn't powered on yet — a 'model device'. When the real BR2-FGT-1 boots up and dials home for the first time, "
+                    "how does FortiManager decide it's THIS pre-registered entry (BR2-FGT-1) and not some other unregistered FortiGate?"
+                ),
+                "commands": [
+                    "# 1. Device Manager > Device & Groups > Add Device > Add Model Device",
+                    "# 2. Configure:",
+                    "#      Name             = BR2-FGT-1",
+                    "#      Link Device By   = Pre-shared Key",
+                    "#      Pre-shared Key   = 123456789",
+                    "#      Device Model     = FortiGate-VM64-KVM",
+                    "#      Port Provisioning = 4",
+                    "#      Pre-Run CLI Template = Pre-CLI Template",
+                    "#      Assign Policy Package = BR",
+                    "# 3. Click 'Edit Variable Mapping' and enter:",
+                    "#      $(GW)       = 100.65.2.254",
+                    "#      $(Hostname) = BR2-FGT-1",
+                    "#      $(IP_port1) = 192.168.1.112/16",
+                    "#      $(IP_port2) = 100.65.2.112/24",
+                    "#      $(IP_port4) = 172.20.2.254/24",
+                    "#      $(LAN_BR)   = 172.20.2.0/24",
+                    "# 4. OK → Next → Finish",
+                ],
+                "verify": "Device Manager > Device & Groups > Managed FortiGate list",
+                "expected": "BR2-FGT-1 present, Config Status = 'Unknown', Policy Package Status = 'BR' (orange warning).",
+                "reflect": (
+                    "The 'Unknown' Config Status is the physical device hasn't connected yet. The orange 'BR' policy-package status is saying something needs to happen. "
+                    "What has to happen next before this device can go green?"
+                ),
+            },
+            {
+                "num": 10,
+                "goal": "Install the policy package + device settings to BR2-FGT-1 (still offline)",
+                "think_first": (
+                    "BR2-FGT-1 isn't reachable yet — the physical device isn't powered on and can't talk to FortiManager. "
+                    "Predict: what does 'Install' actually do at this stage? Where does the resolved config go if it can't be pushed to the device?"
+                ),
+                "commands": [
+                    "# 1. Managed FortiGate > select BR2-FGT-1 checkbox",
+                    "# 2. Install > Install Wizard",
+                    "# 3. 'Install Policy Package & Device Settings' → Policy Package: BR",
+                    "# 4. Next → Next → Install → Finish",
+                    "",
+                    "# Verify the device database now shows:",
+                    "# - Network > Interfaces: port1=192.168.1.112/16, port2=100.65.2.112/24, port4=172.20.2.254/24",
+                    "# - Network > Static Routes: 0.0.0.0/0 via 100.65.2.254 on port2",
+                    "# - CLI Configurations > firewall > policy: no firewall policy yet",
+                ],
+                "verify": "Device Manager > Provisioning Templates > CLI > Pre-Run CLI Template",
+                "expected": "'Assigned to Device/Group' column shows '0 Devices in Total' — the pre-run template auto-detached after install.",
+                "reflect": (
+                    "Regular CLI templates stick to a device until you remove them. Pre-run CLI templates detach automatically after one install. "
+                    "Why the different lifecycle — what's the pre-run template's purpose that makes 'apply once, forget' the right behaviour?"
+                ),
+            },
+            {
+                "num": 11,
+                "goal": "Bootstrap BR2-FGT-1 from the serial console and register it against FortiManager",
+                "think_first": (
+                    "You've prepared everything in FortiManager, but the physical BR2-FGT-1 boots up with a blank config. "
+                    "What is the *absolute minimum* you must configure on the console before FortiManager can push everything else?"
+                ),
+                "commands": [
+                    "# On BR2-FGT-1 serial console (admin / Fortinet1!):",
+                    "",
+                    "config system interface",
+                    "  edit \"port2\"",
+                    "  set ip 100.65.2.112 255.255.255.0",
+                    "  set allowaccess ping https ssh fgfm",
+                    "end",
+                    "",
+                    "config router static",
+                    "  edit 1",
+                    "  set device port2",
+                    "  set gateway 100.65.2.254",
+                    "end",
+                    "",
+                    "config system central-management",
+                    "  set type fortimanager",
+                    "  set fmg 100.65.0.120",
+                    "end",
+                    "",
+                    "# Prompt: 'FortiGate can establish a connection to obtain the serial number now. (y/n)'",
+                    "# Type: y",
+                    "# Prompt: 'Obtained serial number ... Do you confirm ... (y/n)'",
+                    "# Type: y",
+                    "",
+                    "# Now register with the FortiManager serial number + pre-shared key:",
+                    "execute central-mgmt register-device FMG-VMTM24012945 123456789",
+                ],
+                "verify": "On FortiManager: System Settings > Task Monitor (in ADOM EFW)",
+                "expected": "Two tasks running: 'Autolinking Device' progresses to 100%, then 'Push config to device' completes.",
+                "reflect": (
+                    "On the console prompt, the FortiGate hostname changes from `FortiGate-VM64-KVM #` to `BR2-FGT-1 #` after registration. "
+                    "What does that hostname flip tell you about which side actually 'won' the config negotiation — and what would it have looked like if the pre-shared key had been wrong?"
+                ),
+            },
+            {
+                "num": 12,
+                "goal": "Repeat the flow for BR3-FGT-1 (expert challenge — different pre-shared key + metadata)",
+                "think_first": (
+                    "You've done this once. Before repeating for BR3, list which of these you can reuse as-is: the metadata variables themselves, the Pre-CLI Template, the BR policy package, the provisioning approach. "
+                    "What has to change per device?"
+                ),
+                "commands": [
+                    "# 1. Add Model Device (BR3-FGT-1) with:",
+                    "#      Pre-shared Key = 987654321  (different from BR2)",
+                    "#      Device Model   = FortiGate-VM64-KVM",
+                    "#      Port Provisioning = 4",
+                    "#      Pre-Run CLI Template = Pre-CLI Template",
+                    "#      Assign Policy Package = BR",
+                    "#    Metadata mappings:",
+                    "#      $(GW)       = 100.65.3.254",
+                    "#      $(Hostname) = BR3-FGT-1",
+                    "#      $(IP_port1) = 192.168.1.113/16",
+                    "#      $(IP_port2) = 100.65.3.113/24",
+                    "#      $(IP_port4) = 172.20.3.254/24",
+                    "#      $(LAN_BR)   = 172.20.3.0/24",
+                    "# 2. Install Wizard → Policy Package: BR → Next → Install → Finish",
+                    "",
+                    "# 3. On BR3-FGT-1 serial console, bootstrap identical to Step 11 but with 100.65.3.x IPs:",
+                    "config system interface",
+                    "  edit \"port2\"",
+                    "  set ip 100.65.3.113 255.255.255.0",
+                    "  set allowaccess ping https ssh fgfm",
+                    "end",
+                    "config router static",
+                    "  edit 1",
+                    "  set device port2",
+                    "  set gateway 100.65.3.254",
+                    "end",
+                    "config system central-management",
+                    "  set type fortimanager",
+                    "  set fmg 100.65.0.120",
+                    "end",
+                    "# y, y to obtain + confirm the FMG serial",
+                    "execute central-mgmt register-device FMG-VMTM24012945 987654321",
+                ],
+                "verify": "FortiManager > Managed FortiGate list",
+                "expected": "Both BR2-FGT-1 and BR3-FGT-1 show Config Status 'Synchronized' (or 'Auto-update'); both bound to policy package 'BR'.",
+                "reflect": (
+                    "You just deployed two branches with completely different IPs, hostnames, and LAN subnets using ONE Pre-CLI template. "
+                    "Give a one-sentence pitch for LTP + metadata variables to a manager who's pushing back on the up-front setup time. "
+                    "Now flip it: what does this workflow trade *away* compared to configuring each FortiGate directly?"
+                ),
+            },
         ],
-        "cleanup": "Keep the managed-device registrations — Labs 5, 7, 8, and 9 all depend on FortiManager. Delete any throwaway scripts.",
+        "verification": [
+            "A Remote CLI script, a Device DB script, and a Policy Package script have each been run successfully against HQ-DCFW (three revisions in the history)",
+            "BR2-FGT-1 and BR3-FGT-1 both appear in Managed FortiGate with Config Status Synchronized or Auto-update and policy package BR",
+            "The metadata variable $(IP_port2) resolves to different values (100.65.2.112/24 and 100.65.3.113/24) when the pre-CLI template installs on each device",
+            "Both branch consoles show the hostname flipping from `FortiGate-VM64-KVM #` to their assigned $(Hostname) after `execute central-mgmt register-device` completes",
+        ],
+        "cleanup": "Keep the managed-device registrations — Labs 5, 7, 8, and 9 all depend on FortiManager. Delete any throwaway scripts you created while exploring. Leave the Pre-CLI Template as-is (it will auto-detach from BR2/BR3 after install; that's expected).",
         "image_prompt": "",
     },
     {
-        "num": 3,
+        "num": 2,
         "slug": "vlans-and-vdoms",
         "title": "VLANs and VDOMs on ISFW",
         "goal": "Enable VDOMs on HQ-FGT-A, carve two zones with VLAN tagging, and prove inter-VDOM routing works via an inter-VDOM link.",
@@ -1690,7 +2015,7 @@ LABS = [
             "Inter-VDOM links as software cables — when you need them vs when you don't",
             "Where firewall policies live once you're in multi-VDOM mode (per-VDOM policy tables)",
         ],
-        "prereqs": {"labs": [2], "sessions": [11, 12, 14]},
+        "prereqs": {"labs": [1], "sessions": [11, 12, 14]},
         "topology_devices": ["HQ-FGT-A", "HQ-PC-1"],
         "duration": "45-60 minutes",
         "steps": [],
@@ -1703,7 +2028,7 @@ LABS = [
         "image_prompt": "",
     },
     {
-        "num": 4,
+        "num": 3,
         "slug": "high-availability",
         "title": "High Availability — VDOM Partitioning + FGSP",
         "goal": "Split VDOMs across an HA cluster (partitioning), then configure FGSP so both firewalls forward asymmetric flows and survive failover.",
@@ -1713,7 +2038,7 @@ LABS = [
             "Testing session synchronization with a real ICMP flow and a forced failover",
             "Encrypting the session-sync channel with a pre-shared key",
         ],
-        "prereqs": {"labs": [3], "sessions": [15, 16, 17, 18]},
+        "prereqs": {"labs": [2], "sessions": [15, 16, 17, 18]},
         "topology_devices": ["HQ-FGT-A", "HQ-FGT-B", "BR1-FGT", "HQ-PC-1", "BR1-PC-1"],
         "duration": "75-90 minutes",
         "steps": [],
@@ -1726,7 +2051,7 @@ LABS = [
         "image_prompt": "",
     },
     {
-        "num": 5,
+        "num": 4,
         "slug": "dynamic-routing",
         "title": "Dynamic Routing — OSPF ECMP + BGP",
         "goal": "Bring up OSPF between HQ VDOMs, enable ECMP, then peer BGP with a branch FortiGate via FortiManager BGP templates.",
@@ -1736,7 +2061,7 @@ LABS = [
             "FortiManager BGP templates — pushing consistent peer config across sites",
             "Advertising a loopback as a BGP source for stability across failover",
         ],
-        "prereqs": {"labs": [2, 3, 4], "sessions": [20, 21, 22, 24, 25]},
+        "prereqs": {"labs": [1, 2, 3], "sessions": [20, 21, 22, 24, 25]},
         "topology_devices": ["HQ-FGT-A", "HQ-FGT-B", "BR1-FGT", "HQ-FMG-1"],
         "duration": "90-120 minutes",
         "steps": [],
@@ -1749,7 +2074,7 @@ LABS = [
         "image_prompt": "",
     },
     {
-        "num": 6,
+        "num": 5,
         "slug": "security-profiles",
         "title": "Security Profiles — IPS False Positive, Unencrypted + Encrypted Attacks",
         "goal": "Apply IPS profiles to detect and block simulated attacks, then handle SSL deep inspection with a dynamic local certificate.",
@@ -1759,7 +2084,7 @@ LABS = [
             "SSL/SSH deep inspection: dynamic local certificate + client CA trust",
             "Reading `hping` output and correlating it with IPS log lines",
         ],
-        "prereqs": {"labs": [2, 3, 4, 5], "sessions": [27, 28, 29, 30, 31]},
+        "prereqs": {"labs": [1, 2, 3, 4], "sessions": [27, 28, 29, 30, 31]},
         "topology_devices": ["HQ-FGT-A", "HQ-Web-1", "HQ-PC-1"],
         "duration": "60-90 minutes",
         "steps": [],
@@ -1772,7 +2097,7 @@ LABS = [
         "image_prompt": "",
     },
     {
-        "num": 7,
+        "num": 6,
         "slug": "ipsec-vpn-ikev2",
         "title": "IPsec VPN (IKEv2) with Templates",
         "goal": "Configure hub-and-spoke IPsec VPN using FortiManager IPsec templates, verify tunnels come up, then tear one down cleanly.",
@@ -1782,7 +2107,7 @@ LABS = [
             "Reading tunnel status from CLI (`get vpn ipsec tunnel summary`) vs GUI",
             "Deleting an IPsec tunnel without breaking the remaining hub-and-spoke topology",
         ],
-        "prereqs": {"labs": [2, 5], "sessions": [32, 33]},
+        "prereqs": {"labs": [1, 4], "sessions": [32, 33]},
         "topology_devices": ["HQ-FGT-A", "BR1-FGT", "BR2-FGT", "HQ-FMG-1"],
         "duration": "60-75 minutes",
         "steps": [],
@@ -1795,7 +2120,7 @@ LABS = [
         "image_prompt": "",
     },
     {
-        "num": 8,
+        "num": 7,
         "slug": "advpn",
         "title": "Auto-Discovery VPN (ADVPN) with IBGP and EBGP",
         "goal": "Layer ADVPN on top of the IPsec templates, run BGP over the tunnels, and trigger an on-demand spoke-to-spoke shortcut.",
@@ -1805,7 +2130,7 @@ LABS = [
             "Verifying a shortcut with `diagnose vpn ike gateway list` after the first spoke-to-spoke packet",
             "The hub's role in exchanging routes but not necessarily carrying data-plane traffic",
         ],
-        "prereqs": {"labs": [5, 7], "sessions": [34, 35, 36]},
+        "prereqs": {"labs": [4, 6], "sessions": [34, 35, 36]},
         "topology_devices": ["HQ-FGT-A", "BR1-FGT", "BR2-FGT", "HQ-FMG-1"],
         "duration": "90-120 minutes",
         "steps": [],

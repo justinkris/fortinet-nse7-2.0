@@ -110,19 +110,228 @@
   <div class="section-block">
     <div class="section-label">Section 03 · Steps</div>
     <h2>Predict → Run → Verify → <em>Reflect</em></h2>
-    <div class="empty-state"><h3>Steps not authored yet</h3><p>Predict → Run → Verify → Reflect step cards will land here once <code>steps</code> is populated for this lab in <code>build.py</code>.</p></div>
+    <div class="step-card">
+  <div class="step-head"><span class="step-chip">Step 01</span><span class="step-goal">Run a Remote CLI script (ACME Certificate) against HQ-DCFW</span></div>
+  <div class="step-callout"><div class="step-callout-label">Think first</div>The script's target is 'Remote FortiGate Directly (via CLI).' Before running it, predict: does the certificate land on HQ-DCFW's live config, on the FortiManager device database, or both? What will the sync status between them look like afterwards?</div>
+  <div class="code-block"><div class="code-label">Run</div><pre><code># On FortiManager GUI (admin / Fortinet1!):
+# 1. Select 'EFW' ADOM
+# 2. Device Manager &gt; Scripts
+# 3. Check the 'ACME Certificate' script (Type: CLI, Target: Remote FortiGate Directly via CLI)
+# 4. Click 'Run Script'
+# 5. Move HQ-DCFW from Available Entries to Selected Entries
+# 6. Click 'Run Now' → OK → Close</code></pre></div>
+  <div class="code-block"><div class="code-label">Verify</div><pre><code>Device Manager &gt; Device &amp; Groups &gt; Managed FortiGate &gt; HQ-DCFW &gt; Dashboard &gt; Summary &gt; Configuration and Installation widget &gt; Revision &gt; Total Revision &gt; Revision History icon</code></pre></div>
+  <div class="step-callout" style="border-left-color:var(--green-border);background:var(--green-light);"><div class="step-callout-label" style="color:var(--green);">Expected output</div><pre style="font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;white-space:pre-wrap;margin:0;">A new revision row created by 'script_manager' with Installation = 'Retrieved'.</pre></div>
+  <div class="step-callout callout-amber"><div class="step-callout-label">Reflect</div>The lab guide warns: 'You should avoid using the remote method to modify, delete, or create objects that are used in firewall policies.' Why? What breaks in FortiManager's model if a firewall object lives on the device but not in the ADOM policy package?</div>
+</div>
+<div class="step-card">
+  <div class="step-head"><span class="step-chip">Step 02</span><span class="step-goal">Verify the certificate is visible in the FortiManager device database</span></div>
+  <div class="step-callout"><div class="step-callout-label">Think first</div>The Remote script bypassed FortiManager — so how did the ACME certificate become visible under HQ-DCFW &gt; System &gt; Certificates *inside FortiManager*? What automatic step did FortiManager perform right after the script ran?</div>
+  <div class="code-block"><div class="code-label">Run</div><pre><code># 1. HQ-DCFW &gt; Feature Visibility &gt; enable 'Certificates' &gt; OK
+# 2. HQ-DCFW &gt; System &gt; Certificates
+# 3. Scroll to Local Certificates and locate 'acmetest'</code></pre></div>
+  <div class="code-block"><div class="code-label">Verify</div><pre><code>Local Certificates list on HQ-DCFW</code></pre></div>
+  <div class="step-callout" style="border-left-color:var(--green-border);background:var(--green-light);"><div class="step-callout-label" style="color:var(--green);">Expected output</div><pre style="font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;white-space:pre-wrap;margin:0;">acmetest certificate present in Local Certificates.</pre></div>
+  <div class="step-callout callout-amber"><div class="step-callout-label">Reflect</div>After the retrieve, HQ-DCFW shows Config Status 'Synchronized' and Policy Package Status 'DCFW' — both green. What would 'Modified' or 'Out of Sync' have meant here instead?</div>
+</div>
+<div class="step-card">
+  <div class="step-head"><span class="step-chip">Step 03</span><span class="step-goal">Run a Device Database script (Static Route) against HQ-DCFW</span></div>
+  <div class="step-callout"><div class="step-callout-label">Think first</div>This script's target is 'Device Database' (not the remote FortiGate). Predict: after you run it, will HQ-DCFW's live routing table show the new route immediately? Where will the change actually land?</div>
+  <div class="code-block"><div class="code-label">Run</div><pre><code># 1. Device Manager &gt; Scripts
+# 2. Check the 'Static Route' script (Type: CLI, Target: Device Database)
+# 3. Click 'Run Script'
+# 4. Move HQ-DCFW to Selected Entries &gt; Run Now → OK → Close
+# 5. Device Manager &gt; Device &amp; Groups &gt; Managed FortiGate</code></pre></div>
+  <div class="code-block"><div class="code-label">Verify</div><pre><code>Managed FortiGate list — check HQ-DCFW's Config Status column</code></pre></div>
+  <div class="step-callout" style="border-left-color:var(--green-border);background:var(--green-light);"><div class="step-callout-label" style="color:var(--green);">Expected output</div><pre style="font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;white-space:pre-wrap;margin:0;">HQ-DCFW shows 'Modified' with an orange warning triangle.</pre></div>
+  <div class="step-callout callout-amber"><div class="step-callout-label">Reflect</div>Contrast with Step 1: the Remote script left HQ-DCFW 'Synchronized' immediately; this script left it 'Modified'. What does that difference tell you about *what the two script scopes actually do* and *who owns the change until you install it*?</div>
+</div>
+<div class="step-card">
+  <div class="step-head"><span class="step-chip">Step 04</span><span class="step-goal">Install the Device DB change to HQ-DCFW</span></div>
+  <div class="step-callout"><div class="step-callout-label">Think first</div>You only changed the device layer (a static route). But the Install Wizard offers 'Install Policy Package &amp; Device Settings.' Predict: why does the lab guide recommend installing the policy package too, even when your change was device-layer only?</div>
+  <div class="code-block"><div class="code-label">Run</div><pre><code># 1. Managed FortiGate &gt; select HQ-DCFW checkbox
+# 2. Install &gt; Install Wizard
+# 3. 'Install Policy Package &amp; Device Settings' → Policy Package: DCFW
+# 4. Next → Next → Install preview → Close → Install → Finish</code></pre></div>
+  <div class="code-block"><div class="code-label">Verify</div><pre><code>Managed FortiGate — HQ-DCFW row</code></pre></div>
+  <div class="step-callout" style="border-left-color:var(--green-border);background:var(--green-light);"><div class="step-callout-label" style="color:var(--green);">Expected output</div><pre style="font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;white-space:pre-wrap;margin:0;">Config Status 'Synchronized' and Policy Package Status 'DCFW' — both green.</pre></div>
+  <div class="step-callout callout-amber"><div class="step-callout-label">Reflect</div>If the install preview showed 'No commands to be installed' or 'No preview' — what would that be telling you, and would it be a problem?</div>
+</div>
+<div class="step-card">
+  <div class="step-head"><span class="step-chip">Step 05</span><span class="step-goal">Run a Policy Package script (Firewall rule) against the DCFW policy package</span></div>
+  <div class="step-callout"><div class="step-callout-label">Think first</div>First open Policy &amp; Objects &gt; Policy Packages &gt; DCFW &gt; Firewall Policy and count what's there. Predict: after the 'Firewall rule' script runs, where will the new policy appear — on HQ-DCFW's live config, in the DCFW policy package, or both?</div>
+  <div class="code-block"><div class="code-label">Run</div><pre><code># 1. Policy &amp; Objects &gt; Policy Packages &gt; DCFW &gt; Firewall Policy
+#    (should see 1 policy: 'Internet')
+# 2. Device Manager &gt; Scripts
+# 3. Check 'Firewall rule' (Type: CLI, Target: Policy Package or ADOM Database)
+# 4. Run Script → Run script on policy package: DCFW → Run Now → OK → Close
+# 5. Return to Policy &amp; Objects &gt; Policy Packages &gt; DCFW &gt; Firewall Policy</code></pre></div>
+  <div class="code-block"><div class="code-label">Verify</div><pre><code>Count firewall policies in the DCFW package</code></pre></div>
+  <div class="step-callout" style="border-left-color:var(--green-border);background:var(--green-light);"><div class="step-callout-label" style="color:var(--green);">Expected output</div><pre style="font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;white-space:pre-wrap;margin:0;">2 policies now: 'Internet' and 'To HQ-Web-1'.</pre></div>
+  <div class="step-callout callout-amber"><div class="step-callout-label">Reflect</div>If your script only needed to create firewall addresses or service objects (not tied to any specific policy), what policy package should you target — and why does it not actually matter?</div>
+</div>
+<div class="step-card">
+  <div class="step-head"><span class="step-chip">Step 06</span><span class="step-goal">Re-install the policy package to push the new firewall rule to HQ-DCFW</span></div>
+  <div class="step-callout"><div class="step-callout-label">Think first</div>The Install Wizard has two modes now: 'Install Wizard' and 'Re-install Policy.' Predict: what's the difference — when do you use each — and which preview will show 'copy only' vs actual command diffs?</div>
+  <div class="code-block"><div class="code-label">Run</div><pre><code># 1. Policy &amp; Objects &gt; Policy Packages &gt; Install Wizard dropdown &gt; 'Re-install Policy'
+# 2. OK to confirm
+# 3. Install Preview (see what will push to HQ-DCFW) → Close
+# 4. Next → Finish</code></pre></div>
+  <div class="code-block"><div class="code-label">Verify</div><pre><code>Managed FortiGate — HQ-DCFW row</code></pre></div>
+  <div class="step-callout" style="border-left-color:var(--green-border);background:var(--green-light);"><div class="step-callout-label" style="color:var(--green);">Expected output</div><pre style="font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;white-space:pre-wrap;margin:0;">Config Status 'Synchronized' and Policy Package Status 'DCFW' — both green.</pre></div>
+  <div class="step-callout callout-amber"><div class="step-callout-label">Reflect</div>Summarise the three script scopes in one sentence each — Remote / Device DB / Policy-Package — capturing (a) where the change lands and (b) what install action, if any, you must run next.</div>
+</div>
+<div class="step-card">
+  <div class="step-head"><span class="step-chip">Step 07</span><span class="step-goal">Create the IP_port2 metadata variable in the EFW ADOM</span></div>
+  <div class="step-callout"><div class="step-callout-label">Think first</div>The lab has 6 metadata variables in total; five are pre-created and you're adding IP_port2. What does 'metadata variable' actually mean here — and how is it different from just typing an IP directly into a CLI template you'd apply to one device?</div>
+  <div class="code-block"><div class="code-label">Run</div><pre><code># 1. FortiManager GUI (admin / Fortinet1!) &gt; select 'EFW' ADOM
+# 2. Policy &amp; Objects &gt; Advanced &gt; Metadata Variables &gt; Create New
+# 3. Configure:
+#      Name          = IP_port2
+#      Description   = (blank)
+#      Default Value = (blank)
+# 4. OK</code></pre></div>
+  <div class="code-block"><div class="code-label">Verify</div><pre><code>Policy &amp; Objects &gt; Advanced &gt; Metadata Variables</code></pre></div>
+  <div class="step-callout" style="border-left-color:var(--green-border);background:var(--green-light);"><div class="step-callout-label" style="color:var(--green);">Expected output</div><pre style="font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;white-space:pre-wrap;margin:0;">IP_port2 present in the list alongside GW, Hostname, IP_port1, IP_port4, LAN_BR (and vm_interface_number).</pre></div>
+  <div class="step-callout callout-amber"><div class="step-callout-label">Reflect</div>Default Value is left blank on purpose. What behaviour does that produce at install time on a device where you haven't yet bound a per-device mapping — and why is that the safer default here?</div>
+</div>
+<div class="step-card">
+  <div class="step-head"><span class="step-chip">Step 08</span><span class="step-goal">Reference $(IP_port2) inside the port2 stanza of the Pre-CLI Template</span></div>
+  <div class="step-callout"><div class="step-callout-label">Think first</div>Syntax is `$(varname)` — a dollar sign then parentheses. Predict what happens at install time if you type `$IP_port2` without parentheses. What about `(IP_port2)` without the dollar sign?</div>
+  <div class="code-block"><div class="code-label">Run</div><pre><code># 1. Device Manager &gt; Provisioning Templates &gt; CLI
+# 2. Expand 'Pre-Run CLI Template' &gt; right-click 'Pre-CLI Template' &gt; Edit
+# 3. In Script Details, in the port2 section, on the 'set ip' line, type $
+# 4. From the list that appears, select (IP_port2)
+# 5. Confirm the line now reads: set ip $(IP_port2)
+# 6. Click OK</code></pre></div>
+  <div class="code-block"><div class="code-label">Verify</div><pre><code>Reopen the Pre-CLI Template → port2 stanza</code></pre></div>
+  <div class="step-callout" style="border-left-color:var(--green-border);background:var(--green-light);"><div class="step-callout-label" style="color:var(--green);">Expected output</div><pre style="font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;white-space:pre-wrap;margin:0;">Line 4 shows: set ip $(IP_port2)</pre></div>
+  <div class="step-callout callout-amber"><div class="step-callout-label">Reflect</div>The lab guide explicitly warns: 'The dollar sign ($) must precede any metadata variable (enclosed in parentheses). Otherwise, you will receive an error.' Why do you think FortiManager insists on both — what would ambiguously typed values collide with in a normal FortiGate CLI?</div>
+</div>
+<div class="step-card">
+  <div class="step-head"><span class="step-chip">Step 09</span><span class="step-goal">Add BR2-FGT-1 as a model device and bind per-device metadata mappings</span></div>
+  <div class="step-callout"><div class="step-callout-label">Think first</div>You're adding a device that isn't powered on yet — a 'model device'. When the real BR2-FGT-1 boots up and dials home for the first time, how does FortiManager decide it's THIS pre-registered entry (BR2-FGT-1) and not some other unregistered FortiGate?</div>
+  <div class="code-block"><div class="code-label">Run</div><pre><code># 1. Device Manager &gt; Device &amp; Groups &gt; Add Device &gt; Add Model Device
+# 2. Configure:
+#      Name             = BR2-FGT-1
+#      Link Device By   = Pre-shared Key
+#      Pre-shared Key   = 123456789
+#      Device Model     = FortiGate-VM64-KVM
+#      Port Provisioning = 4
+#      Pre-Run CLI Template = Pre-CLI Template
+#      Assign Policy Package = BR
+# 3. Click 'Edit Variable Mapping' and enter:
+#      $(GW)       = 100.65.2.254
+#      $(Hostname) = BR2-FGT-1
+#      $(IP_port1) = 192.168.1.112/16
+#      $(IP_port2) = 100.65.2.112/24
+#      $(IP_port4) = 172.20.2.254/24
+#      $(LAN_BR)   = 172.20.2.0/24
+# 4. OK → Next → Finish</code></pre></div>
+  <div class="code-block"><div class="code-label">Verify</div><pre><code>Device Manager &gt; Device &amp; Groups &gt; Managed FortiGate list</code></pre></div>
+  <div class="step-callout" style="border-left-color:var(--green-border);background:var(--green-light);"><div class="step-callout-label" style="color:var(--green);">Expected output</div><pre style="font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;white-space:pre-wrap;margin:0;">BR2-FGT-1 present, Config Status = 'Unknown', Policy Package Status = 'BR' (orange warning).</pre></div>
+  <div class="step-callout callout-amber"><div class="step-callout-label">Reflect</div>The 'Unknown' Config Status is the physical device hasn't connected yet. The orange 'BR' policy-package status is saying something needs to happen. What has to happen next before this device can go green?</div>
+</div>
+<div class="step-card">
+  <div class="step-head"><span class="step-chip">Step 10</span><span class="step-goal">Install the policy package + device settings to BR2-FGT-1 (still offline)</span></div>
+  <div class="step-callout"><div class="step-callout-label">Think first</div>BR2-FGT-1 isn't reachable yet — the physical device isn't powered on and can't talk to FortiManager. Predict: what does 'Install' actually do at this stage? Where does the resolved config go if it can't be pushed to the device?</div>
+  <div class="code-block"><div class="code-label">Run</div><pre><code># 1. Managed FortiGate &gt; select BR2-FGT-1 checkbox
+# 2. Install &gt; Install Wizard
+# 3. 'Install Policy Package &amp; Device Settings' → Policy Package: BR
+# 4. Next → Next → Install → Finish
+
+# Verify the device database now shows:
+# - Network &gt; Interfaces: port1=192.168.1.112/16, port2=100.65.2.112/24, port4=172.20.2.254/24
+# - Network &gt; Static Routes: 0.0.0.0/0 via 100.65.2.254 on port2
+# - CLI Configurations &gt; firewall &gt; policy: no firewall policy yet</code></pre></div>
+  <div class="code-block"><div class="code-label">Verify</div><pre><code>Device Manager &gt; Provisioning Templates &gt; CLI &gt; Pre-Run CLI Template</code></pre></div>
+  <div class="step-callout" style="border-left-color:var(--green-border);background:var(--green-light);"><div class="step-callout-label" style="color:var(--green);">Expected output</div><pre style="font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;white-space:pre-wrap;margin:0;">'Assigned to Device/Group' column shows '0 Devices in Total' — the pre-run template auto-detached after install.</pre></div>
+  <div class="step-callout callout-amber"><div class="step-callout-label">Reflect</div>Regular CLI templates stick to a device until you remove them. Pre-run CLI templates detach automatically after one install. Why the different lifecycle — what's the pre-run template's purpose that makes 'apply once, forget' the right behaviour?</div>
+</div>
+<div class="step-card">
+  <div class="step-head"><span class="step-chip">Step 11</span><span class="step-goal">Bootstrap BR2-FGT-1 from the serial console and register it against FortiManager</span></div>
+  <div class="step-callout"><div class="step-callout-label">Think first</div>You've prepared everything in FortiManager, but the physical BR2-FGT-1 boots up with a blank config. What is the *absolute minimum* you must configure on the console before FortiManager can push everything else?</div>
+  <div class="code-block"><div class="code-label">Run</div><pre><code># On BR2-FGT-1 serial console (admin / Fortinet1!):
+
+config system interface
+  edit "port2"
+  set ip 100.65.2.112 255.255.255.0
+  set allowaccess ping https ssh fgfm
+end
+
+config router static
+  edit 1
+  set device port2
+  set gateway 100.65.2.254
+end
+
+config system central-management
+  set type fortimanager
+  set fmg 100.65.0.120
+end
+
+# Prompt: 'FortiGate can establish a connection to obtain the serial number now. (y/n)'
+# Type: y
+# Prompt: 'Obtained serial number ... Do you confirm ... (y/n)'
+# Type: y
+
+# Now register with the FortiManager serial number + pre-shared key:
+execute central-mgmt register-device FMG-VMTM24012945 123456789</code></pre></div>
+  <div class="code-block"><div class="code-label">Verify</div><pre><code>On FortiManager: System Settings &gt; Task Monitor (in ADOM EFW)</code></pre></div>
+  <div class="step-callout" style="border-left-color:var(--green-border);background:var(--green-light);"><div class="step-callout-label" style="color:var(--green);">Expected output</div><pre style="font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;white-space:pre-wrap;margin:0;">Two tasks running: 'Autolinking Device' progresses to 100%, then 'Push config to device' completes.</pre></div>
+  <div class="step-callout callout-amber"><div class="step-callout-label">Reflect</div>On the console prompt, the FortiGate hostname changes from `FortiGate-VM64-KVM #` to `BR2-FGT-1 #` after registration. What does that hostname flip tell you about which side actually 'won' the config negotiation — and what would it have looked like if the pre-shared key had been wrong?</div>
+</div>
+<div class="step-card">
+  <div class="step-head"><span class="step-chip">Step 12</span><span class="step-goal">Repeat the flow for BR3-FGT-1 (expert challenge — different pre-shared key + metadata)</span></div>
+  <div class="step-callout"><div class="step-callout-label">Think first</div>You've done this once. Before repeating for BR3, list which of these you can reuse as-is: the metadata variables themselves, the Pre-CLI Template, the BR policy package, the provisioning approach. What has to change per device?</div>
+  <div class="code-block"><div class="code-label">Run</div><pre><code># 1. Add Model Device (BR3-FGT-1) with:
+#      Pre-shared Key = 987654321  (different from BR2)
+#      Device Model   = FortiGate-VM64-KVM
+#      Port Provisioning = 4
+#      Pre-Run CLI Template = Pre-CLI Template
+#      Assign Policy Package = BR
+#    Metadata mappings:
+#      $(GW)       = 100.65.3.254
+#      $(Hostname) = BR3-FGT-1
+#      $(IP_port1) = 192.168.1.113/16
+#      $(IP_port2) = 100.65.3.113/24
+#      $(IP_port4) = 172.20.3.254/24
+#      $(LAN_BR)   = 172.20.3.0/24
+# 2. Install Wizard → Policy Package: BR → Next → Install → Finish
+
+# 3. On BR3-FGT-1 serial console, bootstrap identical to Step 11 but with 100.65.3.x IPs:
+config system interface
+  edit "port2"
+  set ip 100.65.3.113 255.255.255.0
+  set allowaccess ping https ssh fgfm
+end
+config router static
+  edit 1
+  set device port2
+  set gateway 100.65.3.254
+end
+config system central-management
+  set type fortimanager
+  set fmg 100.65.0.120
+end
+# y, y to obtain + confirm the FMG serial
+execute central-mgmt register-device FMG-VMTM24012945 987654321</code></pre></div>
+  <div class="code-block"><div class="code-label">Verify</div><pre><code>FortiManager &gt; Managed FortiGate list</code></pre></div>
+  <div class="step-callout" style="border-left-color:var(--green-border);background:var(--green-light);"><div class="step-callout-label" style="color:var(--green);">Expected output</div><pre style="font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;white-space:pre-wrap;margin:0;">Both BR2-FGT-1 and BR3-FGT-1 show Config Status 'Synchronized' (or 'Auto-update'); both bound to policy package 'BR'.</pre></div>
+  <div class="step-callout callout-amber"><div class="step-callout-label">Reflect</div>You just deployed two branches with completely different IPs, hostnames, and LAN subnets using ONE Pre-CLI template. Give a one-sentence pitch for LTP + metadata variables to a manager who's pushing back on the up-front setup time. Now flip it: what does this workflow trade *away* compared to configuring each FortiGate directly?</div>
+</div>
   </div>
   <div class="section-block">
     <div class="section-label">Section 04 · Verification</div>
     <h2>You're <em>Done When</em></h2>
-    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;"><li>A script from FortiManager runs successfully on the target FortiGate (revision recorded)</li><li>BR2-FGT (and BR3 if used) appears as a managed device in FortiManager</li><li>A metadata variable in the pre-CLI template resolves to different values per device on install</li></ul>
+    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;"><li>A Remote CLI script, a Device DB script, and a Policy Package script have each been run successfully against HQ-DCFW (three revisions in the history)</li><li>BR2-FGT-1 and BR3-FGT-1 both appear in Managed FortiGate with Config Status Synchronized or Auto-update and policy package BR</li><li>The metadata variable $(IP_port2) resolves to different values (100.65.2.112/24 and 100.65.3.113/24) when the pre-CLI template installs on each device</li><li>Both branch consoles show the hostname flipping from `FortiGate-VM64-KVM #` to their assigned $(Hostname) after `execute central-mgmt register-device` completes</li></ul>
   </div>
   <div class="section-block">
     <div class="section-label">Section 05 · Cleanup</div>
     <h2>Before the <em>Next Lab</em></h2>
     <div class="step-callout callout-red">
       <div class="step-callout-label">Cleanup</div>
-      Keep the managed-device registrations — Labs 5, 7, 8, and 9 all depend on FortiManager. Delete any throwaway scripts.
+      Keep the managed-device registrations — Labs 5, 7, 8, and 9 all depend on FortiManager. Delete any throwaway scripts you created while exploring. Leave the Pre-CLI Template as-is (it will auto-detach from BR2/BR3 after install; that's expected).
     </div>
   </div>
   <div style="display:flex;justify-content:space-between;margin-top:32px;padding-top:20px;border-top:1px solid var(--border);font-family:'Outfit',sans-serif;font-size:13px;letter-spacing:0.06em;">
