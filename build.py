@@ -1932,7 +1932,9 @@ SESSION_TEMPLATE = """<!DOCTYPE html>
 <header>
   <div class="header-left">
     <div class="breadcrumb">
-      <a href="../../study-plan.html">NSE7 EF 7.6 Curriculum</a>
+      <a href="../../index.html">Home</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="../../study-plan.html">Curriculum</a>
       <span class="breadcrumb-sep">›</span>
       <a href="../../study-plan.html#phase-{phase_num_pad}">Phase {phase_num} — {phase_title_esc}</a>
       <span class="breadcrumb-sep">›</span>
@@ -3017,14 +3019,20 @@ _STANDALONE_FONTS = (
     '&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">'
 )
 
-def _standalone_page(title, header_h1, header_sub, body_html):
+def _standalone_page(title, header_h1, header_sub, body_html, crumb=None):
+    crumb_label = crumb or title
     return (
         f'<!DOCTYPE html>\n<html lang="en">\n<head>\n'
         f'<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
         f'<title>{title}</title>\n{_STANDALONE_FONTS}\n{_STANDALONE_HUB_STYLES}\n</head>\n<body>\n'
         f'<header>\n'
-        f'<div class="breadcrumb"><a href="study-plan.html">NSE7 EF 7.6 Curriculum</a>'
-        f'<span class="breadcrumb-sep">›</span>{title}</div>\n'
+        f'<div class="breadcrumb">'
+        f'<a href="index.html">Home</a>'
+        f'<span class="breadcrumb-sep">›</span>'
+        f'<a href="study-plan.html">Curriculum</a>'
+        f'<span class="breadcrumb-sep">›</span>'
+        f'{crumb_label}'
+        f'</div>\n'
         f'<div class="header-eyebrow">Post-session artifacts · NSE7 Enterprise Firewall 7.6</div>\n'
         f'<h1>{header_h1}</h1>\n'
         f'<p>{header_sub}</p>\n'
@@ -3082,6 +3090,7 @@ def render_completed_hub(completions):
         header_h1='Completed <em>Study Guides</em>',
         header_sub='Polished HTML study guides produced at the end of each Socratic session.',
         body_html=body,
+        crumb="Completed Study Guides",
     )
     (ROOT / "completed-sessions.html").write_text(html, encoding="utf-8")
 
@@ -3136,8 +3145,105 @@ def render_extras_hub(extras, standalone_extras=None):
         header_h1='Guides, Bites &amp; <em>Nibbles</em>',
         header_sub='Supplementary study artifacts — session-linked and standalone Extras topics. Anchors: #guides, #bites, #nibbles.',
         body_html="".join(sections_html),
+        crumb="Extras",
     )
     (ROOT / "extras.html").write_text(html, encoding="utf-8")
+
+# ---------------------------------------------------------------------------
+# BREADCRUMB NORMALIZER
+# ---------------------------------------------------------------------------
+# Sorted files (complete.html, bites/nibbles/guides, standalone Extras topic
+# pages) come from Claude and either ship with a broken crumb (dead <a href="#">
+# or non-linked <span>) or none at all. This walks every sorted file after
+# rendering and rewrites/injects a working "Home › … › <page>" crumb.
+# Uses inline styles so it renders correctly even on files whose own CSS
+# doesn't define a .breadcrumb rule.
+
+_CRUMB_STYLE = "font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"
+_CRUMB_LINK  = "color:#9bb8e6;text-decoration:none;"
+_CRUMB_SEP   = "color:rgba(155,184,230,0.4);margin:0 6px;"
+
+def _build_crumb(steps):
+    """steps: list of (label, href_or_None). Final item is unlinked (current page)."""
+    parts = [f'<div class="breadcrumb" style="{_CRUMB_STYLE}">']
+    for i, (label, href) in enumerate(steps):
+        if i > 0:
+            parts.append(f'<span class="breadcrumb-sep" style="{_CRUMB_SEP}">›</span>')
+        if href:
+            parts.append(f'<a href="{href}" style="{_CRUMB_LINK}">{html_escape(label)}</a>')
+        else:
+            parts.append(f'<span>{html_escape(label)}</span>')
+    parts.append('</div>')
+    return "".join(parts)
+
+def _normalize_crumb_in_file(path, crumb_html):
+    try:
+        text = path.read_text(encoding="utf-8")
+    except Exception:
+        return
+    pat = _re.compile(r'<div class="breadcrumb"\b[^>]*>.*?</div>', _re.DOTALL | _re.IGNORECASE)
+    if pat.search(text):
+        new_text = pat.sub(lambda m: crumb_html, text, count=1)
+    else:
+        m = _re.search(r'<header\b[^>]*>', text, _re.IGNORECASE)
+        if not m:
+            return  # no <header> — skip
+        end = m.end()
+        new_text = text[:end] + "\n" + crumb_html + text[end:]
+    if new_text != text:
+        path.write_text(new_text, encoding="utf-8")
+
+def normalize_sorted_breadcrumbs():
+    """Rewrite/inject breadcrumbs on every sorted file (complete/bite/nibble/guide + standalone extras)."""
+    # Session sorted files
+    for s in SESSIONS:
+        session_dir = SESSIONS_DIR / f"session-{s['num']:02d}-{s['slug']}"
+        if not session_dir.is_dir():
+            continue
+        complete_path = session_dir / "complete.html"
+        if complete_path.is_file():
+            _normalize_crumb_in_file(complete_path, _build_crumb([
+                ("Home", "../../index.html"),
+                ("Curriculum", "../../study-plan.html"),
+                (f"Session {s['num']:02d}", "index.html"),
+                ("Completed Study Guide", None),
+            ]))
+        for kind in EXTRA_KINDS:
+            kind_dir = session_dir / kind
+            if not kind_dir.is_dir():
+                continue
+            singular = kind[:-1].capitalize()
+            for html_file in kind_dir.glob("*.html"):
+                _normalize_crumb_in_file(html_file, _build_crumb([
+                    ("Home", "../../../index.html"),
+                    ("Curriculum", "../../../study-plan.html"),
+                    (f"Session {s['num']:02d}", "../index.html"),
+                    (singular, None),
+                ]))
+    # Standalone extras sorted files
+    for e in EXTRAS:
+        topic_dir = EXTRAS_DIR / f"extras-{e['num']:02d}-{e['slug']}"
+        if not topic_dir.is_dir():
+            continue
+        index_path = topic_dir / "index.html"
+        if index_path.is_file():
+            _normalize_crumb_in_file(index_path, _build_crumb([
+                ("Home", "../../index.html"),
+                ("Extras", "../../extras.html"),
+                (e["title"], None),
+            ]))
+        for kind in EXTRA_KINDS:
+            kind_dir = topic_dir / kind
+            if not kind_dir.is_dir():
+                continue
+            singular = kind[:-1].capitalize()
+            for html_file in kind_dir.glob("*.html"):
+                _normalize_crumb_in_file(html_file, _build_crumb([
+                    ("Home", "../../../index.html"),
+                    ("Extras", "../../../extras.html"),
+                    (e["title"], "../index.html"),
+                    (singular, None),
+                ]))
 
 # ---------------------------------------------------------------------------
 # LANDING PAGE (index.html) — one-stop front door to every hub
@@ -3317,6 +3423,7 @@ def main():
     render_completed_hub(completions)
     render_extras_hub(extras, standalone_extras=standalone_extras)
     render_landing(extras, completions, standalone_extras)
+    normalize_sorted_breadcrumbs()
     write_prompts_file()
 
     n_extras = sum(len(items) for kinds in extras.values() for items in kinds.values())

@@ -80,6 +80,26 @@ When an `extras-NN-*.html` file contains one or more **image placeholders** (das
 
 **Exception:** if the file already uses the `<img src=... onerror=...>` pattern with a `.si-placeholder` fallback (e.g. Claude generated it that way), don't rewrite the HTML — just extract each prompt to `images/prompts.txt` and leave the toggle-to-view inline prompts in place.
 
+## Breadcrumbs
+
+Every page above the landing chains through a breadcrumb starting with **Home** (index.html), followed by either **Curriculum** (study-plan.html) for study-plan/session artifacts or **Extras** (extras.html) for standalone Extras topics.
+
+Generated pages get their breadcrumb from the templates in `build.py` (`SESSION_TEMPLATE`, `_standalone_page()`, per-page renderers). Sorted files (`complete.html`, `bites/`, `nibbles/`, `guides/`, standalone extras topic pages) come from Claude with either a broken crumb (dead `<a href="#">`, non-linked `<span>`) or none at all — those are fixed by `normalize_sorted_breadcrumbs()` in `build.py`, which runs after all rendering and either rewrites an existing `<div class="breadcrumb">…</div>` or injects one right after the opening `<header>` tag. Uses inline styles so it works even on files that don't define `.breadcrumb` CSS.
+
+Breadcrumb shapes:
+
+| Page | Trail |
+|---|---|
+| `study-plan.html` | (no breadcrumb — sidebar is the nav) |
+| `extras.html`, `completed-sessions.html` | `Home › Curriculum › Extras` / `Completed Study Guides` |
+| `sessions/session-NN-slug/index.html` | `Home › Curriculum › Phase NN … › Session NN` |
+| `sessions/session-NN-slug/complete.html` | `Home › Curriculum › Session NN › Completed Study Guide` |
+| `sessions/session-NN-slug/{bites,nibbles,guides}/*.html` | `Home › Curriculum › Session NN › Bite/Nibble/Guide` |
+| `extras/extras-NN-slug/index.html` | `Home › Extras › <topic title>` |
+| `extras/extras-NN-slug/{bites,nibbles,guides}/*.html` | `Home › Extras › <topic title> › Bite/Nibble/Guide` |
+
+If you add a new page type, extend `normalize_sorted_breadcrumbs()` — don't hand-edit crumbs into individual files (the normalizer will overwrite them next build).
+
 ## Hub cards + card titles
 
 - Hub cards on `extras.html` and `completed-sessions.html` must be a **single `<a>`** — no nested `<a>` inside (nested anchors render as phantom clickable boxes in Chromium/WebKit).
