@@ -1,0 +1,8 @@
+NSE7 EF 7.6 — Labs Shared Topology
+============================================================
+
+topology.png
+
+Flat minimalistic isometric cartoon diagram of a small enterprise network topology, cream background (#faf5e9), deep blue accents (#1e40af), sage green and muted gold highlights, clean bold line work, no gradients, no photorealism. Composition: an internet cloud spans the top. Below, on the left, a HEADQUARTERS zone contains two stacked FortiGate appliances labelled HQ-FGT-A and HQ-FGT-B joined by a dashed HA-sync cable on port4 (10.0.99.0/30). Beside them, a FortiManager (HQ-FMG-1) and a FortiAnalyzer (HQ-FAZ-1) sit on a management network 10.0.13.0/24. Behind HQ-FGT-A, a workstation HQ-PC-1 (10.0.1.10) and a web server HQ-Web-1 (10.0.5.11). Two VDOM-tagged sub-interfaces port5.101 and port5.102 branch out to two small figures representing HQ-PC-1's VLAN101 and VLAN102 personas. To the right, connected via internet, two branch offices: BR1 (BR1-FGT, BR1-PC-1 at 172.20.1.10) and BR2 (BR2-FGT, BR2-PC-1 at 172.20.2.10). Dashed teal lines from BR1 and BR2 to HQ-FGT-A indicate IPsec tunnels forming a hub-and-spoke ADVPN, with a thin sage green line between BR1 and BR2 labelled 'on-demand shortcut'. Each cable carries a small label with port name and IP. Educational documentary tone, generous negative space, structured composition.
+
+============================================================

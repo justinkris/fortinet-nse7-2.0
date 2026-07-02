@@ -1518,15 +1518,351 @@ EXTRAS_DIR = ROOT / "extras"
 LABS_DIR = ROOT / "labs"
 
 TOPOLOGY = {
-    "name": "",
-    "tagline": "",
-    "devices": [],            # [{name, role, model, interfaces:[{name, ip, zone, connected_to}], notes}]
-    "diagram_prompt": "",
+    "name": "Vaultline Minimum Pod",
+    "tagline": "Four FortiGates, a FortiManager + FortiAnalyzer, and three hosts — the smallest pod that still covers every lab in the guide.",
+    "devices": [
+        {
+            "name": "HQ-FGT-A",
+            "role": "HQ FortiGate — primary in HA pair, VDOM host (root + Zone1 + Zone2), ADVPN hub",
+            "model": "FortiGate-VM 7.6.2",
+            "interfaces": [
+                {"name": "port1",     "ip": "100.65.0.111/24", "zone": "WAN",             "connected_to": "Internet"},
+                {"name": "port2",     "ip": "10.0.1.254/24",   "zone": "HQ-LAN",          "connected_to": "HQ-PC-1"},
+                {"name": "port3",     "ip": "10.0.5.254/24",   "zone": "HQ-DMZ",          "connected_to": "HQ-Web-1"},
+                {"name": "port4",     "ip": "10.0.99.1/30",    "zone": "HA-SYNC",         "connected_to": "HQ-FGT-B port4"},
+                {"name": "port5.101", "ip": "10.0.2.254/24",   "zone": "Zone1 (VLAN101)", "connected_to": "HQ-PC-1 (VLAN101 sub-iface)"},
+                {"name": "port5.102", "ip": "10.0.3.254/24",   "zone": "Zone2 (VLAN102)", "connected_to": "HQ-PC-1 (VLAN102 sub-iface)"},
+            ],
+            "notes": "VDOMs enabled in Lab 3. HA-paired with HQ-FGT-B in Lab 4. Acts as ADVPN hub in Labs 7–8. HQ-PC-1 doubles as HQ-PC-2 / HQ-PC-3 via tagged sub-interfaces.",
+        },
+        {
+            "name": "HQ-FGT-B",
+            "role": "HQ FortiGate — secondary in HA pair, FGSP session sync peer",
+            "model": "FortiGate-VM 7.6.2",
+            "interfaces": [
+                {"name": "port1", "ip": "100.65.0.112/24", "zone": "WAN",     "connected_to": "Internet"},
+                {"name": "port2", "ip": "10.0.1.253/24",   "zone": "HQ-LAN",  "connected_to": "HQ-LAN switch"},
+                {"name": "port4", "ip": "10.0.99.2/30",    "zone": "HA-SYNC", "connected_to": "HQ-FGT-A port4"},
+            ],
+            "notes": "FGSP session-sync peer of HQ-FGT-A (Lab 4 Ex.2). Session sync encrypted in Lab 4 Ex.3.",
+        },
+        {
+            "name": "BR1-FGT",
+            "role": "Branch 1 FortiGate — ADVPN spoke, BGP peer",
+            "model": "FortiGate-VM 7.6.2",
+            "interfaces": [
+                {"name": "port1", "ip": "100.65.1.111/24", "zone": "WAN",     "connected_to": "Internet"},
+                {"name": "port2", "ip": "172.20.1.254/24", "zone": "BR1-LAN", "connected_to": "BR1-PC-1"},
+            ],
+            "notes": "First IPsec spoke. Runs BGP with the hub in Lab 5 (via loopback), Lab 7 (VPN), Lab 8 (ADVPN shortcut).",
+        },
+        {
+            "name": "BR2-FGT",
+            "role": "Branch 2 FortiGate — ADVPN spoke, on-demand shortcut partner",
+            "model": "FortiGate-VM 7.6.2",
+            "interfaces": [
+                {"name": "port1", "ip": "100.65.2.111/24", "zone": "WAN",     "connected_to": "Internet"},
+                {"name": "port2", "ip": "172.20.2.254/24", "zone": "BR2-LAN", "connected_to": "BR2-PC-1"},
+            ],
+            "notes": "Second spoke — needed to demonstrate on-demand spoke-to-spoke shortcuts in Lab 8.",
+        },
+        {
+            "name": "HQ-FMG-1",
+            "role": "FortiManager — central management, ADOMs, policy packages, provisioning templates",
+            "model": "FortiManager-VM 7.6.2",
+            "interfaces": [
+                {"name": "port1", "ip": "100.65.0.120/24", "zone": "MGMT",    "connected_to": "Internet"},
+                {"name": "port2", "ip": "10.0.13.254/24",  "zone": "HQ-MGMT", "connected_to": "HQ-LAN switch"},
+            ],
+            "notes": "Hosts LTP templates, IPsec templates, BGP templates, automation scripts. Every FortiGate registers here in Lab 2.",
+        },
+        {
+            "name": "HQ-FAZ-1",
+            "role": "FortiAnalyzer — log analytics + Security Fabric reporting",
+            "model": "FortiAnalyzer-VM 7.6.2",
+            "interfaces": [
+                {"name": "port1", "ip": "100.65.0.125/24", "zone": "MGMT",    "connected_to": "Internet"},
+                {"name": "port2", "ip": "10.0.13.253/24",  "zone": "HQ-MGMT", "connected_to": "HQ-LAN switch"},
+            ],
+            "notes": "Receives logs from every FortiGate. Joins Security Fabric in Lab 9.",
+        },
+        {
+            "name": "HQ-PC-1",
+            "role": "HQ workstation — admin client + traffic generator (plays HQ-PC-2/3 on tagged sub-interfaces in Lab 3)",
+            "model": "Linux VM",
+            "interfaces": [
+                {"name": "eth0",     "ip": "10.0.1.10/24", "zone": "HQ-LAN",         "connected_to": "HQ-FGT-A port2"},
+                {"name": "eth0.101", "ip": "10.0.2.10/24", "zone": "Zone1 (VLAN101)", "connected_to": "HQ-FGT-A port5.101"},
+                {"name": "eth0.102", "ip": "10.0.3.10/24", "zone": "Zone2 (VLAN102)", "connected_to": "HQ-FGT-A port5.102"},
+            ],
+            "notes": "GUI/SSH access to all HQ devices. Runs ping/hping/curl for Lab 6 IPS tests.",
+        },
+        {
+            "name": "HQ-Web-1",
+            "role": "HQ web server — attack target for IPS/SSL labs",
+            "model": "Linux VM (nginx)",
+            "interfaces": [
+                {"name": "eth0", "ip": "10.0.5.11/24", "zone": "HQ-DMZ", "connected_to": "HQ-FGT-A port3"},
+            ],
+            "notes": "Serves HTTP + HTTPS. Attacked with hping and curl in Lab 6.",
+        },
+        {
+            "name": "BR1-PC-1",
+            "role": "Branch 1 workstation — VPN + ADVPN traffic generator",
+            "model": "Linux VM",
+            "interfaces": [
+                {"name": "eth0", "ip": "172.20.1.10/24", "zone": "BR1-LAN", "connected_to": "BR1-FGT port2"},
+            ],
+            "notes": "Pings HQ-PC-1 across VPN in Lab 7; pings BR2-PC-1 across ADVPN shortcut in Lab 8.",
+        },
+    ],
+    "diagram_prompt": (
+        "Flat minimalistic isometric cartoon diagram of a small enterprise network topology, cream background (#faf5e9), "
+        "deep blue accents (#1e40af), sage green and muted gold highlights, clean bold line work, no gradients, no photorealism. "
+        "Composition: an internet cloud spans the top. Below, on the left, a HEADQUARTERS zone contains two stacked FortiGate "
+        "appliances labelled HQ-FGT-A and HQ-FGT-B joined by a dashed HA-sync cable on port4 (10.0.99.0/30). Beside them, a "
+        "FortiManager (HQ-FMG-1) and a FortiAnalyzer (HQ-FAZ-1) sit on a management network 10.0.13.0/24. Behind HQ-FGT-A, a "
+        "workstation HQ-PC-1 (10.0.1.10) and a web server HQ-Web-1 (10.0.5.11). Two VDOM-tagged sub-interfaces port5.101 and "
+        "port5.102 branch out to two small figures representing HQ-PC-1's VLAN101 and VLAN102 personas. To the right, connected "
+        "via internet, two branch offices: BR1 (BR1-FGT, BR1-PC-1 at 172.20.1.10) and BR2 (BR2-FGT, BR2-PC-1 at 172.20.2.10). "
+        "Dashed teal lines from BR1 and BR2 to HQ-FGT-A indicate IPsec tunnels forming a hub-and-spoke ADVPN, with a thin "
+        "sage green line between BR1 and BR2 labelled 'on-demand shortcut'. Each cable carries a small label with port name "
+        "and IP. Educational documentary tone, generous negative space, structured composition."
+    ),
 }
 
-LABS = []                     # [{num, slug, title, goal, learn_targets, prereqs, topology_devices,
-                              #   duration, steps:[{num, goal, think_first, commands, verify, expected, reflect}],
-                              #   verification, cleanup, image_prompt}]
+# ---------------------------------------------------------------------------
+# LABS
+# ---------------------------------------------------------------------------
+# Numbering follows the PDF (Lab 1 has no exercises — omitted).
+# steps=[] on every entry is TODO — fill in per lab when the user asks for it.
+# Prereq session numbers are cross-refs into the SESSIONS list above.
+
+LABS = [
+    {
+        "num": 1,
+        "slug": "network-security-architecture",
+        "title": "Network Security Architecture — Concepts Only",
+        "goal": "No hands-on exercise in the PDF for this chapter. Review the concepts in Session 01 before starting Lab 02.",
+        "learn_targets": [
+            "The Enterprise Firewall product family and where each product fits",
+            "How the study curriculum and the lab pod map to each other",
+        ],
+        "prereqs": {"labs": [], "sessions": [1]},
+        "topology_devices": [],
+        "duration": "read-only",
+        "steps": [],
+        "verification": [],
+        "cleanup": "",
+        "concept_only": True,
+        "image_prompt": "",
+    },
+    {
+        "num": 2,
+        "slug": "central-management",
+        "title": "Central Management with FortiManager",
+        "goal": "Use FortiManager to run scripts and provisioning templates against branch FortiGates without touching them directly.",
+        "learn_targets": [
+            "The three script scopes — Remote, Device DB, Policy Package / ADOM DB — and when each fits",
+            "How Local Template Packages (LTP) use metadata variables to reuse one template across many devices",
+            "Registering a fresh branch FortiGate on FortiManager and pushing baseline config",
+        ],
+        "prereqs": {"labs": [], "sessions": [6, 7, 8]},
+        "topology_devices": ["HQ-FMG-1", "BR1-FGT", "BR2-FGT"],
+        "duration": "60-90 minutes",
+        "steps": [],
+        "verification": [
+            "A script from FortiManager runs successfully on the target FortiGate (revision recorded)",
+            "BR2-FGT (and BR3 if used) appears as a managed device in FortiManager",
+            "A metadata variable in the pre-CLI template resolves to different values per device on install",
+        ],
+        "cleanup": "Keep the managed-device registrations — Labs 5, 7, 8, and 9 all depend on FortiManager. Delete any throwaway scripts.",
+        "image_prompt": "",
+    },
+    {
+        "num": 3,
+        "slug": "vlans-and-vdoms",
+        "title": "VLANs and VDOMs on ISFW",
+        "goal": "Enable VDOMs on HQ-FGT-A, carve two zones with VLAN tagging, and prove inter-VDOM routing works via an inter-VDOM link.",
+        "learn_targets": [
+            "Enabling VDOM mode without wiping the running configuration",
+            "How VLANs and VDOMs compose: one physical port, two Layer-3 segments, isolated by VDOM boundary",
+            "Inter-VDOM links as software cables — when you need them vs when you don't",
+            "Where firewall policies live once you're in multi-VDOM mode (per-VDOM policy tables)",
+        ],
+        "prereqs": {"labs": [2], "sessions": [11, 12, 14]},
+        "topology_devices": ["HQ-FGT-A", "HQ-PC-1"],
+        "duration": "45-60 minutes",
+        "steps": [],
+        "verification": [
+            "HQ-PC-1 (VLAN101 sub-interface) can ping HQ-PC-1 (VLAN102 sub-interface) via the inter-VDOM link",
+            "VLAN101 host can reach the internet through the root VDOM's default route",
+            "`get system status` shows VDOMs enabled and lists the three configured VDOMs (root, Zone1, Zone2)",
+        ],
+        "cleanup": "Leave VDOMs enabled — Lab 4 and Lab 5 depend on the multi-VDOM layout.",
+        "image_prompt": "",
+    },
+    {
+        "num": 4,
+        "slug": "high-availability",
+        "title": "High Availability — VDOM Partitioning + FGSP",
+        "goal": "Split VDOMs across an HA cluster (partitioning), then configure FGSP so both firewalls forward asymmetric flows and survive failover.",
+        "learn_targets": [
+            "VDOM partitioning — distributing VDOMs between two HA cluster members",
+            "FGSP vs FGCP: session-sync only vs full cluster, and when each is the right answer",
+            "Testing session synchronization with a real ICMP flow and a forced failover",
+            "Encrypting the session-sync channel with a pre-shared key",
+        ],
+        "prereqs": {"labs": [3], "sessions": [15, 16, 17, 18]},
+        "topology_devices": ["HQ-FGT-A", "HQ-FGT-B", "BR1-FGT", "HQ-PC-1", "BR1-PC-1"],
+        "duration": "75-90 minutes",
+        "steps": [],
+        "verification": [
+            "`diagnose sys session list` on HQ-FGT-B lists sessions originated on HQ-FGT-A",
+            "A sustained ping from BR1-PC-1 survives a forced failover on the HQ HA pair",
+            "Session-sync traffic on port4 is IPsec-wrapped after the encryption exercise",
+        ],
+        "cleanup": "Keep the HA cluster and FGSP config — Lab 5's dynamic routing runs on top.",
+        "image_prompt": "",
+    },
+    {
+        "num": 5,
+        "slug": "dynamic-routing",
+        "title": "Dynamic Routing — OSPF ECMP + BGP",
+        "goal": "Bring up OSPF between HQ VDOMs, enable ECMP, then peer BGP with a branch FortiGate via FortiManager BGP templates.",
+        "learn_targets": [
+            "OSPF neighbor formation across VDOMs and inter-VDOM links",
+            "ECMP: when you get load-sharing vs when a single route just wins",
+            "FortiManager BGP templates — pushing consistent peer config across sites",
+            "Advertising a loopback as a BGP source for stability across failover",
+        ],
+        "prereqs": {"labs": [2, 3, 4], "sessions": [20, 21, 22, 24, 25]},
+        "topology_devices": ["HQ-FGT-A", "HQ-FGT-B", "BR1-FGT", "HQ-FMG-1"],
+        "duration": "90-120 minutes",
+        "steps": [],
+        "verification": [
+            "`get router info ospf neighbor` shows Full adjacencies between the HQ VDOMs",
+            "`get router info routing-table` shows ECMP entries for the shared prefix",
+            "BGP session established between HQ hub and BR1-FGT via the loopback address",
+        ],
+        "cleanup": "Retain OSPF + BGP config — Labs 7 and 8 assume dynamic routing over the VPN tunnels.",
+        "image_prompt": "",
+    },
+    {
+        "num": 6,
+        "slug": "security-profiles",
+        "title": "Security Profiles — IPS False Positive, Unencrypted + Encrypted Attacks",
+        "goal": "Apply IPS profiles to detect and block simulated attacks, then handle SSL deep inspection with a dynamic local certificate.",
+        "learn_targets": [
+            "How the IPS engine matches signatures — and what a false positive looks like in logs",
+            "Monitor vs Block modes and how to move safely between them",
+            "SSL/SSH deep inspection: dynamic local certificate + client CA trust",
+            "Reading `hping` output and correlating it with IPS log lines",
+        ],
+        "prereqs": {"labs": [2, 3, 4, 5], "sessions": [27, 28, 29, 30, 31]},
+        "topology_devices": ["HQ-FGT-A", "HQ-Web-1", "HQ-PC-1"],
+        "duration": "60-90 minutes",
+        "steps": [],
+        "verification": [
+            "IPS log shows a blocked jumbo-packet signature match after hping simulation",
+            "HQ-FGT-A drops an encrypted attack once SSL deep inspection is applied",
+            "HQ-PC-1 browser trusts the SSL inspection CA after import",
+        ],
+        "cleanup": "Detach heavy IPS profiles from broad policies — they slow later labs. Keep the CA on HQ-PC-1 for Lab 9.",
+        "image_prompt": "",
+    },
+    {
+        "num": 7,
+        "slug": "ipsec-vpn-ikev2",
+        "title": "IPsec VPN (IKEv2) with Templates",
+        "goal": "Configure hub-and-spoke IPsec VPN using FortiManager IPsec templates, verify tunnels come up, then tear one down cleanly.",
+        "learn_targets": [
+            "IKEv2 phase-1 / phase-2 template model in FortiManager",
+            "Normalized interfaces — abstract references that resolve per-device on install",
+            "Reading tunnel status from CLI (`get vpn ipsec tunnel summary`) vs GUI",
+            "Deleting an IPsec tunnel without breaking the remaining hub-and-spoke topology",
+        ],
+        "prereqs": {"labs": [2, 5], "sessions": [32, 33]},
+        "topology_devices": ["HQ-FGT-A", "BR1-FGT", "BR2-FGT", "HQ-FMG-1"],
+        "duration": "60-75 minutes",
+        "steps": [],
+        "verification": [
+            "Tunnel status shows UP for HQ↔BR1 and HQ↔BR2",
+            "BR1-PC-1 can ping HQ-PC-1 across the IPsec tunnel",
+            "Firewall policies referencing the normalized interface install without errors on both spokes",
+        ],
+        "cleanup": "Leave the IPsec tunnels in place — Lab 8 layers ADVPN and BGP on top of them.",
+        "image_prompt": "",
+    },
+    {
+        "num": 8,
+        "slug": "advpn",
+        "title": "Auto-Discovery VPN (ADVPN) with IBGP and EBGP",
+        "goal": "Layer ADVPN on top of the IPsec templates, run BGP over the tunnels, and trigger an on-demand spoke-to-spoke shortcut.",
+        "learn_targets": [
+            "How ADVPN shortcut tunnels form on demand between spokes",
+            "IBGP vs EBGP over ADVPN — route reflector vs full-mesh trade-offs",
+            "Verifying a shortcut with `diagnose vpn ike gateway list` after the first spoke-to-spoke packet",
+            "The hub's role in exchanging routes but not necessarily carrying data-plane traffic",
+        ],
+        "prereqs": {"labs": [5, 7], "sessions": [34, 35, 36]},
+        "topology_devices": ["HQ-FGT-A", "BR1-FGT", "BR2-FGT", "HQ-FMG-1"],
+        "duration": "90-120 minutes",
+        "steps": [],
+        "verification": [
+            "`get router info bgp summary` on BR1 and BR2 shows established sessions to the hub",
+            "First ping from BR1-PC-1 → BR2-PC-1 triggers a shortcut visible with `diagnose vpn ike gateway list`",
+            "Subsequent BR1↔BR2 traffic bypasses the hub in the data plane",
+        ],
+        "cleanup": "Retain ADVPN — Lab 10 use cases reuse it.",
+        "image_prompt": "",
+    },
+    {
+        "num": 9,
+        "slug": "security-fabric",
+        "title": "Security Fabric + SAML SSO + Automation",
+        "goal": "Wire HQ FortiGates and FortiAnalyzer into a Security Fabric, enable SAML SSO between them, and drive automation stitches from FortiManager.",
+        "learn_targets": [
+            "Root vs downstream Security Fabric device roles",
+            "SAML SSO flow — one login authorises the whole fabric",
+            "Automation stitch anatomy: trigger + condition + action",
+            "Scheduled fabric config backup via FortiManager automation",
+        ],
+        "prereqs": {"labs": [2, 6], "sessions": [37, 38]},
+        "topology_devices": ["HQ-FGT-A", "HQ-FGT-B", "BR1-FGT", "HQ-FMG-1", "HQ-FAZ-1"],
+        "duration": "75-90 minutes",
+        "steps": [],
+        "verification": [
+            "Fabric topology view on HQ-FGT-A shows all downstream devices Online",
+            "SAML login from HQ-FGT-A drops the user into HQ-FAZ-1 without a second prompt",
+            "Automation stitch fires on the configured trigger and a log/email confirms it ran",
+        ],
+        "cleanup": "Keep the Security Fabric — Lab 10 use cases build on top of it.",
+        "image_prompt": "",
+    },
+    {
+        "num": 10,
+        "slug": "use-cases",
+        "title": "Use Cases — HR Network, ADVPN Deployment, Automated Backups",
+        "goal": "Combine everything from Labs 2–9 into three realistic customer scenarios and validate each end-to-end.",
+        "learn_targets": [
+            "Translating a requirements list into a working configuration (HR network isolation)",
+            "Deploying ADVPN to a new site using existing templates — no template edits",
+            "Scheduling and validating automated configuration backups from FortiManager",
+        ],
+        "prereqs": {"labs": [2, 3, 5, 7, 8, 9], "sessions": [40]},
+        "topology_devices": ["HQ-FGT-A", "HQ-FGT-B", "BR1-FGT", "BR2-FGT", "HQ-FMG-1", "HQ-FAZ-1"],
+        "duration": "120-150 minutes",
+        "steps": [],
+        "verification": [
+            "HR network reachable only from authorised source zones",
+            "New ADVPN spoke joins the mesh and its BGP peering comes up with zero template changes",
+            "Automatic backup file lands in the configured target with the expected timestamp pattern",
+        ],
+        "cleanup": "Final lab — the pod can be reset at the end of the course.",
+        "image_prompt": "",
+    },
+]
 
 LAB_MODE_METHODOLOGY_TEXT = """You are my Socratic lab coach for the NSE7 EF 7.6 hands-on labs.
 
@@ -3428,6 +3764,67 @@ def _lab_page_shell(title, crumb_html, body_html):
         f'</body>\n</html>\n'
     )
 
+def _render_device_table_rows(devices):
+    """Return HTML rows for a device / interface / IP table. devices is a list of device dicts."""
+    rows = []
+    for d in devices:
+        ifaces = d.get("interfaces", [])
+        rowspan = max(len(ifaces), 1)
+        first_iface = ifaces[0] if ifaces else {"name": "—", "ip": "—", "zone": "—", "connected_to": "—"}
+        rows.append(
+            f'<tr>'
+            f'<td rowspan="{rowspan}">{html_escape(d["name"])}</td>'
+            f'<td rowspan="{rowspan}">{html_escape(d.get("role", ""))}</td>'
+            f'<td rowspan="{rowspan}" style="font-family:\'Cormorant Garamond\',serif;font-weight:normal;color:var(--text-muted);">{html_escape(d.get("model", ""))}</td>'
+            f'<td>{html_escape(first_iface["name"])}</td>'
+            f'<td>{html_escape(first_iface.get("ip", ""))}</td>'
+            f'<td>{html_escape(first_iface.get("zone", ""))}</td>'
+            f'<td>{html_escape(first_iface.get("connected_to", ""))}</td>'
+            f'</tr>'
+        )
+        for iface in ifaces[1:]:
+            rows.append(
+                f'<tr>'
+                f'<td>{html_escape(iface["name"])}</td>'
+                f'<td>{html_escape(iface.get("ip", ""))}</td>'
+                f'<td>{html_escape(iface.get("zone", ""))}</td>'
+                f'<td>{html_escape(iface.get("connected_to", ""))}</td>'
+                f'</tr>'
+            )
+    return "".join(rows)
+
+def _render_topology_block(devices, topology_img_href, topology_prompt=None):
+    """Render the diagram placeholder + device table. devices = list of device dicts to include."""
+    if not devices:
+        return '<div class="empty-state"><h3>No devices assigned to this lab</h3><p>This lab is concept-only.</p></div>'
+    table = f"""
+<table class="device-table">
+  <thead>
+    <tr>
+      <th>Device</th><th>Role</th><th>Model</th><th>Interface</th><th>IP</th><th>Zone</th><th>Connected to</th>
+    </tr>
+  </thead>
+  <tbody>{_render_device_table_rows(devices)}</tbody>
+</table>
+"""
+    prompt_hint = ""
+    if topology_prompt:
+        prompt_hint = f'<div style="font-family:\'Outfit\',sans-serif;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-align:center;">Drop the generated PNG at <code>{html_escape(topology_img_href)}</code> — see <code>labs/images/prompts.txt</code> for the prompt.</div>'
+    img_block = f"""
+<div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;margin:16px 0 24px;">
+  <img src="{topology_img_href}" alt="Topology diagram" style="width:100%;max-width:900px;border-radius:12px;border:1px solid var(--border);display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+  <div style="display:none;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:40px 28px;flex-direction:column;align-items:center;gap:14px;width:100%;">
+    <div style="font-size:44px;opacity:0.35;">🗺️</div>
+    <div style="text-align:center;">
+      <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">Topology diagram placeholder</div>
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--text);">{html_escape(TOPOLOGY.get("name", "Pod topology"))}</div>
+    </div>
+    {prompt_hint}
+  </div>
+</div>
+"""
+    return img_block + table
+
 def render_labs_hub():
     LABS_DIR.mkdir(parents=True, exist_ok=True)
     (LABS_DIR / "images").mkdir(parents=True, exist_ok=True)
@@ -3454,15 +3851,23 @@ def render_labs_hub():
     else:
         cards = []
         for l in LABS:
+            is_concept = l.get("concept_only", False)
+            chip = "Concept-only" if is_concept else html_escape(l.get("duration", ""))
             first_target = html_escape(l.get("learn_targets", [""])[0]) if l.get("learn_targets") else ""
             cards.append(
                 f'<a class="lab-card" href="{lab_filename(l)}">'
-                f'<span class="lab-card-num">Lab {l["num"]:02d} · {html_escape(l.get("duration", ""))}</span>'
+                f'<span class="lab-card-num">Lab {l["num"]:02d} · {chip}</span>'
                 f'<span class="lab-card-title">{html_escape(l["title"])}</span>'
                 f'<span class="lab-card-goal">{html_escape(l.get("goal", ""))}</span>'
                 f'<span class="lab-card-meta">{first_target}</span>'
                 f'</a>'
             )
+        topology_block = _render_topology_block(
+            TOPOLOGY.get("devices", []),
+            "images/topology.png",
+            topology_prompt=TOPOLOGY.get("diagram_prompt"),
+        )
+        hands_on = sum(1 for l in LABS if not l.get("concept_only"))
         body = f"""
 <header>
   {crumb}
@@ -3472,7 +3877,13 @@ def render_labs_hub():
 </header>
 <main>
   <div class="section-block">
-    <div class="section-label">Lab exercises · {len(LABS)} total</div>
+    <div class="section-label">The pod · {html_escape(TOPOLOGY.get("name", ""))}</div>
+    <h2>Shared <em>Topology</em></h2>
+    <p>Every lab exercises a subset of this topology. Build the pod once, then reuse it across all labs.</p>
+    {topology_block}
+  </div>
+  <div class="section-block">
+    <div class="section-label">{len(LABS)} labs · {hands_on} hands-on</div>
     <h2>The <em>Labs</em></h2>
     <div class="card-grid">{"".join(cards)}</div>
   </div>
@@ -3480,6 +3891,83 @@ def render_labs_hub():
 """
     html = _lab_page_shell("Hands-On Labs · NSE7 EF 7.6", crumb, body)
     (LABS_DIR / "index.html").write_text(html, encoding="utf-8")
+
+def _lab_by_num(n):
+    return next((x for x in LABS if x["num"] == n), None)
+
+def _session_by_num(n):
+    return next((x for x in SESSIONS if x["num"] == n), None)
+
+def _lab_prereq_html(l):
+    prereq_labs = l.get("prereqs", {}).get("labs", [])
+    prereq_sessions = l.get("prereqs", {}).get("sessions", [])
+    lab_links, session_links = [], []
+    for n in prereq_labs:
+        pl = _lab_by_num(n)
+        if pl:
+            lab_links.append(f'<a href="{sibling_lab_href(pl)}" style="color:var(--blue);text-decoration:none;">Lab {n:02d}</a>')
+    for n in prereq_sessions:
+        ps = _session_by_num(n)
+        if ps:
+            session_links.append(f'<a href="../../sessions/session-{n:02d}-{ps["slug"]}/index.html" style="color:var(--blue);text-decoration:none;">Session {n:02d}</a>')
+    prereq_labs_str = ", ".join(lab_links) if lab_links else "<em>none</em>"
+    prereq_sessions_str = ", ".join(session_links) if session_links else "<em>none</em>"
+    return prereq_labs_str, prereq_sessions_str
+
+def _lab_steps_html(l):
+    steps = l.get("steps", [])
+    if not steps:
+        return (
+            '<div class="empty-state">'
+            '<h3>Steps not authored yet</h3>'
+            '<p>Predict → Run → Verify → Reflect step cards will land here once <code>steps</code> is populated for this lab in <code>build.py</code>.</p>'
+            '</div>'
+        )
+    cards = []
+    for s in steps:
+        commands_pre = "\n".join(s.get("commands", []))
+        parts = [
+            f'<div class="step-card">',
+            f'  <div class="step-head"><span class="step-chip">Step {s["num"]:02d}</span><span class="step-goal">{html_escape(s.get("goal", ""))}</span></div>',
+        ]
+        if s.get("think_first"):
+            parts.append(
+                f'  <div class="step-callout">'
+                f'<div class="step-callout-label">Think first</div>'
+                f'{html_escape(s["think_first"])}'
+                f'</div>'
+            )
+        if commands_pre:
+            parts.append(
+                f'  <div class="code-block">'
+                f'<div class="code-label">Run</div>'
+                f'<pre><code>{html_escape(commands_pre)}</code></pre>'
+                f'</div>'
+            )
+        if s.get("verify"):
+            parts.append(
+                f'  <div class="code-block">'
+                f'<div class="code-label">Verify</div>'
+                f'<pre><code>{html_escape(s["verify"])}</code></pre>'
+                f'</div>'
+            )
+            if s.get("expected"):
+                parts.append(
+                    f'  <div class="step-callout" style="border-left-color:var(--green-border);background:var(--green-light);">'
+                    f'<div class="step-callout-label" style="color:var(--green);">Expected output</div>'
+                    f'<pre style="font-family:\'SF Mono\',\'Fira Code\',monospace;font-size:12.5px;white-space:pre-wrap;margin:0;">{html_escape(s["expected"])}</pre>'
+                    f'</div>'
+                )
+        if s.get("reflect"):
+            parts.append(
+                f'  <div class="step-callout callout-amber">'
+                f'<div class="step-callout-label">Reflect</div>'
+                f'{html_escape(s["reflect"])}'
+                f'</div>'
+            )
+        parts.append('</div>')
+        cards.append("\n".join(parts))
+    return "\n".join(cards)
 
 def render_lab_page(l):
     slug_dir = f"lab-{l['num']:02d}-{l['slug']}"
@@ -3494,7 +3982,40 @@ def render_lab_page(l):
         '<span class="breadcrumb-sep">›</span>'
         f'Lab {l["num"]:02d}</div>'
     )
-    # Placeholder body — replaced with the full 5-section layout when LABS gets content.
+
+    is_concept = l.get("concept_only", False)
+
+    if is_concept:
+        prereq_labs_str, prereq_sessions_str = _lab_prereq_html(l)
+        body = f"""
+<header>
+  {crumb}
+  <div class="eyebrow">Lab {l['num']:02d} · Concept-only · NSE7 EF 7.6</div>
+  <h1>{html_escape(l['title'])}</h1>
+  <p>{html_escape(l.get('goal', ''))}</p>
+</header>
+<main>
+  <div class="empty-state">
+    <h3>No hands-on exercise for this lab</h3>
+    <p>The lab guide PDF doesn't include a hands-on exercise here. Review the concepts in the linked study session, then move on to Lab 02.</p>
+    <p style="margin-top:12px;">Related study session: {prereq_sessions_str}</p>
+  </div>
+</main>
+"""
+        html = _lab_page_shell(f"Lab {l['num']:02d} — {l['title']} · NSE7 EF 7.6", crumb, body)
+        (out_dir / "index.html").write_text(html, encoding="utf-8")
+        return
+
+    # Full 5-section layout
+    devices_used = [d for d in TOPOLOGY.get("devices", []) if d["name"] in l.get("topology_devices", [])]
+    topology_block = _render_topology_block(devices_used, "../images/topology.png", topology_prompt=None)
+    learn_targets_html = "".join(f'<li>{html_escape(t)}</li>' for t in l.get("learn_targets", []))
+    verification_html = "".join(f'<li>{html_escape(v)}</li>' for v in l.get("verification", []))
+    prereq_labs_str, prereq_sessions_str = _lab_prereq_html(l)
+    prev_l = _lab_by_num(l["num"] - 1)
+    next_l = _lab_by_num(l["num"] + 1)
+    prev_link = f'<a href="{sibling_lab_href(prev_l)}" style="color:var(--blue);text-decoration:none;">← Lab {prev_l["num"]:02d}</a>' if prev_l else '<span style="color:var(--text-muted);">← (first lab)</span>'
+    next_link = f'<a href="{sibling_lab_href(next_l)}" style="color:var(--blue);text-decoration:none;">Lab {next_l["num"]:02d} →</a>' if next_l else '<a href="../index.html" style="color:var(--blue);text-decoration:none;">Back to Labs hub →</a>'
     body = f"""
 <header>
   {crumb}
@@ -3503,9 +4024,45 @@ def render_lab_page(l):
   <p>{html_escape(l.get('goal', ''))}</p>
 </header>
 <main>
-  <div class="empty-state">
-    <h3>Lab content pending</h3>
-    <p>This lab page will render its five sections (Objectives &amp; Prereqs · Topology · Steps · Verification · Cleanup) once <code>steps</code> is populated on the LABS entry in <code>build.py</code>.</p>
+  <div class="section-block">
+    <div class="section-label">Section 01 · Objectives &amp; Prereqs</div>
+    <h2>What You'll <em>Learn</em></h2>
+    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;margin-bottom:16px;">{learn_targets_html}</ul>
+    <table class="device-table" style="max-width:640px;">
+      <tbody>
+        <tr><td style="width:180px;">Duration</td><td>{html_escape(l.get('duration', ''))}</td></tr>
+        <tr><td>Prereq labs</td><td>{prereq_labs_str}</td></tr>
+        <tr><td>Prereq sessions</td><td>{prereq_sessions_str}</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="section-block">
+    <div class="section-label">Section 02 · Topology</div>
+    <h2>Devices in <em>This Lab</em></h2>
+    <p>Subset of the shared pod used in Lab {l['num']:02d}. Full topology: <a href="../index.html" style="color:var(--blue);text-decoration:none;">labs hub →</a></p>
+    {topology_block}
+  </div>
+  <div class="section-block">
+    <div class="section-label">Section 03 · Steps</div>
+    <h2>Predict → Run → Verify → <em>Reflect</em></h2>
+    {_lab_steps_html(l)}
+  </div>
+  <div class="section-block">
+    <div class="section-label">Section 04 · Verification</div>
+    <h2>You're <em>Done When</em></h2>
+    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;">{verification_html}</ul>
+  </div>
+  <div class="section-block">
+    <div class="section-label">Section 05 · Cleanup</div>
+    <h2>Before the <em>Next Lab</em></h2>
+    <div class="step-callout callout-red">
+      <div class="step-callout-label">Cleanup</div>
+      {html_escape(l.get('cleanup', ''))}
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:32px;padding-top:20px;border-top:1px solid var(--border);font-family:'Outfit',sans-serif;font-size:13px;letter-spacing:0.06em;">
+    <div>{prev_link}</div>
+    <div>{next_link}</div>
   </div>
 </main>
 """
@@ -3534,7 +4091,7 @@ def render_landing(extras, completions, standalone_extras):
     tiles = [
         ("study-plan.html", "PLAN",      "chip-plan",     "Study Plan",              f"{n_sessions} sessions across {n_phases} phases — the full curriculum hub."),
         ("completed-sessions.html", "COMPLETED", "chip-complete", "Completed Study Guides", f"{n_completed} of {n_sessions} sessions finished — polished HTML study guides."),
-        ("labs/index.html",     "LABS",    "chip-labs",    "Hands-On Labs",           (f"{len(LABS)} lab exercises across the shared topology — Socratic predict → run → verify." if LABS else "Empty — feed a lab guide PDF and run /build-lab-plan.")),
+        ("labs/index.html",     "LABS",    "chip-labs",    "Hands-On Labs",           (f"{sum(1 for l in LABS if not l.get('concept_only'))} hands-on labs across the shared topology — Socratic predict → run → verify." if LABS else "Empty — feed a lab guide PDF and run /build-lab-plan.")),
         ("extras.html#guides",  "GUIDE",   "chip-guide",   "Guides",                  f"{n_guides} long-form companion pages that dive deeper than a session can."),
         ("extras.html#bites",   "BITE",    "chip-bite",    "Bites",                   f"{n_bites} focused single-concept explainers."),
         ("extras.html#nibbles", "NIBBLE",  "chip-nibble",  "Nibbles",                 f"{n_nibbles} short reference cards / cheat sheets."),
