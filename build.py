@@ -3181,15 +3181,23 @@ def _normalize_crumb_in_file(path, crumb_html):
         text = path.read_text(encoding="utf-8")
     except Exception:
         return
-    pat = _re.compile(r'<div class="breadcrumb"\b[^>]*>.*?</div>', _re.DOTALL | _re.IGNORECASE)
-    if pat.search(text):
-        new_text = pat.sub(lambda m: crumb_html, text, count=1)
+    # 1. Strip every existing breadcrumb block so we can never end up with duplicates.
+    crumb_pat = _re.compile(r'<div class="breadcrumb"[^>]*>.*?</div>\s*', _re.DOTALL | _re.IGNORECASE)
+    stripped = crumb_pat.sub("", text)
+    # 2. Inject fresh crumb at the right anchor.
+    #    Prefer inside .header-left (flex headers push the crumb outside otherwise).
+    #    Fall back to immediately after <header> for headers without .header-left.
+    hl_pat = _re.compile(r'(<div class="header-left"[^>]*>)', _re.IGNORECASE)
+    m = hl_pat.search(stripped)
+    if m:
+        end = m.end()
+        new_text = stripped[:end] + "\n    " + crumb_html + stripped[end:]
     else:
-        m = _re.search(r'<header\b[^>]*>', text, _re.IGNORECASE)
+        m = _re.search(r'<header\b[^>]*>', stripped, _re.IGNORECASE)
         if not m:
             return  # no <header> — skip
         end = m.end()
-        new_text = text[:end] + "\n" + crumb_html + text[end:]
+        new_text = stripped[:end] + "\n" + crumb_html + stripped[end:]
     if new_text != text:
         path.write_text(new_text, encoding="utf-8")
 

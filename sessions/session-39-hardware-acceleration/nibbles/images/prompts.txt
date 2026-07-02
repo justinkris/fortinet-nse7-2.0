@@ -1,0 +1,8 @@
+Session 39 — Nibble: NTurbo
+============================================================
+
+nturbo-pipeline.png
+
+Flat minimalist cartoon illustration, cream background. A horizontal pipeline showing packet flow through a firewall. On the left: a dark blue chip labelled "NP7" receiving a packet stream. In the centre: a glowing purple bridge structure labelled "NTurbo" connecting the NP7 to a green box labelled "IPS Engine". The IPS Engine connects to an amber box labelled "CP9" with a small lightning bolt showing offload. An arrow returns from NTurbo back to the NP7 on the right which forwards packets out. A small blue dashed box labelled "CPU" hovers above the diagram with dotted supervision lines — present but not in the main flow. Simple geometric style, muted colour palette, no decorative elements.
+
+============================================================
