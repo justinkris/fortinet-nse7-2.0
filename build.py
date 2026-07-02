@@ -2143,7 +2143,7 @@ LABS = [
         "image_prompt": "",
     },
     {
-        "num": 9,
+        "num": 8,
         "slug": "security-fabric",
         "title": "Security Fabric + SAML SSO + Automation",
         "goal": "Wire HQ FortiGates and FortiAnalyzer into a Security Fabric, enable SAML SSO between them, and drive automation stitches from FortiManager.",
@@ -2153,7 +2153,7 @@ LABS = [
             "Automation stitch anatomy: trigger + condition + action",
             "Scheduled fabric config backup via FortiManager automation",
         ],
-        "prereqs": {"labs": [2, 6], "sessions": [37, 38]},
+        "prereqs": {"labs": [1, 5], "sessions": [37, 38]},
         "topology_devices": ["HQ-FGT-A", "HQ-FGT-B", "BR1-FGT", "HQ-FMG-1", "HQ-FAZ-1"],
         "duration": "75-90 minutes",
         "steps": [],
