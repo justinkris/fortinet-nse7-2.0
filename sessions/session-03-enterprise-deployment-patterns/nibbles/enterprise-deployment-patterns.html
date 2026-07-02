@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 03 Nibble — The Five-Role Matrix</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+    --coral:#c8553d;
+  }
+  html{scroll-behavior:smooth;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:32px 60px 28px;background:var(--ink-dark);}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:12px;}
+  header h1{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;line-height:1.05;color:#fbf7ec;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:6px;line-height:1.6;}
+  .reading-time{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.14em;color:var(--ink-accent);text-transform:uppercase;margin-top:10px;}
+  main{max-width:1150px;margin:0 auto;padding:32px 60px 48px;}
+
+  .one-liner{background:var(--blue-light);border:1px solid var(--blue-border);border-left:4px solid var(--blue);border-radius:0 12px 12px 0;padding:16px 22px;margin-bottom:28px;font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);line-height:1.4;letter-spacing:-0.005em;}
+  .one-liner em{font-style:italic;font-weight:500;color:var(--blue);}
+
+  .matrix-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:28px;}
+  .role-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 14px;display:flex;flex-direction:column;position:relative;overflow:hidden;}
+  .role-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--blue);}
+  .role-card.branch::before{background:#4a90c2;}
+  .role-card.datacenter::before{background:#c8553d;}
+  .role-card.edge::before{background:#b45309;}
+  .role-card.cloud::before{background:#5c8a5c;}
+  .role-card.isfw::before{background:#7a5c9e;}
+  .role-icon{font-size:24px;margin-bottom:8px;line-height:1;}
+  .role-name{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:6px;letter-spacing:-0.005em;}
+  .role-tag{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border-dim);}
+  .role-attrs{list-style:none;padding:0;margin:0;flex:1;display:flex;flex-direction:column;gap:8px;}
+  .role-attr{font-family:'Cormorant Garamond',serif;font-size:13.5px;line-height:1.5;color:var(--text-soft);}
+  .role-attr-label{font-family:'Outfit',sans-serif;font-size:8.5px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;margin-bottom:2px;display:block;}
+  .role-attr strong{color:var(--text);font-weight:600;}
+
+  .decision-tree{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:24px;}
+  .decision-title{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);text-transform:uppercase;margin-bottom:14px;}
+  .decision-flow{display:flex;flex-direction:column;gap:10px;}
+  .decision-step{display:flex;align-items:flex-start;gap:12px;padding:10px 14px;background:var(--surface-2);border-radius:8px;border-left:3px solid var(--blue);}
+  .decision-num{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;font-style:italic;color:var(--blue);line-height:1;flex-shrink:0;margin-top:2px;min-width:22px;}
+  .decision-text{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.55;color:var(--text-soft);}
+  .decision-text strong{color:var(--text);font-weight:600;}
+  .decision-text em{color:var(--blue);font-style:italic;}
+
+  .traps-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;}
+  .trap-card{background:var(--amber-light);border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:12px 16px;}
+  .trap-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;color:var(--amber);text-transform:uppercase;margin-bottom:4px;}
+  .trap-text{font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.55;color:#5c3d09;}
+  .trap-text strong{color:#3c2707;font-weight:600;}
+
+  .cloud-inset{background:#eef7ee;border:1px solid var(--green-border);border-left:3px solid var(--green);border-radius:0 10px 10px 0;padding:14px 18px;margin-bottom:24px;}
+  .cloud-inset-title{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;color:var(--green);text-transform:uppercase;margin-bottom:8px;}
+  .cloud-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .cloud-cell{font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.55;color:var(--text-soft);}
+  .cloud-cell strong{color:var(--text);font-weight:600;display:block;font-family:'Playfair Display',serif;font-size:16px;margin-bottom:4px;}
+
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:16px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+
+  @media(max-width:960px){
+    .matrix-grid{grid-template-columns:repeat(2,1fr);}
+    .traps-row{grid-template-columns:1fr;}
+    .cloud-grid{grid-template-columns:1fr;}
+  }
+  @media(max-width:720px){
+    header{padding:20px 24px;}
+    header h1{font-size:26px;}
+    main{padding:24px 24px 36px;}
+    footer{padding:14px 24px;}
+    .matrix-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+<div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 03</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Nibble</span></div>
+<div class="header-eyebrow">🍬 Study Nibble · NSE7 EFW 7.6</div>
+  <h1>The <em>Five-Role Matrix</em></h1>
+  <p>One page. One glance. Reconstructs the whole session.</p>
+  <div class="reading-time">⏱ Under 2 minutes</div>
+</header>
+
+<main>
+
+  <div class="one-liner">
+    A firewall's <em>role</em> determines its <em>silicon</em>; its silicon determines its <em>inspection mode</em>; its inspection mode determines its <em>SKU</em>. Never start at the SKU.
+  </div>
+
+  <div class="matrix-grid">
+
+    <div class="role-card branch">
+      <div class="role-icon">🏪</div>
+      <div class="role-name">Branch</div>
+      <div class="role-tag">SD-WAN</div>
+      <ul class="role-attrs">
+        <li class="role-attr">
+          <span class="role-attr-label">Defining job</span>
+          Per-app steering across <strong>unequal WAN links</strong>
+        </li>
+        <li class="role-attr">
+          <span class="role-attr-label">Silicon</span>
+          <strong>SoC4 / SP5</strong> (integrated NP+CP)
+        </li>
+        <li class="role-attr">
+          <span class="role-attr-label">Inspection</span>
+          Flow
+        </li>
+        <li class="role-attr">
+          <span class="role-attr-label">Trap</span>
+          Never a VPN hub
+        </li>
+      </ul>
+    </div>
+
+    <div class="role-card datacenter">
+      <div class="role-icon">🏛️</div>
+      <div class="role-name">Datacenter</div>
+      <div class="role-tag">Throughput</div>
+      <ul class="role-attrs">
+        <li class="role-attr">
+          <span class="role-attr-label">Defining job</span>
+          <strong>East-west</strong> at line rate
+        </li>
+        <li class="role-attr">
+          <span class="role-attr-label">Silicon</span>
+          <strong>Multiple NP7</strong> + discrete CP9
+        </li>
+        <li class="role-attr">
+          <span class="role-attr-label">Inspection</span>
+          Flow only
+        </li>
+        <li class="role-attr">
+          <span class="role-attr-label">Trap</span>
+          Proxy = impossible
+        </li>
+      </ul>
+    </div>
+
+    <div class="role-card edge">
+      <div class="role-icon">🚪</div>
+      <div class="role-name">Edge</div>
+      <div class="role-tag">NGFW</div>
+      <ul class="role-attrs">
+        <li class="role-attr">
+          <span class="role-attr-label">Defining job</span>
+          <strong>Outbound</strong> user + TLS decrypt
+        </li>
+        <li class="role-attr">
+          <span class="role-attr-label">Silicon</span>
+          Balanced NP7 + <strong>strong CP9</strong>
+        </li>
+        <li class="role-attr">
+          <span class="role-attr-label">Inspection</span>
+          Flow <em>and</em> proxy
+        </li>
+        <li class="role-attr">
+          <span class="role-attr-label">Trap</span>
+          Not "inbound protection"
+        </li>
+      </ul>
+    </div>
+
+    <div class="role-card cloud">
+      <div class="role-icon">☁️</div>
+      <div class="role-name">Cloud VM</div>
+      <div class="role-tag">vCPU only</div>
+      <ul class="role-attrs">
+        <li class="role-attr">
+          <span class="role-attr-label">Defining job</span>
+          Same as physical, <strong>no silicon</strong>
+        </li>
+        <li class="role-attr">
+          <span class="role-attr-label">Silicon</span>
+          <strong>None</strong> — vCPU only
+        </li>
+        <li class="role-attr">
+          <span class="role-attr-label">Inspection</span>
+          Flow (proxy expensive)
+        </li>
+        <li class="role-attr">
+          <span class="role-attr-label">Trap</span>
+          BYOL vs PAYG scenario
+        </li>
+      </ul>
+    </div>
+
+    <div class="role-card isfw">
+      <div class="role-icon">🚧</div>
+      <div class="role-name">ISFW</div>
+      <div class="role-tag">Internal</div>
+      <ul class="role-attrs">
+        <li class="role-attr">
+          <span class="role-attr-label">Defining job</span>
+          <strong>East-west</strong> policy inside LAN
+        </li>
+        <li class="role-attr">
+          <span class="role-attr-label">Silicon</span>
+          Sized to internal load
+        </li>
+        <li class="role-attr">
+          <span class="role-attr-label">Inspection</span>
+          Flow (often transparent)
+        </li>
+        <li class="role-attr">
+          <span class="role-attr-label">Trap</span>
+          Not just "segmentation"
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="decision-tree">
+    <div class="decision-title">🧠 The Consultant's Decision Flow</div>
+    <div class="decision-flow">
+      <div class="decision-step">
+        <div class="decision-num">1</div>
+        <div class="decision-text"><strong>Where does it live?</strong> Edge, datacenter, branch, cloud, inside the LAN.</div>
+      </div>
+      <div class="decision-step">
+        <div class="decision-num">2</div>
+        <div class="decision-text"><strong>What's the dominant traffic?</strong> Outbound user, east-west server, unequal-WAN steering, inter-zone.</div>
+      </div>
+      <div class="decision-step">
+        <div class="decision-num">3</div>
+        <div class="decision-text"><strong>What inspection does that need?</strong> Flow-only, flow + proxy, or transparent bridging.</div>
+      </div>
+      <div class="decision-step">
+        <div class="decision-num">4</div>
+        <div class="decision-text"><strong>What silicon does that inspection cost?</strong> NP7 for throughput, CP9 for TLS, SoC for integrated efficiency, vCPU for cloud.</div>
+      </div>
+      <div class="decision-step">
+        <div class="decision-num">5</div>
+        <div class="decision-text"><strong>Which SKU maps to that silicon?</strong> <em>Only now</em> does a datasheet enter the picture.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cloud-inset">
+    <div class="cloud-inset-title">☁️ Cloud-only add-ons</div>
+    <div class="cloud-grid">
+      <div class="cloud-cell">
+        <strong>BYOL vs PAYG</strong>
+        <em>Rental car vs outright purchase.</em> Long-lived production = BYOL (fixed vCPU entitlement, portable across clouds). Bursty / POC / dev = PAYG (marketplace hourly billing).
+      </div>
+      <div class="cloud-cell">
+        <strong>SDN Connectors</strong>
+        Poll cloud API → populate <em>dynamic address objects</em> from tags, resource groups, VM metadata. Policy survives infrastructure change. Supported for Azure, AWS, GCP, NSX, K8s.
+      </div>
+    </div>
+  </div>
+
+  <div class="traps-row">
+    <div class="trap-card">
+      <div class="trap-label">⚠ #1 EXAM TRAP</div>
+      <div class="trap-text"><strong>Edge vs Datacenter confusion.</strong> Both are "big HQ boxes" on a diagram. Read for <em>direction</em> (outbound user vs east-west server) and <em>mode</em> (proxy-capable vs flow-only). Edge = CP9-heavy. Datacenter = multi-NP7.</div>
+    </div>
+    <div class="trap-card">
+      <div class="trap-label">⚠ ISFW JUSTIFICATION</div>
+      <div class="trap-text"><strong>Never reduce to "segmentation".</strong> Three reasons: <em>performance isolation, failure isolation, administrative boundary</em>. The third is often decisive — governance rarely accepts a VDOM as a substitute for a physical device.</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  NSE7 EFW 7.6<span>.</span> Session 03<span>.</span> Nibble<span>.</span> The Five-Role Matrix
+</footer>
+
+</body>
+</html>

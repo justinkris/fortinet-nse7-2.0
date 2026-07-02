@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visual — The Vaultline Estate | Session 03 Architecture Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --coral:#c8553d; --coral-light:#f7e2dc; --coral-border:#e5a99a;
+    --gold:#b8860b; --gold-light:#f7edcc; --gold-border:#d9c07a;
+    --sage:#5c8a5c; --sage-light:#e0ecdd; --sage-border:#a8c8a5;
+    --brown:#7a5c3e;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* CINEMATIC HEADER */
+  header{padding:56px 60px 44px;background:linear-gradient(180deg, #0a1230 0%, #0d1a3a 100%);position:relative;overflow:hidden;}
+  header::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg, transparent 0%, var(--gold) 50%, transparent 100%);opacity:0.4;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:14px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(184,134,11,0.12);border:1px solid rgba(184,134,11,0.35);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--gold-border);letter-spacing:0.12em;margin-bottom:16px;text-transform:uppercase;}
+  header h1{font-family:'Playfair Display',serif;font-size:54px;font-weight:700;line-height:1.02;color:#fbf7ec;margin-bottom:14px;letter-spacing:-0.015em;max-width:900px;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--gold-border);}
+  header .tagline{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:rgba(251,247,236,0.6);line-height:1.6;max-width:720px;margin-top:8px;}
+  .header-meta{margin-top:24px;display:flex;gap:24px;flex-wrap:wrap;}
+  .header-meta-item{font-family:'Outfit',sans-serif;font-size:10.5px;letter-spacing:0.14em;color:var(--ink-accent);text-transform:uppercase;}
+  .header-meta-item strong{color:#fbf7ec;font-weight:600;}
+
+  /* MAIN */
+  main{max-width:1180px;margin:0 auto;padding:48px 60px 60px;}
+
+  /* NARRATIVE INTRO */
+  .narrative-intro{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--coral);border-radius:0 14px 14px 0;padding:24px 32px;margin-bottom:44px;}
+  .narrative-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.2em;color:var(--coral);text-transform:uppercase;margin-bottom:10px;}
+  .narrative-intro p{font-family:'Cormorant Garamond',serif;font-size:18px;line-height:1.7;color:var(--text-soft);margin-bottom:12px;}
+  .narrative-intro p:last-child{margin-bottom:0;}
+  .narrative-intro p strong{color:var(--text);font-weight:600;}
+  .narrative-intro p em{color:var(--coral);font-style:italic;}
+  .narrative-intro .drop-cap::first-letter{font-family:'Playfair Display',serif;font-size:52px;font-weight:700;float:left;line-height:0.85;padding:6px 10px 0 0;color:var(--coral);font-style:italic;}
+
+  /* SECTION LABEL */
+  .section-marker{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.24em;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:12px;}
+  .section-marker::before,.section-marker::after{content:'';flex:1;height:1px;background:var(--border);}
+  .section-marker::before{max-width:80px;}
+
+  /* SECTION HEADING */
+  .scene-heading{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:var(--text);line-height:1.1;margin-bottom:12px;letter-spacing:-0.015em;}
+  .scene-heading em{font-style:italic;font-weight:500;color:var(--blue);}
+  .scene-tagline{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:var(--text-muted);margin-bottom:24px;line-height:1.6;}
+
+  /* HERO IMAGE PLACEHOLDER */
+  .hero-image{background:linear-gradient(135deg, #fdf6e0 0%, #f5eed9 100%);border:2px dashed var(--gold-border);border-radius:16px;padding:0;margin-bottom:28px;position:relative;overflow:hidden;}
+  .hero-image-inner{padding:80px 40px;text-align:center;background:radial-gradient(circle at center, rgba(184,134,11,0.06) 0%, transparent 70%);}
+  .hero-image-icon{font-size:64px;margin-bottom:16px;line-height:1;}
+  .hero-image-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:600;color:var(--text);margin-bottom:6px;font-style:italic;}
+  .hero-image-subtitle{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;margin-bottom:14px;}
+  .hero-image-filename{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;color:var(--brown);background:rgba(184,134,11,0.08);border:1px solid rgba(184,134,11,0.2);padding:6px 14px;border-radius:6px;display:inline-block;}
+
+  /* IMAGE PROMPT BLOCK */
+  .prompt-block{background:var(--ink-dark);border-radius:14px;padding:0;margin-bottom:36px;overflow:hidden;}
+  .prompt-header{padding:14px 22px;background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+  .prompt-header-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--gold-border);text-transform:uppercase;}
+  .prompt-header::after{content:'▾ Show prompt';margin-left:auto;font-family:'Outfit',sans-serif;font-size:10px;letter-spacing:0.12em;color:var(--ink-accent);text-transform:uppercase;}
+  .prompt-block.open .prompt-header::after{content:'▴ Hide prompt';}
+  .prompt-body{display:none;padding:20px 24px;}
+  .prompt-block.open .prompt-body{display:block;}
+  .prompt-body p{font-family:'Cormorant Garamond',serif;font-size:15.5px;line-height:1.75;color:#e8efff;margin-bottom:12px;}
+  .prompt-body p:last-child{margin-bottom:0;}
+  .prompt-body strong{color:var(--gold-border);font-weight:600;}
+  .prompt-body em{color:#c9d6f0;font-style:italic;}
+  .prompt-body .prompt-section-label{display:block;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--gold-border);text-transform:uppercase;margin-top:14px;margin-bottom:4px;}
+  .prompt-body .prompt-section-label:first-child{margin-top:0;}
+
+  /* MENTAL MODEL BLOCK */
+  .mental-model-block{background:var(--blue-light);border:1px solid var(--blue-border);border-left:4px solid var(--blue);border-radius:0 14px 14px 0;padding:22px 28px;margin-bottom:36px;}
+  .mental-model-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--blue);text-transform:uppercase;margin-bottom:10px;}
+  .mental-model-block h3{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--text);margin-bottom:10px;letter-spacing:-0.01em;line-height:1.25;}
+  .mental-model-block h3 em{font-style:italic;color:var(--blue);}
+  .mental-model-block p{font-family:'Cormorant Garamond',serif;font-size:16.5px;line-height:1.7;color:var(--text-soft);margin-bottom:10px;}
+  .mental-model-block p:last-child{margin-bottom:0;}
+  .mental-model-block strong{color:var(--text);font-weight:600;}
+
+  /* SCENE (close-up) */
+  .scene-block{margin-bottom:56px;}
+  .scene-block:last-of-type{margin-bottom:36px;}
+  .scene-number{font-family:'Playfair Display',serif;font-size:14px;font-style:italic;color:var(--coral);font-weight:600;letter-spacing:0.06em;margin-bottom:8px;}
+  .scene-title{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:8px;padding-left:16px;border-left:3px solid var(--coral);letter-spacing:-0.01em;}
+  .scene-title em{font-style:italic;font-weight:500;color:var(--coral);}
+  .scene-subtitle{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:var(--text-muted);padding-left:19px;margin-bottom:20px;line-height:1.55;}
+
+  .scene-image{background:linear-gradient(135deg, #fdf6e0 0%, #f5eed9 100%);border:2px dashed var(--coral-border);border-radius:14px;padding:0;margin-bottom:20px;position:relative;overflow:hidden;}
+  .scene-image-inner{padding:56px 32px;text-align:center;background:radial-gradient(circle at center, rgba(200,85,61,0.06) 0%, transparent 70%);}
+  .scene-image-icon{font-size:48px;margin-bottom:12px;line-height:1;}
+  .scene-image-title{font-family:'Playfair Display',serif;font-size:19px;font-weight:600;color:var(--text);margin-bottom:6px;font-style:italic;}
+  .scene-image-filename{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:11.5px;color:var(--brown);background:rgba(200,85,61,0.08);border:1px solid rgba(200,85,61,0.2);padding:5px 12px;border-radius:6px;display:inline-block;margin-top:8px;}
+
+  .scene-prompt-block{background:var(--ink-dark);border-radius:12px;padding:0;margin-bottom:20px;overflow:hidden;}
+  .scene-prompt-header{padding:12px 20px;background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+  .scene-prompt-label{font-family:'Outfit',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:0.16em;color:var(--coral-border);text-transform:uppercase;}
+  .scene-prompt-header::after{content:'▾ Show prompt';margin-left:auto;font-family:'Outfit',sans-serif;font-size:9.5px;letter-spacing:0.1em;color:var(--ink-accent);text-transform:uppercase;}
+  .scene-prompt-block.open .scene-prompt-header::after{content:'▴ Hide prompt';}
+  .scene-prompt-body{display:none;padding:18px 22px;}
+  .scene-prompt-block.open .scene-prompt-body{display:block;}
+  .scene-prompt-body p{font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.72;color:#e8efff;margin-bottom:10px;}
+  .scene-prompt-body p:last-child{margin-bottom:0;}
+  .scene-prompt-body strong{color:var(--coral-border);font-weight:600;}
+  .scene-prompt-body em{color:#c9d6f0;font-style:italic;}
+  .scene-prompt-body .prompt-section-label{display:block;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--coral-border);text-transform:uppercase;margin-top:12px;margin-bottom:3px;}
+  .scene-prompt-body .prompt-section-label:first-child{margin-top:0;}
+
+  .scene-narration{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:14px;}
+  .scene-narration-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--gold);text-transform:uppercase;margin-bottom:8px;}
+  .scene-narration p{font-family:'Cormorant Garamond',serif;font-size:16.5px;line-height:1.7;color:var(--text-soft);margin-bottom:10px;font-style:italic;}
+  .scene-narration p:last-child{margin-bottom:0;}
+  .scene-narration p strong{color:var(--text);font-weight:600;font-style:normal;}
+  .scene-narration p em{color:var(--coral);font-style:italic;}
+
+  .scene-hook{background:var(--gold-light);border:1px solid var(--gold-border);border-left:3px solid var(--gold);border-radius:0 10px 10px 0;padding:14px 20px;margin-top:14px;}
+  .scene-hook-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--gold);text-transform:uppercase;margin-bottom:6px;}
+  .scene-hook-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:#5c3d09;}
+  .scene-hook-text em{color:var(--gold);font-style:italic;}
+
+  /* TAKEAWAYS */
+  .takeaways{background:var(--sage-light);border:1px solid var(--sage-border);border-left:4px solid var(--sage);border-radius:0 14px 14px 0;padding:24px 32px;margin-bottom:32px;}
+  .takeaways-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--sage);text-transform:uppercase;margin-bottom:14px;}
+  .takeaways h3{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);margin-bottom:14px;letter-spacing:-0.01em;line-height:1.15;}
+  .takeaways h3 em{font-style:italic;font-weight:500;color:var(--sage);}
+  .takeaways ol{list-style:none;padding:0;counter-reset:take;}
+  .takeaways ol li{font-family:'Cormorant Garamond',serif;font-size:16.5px;line-height:1.7;color:var(--text-soft);padding:10px 0 10px 40px;position:relative;border-bottom:1px solid rgba(92,138,92,0.2);counter-increment:take;}
+  .takeaways ol li:last-child{border-bottom:none;}
+  .takeaways ol li::before{content:counter(take);position:absolute;left:0;top:11px;width:26px;height:26px;background:var(--sage);color:#fff;border-radius:50%;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:14px;display:flex;align-items:center;justify-content:center;}
+  .takeaways ol li strong{color:var(--text);font-weight:600;}
+  .takeaways ol li em{color:var(--sage);font-style:italic;}
+
+  /* EXAM NOTES */
+  .exam-notes{background:var(--coral-light);border:1px solid var(--coral-border);border-left:4px solid var(--coral);border-radius:0 14px 14px 0;padding:22px 28px;margin-bottom:32px;}
+  .exam-notes-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--coral);text-transform:uppercase;margin-bottom:12px;}
+  .exam-notes h3{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--text);margin-bottom:12px;letter-spacing:-0.01em;line-height:1.2;}
+  .exam-notes h3 em{font-style:italic;color:var(--coral);}
+  .exam-notes ul{list-style:none;padding:0;}
+  .exam-notes ul li{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:#5c2c20;padding:6px 0 6px 22px;position:relative;}
+  .exam-notes ul li::before{content:'▸';position:absolute;left:0;top:6px;color:var(--coral);font-weight:700;}
+  .exam-notes strong{color:#3c1810;font-weight:600;}
+
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:22px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--coral);}
+
+  @media(max-width:720px){
+    header{padding:32px 24px 28px;}
+    header h1{font-size:36px;}
+    header .tagline{font-size:16px;}
+    main{padding:32px 24px 40px;}
+    .scene-heading{font-size:26px;}
+    .scene-title{font-size:24px;}
+    .hero-image-inner{padding:48px 24px;}
+    .scene-image-inner{padding:36px 20px;}
+    footer{padding:16px 24px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+<div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 03</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Bite</span></div>
+  <div class="header-eyebrow">🎬 Visual · Architecture Map · Cinematic</div>
+  <h1>The <em>Vaultline Estate</em></h1>
+  <p class="tagline">A wide-shot view of every FortiGate in the enterprise, followed by four cinematic close-ups. The map you can walk through mentally in a boardroom, on an exam, or in front of a customer diagram at 2 a.m.</p>
+  <div class="header-meta">
+    <div class="header-meta-item"><strong>Style:</strong> Cinematic architecture map</div>
+    <div class="header-meta-item"><strong>Scenes:</strong> 1 hero + 4 close-ups</div>
+    <div class="header-meta-item"><strong>Reinforces:</strong> Session 03</div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ══════════════════════════════════════════════════════════
+       NARRATIVE INTRO
+       ══════════════════════════════════════════════════════════ -->
+  <div class="narrative-intro">
+    <div class="narrative-label">Opening Shot</div>
+    <p class="drop-cap">Wednesday morning at Vaultline Financial. The board has just approved something bigger than a firewall refresh — an acquisition, a datacenter renewal, a cloud migration, and twelve new branches, all in the same quarter. On Priya's desk sits a reseller's quote: fifteen units of the same mid-range FortiGate, everywhere, for everything.</p>
+    <p>The <strong>architecture map</strong> that follows is what an experienced consultant sees when they look at that quote. Where each firewall lives. What silicon it needs. Which inspection modes are on the menu. Why standardising across five architectural roles fails in <em>both directions</em> — waste at the branches, inadequacy at the datacenter, and something even stranger at the Azure cloud where the concept of silicon simply disappears.</p>
+    <p>This is the picture that reconstructs the whole session in one glance. Look at it. Walk through it. Come back to it before the exam.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       WHY THIS VISUAL
+       ══════════════════════════════════════════════════════════ -->
+  <div class="mental-model-block">
+    <div class="mental-model-label">🧠 The mental model this trains</div>
+    <h3>Spatial memory <em>beats</em> table memory.</h3>
+    <p>The exam does not ask "list the five deployment roles." It hands you a customer diagram and asks which model. The skill being tested is <strong>recognition</strong> — the ability to look at a picture and instantly place each firewall by role. A map trains that skill in a way a comparison table cannot.</p>
+    <p>Every FortiGate in the Vaultline map is labelled with its role, its silicon, and its inspection mode. Every arrow shows the dominant traffic direction. Every close-up scene captures the moment where role-defining decisions become visible. Study the whole map, then come back to any close-up when you want to feel a specific decision more deeply.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       HERO — WIDE SHOT
+       ══════════════════════════════════════════════════════════ -->
+  <div class="section-marker">The Wide Shot</div>
+  <h2 class="scene-heading">The Full <em>Vaultline Estate</em></h2>
+  <p class="scene-tagline">One isometric wide-shot. Every firewall visible. Every role labelled. The whole picture in a single frame.</p>
+
+  <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:28px;">
+  <img src="images/visual-vaultline-hero-map.png" alt="The Vaultline Estate — Full Architecture Map" style="width:100%;max-width:980px;border-radius:14px;border:1px solid var(--border);display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+  <div style="display:none;border:2px dashed var(--gold-border, #d4c89a);border-radius:14px;background:rgba(255,255,255,0.5);padding:40px 28px;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:980px;">
+    <div style="font-size:44px;opacity:0.35;">🎬</div>
+    <div style="text-align:center;">
+      <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">Illustration placeholder</div>
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--text);">The Vaultline Estate — Full Architecture Map</div>
+    </div>
+    <div style="font-family:'Outfit',sans-serif;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-align:center;">Drop the generated PNG at <code>images/visual-vaultline-hero-map.png</code> — see <code>images/prompts.txt</code> for the prompt.</div>
+  </div>
+</div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       CLOSE-UP 1 — DATACENTER
+       ══════════════════════════════════════════════════════════ -->
+  <div class="section-marker">Close-Up 01</div>
+  <div class="scene-block">
+    <div class="scene-number">Scene One</div>
+    <h3 class="scene-title">The Datacenter, at <em>Line Rate</em></h3>
+    <p class="scene-subtitle">Basement level. Server racks stretch into the distance. The FortiGate is not busy — it is fast.</p>
+
+    <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:28px;">
+  <img src="images/visual-vaultline-scene-datacenter.png" alt="The Datacenter Close-Up" style="width:100%;max-width:860px;border-radius:14px;border:1px solid var(--border);display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+  <div style="display:none;border:2px dashed var(--gold-border, #d4c89a);border-radius:14px;background:rgba(255,255,255,0.5);padding:40px 28px;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:860px;">
+    <div style="font-size:44px;opacity:0.35;">🏛️</div>
+    <div style="text-align:center;">
+      <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">Illustration placeholder</div>
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--text);">The Datacenter Close-Up</div>
+    </div>
+    <div style="font-family:'Outfit',sans-serif;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-align:center;">Drop the generated PNG at <code>images/visual-vaultline-scene-datacenter.png</code> — see <code>images/prompts.txt</code> for the prompt.</div>
+  </div>
+</div>
+
+    <div class="scene-narration">
+      <div class="scene-narration-label">Voiceover</div>
+      <p>This is where the Friday incident lived. Not on the trading floor itself, but here — where a single proxy profile, added to a single policy, would send <em>every</em> session to the CPU. Sixty gigabits of market data on a single overworked chip. Forty milliseconds of latency where there used to be one.</p>
+      <p>The datacenter FortiGate does not do proxy mode. It does not do it because it <strong>cannot</strong> do it. Not at this scale, not at this session count, not at this latency budget. What it does instead is quiet: three NP7 chips in parallel, each handling a subset of interfaces, moving packets at line rate while the CPU orchestrates from the sidelines.</p>
+    </div>
+
+    <div class="scene-hook">
+      <div class="scene-hook-label">🧷 Memory Hook</div>
+      <div class="scene-hook-text">Datacenter = <em>three NP7s glowing in parallel</em>, silent and sustained. If you see proxy mode in a scenario at datacenter throughput, it is the wrong answer or the wrong scenario.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       CLOSE-UP 2 — BRANCH
+       ══════════════════════════════════════════════════════════ -->
+  <div class="section-marker">Close-Up 02</div>
+  <div class="scene-block">
+    <div class="scene-number">Scene Two</div>
+    <h3 class="scene-title">The Branch on <em>Two Roads</em></h3>
+    <p class="scene-subtitle">A regional office. Two internet links. A Teams call that cannot drop.</p>
+
+    <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:28px;">
+  <img src="images/visual-vaultline-scene-branch.png" alt="The Branch Close-Up" style="width:100%;max-width:860px;border-radius:14px;border:1px solid var(--border);display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+  <div style="display:none;border:2px dashed var(--gold-border, #d4c89a);border-radius:14px;background:rgba(255,255,255,0.5);padding:40px 28px;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:860px;">
+    <div style="font-size:44px;opacity:0.35;">🏪</div>
+    <div style="text-align:center;">
+      <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">Illustration placeholder</div>
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--text);">The Branch Close-Up</div>
+    </div>
+    <div style="font-family:'Outfit',sans-serif;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-align:center;">Drop the generated PNG at <code>images/visual-vaultline-scene-branch.png</code> — see <code>images/prompts.txt</code> for the prompt.</div>
+  </div>
+</div>
+
+    <div class="scene-narration">
+      <div class="scene-narration-label">Voiceover</div>
+      <p>Twelve of these. Twelve small buildings in twelve small towns, each with one dependable link and one unreliable one, each with a handful of advisors whose day depends on the same voice call staying alive when a truck cuts a cable outside town.</p>
+      <p>The branch FortiGate does not need to be big. It needs to be <em>clever</em>. Its defining skill is not throughput — it is <strong>choosing which road to send each packet down</strong>. The datacenter's silicon is wasted here. So is its price tag. What matters is SD-WAN, and one integrated chip is exactly enough.</p>
+    </div>
+
+    <div class="scene-hook">
+      <div class="scene-hook-label">🧷 Memory Hook</div>
+      <div class="scene-hook-text">Branch = <em>Sarah's Teams call staying alive when the fibre road cracks</em>. One chip. Two roads. Intelligent per-application steering. Never a hub.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       CLOSE-UP 3 — EDGE
+       ══════════════════════════════════════════════════════════ -->
+  <div class="section-marker">Close-Up 03</div>
+  <div class="scene-block">
+    <div class="scene-number">Scene Three</div>
+    <h3 class="scene-title">The Depot at the <em>City Gates</em></h3>
+    <p class="scene-subtitle">The rooftop. Every parcel leaving the building passes through this checkpoint. Most people think the checkpoint is watching what arrives — they are wrong.</p>
+
+    <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:28px;">
+  <img src="images/visual-vaultline-scene-edge.png" alt="The Edge Close-Up" style="width:100%;max-width:860px;border-radius:14px;border:1px solid var(--border);display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+  <div style="display:none;border:2px dashed var(--gold-border, #d4c89a);border-radius:14px;background:rgba(255,255,255,0.5);padding:40px 28px;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:860px;">
+    <div style="font-size:44px;opacity:0.35;">🚪</div>
+    <div style="text-align:center;">
+      <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">Illustration placeholder</div>
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--text);">The Edge Close-Up</div>
+    </div>
+    <div style="font-family:'Outfit',sans-serif;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-align:center;">Drop the generated PNG at <code>images/visual-vaultline-scene-edge.png</code> — see <code>images/prompts.txt</code> for the prompt.</div>
+  </div>
+</div>
+
+    <div class="scene-narration">
+      <div class="scene-narration-label">Voiceover</div>
+      <p>Most engineers imagine a firewall as a bouncer at the door, watching for attackers trying to get in. At an internet edge, the statistics tell a very different story. Almost nothing gets in that was not invited. What matters is what is going <em>out</em>.</p>
+      <p>Users clicking phishing links. Malware calling home. Files uploaded to unsanctioned cloud storage. Encrypted C2 tunnels hiding inside normal HTTPS. Ninety-five percent of the risk at the edge is <strong>outbound</strong>. And ninety-five percent of that outbound traffic is encrypted.</p>
+      <p>Which is why the edge FortiGate's most important chip is not the NP7. It is the <em>CP9</em>. Every encrypted session that needs deep inspection has to be decrypted, inspected, and re-encrypted — and only the CP9 has the crypto throughput to make that affordable at scale.</p>
+    </div>
+
+    <div class="scene-hook">
+      <div class="scene-hook-label">🧷 Memory Hook</div>
+      <div class="scene-hook-text">Edge = <em>the depot watching what leaves, not what arrives</em>. CP9 is the star. Proxy mode is welcome here because the user population is small enough to afford it.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       CLOSE-UP 4 — CLOUD
+       ══════════════════════════════════════════════════════════ -->
+  <div class="section-marker">Close-Up 04</div>
+  <div class="scene-block">
+    <div class="scene-number">Scene Four</div>
+    <h3 class="scene-title">The Cloud, Where <em>Silicon Vanishes</em></h3>
+    <p class="scene-subtitle">Above the map. Inside a stylised cloud. A FortiGate exists — but it has no chips. Only vCPUs. Only tags. Only trust.</p>
+
+    <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:28px;">
+  <img src="images/visual-vaultline-scene-cloud.png" alt="The Cloud VM Close-Up" style="width:100%;max-width:860px;border-radius:14px;border:1px solid var(--border);display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+  <div style="display:none;border:2px dashed var(--gold-border, #d4c89a);border-radius:14px;background:rgba(255,255,255,0.5);padding:40px 28px;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:860px;">
+    <div style="font-size:44px;opacity:0.35;">☁️</div>
+    <div style="text-align:center;">
+      <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">Illustration placeholder</div>
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--text);">The Cloud VM Close-Up</div>
+    </div>
+    <div style="font-family:'Outfit',sans-serif;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-align:center;">Drop the generated PNG at <code>images/visual-vaultline-scene-cloud.png</code> — see <code>images/prompts.txt</code> for the prompt.</div>
+  </div>
+</div>
+
+    <div class="scene-narration">
+      <div class="scene-narration-label">Voiceover</div>
+      <p>In the cloud, silicon simply disappears. There is no NP7 to offload sessions. There is no CP9 to decrypt TLS at line rate. There is no dedicated crypto engine for IPsec. Everything that ran on a chip is now running on however many <em>vCPUs</em> Azure has been paid to allocate.</p>
+      <p>Which forced Fortinet to invent two new things. One: <strong>vCPU-based licensing</strong> — either the fixed subscription that entitles the VM to a certain vCPU count (BYOL, the "own it outright" model), or the marketplace hourly rate that scales with the VM size (PAYG, the "rental car" model). Long-lived production wins with BYOL. Bursty and POC workloads win with PAYG.</p>
+      <p>Two: <strong>SDN Connectors</strong>. Because cloud subnets change hourly, static IP-based policy breaks constantly. Instead, the FortiGate polls Azure's own API and translates cloud metadata — tags, resource groups, VM labels — into dynamic firewall address objects. A policy that says "allow role=web to reach role=db" continues working as DevOps engineers scale the estate. No policy edits required.</p>
+    </div>
+
+    <div class="scene-hook">
+      <div class="scene-hook-label">🧷 Memory Hook</div>
+      <div class="scene-hook-text">Cloud VM = <em>a ghost FortiGate with no chips, riding on vCPU, reading tags off Azure like a mind-reader</em>. BYOL = buy. PAYG = rent. SDN Connectors = policy survives infrastructure change.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       KEY TAKEAWAYS
+       ══════════════════════════════════════════════════════════ -->
+  <div class="takeaways">
+    <div class="takeaways-label">🎯 Key Takeaways</div>
+    <h3>What this <em>picture</em> should reconstruct</h3>
+    <ol>
+      <li><strong>Five roles, one estate.</strong> If you can mentally walk the Vaultline diorama and name each firewall by role, silicon, and inspection mode, you can identify any FortiGate on any customer diagram or exam scenario.</li>
+      <li><strong>Traffic direction defines role.</strong> Outbound user traffic = <em>Edge</em>. East-west server traffic = <em>Datacenter</em>. Unequal-WAN steering = <em>Branch</em>. Inter-zone LAN traffic = <em>ISFW</em>. Any of these in the cloud = <em>Cloud VM</em> with no silicon.</li>
+      <li><strong>Silicon reveals the role even without a label.</strong> Three NP7s in parallel = datacenter. Big CP9 with modest NP7 = edge. Integrated SoC4/SP5 = branch. Ghost outline with vCPUs = cloud.</li>
+      <li><strong>The reseller's fifteen-of-one quote fails in both directions.</strong> Waste at the branches, inadequacy at the datacenter, and a category error at Azure where "hardware SKU" is not even the right framing.</li>
+      <li><strong>The map is spatial memory training.</strong> When you look at a customer diagram in six months, this diorama should overlay itself onto the customer's network like a template.</li>
+    </ol>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       EXAM NOTES
+       ══════════════════════════════════════════════════════════ -->
+  <div class="exam-notes">
+    <div class="exam-notes-label">📝 Exam Notes</div>
+    <h3>What Fortinet <em>tests</em> on this map</h3>
+    <ul>
+      <li><strong>Edge vs Datacenter confusion is the #1 trap.</strong> Both are big HQ boxes. Read the scenario for <em>traffic direction</em> and <em>inspection mode</em>. Not for box size.</li>
+      <li><strong>SoC as VPN hub is always wrong.</strong> If a scenario positions a branch model terminating 40+ tunnels for other branches, the scenario itself is the wrong answer.</li>
+      <li><strong>BYOL vs PAYG is a workload-duration question, not a definition question.</strong> Long-lived production = BYOL. Bursty / POC / dev = PAYG.</li>
+      <li><strong>ISFW justification must name all three:</strong> performance isolation, failure isolation, administrative boundary. "Segmentation" alone will lose marks.</li>
+      <li><strong>SDN Connector = dynamic address objects from cloud tags.</strong> If a scenario mentions dynamic discovery, tags, or resource groups, this is the answer.</li>
+      <li><strong>Cloud VMs have no NP7 or CP9.</strong> Every hardware acceleration answer you learned in Session 39 does not apply in the cloud. Everything runs on vCPU.</li>
+    </ul>
+  </div>
+
+</main>
+
+<footer>
+  NSE7 EFW 7.6<span>.</span> Session 03<span>.</span> Visual<span>.</span> The Vaultline Estate — Architecture Map
+</footer>
+
+<script>
+document.querySelectorAll('.prompt-block, .scene-prompt-block').forEach(function(b) {
+  b.addEventListener('click', function(e) { /* handled by inline onclick, this is just a fallback */ });
+});
+</script>
+</body>
+</html>

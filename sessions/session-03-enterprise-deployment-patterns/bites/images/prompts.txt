@@ -1,0 +1,222 @@
+Session 03 — Bite: Visual — The Vaultline Estate
+============================================================
+
+visual-vaultline-hero-map.png
+
+Title: The Vaultline Estate — Full Architecture Map
+Subtitle: Isometric wide-shot · 5 deployment roles · 15+ FortiGates
+
+🎨 Image Generation Prompt — Hero
+    
+    
+      
+
+[Overall Composition]
+
+      A cinematic isometric wide-shot of an entire enterprise network laid out like a small stylised diorama. The composition is horizontal, viewed from a slightly elevated 30-degree angle. The scene is divided into four zones: HQ Tower (centre-left, the largest structure), Regional Australia map (bottom-right, with twelve small branch buildings scattered across it), Azure Cloud region (upper-right, floating above the map like a stylised cloud with a datacenter inside), and Internal Segmentation zone (a corridor cross-section cutting through the HQ tower). Everything is connected by flowing coloured arrows representing traffic.
+
+      
+
+[Perspective & Style]
+
+      Flat minimalistic but highly detailed cartoon illustration. Modern vector-art aesthetic. Clean bold line work. No gradients. No photorealism. No 3D rendering. Highly structured composition with generous spacing. Educational yet visually engaging. Isometric projection at a 30-degree angle.
+
+      
+
+[Colour Palette]
+
+      Warm modern colour palette. Cream background (#faf5e9). Coral accents (#c8553d) for the datacenter and hero elements. Muted gold highlights (#b8860b) for the edge firewall and traffic-inspection glows. Sage greens (#5c8a5c) for the cloud region and SDN indicators. Soft brown outlines (#7a5c3e). Deep navy (#0d1a3a) for labels, structural outlines, and text. Blue (#1e40af) for policy-flow arrows.
+
+      
+
+[HQ Tower (centre-left)]
+
+      A five-storey stylised office tower drawn as an isometric cutaway showing internal floors. Rooftop: the Edge FortiGate — a small navy firewall unit with a bright gold halo around it, sitting between the tower and a stylised internet cloud above. Label: "EDGE · BALANCED NP7 + STRONG CP9 · FLOW + PROXY". Outbound gold arrows flow from tower users up through this box into the internet cloud. Middle floors: "Corporate Users" (illustrated as three tiny stylised desks with small figures). Between corporate and trading floors: the ISFW — a small purple firewall unit placed horizontally across the corridor, with a subtle "transparent mode" bridge symbol. Label: "ISFW · TRANSPARENT MODE · EAST-WEST". Lower floors: "Trading Floor" (three tiny stylised trading desks with screens). Basement: the Datacenter FortiGate — a larger coral-accented firewall unit drawn with THREE small NP7 chips visible on its surface plus a discrete CP9 chip. Label: "DATACENTER · MULTIPLE NP7 · FLOW ONLY". Thick coral arrows flow between server racks east-west.
+
+      
+
+[Regional Australia Map (bottom-right)]
+
+      A stylised outline of southeastern Australia (Victoria and NSW simplified into a flat shape). Twelve tiny branch buildings dot the map — small houses or single-storey office icons in soft blue. Each branch has a small blue firewall icon on it labelled with a tiny SoC4 chip symbol. Two thin coloured lines run from each branch to the HQ tower and to the Azure cloud: one gold (fibre), one dashed sage (4G backup). Above the map, a floating banner: "BRANCH · SoC4/SP5 · SD-WAN · 12 SITES". A small illustrated icon shows a person on a Teams call at one of the branches, with a laptop and a video-call bubble.
+
+      
+
+[Azure Cloud Region (upper-right)]
+
+      A large stylised cloud shape in sage green, floating above the regional map. Inside the cloud, a simplified Azure datacenter with server racks. Sitting in front of the racks is the FortiGate-VM — drawn with visibly no silicon chips, no NP7, no CP9, just a translucent virtual outline with "vCPU" written faintly on it. Label: "CLOUD VM · NO SILICON · BYOL". Below it, three small tag icons floating: "role=web", "role=db", "role=api", with dotted lines connecting them to the FortiGate-VM — representing SDN Connectors. Small "SDN CONNECTOR" label with a wifi-like radiating icon.
+
+      
+
+[Traffic Flow Arrows]
+
+      Coloured arrows show dominant traffic direction. Gold outbound arrows flow from HQ users up through the edge firewall to the internet cloud. Coral east-west arrows flow between server racks in the datacenter basement. Blue policy arrows flow between branches and HQ via fibre. Dashed sage arrows represent 4G backup paths from branches. Green cloud-native arrows flow within the Azure cloud between tagged VMs.
+
+      
+
+[Labels & Typography]
+
+      Each firewall carries a clean rectangular label plate below it in navy on cream: ROLE · SILICON · INSPECTION MODE. Typography is a clean modern sans-serif reminiscent of Outfit. Labels are legible but never dominate the image. Numeric callouts (e.g., "40 Gbps east-west", "SD-WAN steering") appear as small annotations near their respective elements.
+
+      
+
+[Atmosphere & Mood]
+
+      Educational cinematic. Feels like a still from a documentary about enterprise networks. Warm, inviting, calm — not sterile or corporate. Generous negative space around the whole diorama so nothing feels crowded. Faint radial glow around the whole scene suggesting the diorama sits under a warm spotlight. No people crowding the scene — only a few tiny figures at key locations to convey scale (trader at a desk, user on a Teams call, admin next to the datacenter rack).
+
+============================================================
+
+visual-vaultline-scene-datacenter.png
+
+Title: The Datacenter Close-Up
+
+🎨 Image Prompt — Datacenter
+      
+      
+        
+
+[Composition]
+
+        A cinematic side-angle view of an enterprise datacenter floor. Rows of stylised server racks stretch into the perspective distance. In the foreground, a large coral-accented FortiGate appliance sits on an equipment shelf, opened to reveal its internal architecture: three visible NP7 chips arranged in a row, each glowing a soft coral, plus a discrete CP9 chip sitting alongside them. Small labelled lines identify each chip.
+
+        
+
+[Style & Palette]
+
+        Flat minimalistic vector cartoon illustration. Warm cream background with coral accents on the FortiGate and NP7 chips. Sage green on network cables. Soft brown outlines. Navy text labels. No gradients, no photorealism.
+
+        
+
+[Traffic Visualisation]
+
+        Thick horizontal coral arrows flow east-west between server racks, passing through the FortiGate. Small "40 Gbps" and "millions of sessions" callouts float near the arrows. A subtle glow around the NP7 chips suggests they are handling all the traffic without CPU intervention. Above the scene, a floating banner reads "FLOW ONLY · NO PROXY EVER".
+
+        
+
+[Cinematic Detail]
+
+        A single small admin figure stands to the side of the rack, holding a tablet, looking calm. Cool white ceiling lights above the rack casting a soft glow. In the distance, a faint reference back to the trading floor above with a stylised trader's screen visible through a wire-frame ceiling cutaway. The scene should feel powerful, sustained, industrial — not frantic.
+
+        
+
+[Labels]
+
+        "NP7 × 3 — PARALLEL FORWARDING". "CP9 — CRYPTO / TLS". "60 GBPS EAST-WEST". "PROXY = ARCHITECTURALLY EXCLUDED". Labels in clean navy sans-serif.
+
+============================================================
+
+visual-vaultline-scene-branch.png
+
+Title: The Branch Close-Up
+
+🎨 Image Prompt — Branch
+      
+      
+        
+
+[Composition]
+
+        A cinematic street-level view of a small regional office building in a country town. The building is single-storey, with a stylised tree beside it and a distant hill in the background. On the roof, a small blue FortiGate branch device sits with a visible integrated SoC4/SP5 chip — one chip, doing everything. Beside the building, two roads lead out to the horizon: one is a smooth fibre road in gold, the other is a rougher, dashed 4G road in sage green.
+
+        
+
+[Traffic Steering]
+
+        Small labelled packets float above the roads, each with a tiny icon: Teams call packet (video icon), web browsing packet (globe icon), file transfer packet (folder icon), SaaS packet (cloud icon). The FortiGate on the roof is drawn actively directing each packet to a road based on its type — Teams call goes on the fibre road; web browsing goes on 4G. A visible "SD-WAN steering" label with an arrow showing the decision.
+
+        
+
+[Style & Palette]
+
+        Flat minimalistic vector cartoon. Warm cream sky. Soft sage foliage. Blue FortiGate. Gold and sage roads. Gentle rolling hills in the distance suggesting the branch is remote.
+
+        
+
+[Human Detail]
+
+        Through the office window, a small figure of Sarah (a financial advisor from the story) sits at a desk on a Teams video call — a small "Teams" video bubble visible on her screen. Her connection is highlighted in gold, tracing from her desk up through the FortiGate and down the fibre road. A subtle sense that if the fibre road failed, the FortiGate would reroute her call — but only her call — to the 4G road.
+
+        
+
+[Labels]
+
+        "BRANCH · SoC4/SP5 · INTEGRATED NP+CP". "SD-WAN — steer per application". "Fibre — primary". "4G — backup". "×12 sites like this across Meridian". Labels in clean navy sans-serif.
+
+============================================================
+
+visual-vaultline-scene-edge.png
+
+Title: The Edge Close-Up
+
+🎨 Image Prompt — Edge
+      
+      
+        
+
+[Composition]
+
+        A cinematic view of the rooftop of the Vaultline HQ tower, looking outward over a stylised city skyline into an internet cloud. The Edge FortiGate sits like a checkpoint building on the rooftop, drawn as a small guardhouse with a golden halo around it. Below it, a long queue of stylised users flows OUTWARD from the building up through the checkpoint — each user carrying a labelled parcel (Facebook, Teams, SaaS, unknown site).
+
+        
+
+[The Twist — Directional Emphasis]
+
+        The dominant traffic direction is outbound. Thick gold arrows flow from the building's interior UP through the edge firewall INTO the internet cloud. Inbound arrows (from the internet toward the building) are visibly thinner and mostly blocked by a "default deny" wall — some allowed thin arrows go to a small "public services" wing of the building, but they are dwarfed by the outbound stream.
+
+        
+
+[CP9 Emphasis]
+
+        The FortiGate is drawn opened up, revealing a prominent large CP9 chip in the centre, glowing gold, with the label "TLS DECRYPT" beside it. The NP7 chip is present but smaller and less prominent — the CP9 is the star of this scene. Small padlock icons dot the outbound parcels indicating encryption, and beside the CP9 chip, some padlocks are shown being opened for inspection.
+
+        
+
+[Style & Palette]
+
+        Warm cinematic tones. Gold as the dominant colour to emphasise outbound flow and the CP9. Warm cream base. Soft brown outlines. Deep navy for labels. Internet cloud drawn as a stylised warm cumulus with faint icons of websites inside.
+
+        
+
+[Labels]
+
+        "EDGE · BALANCED NP7 + STRONG CP9 · FLOW + PROXY". "95% of risk lives here". "OUTBOUND USER TRAFFIC". "TLS DECRYPT — CP9 EARNING ITS KEEP". Small annotation: "Proxy mode is on the menu here".
+
+============================================================
+
+visual-vaultline-scene-cloud.png
+
+Title: The Cloud VM Close-Up
+
+🎨 Image Prompt — Cloud VM
+      
+      
+        
+
+[Composition]
+
+        A cinematic view inside a stylised Azure cloud region — the exterior of the cloud is a soft sage-green cumulus shape, and inside we see a cutaway of a virtualised datacenter. Server racks stand in orderly rows. In front of them, a translucent, ghostly FortiGate outline hovers — visibly empty inside. Where the NP7 and CP9 chips should be, there are only faint dashed outlines with the label "NO SILICON". Instead, four small "vCPU" tokens hover near the outline.
+
+        
+
+[SDN Connector Visualisation]
+
+        Around the FortiGate-VM, small floating labels drift like tags on strings: "role=web", "role=db", "role=api", "env=prod". Each tag is connected to actual illustrated VMs elsewhere in the cloud region by dotted sage lines. A small glowing icon labelled "SDN CONNECTOR" sits between the FortiGate and the tags, with a radiating antenna symbol suggesting it is continuously polling the Azure API. When a new VM appears (illustrated as a faded VM materialising with an "role=web" tag), the sage line automatically extends to it.
+
+        
+
+[Licensing Visualisation]
+
+        To the side of the FortiGate-VM, two floating cards represent the licensing choice: BYOL card — illustrated as a car being purchased (small "OWN" label, portable-looking, with cloud logos for Azure, AWS, GCP indicating portability). PAYG card — illustrated as a rental car with a taxi meter (small "RENT" label, per-hour clock icon). The BYOL card is highlighted with a subtle gold glow indicating the correct choice for this long-lived production workload.
+
+        
+
+[Style & Palette]
+
+        Sage greens dominate to evoke the cloud environment. Cream base. Translucent/ghostly effect on the FortiGate-VM using dashed outlines and reduced opacity. Warm gold highlights on the BYOL choice.
+
+        
+
+[Labels]
+
+        "CLOUD VM · NO SILICON · vCPU ONLY". "SDN CONNECTOR — cloud metadata → dynamic address objects". "BYOL wins long-term production". "PAYG wins for POC / bursty". "Everything the NP7 and CP9 did in hardware — now runs on software".
+
+============================================================

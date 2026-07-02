@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 03 — Enterprise Deployment Patterns</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb a:hover{text-decoration:underline;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.005em;}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+  .top-panels{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+  .top-panels .qpanel{border-bottom:none;border-right:1px solid var(--border);}
+  .top-panels .qpanel-header{padding-left:32px;padding-right:32px;}
+  .top-panels .qpanel-body{padding-left:32px;padding-right:32px;}
+  .qpanel{background:var(--surface);}
+  .qpanel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .qpanel-header:hover,.qpanel-header.open{background:var(--surface-2);}
+  .qpanel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .qpanel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .qpanel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .qpanel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .qpanel-body{display:none;padding:0 20px 22px;}
+  .qpanel-body.open{display:block;}
+  .notes-panel{background:var(--surface);}
+  .notes-panel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 32px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .notes-panel-header:hover,.notes-panel-header.open{background:var(--surface-2);}
+  .notes-panel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .notes-panel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .notes-panel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .notes-panel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .notes-panel-body{display:none;padding:0 32px 22px;}
+  .notes-panel-body.open{display:block;}
+  .q-group{margin-bottom:16px;}
+  .q-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+  .q-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-dim);}
+  .q-item:last-child{border-bottom:none;}
+  .q-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;color:var(--blue);min-width:16px;margin-top:2px;}
+  .q-text{font-size:14px;color:var(--text-soft);line-height:1.5;flex:1;}
+  .q-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:0 4px;margin-top:1px;}
+  .q-del:hover{color:var(--blue);}
+  .no-questions{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);padding:8px 0;}
+  .btn-add-q{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-q:hover{opacity:0.85;}
+  .section-nav{position:sticky;top:0;z-index:90;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px;overflow-x:auto;}
+  .nav-tab{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:12px 18px;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s,border-color 0.15s;}
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+  main{max-width:1200px;margin:0 auto;padding:0;}
+  .main-content{padding:36px 60px 60px 60px;}
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:4px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .socratic-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:16px;border-top:3px solid var(--blue);}
+  .socratic-header{display:flex;align-items:center;gap:8px;margin-bottom:0;cursor:pointer;user-select:none;}
+  .socratic-header::after{content:'▸ Expand';margin-left:auto;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-block.soc-open .socratic-header{margin-bottom:10px;}
+  .socratic-block.soc-open .socratic-header::after{content:'▾ Collapse';}
+  .socratic-block:not(.soc-open) .socratic-insight,
+  .socratic-block:not(.soc-open) .socratic-questions,
+  .socratic-block:not(.soc-open) .answer-area{display:none;}
+  .socratic-icon{font-size:17px;flex-shrink:0;}
+  .socratic-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-insight{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;margin-bottom:12px;border-left:3px solid var(--border);padding-left:14px;font-style:italic;}
+  .socratic-questions{list-style:none;padding:0;margin:0;}
+  .socratic-questions li{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--border-dim);line-height:1.6;}
+  .socratic-questions li:last-child{border-bottom:none;}
+  .socratic-questions li::before{content:'?';position:absolute;left:0;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:16px;top:7px;color:var(--blue);}
+  .answer-area{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .answer-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .answer-textarea:focus{border-color:var(--blue);}
+  .answer-textarea:disabled{opacity:0.75;background:var(--surface-2);cursor:default;}
+  .answer-buttons{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .btn-add-answer{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-answer:hover:not(:disabled){opacity:0.85;}
+  .btn-add-answer:disabled{opacity:0.5;cursor:default;}
+  .btn-see-answer{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-see-answer:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-see-answer:not(:disabled){color:var(--blue);border-color:var(--blue);}
+  .btn-see-answer:hover:not(:disabled){background:var(--blue-glow);}
+  .model-answers{margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .model-answer-item{padding:10px 0;border-bottom:1px solid var(--border-dim);}
+  .model-answer-item:first-child{padding-top:0;}
+  .model-answer-item:last-child{border-bottom:none;padding-bottom:0;}
+  .model-answer-q{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;}
+  .model-answer-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;}
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+  .analogy-label{display:flex;align-items:center;gap:6px;user-select:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px;text-transform:uppercase;}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
+  .analogy-text ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;}
+  .analogy-text li{padding-left:18px;position:relative;}
+  .analogy-text li::before{content:'•';position:absolute;left:0;font-weight:700;color:var(--amber);}
+  .lesson-tools{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:40px;}
+  .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .tool-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .tool-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .tool-textarea:focus{border-color:var(--blue);}
+  .tool-row{margin-top:8px;display:flex;gap:8px;}
+  .page-nav{display:flex;border-top:2px solid var(--border);background:var(--surface);}
+  .page-nav-btn{flex:1;display:flex;flex-direction:column;gap:4px;padding:16px 28px;text-decoration:none;transition:background 0.15s;cursor:pointer;}
+  .page-nav-btn:hover:not(.page-nav-disabled){background:var(--surface-2);}
+  .page-nav-prev{border-right:1px solid var(--border);}
+  .page-nav-next{text-align:right;}
+  .page-nav-disabled{opacity:0.3;pointer-events:none;}
+  .page-nav-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);display:block;text-transform:uppercase;}
+  .page-nav-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;font-style:italic;color:var(--blue);display:block;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:34px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}.section-nav{padding:0 16px;}.top-panels{grid-template-columns:1fr;}.top-panels .qpanel{border-right:none;border-bottom:1px solid var(--border);}.lesson-tools-grid{grid-template-columns:1fr;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../study-plan.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="index.html" style="color:#9bb8e6;text-decoration:none;">Session 03</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Completed Study Guide</span></div>
+    <div class="header-eyebrow"><span class="dot-live"></span> Study Guide · NSE7 EFW 7.6</div>
+    <h1>Enterprise <em>Deployment Patterns</em></h1>
+    <p>Where a FortiGate lives determines what silicon it needs, which features matter, and which SKU category it belongs in.</p>
+  </div>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">One SKU cannot serve <em>five roles</em>. The blueprint tests whether you can match placement to purpose.</div>
+  <p class="motivation-sub">Given an enterprise diagram, an NSE7 engineer must label every FortiGate by role and justify the silicon and features each one needs — before ever opening a datasheet.</p>
+</div>
+
+<div class="top-panels">
+  <div class="qpanel" id="qpanel">
+    <button class="qpanel-header" onclick="toggleQPanel()" id="qpanel-header">
+      <span class="qpanel-title">MY QUESTIONS</span>
+      <span class="qpanel-count" id="qpanel-count">0</span>
+      <span class="qpanel-hint">— click to expand</span>
+      <span class="qpanel-chevron" id="qpanel-chevron">▾</span>
+    </button>
+    <div class="qpanel-body" id="qpanel-body"></div>
+  </div>
+  <div class="notes-panel" id="notes-panel">
+    <button class="notes-panel-header" onclick="toggleNotesPanel()" id="notes-panel-header">
+      <span class="notes-panel-title">MY NOTES</span>
+      <span class="notes-panel-count" id="notes-panel-count">0</span>
+      <span class="notes-panel-hint">— click to expand</span>
+      <span class="notes-panel-chevron" id="notes-panel-chevron">▾</span>
+    </button>
+    <div class="notes-panel-body" id="notes-panel-body"></div>
+  </div>
+</div>
+
+<nav class="section-nav" id="section-nav">
+  <a class="nav-tab active" href="#section-branch">Branch</a>
+  <a class="nav-tab" href="#section-datacenter">Datacenter</a>
+  <a class="nav-tab" href="#section-edge">Edge</a>
+  <a class="nav-tab" href="#section-cloud">Cloud VM</a>
+  <a class="nav-tab" href="#section-isfw">ISFW</a>
+</nav>
+
+<main>
+  <div class="main-content">
+
+    <!-- ══════════════════════════════════════════
+         SECTION 1 — BRANCH
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · BRANCH</span>
+      </div>
+      <p class="socratic-insight">A branch office has 20 staff and one internet link — sometimes two, if you count 4G backup. The security requirement is real but modest. So what actually dominates the branch FortiGate's day-to-day work, and why is it a problem the datacenter never faces?</p>
+      <ul class="socratic-questions">
+        <li>Why is SD-WAN a branch problem rather than a datacenter problem?</li>
+        <li>Why does the branch use integrated NP+CP silicon (SoC4/SP5) rather than discrete NP7 + CP9?</li>
+      </ul>
+      <div class="answer-area" data-section="branch">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Branches have <strong>multiple, unequal WAN links</strong> — fibre, 4G, sometimes ADSL — and must steer traffic per-application in real time based on link health, latency and cost. The datacenter sits on redundant, high-quality dedicated links that are typically load-shared symmetrically. SD-WAN's core value (intelligent per-application steering across unequal links) simply doesn't apply at the datacenter. It's a branch problem because unequal, unreliable WAN is a branch reality.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Integrated silicon (SoC4/SP5) is cheaper, smaller, and lower-power — perfect for 10–30 users. It caps out at throughputs a branch will never need. Discrete NP7 + CP9 exists to be <em>multiplied</em> on high-end boards (multiple NP7s in parallel), which is only justified by datacenter or high-throughput edge workloads. Spending on discrete silicon for a branch is waste; conversely, positioning SoC-class silicon as a VPN hub for 40+ branches will fail catastrophically under load.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-branch">
+      <div class="section-label">SECTION 01 — DEPLOYMENT ROLE</div>
+      <h2>The Branch <em>FortiGate</em></h2>
+
+      <p>The <strong>branch FortiGate</strong> is the smallest and most numerous role in an enterprise estate. Its defining job is <em>SD-WAN across unequal WAN links</em> — steering traffic per-application in real time based on link health, jitter, latency and business priority. Web browsing, Teams calls, SaaS access, and HQ-bound traffic all leave the branch through the same one or two links, and each has a different tolerance for impairment.</p>
+
+      <p>Because the user population is small (typically 10–50 staff), throughput requirements are modest — usually under a few gigabits. Fortinet builds silicon specifically for this scale: the <strong>SoC4</strong> and <strong>SP5</strong> processors integrate NP (network processor) and CP (content processor) functions onto a single chip. This trades peak throughput for cost, size and power efficiency — exactly the right trade-off for a rack that lives under a receptionist's desk.</p>
+
+      <div class="callout callout-amber">
+        <strong>Session 39 warning, reinforced:</strong> SoC-class devices are <em>branch</em> devices. Never position them as hubs for large hub-and-spoke topologies. If a scenario describes a "small branch model terminating 40 IPsec tunnels from other branches," that scenario is wrong on its face.
+      </div>
+
+      <p>Inspection at the branch is typically <strong>flow-based</strong> — the user population doesn't justify the CPU cost of proxy mode, and per-user latency is more visible than at HQ. Application control and web filtering are still enabled, but they run flow-mode with hardware acceleration where the SoC supports it.</p>
+
+      <div class="analogy-box">
+        <div class="analogy-label">Analogy</div>
+        <div class="analogy-text">
+          <p class="analogy-summary">A branch FortiGate is a small-town post office.</p>
+          <ul>
+            <li>It serves a fixed local population — no crowds, no queue.</li>
+            <li>It uses whatever transport is available that day — the mail van, the courier, sometimes a delayed backup route when the highway is closed.</li>
+            <li>Its most important skill isn't sorting volume — it's <em>deciding which route to use for which parcel</em>.</li>
+            <li>Building the town a giant sorting facility would be waste; building it a card table and one staff member would be inadequacy. The right building sits between the two.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Branch = <strong>SD-WAN + SoC-class silicon + small user population</strong>. If a scenario mentions multiple WAN links, application-aware steering, or "regional office," you are looking at a branch role. Never position SoC as a hub.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-branch" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-branch','Branch')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-branch" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-branch')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 2 — DATACENTER
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · DATACENTER</span>
+      </div>
+      <p class="socratic-insight">Session 39 taught you that proxy mode kills NP7 offload. Session 02 taught you that inspection mode is inferred from the profiles you attach. The datacenter FortiGate must reconcile both: it needs deep security awareness <em>and</em> tens of gigabits of sustained throughput. Only one inspection mode makes that possible.</p>
+      <ul class="socratic-questions">
+        <li>Why is proxy mode architecturally unacceptable at the datacenter, even for outbound admin traffic?</li>
+        <li>Why do high-end datacenter models ship with multiple NP7s rather than one very large NP7?</li>
+      </ul>
+      <div class="answer-area" data-section="datacenter">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Proxy mode terminates the connection at the FortiGate, creating two CPU-bound session entries per user flow and disqualifying every session on that policy from NP7 offload. Even a single proxy profile applied to a policy carrying 40 Gbps of east-west traffic will send that traffic to the CPU — exactly the failure mode from Vaultline's Friday trading floor incident. Proxy mode cannot sustain datacenter throughput, so datacenter policies are engineered to be exclusively flow-based.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Silicon has physical limits. Rather than build one very-large NP7 that few customers could afford, Fortinet designs boards with <strong>multiple NP7s in parallel</strong>, each responsible for a subset of physical interfaces. This lets a single chassis scale to hundreds of gigabits by adding more chips rather than making one chip bigger. It also gives the design team a clean scaling curve: the same NP7 die used in mid-range boxes appears three or six times on datacenter models.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-datacenter">
+      <div class="section-label">SECTION 02 — DEPLOYMENT ROLE</div>
+      <h2>The Datacenter <em>FortiGate</em></h2>
+
+      <p>The <strong>datacenter FortiGate</strong> is defined by <em>throughput at line rate</em>. Its dominant traffic is east-west (server-to-server, database replication, storage traffic, application-tier communication) plus north-south server ingress from users. Peak volumes commonly run 40–100 Gbps sustained, and session counts run into the millions.</p>
+
+      <p>Silicon-wise, this role justifies <strong>multiple discrete NP7 processors</strong> working in parallel, paired with dedicated CP9 chips for TLS decryption and IPsec key exchange. The architecture is deliberately not integrated — separating NP7 and CP9 as discrete chips lets each be scaled independently and multiplied on the board.</p>
+
+      <table class="data-table">
+        <thead><tr><th>Attribute</th><th>Datacenter Reality</th></tr></thead>
+        <tbody>
+          <tr><td>Dominant traffic direction</td><td>East-west (server-to-server); some north-south server ingress</td></tr>
+          <tr><td>Traffic character</td><td>Machine-to-machine, short-lived, high-frequency, encrypted</td></tr>
+          <tr><td>Inspection mode</td><td>Flow-only — proxy mode is architecturally excluded</td></tr>
+          <tr><td>Silicon priority</td><td>Multiple NP7s in parallel; discrete CP9 for crypto</td></tr>
+          <tr><td>Session capacity</td><td>Millions of concurrent sessions</td></tr>
+          <tr><td>Failure sensitivity</td><td>Extreme — HA pairs mandatory, session sync required</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-amber">
+        <strong>Exam trap:</strong> Candidates conflate "datacenter" with "edge" because both are big HQ boxes on a diagram. Read the scenario carefully. Outbound user browsing with TLS decrypt = <em>edge</em>. East-west database replication with sub-millisecond latency requirement = <em>datacenter</em>. Different silicon, different inspection mode, different SKU category.
+      </div>
+
+      <p>Vaultline's trading floor is a textbook datacenter workload: market data feeds are machine-to-machine, short-lived, extraordinarily latency-sensitive, and utterly incompatible with proxy mode. This is why the VDOM split-architecture from Session 02 kept the trading VDOM strictly flow-based — the physics of proxy mode make it impossible at that scale.</p>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Datacenter = <strong>multiple NP7s + flow-only + east-west</strong>. If a scenario describes machine-to-machine traffic at tens of gigabits with tight latency budgets, no amount of security profile enthusiasm changes the answer: proxy mode is off the table.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-datacenter" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-datacenter','Datacenter')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-datacenter" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-datacenter')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 3 — EDGE
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · EDGE</span>
+      </div>
+      <p class="socratic-insight">Corporate users at HQ reach the internet through the edge FortiGate. Ask most engineers what a firewall does and they'll say "protects the network from attackers." At an internet edge, the traffic statistics tell a different story — and that story changes which silicon matters most.</p>
+      <ul class="socratic-questions">
+        <li>Why is outbound user traffic more consequential than inbound traffic at the edge?</li>
+        <li>Why is proxy mode acceptable at the edge when it is unacceptable at the datacenter?</li>
+      </ul>
+      <div class="answer-area" data-section="edge">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Inbound unsolicited internet traffic is mostly blocked by default policy — nothing gets in unless explicitly allowed. The traffic that actually matters is <strong>outbound and user-initiated</strong>: phishing links clicked, malware calling home, data exfiltrated to unsanctioned SaaS, and command-and-control traffic hiding in HTTPS. The edge's real job is inspecting outbound flows, and 95%+ of that traffic is now encrypted. This makes <em>SSL/TLS deep inspection</em> the defining edge workload, which in turn makes the CP9 the most important chip at this role.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">The edge's user population is small (hundreds to low thousands), sessions are longer-lived, and per-user latency budgets are more forgiving than machine-to-machine flows. Proxy mode's CPU cost is <em>affordable</em> at this scale. Additionally, some deep-inspection features (advanced DLP, category quotas, VoIP inspection) are only available in proxy mode — and the edge is exactly the place those features are needed. The datacenter has none of these traits, which is why the same design decision fails there.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-edge">
+      <div class="section-label">SECTION 03 — DEPLOYMENT ROLE</div>
+      <h2>The Edge / Perimeter <em>FortiGate</em></h2>
+
+      <p>The <strong>edge FortiGate</strong> is the NGFW at the WAN boundary — the front door between corporate users and the entire internet. It is defined by <em>deep security inspection on outbound user traffic</em>, with SSL/TLS decryption routinely enabled and full UTM (web filter, application control, IPS, antivirus) active on almost every policy.</p>
+
+      <p>Silicon requirements are balanced. Enough NP7 capacity to handle baseline throughput, but the truly critical chip is the <strong>CP9</strong>: TLS decryption at scale, IPsec Diffie-Hellman key exchange, and flow-mode UTM pattern matching all run through the content processor. An underspecced CP9 at the edge cripples deep inspection even if the NP7 has bandwidth to spare.</p>
+
+      <div class="callout">
+        <strong>Direction matters:</strong> At the edge, ~95% of the risk lives in outbound flows. Users clicking bad links. Malware calling home. Sensitive files uploaded to consumer cloud. Encrypted C2 tunnels blending into normal HTTPS. The firewall's daily work is watching users leave — not watching attackers arrive.
+      </div>
+
+      <p>Because the user population is small and sessions are longer-lived, <strong>proxy mode is architecturally acceptable</strong> at the edge. Features like advanced DLP, web category quotas, and VoIP inspection are proxy-only — and the edge is exactly where they earn their keep. A senior engineer will deliberately choose proxy mode for policies that need it, accepting the CPU cost as the price of the inspection depth.</p>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Edge = <strong>outbound user inspection + CP9-heavy + TLS deep inspection</strong>. Proxy mode is on the menu here where it isn't at the datacenter. If you see "800 users browsing the internet with SaaS controls," you're looking at edge.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-edge" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-edge','Edge')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-edge" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-edge')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 4 — CLOUD VM
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · CLOUD VM</span>
+      </div>
+      <p class="socratic-insight">A FortiGate-VM in Azure has no NP7, no CP9, no crypto engine — everything you learned about hardware acceleration in Sessions 39 and 40 disappears. Yet Vaultline still needs the same policy model, the same visibility, and the same NGFW capability in front of their Azure customer portal. Fortinet had to solve two new problems: how do you scale a firewall whose performance is defined by vCPU count, and how do you write policy for an environment where subnets change hourly?</p>
+      <ul class="socratic-questions">
+        <li>When would you choose BYOL over PAYG, and vice versa?</li>
+        <li>Why do SDN Connectors exist? What would policy management look like without them?</li>
+      </ul>
+      <div class="answer-area" data-section="cloud">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text"><strong>BYOL</strong> wins for long-lived, predictable production workloads — the licence is a fixed subscription capping vCPU usage, so a 24/7 multi-year deployment amortises the up-front cost quickly. It is also portable across clouds. <strong>PAYG</strong> wins for short-lived, bursty, or POC workloads — deployment takes minutes with no procurement, billing bundles into the existing cloud invoice, and turning the VM off stops the meter. The rule of thumb: rental car (PAYG) versus outright purchase (BYOL). Vaultline's Azure customer portal, running 24/7 for years, is a BYOL scenario.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Cloud resources change dynamically — DevOps engineers spin subnets up and down all day. Static IP-based policies break the moment someone re-CIDRs a subnet. <strong>SDN Connectors</strong> poll the cloud provider's management API (Azure, AWS, GCP, NSX, Kubernetes) and translate cloud-native metadata — tags, resource groups, VM labels — into <em>dynamic firewall address objects</em>. A policy that references "any VM tagged role=web" continues working as new web VMs are created, without a policy edit. Without SDN Connectors, cloud policy management degenerates into constant reactive edits to keep up with infrastructure changes.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-cloud">
+      <div class="section-label">SECTION 04 — DEPLOYMENT ROLE</div>
+      <h2>The Cloud <em>FortiGate-VM</em></h2>
+
+      <p>The <strong>FortiGate-VM</strong> is FortiOS running as a virtual machine on a hypervisor you don't own. It has no NP7 for session offload, no CP9 for TLS or IPsec acceleration, and no dedicated crypto engines. Every function that ran on silicon in the physical fleet now runs as software on whatever vCPUs Azure, AWS, or GCP allocate to the VM.</p>
+
+      <p>This has two profound consequences. First, throughput is defined entirely by vCPU count — meaning Fortinet needed a licensing model that scales with vCPU rather than a fixed hardware SKU. Second, cloud environments change dynamically — meaning policy cannot be built around static IP addresses.</p>
+
+      <h3 style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--text);margin:20px 0 10px;">BYOL vs PAYG</h3>
+
+      <table class="data-table">
+        <thead><tr><th>Model</th><th>Mechanism</th><th>Best For</th></tr></thead>
+        <tbody>
+          <tr><td>BYOL</td><td>Fixed annual licence entitles the VM to X vCPUs; enforced by FortiOS regardless of the hypervisor VM size</td><td>Long-lived production, predictable budget, portable across clouds</td></tr>
+          <tr><td>PAYG</td><td>Marketplace image billed hourly through the cloud provider; rate scales with VM size</td><td>POC, dev/test, bursty or autoscaling workloads</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <strong>Rule of thumb:</strong> BYOL = buy the car outright. PAYG = airport rental. Cheap short-term, expensive long-term. Vaultline's Azure customer portal (24/7, multi-year) is a BYOL scenario.
+      </div>
+
+      <h3 style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--text);margin:20px 0 10px;">SDN Connectors</h3>
+
+      <p>The mechanism that makes a FortiGate-VM genuinely <em>cloud-native</em> is the <strong>SDN Connector</strong>. Rather than write policy against static IP ranges, an engineer writes policy against dynamic address objects populated by real-time queries against the cloud provider's API:</p>
+
+      <ul>
+        <li><strong>Azure SDN Connector:</strong> discovers VMs, resource groups, subnets, and tags</li>
+        <li><strong>AWS SDN Connector:</strong> discovers EC2 instances, VPCs, security groups, and tags</li>
+        <li><strong>GCP, VMware NSX, Kubernetes:</strong> each supported via their own connector</li>
+      </ul>
+
+      <p>A policy that says "allow anything tagged <em>role=web</em> to reach anything tagged <em>role=db</em>" continues working as DevOps engineers scale the estate — the FortiGate discovers new tagged VMs automatically on each poll cycle.</p>
+
+      <div class="callout callout-amber">
+        <strong>Exam flag:</strong> If a scenario mentions cloud tags, dynamic address objects, or automatic discovery of cloud resources, it is testing SDN Connectors. If it asks about a long-running production VM's licensing, it is testing BYOL vs PAYG.
+      </div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Cloud VM = <strong>no silicon (vCPU only) + BYOL/PAYG licensing + SDN Connectors</strong>. Everything the NP7 and CP9 did in silicon now runs on vCPUs. SDN Connectors turn cloud metadata into firewall addresses so policy survives infrastructure change.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-cloud" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-cloud','Cloud VM')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-cloud" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-cloud')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 5 — ISFW
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · ISFW</span>
+      </div>
+      <p class="socratic-insight">VDOMs virtualise one physical device into many logical firewalls. They're cheap, elegant, and solve most segmentation problems. So why do larger organisations sometimes deploy an entirely separate physical FortiGate <em>inside</em> the LAN? What does a second physical device give you that a VDOM on the edge box does not?</p>
+      <ul class="socratic-questions">
+        <li>What are the three reasons a dedicated internal firewall wins over an equivalent VDOM?</li>
+        <li>Why is an ISFW often deployed in transparent mode?</li>
+      </ul>
+      <div class="answer-area" data-section="isfw">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">(1) <strong>Performance isolation</strong> — the edge firewall's CPU and NP7 are already committed to internet inspection; adding tens of gigabits of east-west inspection on top competes for the same silicon and creates the exact overload condition Vaultline suffered on Friday night. (2) <strong>Failure isolation</strong> — a dedicated ISFW gives you two independent failure domains; an edge outage no longer breaks internal segmentation, and an ISFW outage no longer breaks internet access. (3) <strong>Administrative boundary</strong> — in larger organisations, the internet security team and the internal segmentation team are often different teams with different change windows and audit requirements; a physical boundary is often a governance requirement, not a technical one.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">An ISFW is typically dropped <em>between existing subnets</em> that were previously routed through a switch. <strong>Transparent mode</strong> allows the FortiGate to bridge those subnets at Layer 2 without requiring any IP renumbering, gateway changes, or route table modifications on the surrounding infrastructure. From the perspective of hosts on either side, nothing has changed — the packets simply pass through a device that now inspects them. This makes ISFW insertion a low-risk change, which matters when you're inserting a firewall between production zones that must not experience a maintenance window.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-isfw">
+      <div class="section-label">SECTION 05 — DEPLOYMENT ROLE</div>
+      <h2>The Internal Segmentation <em>FortiGate</em></h2>
+
+      <p>The <strong>Internal Segmentation FortiGate (ISFW)</strong> lives <em>inside</em> the LAN, between internal security zones — corporate users versus trading systems, PCI zones versus general estate, IT versus OT. Its only job is east-west policy enforcement between internal zones. It never faces the internet directly.</p>
+
+      <p>ISFW justification is threefold — and the exam expects you to name all three:</p>
+
+      <ol>
+        <li><strong>Performance isolation:</strong> keeps east-west inspection off the edge firewall's CPU and NP7, which are already committed to internet inspection.</li>
+        <li><strong>Failure isolation:</strong> two devices means two independent failure domains — an outage in one does not compromise the other.</li>
+        <li><strong>Administrative boundary:</strong> physical separation between the internet security team and the internal segmentation team, often required by governance, audit, or change-control regimes.</li>
+      </ol>
+
+      <div class="callout callout-green">
+        <strong>Remember:</strong> "Segmentation" is the <em>outcome</em>. VDOMs also deliver segmentation. What distinguishes an ISFW is <em>performance isolation, failure isolation, and administrative boundary</em>. Don't reduce your answer to just "segmentation" on the exam.
+      </div>
+
+      <p>ISFWs are frequently deployed in <strong>transparent mode</strong> — the FortiGate bridges Layer 2 between existing subnets without requiring any IP renumbering. This makes ISFW insertion practical in brownfield networks where a maintenance window for re-addressing is not achievable. Transparent mode is a full topic in its own right and will be covered in a dedicated future session.</p>
+
+      <div class="callout callout-amber">
+        <strong>Session 02 connection:</strong> VDOMs and ISFWs solve overlapping problems by different mechanisms. VDOMs virtualise one device; an ISFW physically separates. The right choice depends on scale, throughput budget, governance requirements, and failure-domain design. A senior engineer chooses deliberately — not because "we always do it this way."</p>
+      </div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">ISFW = <strong>east-west policy inside the LAN</strong>, justified by <em>performance isolation + failure isolation + administrative boundary</em>. Often deployed in transparent mode for insertion without renumbering. Not the same as a VDOM — different failure domain, different silicon.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-isfw" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-isfw','ISFW')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-isfw" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-isfw')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</main>
+
+<div class="page-nav">
+  <a class="page-nav-btn page-nav-prev" href="session-02-fortios-architecture.html">
+    <span class="page-nav-label">← PREVIOUS SESSION</span>
+    <span class="page-nav-title">Session 02 — FortiOS Architecture</span>
+  </a>
+  <a class="page-nav-btn page-nav-next" href="index.html">
+    <span class="page-nav-label">NEXT →</span>
+    <span class="page-nav-title">Session 04 — TBD</span>
+  </a>
+</div>
+
+<footer>
+  NSE7 EFW 7.6<span>.</span> Domain 1 — System Configuration<span>.</span> Session 03<span>.</span> Enterprise Deployment Patterns
+</footer>
+
+<script>
+const PAGE_KEY = 'nse7-s03-enterprise-deployment-patterns';
+const SECTIONS = {
+  'section-branch': 'Branch',
+  'section-datacenter': 'Datacenter',
+  'section-edge': 'Edge',
+  'section-cloud': 'Cloud VM',
+  'section-isfw': 'ISFW',
+};
+
+document.querySelectorAll('.socratic-header').forEach(function(h) {
+  h.addEventListener('click', function() { h.closest('.socratic-block').classList.toggle('soc-open'); });
+});
+function getQArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-qs') || '[]'); }
+function saveQArr(qs) { localStorage.setItem(PAGE_KEY+'-qs', JSON.stringify(qs)); }
+function addQuestion(key, name) {
+  const ta = document.getElementById('q-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const qs = getQArr(); qs.push({id: Date.now(), section: key, sectionName: name, text});
+  saveQArr(qs); ta.value = ''; renderQPanel();
+  if (!document.getElementById('qpanel-body').classList.contains('open')) toggleQPanel();
+}
+function deleteQ(id) { saveQArr(getQArr().filter(q => q.id !== id)); renderQPanel(); }
+function toggleQPanel() {
+  const body = document.getElementById('qpanel-body');
+  const header = document.getElementById('qpanel-header');
+  const chevron = document.getElementById('qpanel-chevron');
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-qpanel-open', open);
+}
+function renderQPanel() {
+  const qs = getQArr();
+  const count = document.getElementById('qpanel-count');
+  if (count) { count.textContent = qs.length; count.style.display = qs.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.qpanel-hint');
+  if (hint) hint.textContent = qs.length ? `— ${qs.length} question${qs.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('qpanel-body'); if (!body) return;
+  if (!qs.length) { body.innerHTML = '<p class="no-questions">No questions yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  qs.forEach(q => { if (groups[q.section]) groups[q.section].push(q); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(q => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${q.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteQ(${q.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function getNotesArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-notes') || '[]'); }
+function saveNotesArr(ns) { localStorage.setItem(PAGE_KEY+'-notes', JSON.stringify(ns)); }
+function addNote(key) {
+  const ta = document.getElementById('note-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const ns = getNotesArr(); ns.push({id: Date.now(), section: key, sectionName: SECTIONS[key]||key, text});
+  saveNotesArr(ns); ta.value = ''; renderNotesPanel();
+  if (!document.getElementById('notes-panel-body').classList.contains('open')) toggleNotesPanel();
+}
+function deleteNote(id) { saveNotesArr(getNotesArr().filter(n => n.id !== id)); renderNotesPanel(); }
+function toggleNotesPanel() {
+  const body = document.getElementById('notes-panel-body');
+  const header = document.getElementById('notes-panel-header');
+  const chevron = document.getElementById('notes-panel-chevron');
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-notes-panel-open', open);
+}
+function renderNotesPanel() {
+  const ns = getNotesArr();
+  const count = document.getElementById('notes-panel-count');
+  if (count) { count.textContent = ns.length; count.style.display = ns.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.notes-panel-hint');
+  if (hint) hint.textContent = ns.length ? `— ${ns.length} note${ns.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('notes-panel-body'); if (!body) return;
+  if (!ns.length) { body.innerHTML = '<p class="no-questions">No notes yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  ns.forEach(n => { if (groups[n.section]) groups[n.section].push(n); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(n => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteNote(${n.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function saveSocAnswer(btn) {
+  const area = btn.closest('.answer-area');
+  const ta = area.querySelector('.answer-textarea');
+  if (!ta.value.trim()) { ta.focus(); return; }
+  const key = PAGE_KEY+'-socans-'+area.dataset.section;
+  try { localStorage.setItem(key, ta.value); } catch(e) {}
+  ta.disabled = true; btn.textContent = '✓ Answer saved'; btn.disabled = true;
+  const seeBtn = area.querySelector('.btn-see-answer');
+  seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+}
+function revealSocAnswer(btn) {
+  if (btn.disabled) return;
+  const answers = btn.closest('.answer-area').querySelector('.model-answers');
+  const isHidden = answers.style.display === 'none' || !answers.style.display;
+  answers.style.display = isHidden ? 'block' : 'none';
+  btn.textContent = isHidden ? '▲ Hide Model Answer' : '💡 See Model Answer';
+}
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+document.addEventListener('DOMContentLoaded', function() {
+  renderQPanel(); renderNotesPanel();
+  if (localStorage.getItem(PAGE_KEY+'-qpanel-open') === 'true') toggleQPanel();
+  if (localStorage.getItem(PAGE_KEY+'-notes-panel-open') === 'true') toggleNotesPanel();
+  document.querySelectorAll('.answer-area').forEach(function(area) {
+    const key = PAGE_KEY+'-socans-'+area.dataset.section;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const ta = area.querySelector('.answer-textarea'); ta.value = saved; ta.disabled = true;
+        const addBtn = area.querySelector('.btn-add-answer'); addBtn.textContent = '✓ Answer saved'; addBtn.disabled = true;
+        const seeBtn = area.querySelector('.btn-see-answer'); seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+      }
+    } catch(e) {}
+  });
+  document.querySelectorAll('.analogy-box').forEach(function(box) {
+    box.classList.add('expanded');
+    const label = box.querySelector(':scope > .analogy-label');
+    if (label) label.addEventListener('click', () => box.classList.toggle('expanded'));
+  });
+});
+</script>
+</body>
+</html>

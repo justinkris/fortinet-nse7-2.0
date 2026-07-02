@@ -31,13 +31,18 @@ Standalone Extras are discovered by `discover_standalone_extras()` in `build.py`
 
 **Registering a new topic:** append to the `EXTRAS = [...]` list in `build.py` with `num`, `slug`, `title`, `tagline`. Then rebuild.
 
-## Sort workflow — sorting-hat extension
+## Sort workflow — sorting-hat extensions
 
-The base skill's sort patterns cover `session-NN-*` files. This project adds one more pattern:
+The base skill's sort patterns cover `session-NN-{bite|nibble|guide|complete}-*` and `session-NN-*.txt`. This project adds two patterns:
 
-| Pattern | Meaning | Destination |
-|---|---|---|
-| `extras-<NN>-<slug>.html` | Standalone Extras topic index | `extras/extras-<NN>-<slug>/index.html` |
+| Pattern | Meaning | Destination | Extra step |
+|---|---|---|---|
+| `extras-<NN>-<slug>.html` | Standalone Extras topic index | `extras/extras-<NN>-<slug>/index.html` | Register in `EXTRAS` list in `build.py`. |
+| `session-<NN>-visual-<slug>.html` | Session-linked visual bite (`visual` is a semantic marker, not a standard kind) | Ask the user which kind to sort as — usually **bite**. Then `sessions/session-<NN>-<session-slug>/bites/<slug>.html`. | No registry — discovery scan finds it. |
+
+Both patterns typically ship with **multiple image placeholders + prompt-toggle blocks** — see next section.
+
+For any other filename that doesn't match a known pattern, halt and ask the user (do not guess a destination).
 
 Sort steps for an `extras-NN-*.html` file:
 
@@ -47,38 +52,66 @@ Sort steps for an `extras-NN-*.html` file:
 4. Run `python3 build.py`.
 5. Report the move and confirm the new card shows on `extras.html`.
 
-Session-linked bite/nibble/guide/complete/summary files still follow the base skill's rules — nothing changes there.
+Sort steps for a `session-NN-visual-*.html` file:
 
-## Image handling for standalone Extras
+1. Confirm the target kind with the user (default: bite). Move to `sessions/session-<NN>-<session-slug>/<kind>s/<slug>.html`.
+2. **Handle image placeholders** (see next section).
+3. Run `python3 build.py`.
 
-When an `extras-NN-*.html` file contains one or more **image placeholders** (dashed-border blocks with an inline generation prompt), do this on sort:
+Session-linked bite/nibble/guide/complete/summary files still follow the base skill's rules for everything except image handling.
 
-1. Create an `images/` subfolder inside the extras topic folder.
-2. For each placeholder:
-   - Pick a descriptive PNG filename (kebab-case, e.g. `customs-lanes.png`, `s1-reading-order.png`).
-   - Replace the placeholder block with an `<img src="images/<filename>.png">` that degrades gracefully to a dashed fallback if the PNG is missing. Pattern:
+## Image handling for sorted files with placeholders
 
-     ```html
-     <img src="images/<filename>.png" alt="..." style="..." onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-     <div style="display:none;border:2px dashed var(--border);...">
-       <!-- short placeholder card: title + "Drop the generated PNG at images/<filename>.png — see images/prompts.txt for the prompt" -->
+This applies to **any sorted file with image placeholders** — standalone Extras topic pages, session-linked bites/nibbles/guides, visual companions. Ask "does this file have inline image placeholders with prompt text?" — if yes, do the following.
+
+**Where the `images/` folder lives:** always alongside the HTML file (as a sibling in the same folder).
+
+| File location | `images/` folder |
+|---|---|
+| `extras/extras-NN-<slug>/index.html` | `extras/extras-NN-<slug>/images/` |
+| `sessions/session-NN-<slug>/{bites,nibbles,guides}/<file>.html` | `sessions/session-NN-<slug>/{bites,nibbles,guides}/images/` |
+
+**Three placeholder styles seen so far:**
+
+1. **Simple dashed-div placeholder** with an inline prompt paragraph (e.g. extras-02, session-39 nibble): one placeholder, one prompt inline. Rewrite as described below.
+2. **Custom `.hero-image` / `.scene-image` classes + adjacent `.prompt-block` / `.scene-prompt-block` toggles** (e.g. the vaultline visual bite): often 5+ placeholders per file, each with an intended filename shown in a `.hero-image-filename` / `.scene-image-filename` div and a matching prompt-body directly after. Same rewrite, done in a loop.
+3. **Already-correct `<img src=… onerror=…>` with `.si-placeholder` fallback and a `▾ Show image prompt` toggle** (e.g. extras-03): **do not touch the HTML** — the file already has the right structure. Just extract the prompt text from each `<div class="prompt-content" hidden>…</div>` into `images/prompts.txt`.
+
+**Rewrite pattern (styles 1 and 2):** for each placeholder in the file:
+
+1. Pick a descriptive PNG filename in kebab-case (e.g. `customs-lanes.png`, `nturbo-pipeline.png`, `visual-vaultline-hero-map.png`). If the source file already shows an intended filename (e.g. inside a `.hero-image-filename` div), keep it verbatim.
+2. Replace the placeholder block *and* its adjacent prompt-toggle block with a single `<img>` + graceful fallback:
+
+   ```html
+   <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:28px;">
+     <img src="images/<filename>.png" alt="..." style="width:100%;max-width:900px;border-radius:12px;border:1px solid var(--border);display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+     <div style="display:none;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:40px 28px;flex-direction:column;align-items:center;gap:12px;width:100%;">
+       <!-- short fallback card: icon + title + "Drop the generated PNG at images/<filename>.png — see images/prompts.txt for the prompt" -->
      </div>
-     ```
-
-   - **Do not leave the long prompt text inline in the HTML.** Move it to `images/prompts.txt`.
-3. Create or append to `extras/extras-NN-<slug>/images/prompts.txt` — one block per image, in this shape:
-
-   ```
-   <filename>.png
-
-   <full generation prompt, verbatim>
-
-   ============================================================
+   </div>
    ```
 
-   If the file already exists, append; do not overwrite.
+3. **Do not leave the long prompt text inline in the HTML.** Remove the `.prompt-block` / `.scene-prompt-block` / equivalent toggle block entirely — the prompt lives in `prompts.txt`.
 
-**Exception:** if the file already uses the `<img src=... onerror=...>` pattern with a `.si-placeholder` fallback (e.g. Claude generated it that way), don't rewrite the HTML — just extract each prompt to `images/prompts.txt` and leave the toggle-to-view inline prompts in place.
+**For multi-placeholder files, write a one-shot Python script** rather than doing N sequential Edit tool calls — a regex over `<div class="(?:hero|scene)-image">…</div>\s*<div class="(?:scene-)?prompt-block"…</div>` covers the vaultline shape. Keep the script in `/tmp` and run it once; don't check it in.
+
+**`prompts.txt` shape:** one block per image, in this format (append if the file already exists, don't overwrite):
+
+```
+<file-context-line, e.g. "Session 03 — Bite: Visual — The Vaultline Estate">
+============================================================
+
+<filename>.png
+
+Title: <optional title from the source>
+
+<full generation prompt, verbatim — preserve section labels if the source had them>
+
+============================================================
+
+<next filename>.png
+…
+```
 
 ## Breadcrumbs
 

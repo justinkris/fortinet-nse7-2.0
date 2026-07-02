@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 03 Bite — Enterprise Deployment Patterns</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:40px 60px 32px;background:var(--ink-dark);}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  header h1{font-family:'Playfair Display',serif;font-size:42px;font-weight:700;line-height:1.05;color:#fbf7ec;margin-bottom:8px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:6px;line-height:1.6;}
+  .reading-time{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.14em;color:var(--ink-accent);text-transform:uppercase;margin-top:12px;}
+  main{max-width:1000px;margin:0 auto;padding:40px 60px 60px;}
+  .bite-section{margin-bottom:36px;}
+  .bite-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .bite-section h2{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:14px;padding-left:14px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .bite-section h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .bite-section p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:12px;}
+  .bite-section p strong{color:var(--text);font-weight:600;}
+  .bite-section p em{color:var(--blue);font-style:italic;}
+  .bite-section ul,.bite-section ol{padding-left:22px;margin-bottom:12px;}
+  .bite-section li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:4px;}
+  .bite-section li strong{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:14px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .data-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:9px 12px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:14.5px;padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:14px 0;}
+  .analogy-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:6px;text-transform:uppercase;}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:8px;font-size:17px;}
+  .quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:14px;border-top:3px solid var(--blue);}
+  .quiz-num{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--blue);text-transform:uppercase;margin-bottom:8px;}
+  .quiz-q{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--text);line-height:1.55;margin-bottom:10px;}
+  .quiz-toggle{background:transparent;border:1px solid var(--blue);color:var(--blue);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.12em;padding:6px 14px;border-radius:8px;cursor:pointer;text-transform:uppercase;}
+  .quiz-toggle:hover{background:var(--blue-glow);}
+  .quiz-answer{margin-top:12px;padding:10px 14px;background:var(--surface-2);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:15.5px;color:var(--text-soft);line-height:1.65;}
+  .quiz-answer[hidden]{display:none;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:24px 24px 20px;}header h1{font-size:32px;}main{padding:24px 24px 40px;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<header>
+<div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 03</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Bite</span></div>
+<div class="header-eyebrow">🍪 Study Bite · NSE7 EFW 7.6</div>
+  <h1>Enterprise <em>Deployment Patterns</em></h1>
+  <p>Reactivate the mental model in 5–10 minutes. Assumes you've already worked through the full session.</p>
+  <div class="reading-time">⏱ 7 min read</div>
+</header>
+
+<main>
+
+  <div class="bite-section">
+    <div class="bite-label">OVERVIEW</div>
+    <h2>The <em>one-paragraph</em> refresh</h2>
+    <p>A FortiGate's role in the network — <em>not its size</em> — determines its silicon, its inspection mode, and its SKU category. There are five canonical roles: <strong>Branch</strong> (SD-WAN across unequal links, SoC-class silicon), <strong>Datacenter</strong> (multi-NP7, flow-only, east-west), <strong>Edge</strong> (outbound user inspection, CP9-heavy for TLS decrypt, proxy-capable), <strong>Cloud VM</strong> (no silicon, vCPU-only, BYOL or PAYG, SDN Connectors), and <strong>ISFW</strong> (east-west policy inside the LAN, often transparent mode). Standardising on one SKU across all five is the reseller's fallacy — it overspends at one end and underspecs at the other. Reason workload → silicon → SKU. Always.</p>
+  </div>
+
+  <div class="bite-section">
+    <div class="bite-label">PROBLEM SOLVED</div>
+    <h2>Why this matters on the <em>exam</em></h2>
+    <p>The NSE7 tests architectural thinking. Given an enterprise diagram, you must be able to label every FortiGate by role and justify silicon and features. Getting this wrong at design time creates the exact troubleshooting scenarios the exam then tests — proxy mode at the datacenter, SoC as a VPN hub, edge without CP9 capacity. Roles must be internalised, not memorised.</p>
+  </div>
+
+  <div class="bite-section">
+    <div class="bite-label">MENTAL MODEL</div>
+    <h2>The <em>role-defined</em> firewall</h2>
+    <table class="data-table">
+      <thead><tr><th>Role</th><th>Defining Job</th><th>Silicon</th><th>Inspection</th></tr></thead>
+      <tbody>
+        <tr><td>Branch</td><td>SD-WAN across unequal WAN links</td><td>SoC4 / SP5 (integrated NP+CP)</td><td>Flow (typically)</td></tr>
+        <tr><td>Datacenter</td><td>Throughput at line rate, east-west</td><td>Multiple NP7 + discrete CP9</td><td>Flow only</td></tr>
+        <tr><td>Edge</td><td>Outbound user inspection + TLS decrypt</td><td>Balanced NP7 + strong CP9</td><td>Flow <em>and</em> proxy</td></tr>
+        <tr><td>Cloud VM</td><td>Any of the above, without silicon</td><td>vCPU only (no NP, no CP)</td><td>Flow (proxy expensive)</td></tr>
+        <tr><td>ISFW</td><td>East-west policy inside the LAN</td><td>Sized for internal throughput</td><td>Flow (often transparent mode)</td></tr>
+      </tbody>
+    </table>
+    <p><strong>The one-sentence rule:</strong> A firewall's role determines its silicon; its silicon determines its inspection mode; its inspection mode determines its SKU.</p>
+  </div>
+
+  <div class="bite-section">
+    <div class="bite-label">WORKFLOW</div>
+    <h2>The consultant's <em>decision flow</em></h2>
+    <ol>
+      <li><strong>Where does the firewall live?</strong> Edge, datacenter, branch, cloud, or inside the LAN?</li>
+      <li><strong>What is the dominant traffic?</strong> Outbound user, east-west server, machine-to-machine, or inter-zone?</li>
+      <li><strong>What inspection is required?</strong> Flow-only, flow + proxy, or transparent bridging?</li>
+      <li><strong>What silicon does that inspection cost?</strong> NP7 for throughput, CP9 for TLS decrypt, SoC for integrated efficiency, vCPU for cloud.</li>
+      <li><strong>What SKU family maps to that silicon budget?</strong> This is finally where a datasheet enters the picture.</li>
+    </ol>
+    <p>Never start at step 5.</p>
+  </div>
+
+  <div class="bite-section">
+    <div class="bite-label">TERMINOLOGY</div>
+    <h2>Key <em>terms</em></h2>
+    <ul>
+      <li><strong>SoC4 / SP5:</strong> System-on-Chip designs integrating NP+CP for branch/entry-level use.</li>
+      <li><strong>NP7:</strong> Network Processor 7 — session forwarding, NAT, IPsec crypto. Datacenter models ship multiple in parallel.</li>
+      <li><strong>CP9:</strong> Content Processor 9 — TLS decrypt, IPS pattern matching (via IPSA), Diffie-Hellman.</li>
+      <li><strong>SD-WAN:</strong> intelligent per-application steering across multiple unequal WAN links. Branch-defining feature.</li>
+      <li><strong>ISFW:</strong> Internal Segmentation FortiGate. East-west policy inside the LAN.</li>
+      <li><strong>BYOL:</strong> Bring Your Own Licence. Fixed vCPU entitlement. Portable across clouds. Long-term winner.</li>
+      <li><strong>PAYG:</strong> Pay As You Go. Marketplace hourly billing. Bursty/short-term winner.</li>
+      <li><strong>SDN Connector:</strong> polls cloud API to populate dynamic firewall address objects from tags, resource groups, VM metadata.</li>
+      <li><strong>Transparent mode:</strong> L2 bridge — insert an ISFW without renumbering surrounding subnets.</li>
+    </ul>
+  </div>
+
+  <div class="bite-section">
+    <div class="bite-label">EXAM CRITICAL</div>
+    <h2>The <em>traps</em> to expect</h2>
+
+    <div class="callout callout-amber">
+      <strong>Trap 1 — Edge vs Datacenter confusion.</strong> Both are big HQ boxes. Read for <em>traffic direction</em> (outbound user vs east-west server) and <em>inspection mode</em> (proxy-capable vs flow-only). Edge = CP9-heavy. Datacenter = multi-NP7.
+    </div>
+
+    <div class="callout callout-amber">
+      <strong>Trap 2 — SoC as VPN hub.</strong> Wrong on its face. SoC4/SP5 are branch devices. If a scenario positions them as terminating 40+ tunnels, the scenario itself is the wrong answer or the question is testing your ability to reject it.
+    </div>
+
+    <div class="callout callout-amber">
+      <strong>Trap 3 — BYOL vs PAYG by workload duration.</strong> The exam rarely asks the definition; it asks the scenario. Long-lived production = BYOL. Bursty/POC/dev = PAYG.
+    </div>
+
+    <div class="callout callout-amber">
+      <strong>Trap 4 — ISFW reduced to "segmentation".</strong> VDOMs also deliver segmentation. Name all three ISFW justifications: performance isolation, failure isolation, administrative boundary.
+    </div>
+
+    <div class="callout callout-amber">
+      <strong>Trap 5 — Cloud tags in a scenario.</strong> Dynamic address objects populated from cloud metadata = SDN Connector. Not a policy edit, not a NAT trick.
+    </div>
+  </div>
+
+  <div class="bite-section">
+    <div class="bite-label">COMMON MISTAKES</div>
+    <h2>What junior engineers <em>get wrong</em></h2>
+    <ul>
+      <li><strong>"Standardise on one model for support and sparing."</strong> Tempting but architecturally wrong. Roles are incompatible workloads.</li>
+      <li><strong>"Flow mode is less security."</strong> No. Flow + NTurbo + IPS engine + CP9 (via IPSA) is full L7 inspection at line rate. The difference is <em>timing</em>, not <em>depth</em>.</li>
+      <li><strong>"The edge firewall protects against attackers."</strong> Partially. Its dominant real workload is inspecting <em>outbound</em> user traffic — where 95% of the risk actually lives.</li>
+      <li><strong>"A FortiGate-VM is just a smaller FortiGate."</strong> No. It has no NP7, no CP9, no crypto engine. Everything runs on vCPUs. This changes every performance calculation.</li>
+      <li><strong>"An ISFW is a VDOM in a separate box."</strong> Only in outcome. The reasons for physical separation are performance, failure, and administrative isolation — none of which VDOMs provide.</li>
+    </ul>
+  </div>
+
+  <div class="bite-section">
+    <div class="bite-label">TROUBLESHOOTING CHECKLIST</div>
+    <h2>When a deployment feels <em>wrong</em></h2>
+    <ol>
+      <li>Trace the workload: what does this box actually do all day?</li>
+      <li>Trace the silicon: does the hardware match that workload?</li>
+      <li>Trace the inspection mode: is the mode compatible with the throughput target?</li>
+      <li>Check for role confusion: is a datacenter box being asked to do edge work, or vice versa?</li>
+      <li>Check for scale mismatch: is a SoC device being asked to hub a large topology?</li>
+      <li>Check for cloud reality: is a physical-appliance mindset being applied to a VM?</li>
+    </ol>
+  </div>
+
+  <div class="bite-section">
+    <div class="bite-label">ANALOGY</div>
+    <h2>The <em>vehicle fleet</em></h2>
+    <div class="analogy-box">
+      <div class="analogy-label">Analogy</div>
+      <div class="analogy-text">
+        <p class="analogy-summary">A national delivery company doesn't run its whole fleet as one vehicle type.</p>
+        <ul style="list-style:none;padding:0;">
+          <li><strong>Branch</strong> = the small van doing multi-drop rural routes. Small, agile, cost-conscious. Chooses which road to take each morning based on weather.</li>
+          <li><strong>Datacenter</strong> = the eighteen-wheeler on the motorway. Vast tonnage, one route, cannot afford to stop for inspection.</li>
+          <li><strong>Edge</strong> = the depot at the city gates. Every outgoing parcel is checked and logged. Handles fewer parcels per hour but examines each carefully.</li>
+          <li><strong>Cloud VM</strong> = a hired vehicle from a fleet you don't own. You choose whether to lease (BYOL) or rent per-day (PAYG). No maintenance responsibility.</li>
+          <li><strong>ISFW</strong> = the internal loading bay checkpoint between the warehouse floor and the dispatch area. Nothing to do with outside traffic; entirely about who moves what internally.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="bite-section">
+    <div class="bite-label">SELF-TEST</div>
+    <h2>Five <em>quick</em> questions</h2>
+
+    <div class="quiz-block">
+      <div class="quiz-num">Q1</div>
+      <div class="quiz-q">A customer has 60 Gbps of east-west database replication and wants full IPS on that traffic. Which role is this and what inspection mode must you use?</div>
+      <button class="quiz-toggle" onclick="this.nextElementSibling.hidden=!this.nextElementSibling.hidden;this.textContent=this.nextElementSibling.hidden?'▾ Reveal answer':'▴ Hide answer';">▾ Reveal answer</button>
+      <div class="quiz-answer" hidden><strong>Datacenter role, flow-only.</strong> Proxy mode is architecturally impossible at 60 Gbps because it disqualifies NP7 offload and CPU-bounds every session. Flow mode + IPS via NTurbo + CP9 gives full L7 inspection at line rate.</div>
+    </div>
+
+    <div class="quiz-block">
+      <div class="quiz-num">Q2</div>
+      <div class="quiz-q">A branch office has both a fibre WAN and a 4G backup. Users need to keep their Teams calls up when the fibre degrades. What Fortinet feature defines this workload, and why is this a branch problem rather than an edge problem?</div>
+      <button class="quiz-toggle" onclick="this.nextElementSibling.hidden=!this.nextElementSibling.hidden;this.textContent=this.nextElementSibling.hidden?'▾ Reveal answer':'▴ Hide answer';">▾ Reveal answer</button>
+      <div class="quiz-answer" hidden><strong>SD-WAN.</strong> Application-aware steering across unequal WAN links. Branches have multiple, unreliable, cost-differentiated links — edges typically have redundant enterprise-grade links that don't require this kind of per-application decision.</div>
+    </div>
+
+    <div class="quiz-block">
+      <div class="quiz-num">Q3</div>
+      <div class="quiz-q">A customer wants to deploy a FortiGate-VM in Azure to protect their production customer portal that runs 24/7. Which licensing model do you recommend and why?</div>
+      <button class="quiz-toggle" onclick="this.nextElementSibling.hidden=!this.nextElementSibling.hidden;this.textContent=this.nextElementSibling.hidden?'▾ Reveal answer':'▴ Hide answer';">▾ Reveal answer</button>
+      <div class="quiz-answer" hidden><strong>BYOL.</strong> Long-lived, predictable production workload. Fixed licence entitles the VM to a set vCPU count; the up-front cost amortises quickly against PAYG's hourly premium. Also portable if they later migrate to AWS or GCP.</div>
+    </div>
+
+    <div class="quiz-block">
+      <div class="quiz-num">Q4</div>
+      <div class="quiz-q">A customer's cloud DevOps team spins subnets up and down all day. Static IP-based firewall policies keep breaking. What Fortinet mechanism solves this?</div>
+      <button class="quiz-toggle" onclick="this.nextElementSibling.hidden=!this.nextElementSibling.hidden;this.textContent=this.nextElementSibling.hidden?'▾ Reveal answer':'▴ Hide answer';">▾ Reveal answer</button>
+      <div class="quiz-answer" hidden><strong>SDN Connectors.</strong> The FortiGate polls the cloud provider's API (Azure/AWS/GCP/NSX/K8s) and populates dynamic address objects from cloud-native metadata — tags, resource groups, VM labels. Policy references the tag, not the IP.</div>
+    </div>
+
+    <div class="quiz-block">
+      <div class="quiz-num">Q5</div>
+      <div class="quiz-q">Give three reasons an organisation deploys a dedicated ISFW rather than a VDOM on their edge firewall — and why the third reason is often the deciding factor in large enterprises.</div>
+      <button class="quiz-toggle" onclick="this.nextElementSibling.hidden=!this.nextElementSibling.hidden;this.textContent=this.nextElementSibling.hidden?'▾ Reveal answer':'▴ Hide answer';">▾ Reveal answer</button>
+      <div class="quiz-answer" hidden><strong>(1) Performance isolation</strong> — east-west inspection doesn't compete with edge CPU and NP7 workload. <strong>(2) Failure isolation</strong> — two independent failure domains. <strong>(3) Administrative boundary</strong> — separate teams, separate change windows, separate audit trails. The third is often decisive because it's a governance requirement, not a technical one — and governance rarely accepts a VDOM as a substitute for a physical boundary.</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  NSE7 EFW 7.6<span>.</span> Session 03<span>.</span> Study Bite<span>.</span> Enterprise Deployment Patterns
+</footer>
+
+<script>
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+</script>
+</body>
+</html>
