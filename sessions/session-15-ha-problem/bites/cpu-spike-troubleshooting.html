@@ -21,7 +21,7 @@
 <script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Subtopic 15 — FGCP vs FGSP</title><!-- ← e.g. "Subtopic 02 — Configure VLANs" -->
+<title>Subtopic 15c — Diagnosing a Post-Failover CPU Spike</title><!-- ← e.g. "Subtopic 02 — Configure VLANs" -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   /* ── DESIGN TOKENS ── */
@@ -241,20 +241,14 @@
      ══════════════════════════════════════════════════════════ -->
 <header>
   <div class="header-left">
-    <div class="breadcrumb">
-      <span>NSE7 Enterprise Firewall 7.6</span>
-      <span class="breadcrumb-sep">›</span>
-      <span>Session 15 — HA</span>
-      <span class="breadcrumb-sep">›</span>
-      Study Bite
-    </div>
+    <div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 15</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Bite</span></div>
     <div class="header-eyebrow"><span class="dot-live"></span> Study Bite · NSE7 EF 7.6</div>
-    <h1>One Cluster, or Two Independent Firewalls — <em>FGCP vs FGSP</em></h1>
+    <h1>Diagnosing a <em>Post-Failover CPU Spike</em></h1>
     <!--
       ← H1 pattern: plain words first, key noun/phrase in <em>.
          e.g. "Configure <em>VLANs</em>" or "Understand <em>OSPF</em> Neighbor States"
     -->
-    <p>How to tell which HA problem you're actually solving before you pick a protocol.</p>
+    <p>A field walkthrough of the Thursday incident — turning a vague 'CPU spiked, portal hung' report into a clear verdict.</p>
     <!--
       ← One sentence (≤20 words) capturing the core insight of the subtopic.
          e.g. "How switches use 802.1Q tagging to carry multiple broadcast domains over a single trunk link."
@@ -266,12 +260,12 @@
      MOTIVATION BANNER
      ══════════════════════════════════════════════════════════ -->
 <div class="motivation-banner">
-  <div class="motivation-text">FGCP is one cluster that happens to have two bodies. FGSP is <em>two independent firewalls</em> that just tell each other what they know.</div>
+  <div class="motivation-text">A CPU spike after failover isn't a verdict — it's a <em>question waiting for evidence</em>.</div>
   <!--
     ← Bold Playfair statement. Wrap the key phrase in <em>. 1–2 sentences.
        e.g. "VLANs don't just split a switch — they create <em>independent broadcast domains</em> that share the same physical hardware."
   -->
-  <p class="motivation-sub">Get this backwards on the exam and you'll misread every HA scenario — waiting for a clustered failover that was never built, or forcing config sync onto two boxes that were designed to stay independent.</p>
+  <p class="motivation-sub">This bite reconstructs the exact diagnostic path used to answer Priya's question: was Thursday's failover a success, or a warning sign?</p>
   <!--
     ← Smaller supporting sentence. Why this subtopic matters in the bigger picture.
        e.g. "Every inter-VLAN routing, trunking, and STP topic later in the blueprint assumes you can predict exactly which port belongs to which broadcast domain."
@@ -306,9 +300,9 @@
      STICKY SECTION NAV — one tab per section
      ══════════════════════════════════════════════════════════ -->
 <nav class="section-nav" id="section-nav">
-  <a class="nav-tab active" href="#section-core-distinction">Core Distinction</a><!-- ← e.g. href="#section-vlan-basics" >VLAN Basics -->
-  <a class="nav-tab" href="#section-packet-flow">Packet Flow</a>
-  <a class="nav-tab" href="#section-exam-traps">Exam Traps</a>
+  <a class="nav-tab active" href="#section-incident-timeline">The Incident</a><!-- ← e.g. href="#section-vlan-basics" >VLAN Basics -->
+  <a class="nav-tab" href="#section-verdict">The Verdict</a>
+  <a class="nav-tab" href="#section-self-test">Self-Test</a>
   <!-- Add more tabs if there are 4 or 5 sections -->
 </nav>
 
@@ -323,19 +317,19 @@
     <div class="socratic-block">
       <div class="socratic-header">
         <span class="socratic-icon">💭</span>
-        <span class="socratic-label">THINK FIRST · CORE DISTINCTION</span>
+        <span class="socratic-label">THINK FIRST · THE INCIDENT</span>
         <!-- ← e.g. "THINK FIRST · VLAN BASICS" -->
       </div>
-      <p class="socratic-insight">Before reading on, force the recall. Both scenarios below involve two FortiGates — the only question is which relationship they have with each other.</p>
+      <p class="socratic-insight">HQ edge FortiGate-A dies (power supply). FGCP fails over to Box B in ~1 second. Users report a 45-second 'hanging' portal; CPU hits 95%. VPN tunnels never drop.</p>
       <!--
         ← 2–3 sentence framing of WHY these questions matter. Reveal the tension
            or the gotcha before asking the question.
       -->
       <ul class="socratic-questions">
-        <li>Two datacenter FortiGates, independently managed, config has drifted between them, both actively passing live traffic right now. Which protocol fits — and why can't the other one work here?</li><!-- ← Specific, scenario-driven. Ends with a '?' -->
-        <li>Two edge FortiGates, one ISP uplink, one box should sit ready to seamlessly take over live VPN tunnels the instant the other dies. Which protocol — and why?</li><!-- ← Second question. Use a third only if genuinely complex. -->
+        <li>Is this pattern consistent with FGCP working correctly, or is it a sign of a problem?</li><!-- ← Specific, scenario-driven. Ends with a '?' -->
+        <li>What's the very first question you'd ask before deciding 'success' or 'warning'?</li><!-- ← Second question. Use a third only if genuinely complex. -->
       </ul>
-      <div class="answer-area" data-section="core-distinction">
+      <div class="answer-area" data-section="incident-timeline">
         <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
         <div class="answer-buttons">
           <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
@@ -344,67 +338,44 @@
         <div class="model-answers" style="display:none;">
           <div class="model-answer-item">
             <div class="model-answer-q">Q1 — MODEL ANSWER</div>
-            <div class="model-answer-text">FGSP. It only needs session-table data shared between the boxes — it tolerates drifted config because there's no single cluster identity to keep in sync. FGCP is disqualified because it requires near-identical configuration and a single logical cluster identity from the start; you don't retrofit it onto two already-diverged, independently-managed devices.</div>
+            <div class="model-answer-text">Potentially both, and that's the point — a CPU spike right after an FGCP failover is expected, because session resync forces CPU-mediated re-establishment for every previously-offloaded session. Tunnels surviving is a strong positive sign that state actually transferred. Neither fact alone settles the verdict.</div>
             <!-- ← Precise. No hedging. 2–4 sentences. Lead with the core fact. -->
           </div>
           <div class="model-answer-item">
             <div class="model-answer-q">Q2 — MODEL ANSWER</div>
-            <div class="model-answer-text">FGCP. Heartbeat detects the failure, synchronized config means Box B is a mirror of Box A, and synchronized session state means live VPN SAs and sessions survive the takeover invisibly to the remote peer. FGSP has no election or failover logic of its own — it can't deliver a seamless single-box takeover by itself.</div>
+            <div class="model-answer-text">Was any traffic actually dropped during that window, or was the CPU merely busy? 'High CPU' and 'CPU overloaded and shedding packets' look similar in a glance at a dashboard but mean very different things for the verdict.</div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- SECTION CONTENT BLOCK -->
-    <div class="section-block" id="section-core-distinction">
+    <div class="section-block" id="section-incident-timeline">
       <div class="section-label">SECTION 01</div>
-      <h2>Same Two Boxes, <em>Two Completely Different Relationships</em></h2>
+      <h2>Reconstructing <em>What Actually Happened</em></h2>
       <!-- ← Same em-noun pattern as H1. e.g. "How a Switch Builds Its <em>MAC Address Table</em>" -->
 
       <!-- Section image — starts compact (260px), click to expand full-width -->
       <div class="section-img-wrap">
-        <img src="images/s1-core-distinction.png" class="section-img"
-             alt="Diagram comparing FGCP clustered identity versus FGSP independent session sync"
+        <img src="images/s1-incident-timeline.png" class="section-img"
+             alt="Timeline diagram of the Thursday FGCP failover incident"
              onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
-        <p class="img-caption">FGCP: one logical cluster, two bodies. FGSP: two independent firewalls sharing only session data.</p>
+        <p class="img-caption">From power failure to CPU normalization — the full 45-second window.</p>
         <!-- Shown only when image is missing: -->
         <div class="si-placeholder">
-          <span class="si-filename">images/s1-core-distinction.png</span>
+          <span class="si-filename">images/s1-incident-timeline.png</span>
           <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Split composition, left half vs right half, divided by a thin dashed sage-green vertical line. LEFT HALF labeled 'FGCP' in bold coral header text: two identical FortiGate boxes (simple flat rectangular firewall icons with a small flame-shield logo) standing side by side wearing matching coral name-badges reading 'CLUSTER-01', connected by two thick gold cables labeled 'heartbeat' and 'session + config sync' with small flowing dot animation marks along them, a single dashed-outline halo drawn around both boxes together to show they present as one logical unit, a small crown icon over the current primary box and a 'standby' tag on the second. RIGHT HALF labeled 'FGSP' in bold sage-green header text: two clearly different-looking FortiGate boxes (slightly different shape/colour to show independence) standing apart with no shared halo, each with its own separate configuration folder icon beside it in a different muted colour to show config drift, a single thin gold line labeled 'session table sync only' connecting them, and above both boxes a separate cloud-shaped icon labeled 'upstream switch / load balancer' with two arrows pointing down to each box to show traffic being distributed by something external. Bottom of image: small caption bar reading 'FGCP: the boxes manage failover themselves — FGSP: something upstream decides where traffic goes.' Clean structured composition, generous spacing, educational but visually engaging, every object reinforces the networking concept.</div>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A horizontal timeline ribbon drawn left to right with five labeled tick-mark stops, each with a small flat icon above it: Stop 1 'Power fails' — a broken plug icon on a FortiGate box; Stop 2 '~1s: heartbeat lost, virtual IP moves' — a small crown icon hopping from Box A to Box B; Stop 3 'Kernel sessions present, NP7 empty' — a filled ledger icon next to an empty chip icon; Stop 4 '~45s: CPU re-establishes fast path' — a CPU icon glowing coral with a rising thermometer bar above it; Stop 5 'CPU normalizes, tunnels intact' — the thermometer bar cooling to sage green, with a small unbroken padlock-shaped VPN tunnel icon staying solid throughout the whole ribbon underneath. Bottom caption bar: 'One second to fail over. Forty-five seconds to fully recover the fast path.' Clean structured composition, generous spacing, educational and visually engaging.</div>
         </div>
       </div>
 
       <!-- Body content: paragraphs, lists, callouts, tables, code blocks -->
-      <p>FGCP (FortiGate Clustering Protocol) builds two FortiGates into a single logical device. Configuration is synchronized so both boxes are near-identical, a heartbeat link continuously checks liveness, and session state is synchronized so the standby unit can seamlessly assume the primary's identity — including live VPN tunnels — the instant a failure is detected. The two boxes don't just cooperate; they present to the rest of the network as one cluster.</p>
+      <p>The reconstructed sequence: power failure on Box A, heartbeat loss detected, virtual IP and primary role move to Box B in about a second. At that instant, Box B's kernel already holds every synced session — but its NP7 holds none of the corresponding hardware entries. Every one of those sessions' next packets gets CPU-processed to rebuild the fast path, which is what produces the 45-second window of elevated CPU before things normalize.</p>
       <!-- ← First paragraph: what the concept is, why it exists, how it fits the architecture -->
-      <p>FGSP (FortiGate Session Life Support Protocol) is a much narrower agreement between two otherwise fully independent FortiGates: share session table data, and nothing else. No config sync, no shared identity, no heartbeat-driven election. Both boxes stay alive and pass traffic simultaneously. FGSP exists purely so that if traffic for an existing connection is redirected to the 'other' box — by something upstream, not by the FortiGates themselves — that box can still find the session and forward the packet correctly instead of dropping it.</p>
-
-      <table class="data-table">
-        <thead><tr><th>Question</th><th>FGCP</th><th>FGSP</th></tr></thead>
-        <tbody>
-          <tr><td>Configuration</td><td>Synchronized, near-identical</td><td>Independent, can drift</td></tr>
-          <tr><td>Identity</td><td>Single logical cluster</td><td>Two independent devices</td></tr>
-          <tr><td>What's shared</td><td>Heartbeat + full session sync</td><td>Session table sync only</td></tr>
-          <tr><td>Who decides failover</td><td>The cluster itself</td><td>Something upstream (router / LB / ECMP)</td></tr>
-          <tr><td>Deployment fit</td><td>Matched pair, built as a cluster from day one</td><td>Independently-managed boxes, config allowed to differ</td></tr>
-        </tbody>
-      </table>
+      <p>The VPN tunnel evidence matters here as more than a good outcome — it's diagnostic proof that FGCP's session-state synchronization actually worked as designed. If the tunnels had dropped, that would point to a sync failure, not a sizing issue. Since they didn't, the CPU spike is best read as the visible cost of a mechanism that succeeded, not a separate malfunction.</p>
 
       <div class="callout callout-amber">
-        <strong>Common misconception:</strong> "Active/standby means FGCP, active/active means FGSP." False — FGCP supports active-active too. The real test is config coupling and shared identity, not traffic distribution style.
-      </div>
-
-      <div class="analogy-box expanded">
-        <div class="analogy-label">Analogy</div>
-        <div class="analogy-text">
-          <p class="analogy-summary">Two firefighters sharing a badge number, versus two firefighters at different stations who just text each other every address.</p>
-          <ul>
-            <li>FGCP: same badge number, same radio, same gear — either one can answer as "Unit 12." One identity, kept in sync continuously.</li>
-            <li>FGSP: two separate responders at separate stations, fully independent — they just text each other the address of every active call, so whichever one gets flagged down next already knows what's happening.</li>
-            <li>Dispatch deciding who gets flagged down = the upstream router/switch/load balancer, not the firefighters themselves.</li>
-          </ul>
-        </div>
+        <strong>Don't confuse this with Sunday's outage:</strong> Sunday (Session 15's opening incident) was a cold-spare recovery with no live FGCP pair running — hours of manual work and full tunnel renegotiation. Thursday is a warm, continuously-synced FGCP pair — automatic failover in ~1 second with tunnels intact. Same failure trigger (dead power supply), architecturally different outcome.
       </div>
 
       <!-- ← Second paragraph: mechanism / how it works in practice -->
@@ -486,7 +457,7 @@ Switch# write memory</code></pre>
         <div class="mental-note-block-icon">🧠</div>
         <div class="mental-note-block-inner">
           <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">FGCP = the two boxes manage the failover themselves (heartbeat + election + full sync = one cluster identity). FGSP = something upstream decides where traffic goes; the FortiGates only make sure that whichever box the traffic lands on already knows about the session.</div>
+          <div class="mental-note-block-text">The tunnels staying up and the CPU spiking are not contradictory facts — they're two symptoms of the same correctly-working mechanism: state synced perfectly, hardware fast path did not (and structurally can't).</div>
           <!--
             ← 2–3 sentences. Lead with a concrete number, ordered list, or key relationship.
                e.g. "An access port belongs to exactly one VLAN and strips/adds no 802.1Q tag.
@@ -502,13 +473,13 @@ Switch# write memory</code></pre>
       <div class="lesson-tools-grid">
         <div>
           <div class="tool-label">ASK A QUESTION</div>
-          <textarea class="tool-textarea" id="q-section-core-distinction" placeholder="What are you unsure about in this section?" rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-core-distinction','Core Distinction')">Add Question</button></div>
+          <textarea class="tool-textarea" id="q-section-incident-timeline" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-incident-timeline','The Incident')">Add Question</button></div>
         </div>
         <div>
           <div class="tool-label">ADD A NOTE</div>
-          <textarea class="tool-textarea" id="note-section-core-distinction" placeholder="Write a note about this section..." rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-core-distinction')">+ Add Note</button></div>
+          <textarea class="tool-textarea" id="note-section-incident-timeline" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-incident-timeline')">+ Add Note</button></div>
         </div>
       </div>
     </div>
@@ -519,14 +490,14 @@ Switch# write memory</code></pre>
     <div class="socratic-block">
       <div class="socratic-header">
         <span class="socratic-icon">💭</span>
-        <span class="socratic-label">THINK FIRST · PACKET FLOW</span>
+        <span class="socratic-label">THINK FIRST · FROM DATA TO A VERDICT</span>
       </div>
-      <p class="socratic-insight">The exam loves to test where each protocol's responsibility actually stops. This is the boundary to get precise.</p>
+      <p class="socratic-insight">Gathering evidence isn't the end goal — Priya needs an actual answer for the board.</p>
       <ul class="socratic-questions">
-        <li>In FGSP, Box A dies mid-connection. What has to happen before Box B ever sees the next packet of that connection — and whose job is that, exactly?</li>
-        <li>In FGCP, what specifically moves from Box A to Box B during failover, and what stays put?</li>
+        <li>Given everything gathered, what's the actual verdict — success, warning, or 'depends on X'?</li>
+        <li>What's one proactive test that would validate the pair's safety margin, instead of waiting for a real market-open failover to find out?</li>
       </ul>
-      <div class="answer-area" data-section="packet-flow">
+      <div class="answer-area" data-section="verdict">
         <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
         <div class="answer-buttons">
           <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
@@ -535,36 +506,36 @@ Switch# write memory</code></pre>
         <div class="model-answers" style="display:none;">
           <div class="model-answer-item">
             <div class="model-answer-q">Q1 — MODEL ANSWER</div>
-            <div class="model-answer-text">Something upstream of the FortiGates — a router, switch, ECMP path, or load balancer — has to detect Box A is gone and start sending that traffic toward Box B instead. This detection and redirection is not something FGSP itself performs; FGSP's only job is making sure Box B has the session data ready for when that redirected packet arrives.</div>
+            <div class="model-answer-text">Thursday's failover succeeded exactly as designed — the CPU spike is the expected cost of NP7 resync, not a malfunction. It becomes a genuine warning only if drop/retransmit counters show real packet loss during the spike, or if Thursday's throughput was already close to the historical peak, leaving no margin for a worse event.</div>
           </div>
           <div class="model-answer-item">
             <div class="model-answer-q">Q2 — MODEL ANSWER</div>
-            <div class="model-answer-text">The cluster's shared identity — its virtual IP addresses and its role as primary — moves to Box B. What stays fixed is the synchronized configuration itself (policies, routes, profiles) which was already identical on both boxes before the failure. FGCP doesn't 'copy' config during failover; it was kept in sync continuously beforehand.</div>
+            <div class="model-answer-text">A controlled, scheduled failover test during a monitored maintenance window timed to approximate peak throughput — directly observing whether CPU saturation and packet loss occur under worst-case load, rather than inferring the answer from a quiet Thursday afternoon.</div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="section-block" id="section-packet-flow">
+    <div class="section-block" id="section-verdict">
       <div class="section-label">SECTION 02</div>
-      <h2>Where Each Protocol's <em>Job Actually Stops</em></h2>
+      <h2>From Data <em>to a Verdict</em></h2>
       <div class="section-img-wrap">
-        <img src="images/s2-packet-flow.png" class="section-img" alt="Diagram showing failover responsibility boundary between FortiGate HA and upstream network"
+        <img src="images/s2-verdict.png" class="section-img" alt="Decision checklist for verdict on post-failover CPU spike"
              onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
-        <p class="img-caption">FGCP owns its own failover. FGSP depends on an upstream device to redirect traffic.</p>
+        <p class="img-caption">Evidence before verdict — every time.</p>
         <div class="si-placeholder">
-          <span class="si-filename">images/s2-packet-flow.png</span>
+          <span class="si-filename">images/s2-verdict.png</span>
           <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Centre composition: a vertical thin dashed line splits the scene into 'INSIDE THE CLUSTER' (left, coral wash) and 'OUTSIDE THE CLUSTER' (right, sage wash). On the left, two small flat FortiGate icons enclosed in a single rounded dashed boundary, a gold heartbeat pulse-line and a second gold line labeled 'session + config sync' looping between them, a tiny crown icon hopping from one box to the other with a motion-arc arrow to show failover happening entirely inside the boundary. On the right, a single FortiGate icon sits OUTSIDE any boundary next to a second identical-style FortiGate icon, both under a large cloud-shaped 'upstream switch / router' icon with a question-mark bubble over it labeled 'who decides?', dashed arrows from the cloud icon pointing down to each FortiGate to show external redirection, and a small magnifying glass icon hovering near the right FortiGate labeled 'session table only' to show its limited scope. Bottom caption bar: 'FGCP owns its failover. FGSP waits for someone else to send it traffic.' Clean structured composition, generous spacing, educational and visually engaging.</div>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A clipboard icon in the centre with four small checkbox rows, each with a tiny icon beside its label: row 1 'Correlate timestamp with FortiAnalyzer peak throughput' — small chart-line icon; row 2 'Check retransmit / drop counters' — small warning-triangle icon; row 3 'Confirm VPN tunnel status logs' — small padlock icon; row 4 'Check CPU trend after the spike' — small downward-trending line icon. All four checkboxes shown ticked in gold. Below the clipboard, two branching arrows lead to two outcome cards: left card labeled 'SUCCESS' in sage green with a checkmark badge, right card labeled 'WARNING — test at peak load' in coral with an alert badge. Bottom caption: 'Evidence first. Verdict second.' Clean structured composition, generous spacing, educational and visually engaging.</div>
         </div>
       </div>
-      <p>This is the single most exam-relevant boundary in this topic. FGCP is self-contained — the two FortiGates own the entire failover process end to end, including deciding who is primary and taking over the shared identity. Nothing outside the cluster needs to know a failure happened.</p>
-      <p>FGSP is deliberately incomplete on its own. It solves the 'does the receiving box recognize this session' problem, but it does not solve the 'why did this box receive the packet at all' problem. That second problem belongs to whatever is distributing traffic across the two independent FortiGates in the first place — which is exactly the open question from this session, and the natural bridge into the next protocol on the blueprint.</p>
+      <p>The methodology matters more than this specific incident's answer: gather timestamped evidence (failover time, throughput correlation, retransmit/drop counters, tunnel status, CPU trend), compare it against the worst-case baseline the box actually needs to survive, and only then render a verdict. Treating 'it recovered' as automatically synonymous with 'it's safely sized' is the mistake to avoid — recovery is necessary evidence, not sufficient evidence.</p>
+      <p>The concrete next action for Priya isn't to wait and hope the next failure happens during a quiet period — it's to schedule a controlled failover test that approximates peak trading-floor throughput, and watch the same counters under conditions that actually stress the design.</p>
       <div class="mental-note-block">
         <div class="mental-note-block-icon">🧠</div>
         <div class="mental-note-block-inner">
           <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">FGCP's failover is entirely internal — two boxes, one boundary, nothing outside needs to react. FGSP's failover is entirely external — the FortiGates only guarantee session recognition; something else in the network has to decide where the packet goes.</div>
+          <div class="mental-note-block-text">Verdict checklist: (1) failover timestamp vs. FortiAnalyzer peak throughput, (2) drop/retransmit counters during the spike, (3) VPN tunnel status through the event, (4) CPU trend after the spike. All four before you speak to the board.</div>
         </div>
       </div>
     </div>
@@ -573,13 +544,13 @@ Switch# write memory</code></pre>
       <div class="lesson-tools-grid">
         <div>
           <div class="tool-label">ASK A QUESTION</div>
-          <textarea class="tool-textarea" id="q-section-packet-flow" placeholder="What are you unsure about in this section?" rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-packet-flow','Packet Flow')">Add Question</button></div>
+          <textarea class="tool-textarea" id="q-section-verdict" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-verdict','The Verdict')">Add Question</button></div>
         </div>
         <div>
           <div class="tool-label">ADD A NOTE</div>
-          <textarea class="tool-textarea" id="note-section-packet-flow" placeholder="Write a note about this section..." rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-packet-flow')">+ Add Note</button></div>
+          <textarea class="tool-textarea" id="note-section-verdict" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-verdict')">+ Add Note</button></div>
         </div>
       </div>
     </div>
@@ -591,14 +562,14 @@ Switch# write memory</code></pre>
     <div class="socratic-block">
       <div class="socratic-header">
         <span class="socratic-icon">💭</span>
-        <span class="socratic-label">THINK FIRST · EXAM TRAPS & CHECKLIST</span>
+        <span class="socratic-label">THINK FIRST · SELF-TEST</span>
       </div>
-      <p class="socratic-insight">Quick self-test before moving on — no hints, just recall.</p>
+      <p class="socratic-insight">Recall the full diagnostic path from memory before checking below.</p>
       <ul class="socratic-questions">
-        <li>Why is 'active/standby vs active/active' NOT a reliable way to tell FGCP and FGSP apart?</li>
-        <li>If FGSP has no election logic, what determines which box a given packet actually lands on after a failure?</li>
+        <li>Name two pieces of evidence you'd pull before rendering a verdict on a post-failover CPU spike.</li>
+        <li>Why is a quiet-afternoon failover not sufficient evidence that the pair is safely sized for the worst case?</li>
       </ul>
-      <div class="answer-area" data-section="exam-traps">
+      <div class="answer-area" data-section="self-test">
         <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
         <div class="answer-buttons">
           <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
@@ -607,48 +578,36 @@ Switch# write memory</code></pre>
         <div class="model-answers" style="display:none;">
           <div class="model-answer-item">
             <div class="model-answer-q">Q1 — MODEL ANSWER</div>
-            <div class="model-answer-text">Because FGCP supports both active-passive and active-active modes — active-active alone doesn't rule out FGCP. The real dividing line is whether the two boxes share one logical cluster identity and synchronized config (FGCP) or remain fully independent devices sharing only session data (FGSP).</div>
+            <div class="model-answer-text">FortiAnalyzer historical throughput correlated against the failover timestamp, and retransmit/drop counters during the spike window — at minimum. VPN tunnel status and post-spike CPU trend round out the full picture.</div>
           </div>
           <div class="model-answer-item">
             <div class="model-answer-q">Q2 — MODEL ANSWER</div>
-            <div class="model-answer-text">Whatever mechanism sits upstream of the two FortiGates — routing convergence, ECMP hashing, a load balancer's health check, or a first-hop redundancy protocol. FGSP has no say in this; it only guarantees that wherever the packet lands, the session will be recognized.</div>
+            <div class="model-answer-text">Because the CPU margin observed during low traffic tells you nothing about the margin left over when the same failover happens during peak throughput — the worst-case scenario is exactly the one a quiet-period observation can't rule out.</div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="section-block" id="section-exam-traps">
+    <div class="section-block" id="section-self-test">
       <div class="section-label">SECTION 03</div>
-      <h2>Don't Fall For <em>These Two Traps</em></h2>
+      <h2>Lock In <em>the Method</em></h2>
       <div class="section-img-wrap">
-        <img src="images/s3-exam-traps.png" class="section-img" alt="Troubleshooting checklist diagram for FGCP and FGSP failure isolation"
+        <img src="images/s3-self-test.png" class="section-img" alt="Summary card of the troubleshooting methodology for post-failover CPU spikes"
              onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
-        <p class="img-caption">Two separate jobs, two separate failure points — diagnose them independently.</p>
+        <p class="img-caption">Methodology over memorized fixes.</p>
         <div class="si-placeholder">
-          <span class="si-filename">images/s3-exam-traps.png</span>
+          <span class="si-filename">images/s3-self-test.png</span>
           <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A simple two-branch troubleshooting flowchart drawn as a friendly diagram: at the top, a coral rounded rectangle reads 'Connections dropping between two FortiGates'. Below it a gold diamond decision shape reads 'Was this meant to be ONE cluster identity?'. Left branch (labeled YES, coral arrow) leads to a small icon of two FortiGates inside a dashed boundary with two separate small gauge icons labeled 'heartbeat link' and 'session + config sync' — each gauge shown independently, one green (up) one red (down), with a caption 'check each independently — one can fail without the other'. Right branch (labeled NO, sage arrow) leads to an icon of a cloud/router above two independent FortiGates with a magnifying glass over the cloud icon and caption 'check the upstream device's failure detection FIRST — before blaming session sync'. Bottom of image: small caption bar reading 'Two different jobs, two different failure domains.' Clean structured composition, generous spacing, educational and visually engaging.</div>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A simple circular process diagram with four arrows forming a loop, each segment labeled with a short phrase and small icon: 'Gather Evidence' (magnifying glass), 'Compare to Worst Case' (scale/balance icon), 'Render Verdict' (gavel icon), 'Recommend Proactive Test' (calendar icon with a small clock). In the centre of the circle, a small FortiGate icon sits calmly. Bottom caption bar: 'Recovery is necessary evidence. It is not sufficient evidence.' Clean structured composition, generous spacing, educational and visually engaging.</div>
         </div>
       </div>
-      <p>Common misconception: assuming 'active/active' automatically means FGSP and 'active/standby' automatically means FGCP. FGCP can run active-active. The dividing question is never about traffic distribution style — it's always about whether the boxes share one identity and synced config, or stay independent.</p>
-      <p>Troubleshooting checklist: (1) Confirm the intended relationship first — was this ever meant to be one cluster identity, or two independent boxes? Check for a shared HA group name/hostname. (2) If FGCP, remember heartbeat and session-sync are two separate mechanisms from Session 15's earlier reasoning — either can fail while the other keeps working, so isolate which one broke before assuming the whole cluster is down. (3) If FGSP, a 'dropped connection' complaint may not be an FGSP problem at all — check the upstream redirection mechanism first, since FGSP can only be blamed once you've confirmed traffic actually reached the other box.</p>
-
-      <div class="callout">
-        <strong>Self-test — answer from memory before scrolling back:</strong>
-        <ol style="margin-top:8px;padding-left:20px;">
-          <li>Two independently-managed, config-drifted boxes, load-balanced by an upstream switch — which protocol?</li>
-          <li>Two identically-configured boxes behind one ISP, needing zero-touch seamless VPN takeover — which protocol?</li>
-          <li>Name the two separate jobs FGCP performs that FGSP does not.</li>
-          <li>Why is "active/active" not proof that a design must be FGSP?</li>
-          <li>After an FGSP failover complaint, which two failure domains would you check, and in what order?</li>
-        </ol>
-      </div>
-
+      <p>The transferable skill here isn't 'a 45-second spike is fine' — that number is specific to Thursday's traffic level and this pair's sizing. The transferable skill is the four-step method: gather evidence, compare against the worst case the box actually needs to survive, render a verdict grounded in that comparison, and recommend a proactive test rather than waiting for the real worst-case event to arrive uninvited.</p>
+      <p>Use this bite for retrieval practice before your next HA troubleshooting scenario — cover the mental notes and try to reconstruct the four-item checklist from memory first.</p>
       <div class="mental-note-block">
         <div class="mental-note-block-icon">🧠</div>
         <div class="mental-note-block-inner">
           <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">Self-test: (1) Two independently-managed, config-drifted boxes load-balanced by an upstream switch — which protocol? (2) Two identically-configured boxes behind one ISP needing zero-touch VPN takeover — which protocol? (3) Name the two jobs FGCP performs that FGSP does not. (4) After an FGSP failover, which two failure domains would you check separately, and in what order?</div>
+          <div class="mental-note-block-text">Self-test: (1) Two pieces of evidence before rendering a verdict? (2) What distinguishes 'busy' from 'overloaded and dropping'? (3) Why isn't a quiet-afternoon failover sufficient evidence? (4) What proactive test closes the gap? (5) Why did the tunnels surviving matter as evidence, not just as a good outcome?</div>
         </div>
       </div>
     </div>
@@ -657,13 +616,13 @@ Switch# write memory</code></pre>
       <div class="lesson-tools-grid">
         <div>
           <div class="tool-label">ASK A QUESTION</div>
-          <textarea class="tool-textarea" id="q-section-exam-traps" placeholder="What are you unsure about in this section?" rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-exam-traps','Exam Traps')">Add Question</button></div>
+          <textarea class="tool-textarea" id="q-section-self-test" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-self-test','Self-Test')">Add Question</button></div>
         </div>
         <div>
           <div class="tool-label">ADD A NOTE</div>
-          <textarea class="tool-textarea" id="note-section-exam-traps" placeholder="Write a note about this section..." rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-exam-traps')">+ Add Note</button></div>
+          <textarea class="tool-textarea" id="note-section-self-test" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-self-test')">+ Add Note</button></div>
         </div>
       </div>
     </div>
@@ -683,7 +642,7 @@ Switch# write memory</code></pre>
   </a>
   <a class="page-nav-btn page-nav-next" href="#">
     <span class="page-nav-label">NEXT →</span>
-    <span class="page-nav-title">Next: VRRP — the third HA answer</span>
+    <span class="page-nav-title">Bite: NP7 Resync</span>
   </a>
 </div>
 
@@ -691,7 +650,7 @@ Switch# write memory</code></pre>
      FOOTER
      ══════════════════════════════════════════════════════════ -->
 <footer>
-  NSE7 Enterprise Firewall 7.6<span>.</span> Session 15<span>.</span> Study Bite<span>.</span> FGCP vs FGSP
+  NSE7 Enterprise Firewall 7.6<span>.</span> Session 15 — HA<span>.</span> Study Bite<span>.</span> Diagnosing a Post-Failover CPU Spike
 </footer>
 
 <!-- ══════════════════════════════════════════════════════════
@@ -699,14 +658,14 @@ Switch# write memory</code></pre>
      ══════════════════════════════════════════════════════════ -->
 <script>
 // ← PAGE_KEY must be unique across all pages. Format: ccna-chNN-subNN-slug
-const PAGE_KEY = 'nse7-s15-bite-fgcp-fgsp';
+const PAGE_KEY = 'nse7-s15-bite-cpu-spike-troubleshooting';
 // e.g. 'ccna-ch04-sub02-vlans'
 
 // ← One entry per section. Key = the id on the .section-block div (without #).
 const SECTIONS = {
-  'section-core-distinction': 'Core Distinction',
-  'section-packet-flow': 'Packet Flow',
-  'section-exam-traps': 'Exam Traps',
+  'section-incident-timeline': 'The Incident',
+  'section-verdict': 'The Verdict',
+  'section-self-test': 'Self-Test',
   // add more if needed
 };
 

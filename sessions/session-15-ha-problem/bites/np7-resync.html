@@ -21,7 +21,7 @@
 <script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Subtopic 15c — Diagnosing a Post-Failover CPU Spike</title><!-- ← e.g. "Subtopic 02 — Configure VLANs" -->
+<title>Subtopic 15b — NP7 Resync After Failover</title><!-- ← e.g. "Subtopic 02 — Configure VLANs" -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   /* ── DESIGN TOKENS ── */
@@ -241,20 +241,14 @@
      ══════════════════════════════════════════════════════════ -->
 <header>
   <div class="header-left">
-    <div class="breadcrumb">
-      <span>NSE7 Enterprise Firewall 7.6</span>
-      <span class="breadcrumb-sep">›</span>
-      <span>Session 15 — HA</span>
-      <span class="breadcrumb-sep">›</span>
-      Study Bite
-    </div>
+    <div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 15</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Bite</span></div>
     <div class="header-eyebrow"><span class="dot-live"></span> Study Bite · NSE7 EF 7.6</div>
-    <h1>Diagnosing a <em>Post-Failover CPU Spike</em></h1>
+    <h1>The Hidden Cost of <em>Stateful Failover — NP7 Resync</em></h1>
     <!--
       ← H1 pattern: plain words first, key noun/phrase in <em>.
          e.g. "Configure <em>VLANs</em>" or "Understand <em>OSPF</em> Neighbor States"
     -->
-    <p>A field walkthrough of the Thursday incident — turning a vague 'CPU spiked, portal hung' report into a clear verdict.</p>
+    <p>Why a synced session table doesn't mean a synced hardware fast path — and what that costs the CPU the instant failover happens.</p>
     <!--
       ← One sentence (≤20 words) capturing the core insight of the subtopic.
          e.g. "How switches use 802.1Q tagging to carry multiple broadcast domains over a single trunk link."
@@ -266,12 +260,12 @@
      MOTIVATION BANNER
      ══════════════════════════════════════════════════════════ -->
 <div class="motivation-banner">
-  <div class="motivation-text">A CPU spike after failover isn't a verdict — it's a <em>question waiting for evidence</em>.</div>
+  <div class="motivation-text">FGCP synchronizes what the <em>kernel</em> knows. It never touches what the <em>NP7</em> knows.</div>
   <!--
     ← Bold Playfair statement. Wrap the key phrase in <em>. 1–2 sentences.
        e.g. "VLANs don't just split a switch — they create <em>independent broadcast domains</em> that share the same physical hardware."
   -->
-  <p class="motivation-sub">This bite reconstructs the exact diagnostic path used to answer Priya's question: was Thursday's failover a success, or a warning sign?</p>
+  <p class="motivation-sub">That one-sentence gap is the entire reason failover causes a CPU spike instead of a silent handoff — and it's the sizing detail most engineers miss until it costs them.</p>
   <!--
     ← Smaller supporting sentence. Why this subtopic matters in the bigger picture.
        e.g. "Every inter-VLAN routing, trunking, and STP topic later in the blueprint assumes you can predict exactly which port belongs to which broadcast domain."
@@ -306,8 +300,8 @@
      STICKY SECTION NAV — one tab per section
      ══════════════════════════════════════════════════════════ -->
 <nav class="section-nav" id="section-nav">
-  <a class="nav-tab active" href="#section-incident-timeline">The Incident</a><!-- ← e.g. href="#section-vlan-basics" >VLAN Basics -->
-  <a class="nav-tab" href="#section-verdict">The Verdict</a>
+  <a class="nav-tab active" href="#section-two-tables">Two Tables</a><!-- ← e.g. href="#section-vlan-basics" >VLAN Basics -->
+  <a class="nav-tab" href="#section-sizing-consequence">Sizing</a>
   <a class="nav-tab" href="#section-self-test">Self-Test</a>
   <!-- Add more tabs if there are 4 or 5 sections -->
 </nav>
@@ -323,19 +317,19 @@
     <div class="socratic-block">
       <div class="socratic-header">
         <span class="socratic-icon">💭</span>
-        <span class="socratic-label">THINK FIRST · THE INCIDENT</span>
+        <span class="socratic-label">THINK FIRST · TWO TABLES</span>
         <!-- ← e.g. "THINK FIRST · VLAN BASICS" -->
       </div>
-      <p class="socratic-insight">HQ edge FortiGate-A dies (power supply). FGCP fails over to Box B in ~1 second. Users report a 45-second 'hanging' portal; CPU hits 95%. VPN tunnels never drop.</p>
+      <p class="socratic-insight">"Session sync" sounds like it should mean everything transfers. Test that assumption before reading on.</p>
       <!--
         ← 2–3 sentence framing of WHY these questions matter. Reveal the tension
            or the gotcha before asking the question.
       -->
       <ul class="socratic-questions">
-        <li>Is this pattern consistent with FGCP working correctly, or is it a sign of a problem?</li><!-- ← Specific, scenario-driven. Ends with a '?' -->
-        <li>What's the very first question you'd ask before deciding 'success' or 'warning'?</li><!-- ← Second question. Use a third only if genuinely complex. -->
+        <li>FGCP's sync link carries kernel-level session table entries between the two boxes. Does it also carry the NP7's internal hardware offload table? Why or why not?</li><!-- ← Specific, scenario-driven. Ends with a '?' -->
+        <li>When a synced session's first packet arrives at the new primary after failover, which component processes it — the NP7 or the CPU — and why?</li><!-- ← Second question. Use a third only if genuinely complex. -->
       </ul>
-      <div class="answer-area" data-section="incident-timeline">
+      <div class="answer-area" data-section="two-tables">
         <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
         <div class="answer-buttons">
           <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
@@ -344,44 +338,62 @@
         <div class="model-answers" style="display:none;">
           <div class="model-answer-item">
             <div class="model-answer-q">Q1 — MODEL ANSWER</div>
-            <div class="model-answer-text">Potentially both, and that's the point — a CPU spike right after an FGCP failover is expected, because session resync forces CPU-mediated re-establishment for every previously-offloaded session. Tunnels surviving is a strong positive sign that state actually transferred. Neither fact alone settles the verdict.</div>
+            <div class="model-answer-text">No. The NP7's internal table is local hardware state living inside that specific chip — a kernel-to-kernel sync link has no way to write into another box's silicon. Only the kernel-level session entry, the software record of the connection, crosses the sync link.</div>
             <!-- ← Precise. No hedging. 2–4 sentences. Lead with the core fact. -->
           </div>
           <div class="model-answer-item">
             <div class="model-answer-q">Q2 — MODEL ANSWER</div>
-            <div class="model-answer-text">Was any traffic actually dropped during that window, or was the CPU merely busy? 'High CPU' and 'CPU overloaded and shedding packets' look similar in a glance at a dashboard but mean very different things for the verdict.</div>
+            <div class="model-answer-text">The CPU. The new primary's NP7 starts with zero hardware entries for any 'inherited' session. The kernel recognizes the session and forwards the first packet(s) via the CPU path, which also reprograms the NP7 with a fresh hardware entry so later packets can ride the fast path again.</div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- SECTION CONTENT BLOCK -->
-    <div class="section-block" id="section-incident-timeline">
+    <div class="section-block" id="section-two-tables">
       <div class="section-label">SECTION 01</div>
-      <h2>Reconstructing <em>What Actually Happened</em></h2>
+      <h2>Two Tables, <em>One Sync Link</em></h2>
       <!-- ← Same em-noun pattern as H1. e.g. "How a Switch Builds Its <em>MAC Address Table</em>" -->
 
       <!-- Section image — starts compact (260px), click to expand full-width -->
       <div class="section-img-wrap">
-        <img src="images/s1-incident-timeline.png" class="section-img"
-             alt="Timeline diagram of the Thursday FGCP failover incident"
+        <img src="images/s1-two-tables.png" class="section-img"
+             alt="Diagram of kernel session table sync versus NP7 local hardware table during FGCP failover"
              onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
-        <p class="img-caption">From power failure to CPU normalization — the full 45-second window.</p>
+        <p class="img-caption">Kernel state crosses the sync link. NP7 hardware state never does.</p>
         <!-- Shown only when image is missing: -->
         <div class="si-placeholder">
-          <span class="si-filename">images/s1-incident-timeline.png</span>
+          <span class="si-filename">images/s1-two-tables.png</span>
           <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A horizontal timeline ribbon drawn left to right with five labeled tick-mark stops, each with a small flat icon above it: Stop 1 'Power fails' — a broken plug icon on a FortiGate box; Stop 2 '~1s: heartbeat lost, virtual IP moves' — a small crown icon hopping from Box A to Box B; Stop 3 'Kernel sessions present, NP7 empty' — a filled ledger icon next to an empty chip icon; Stop 4 '~45s: CPU re-establishes fast path' — a CPU icon glowing coral with a rising thermometer bar above it; Stop 5 'CPU normalizes, tunnels intact' — the thermometer bar cooling to sage green, with a small unbroken padlock-shaped VPN tunnel icon staying solid throughout the whole ribbon underneath. Bottom caption bar: 'One second to fail over. Forty-five seconds to fully recover the fast path.' Clean structured composition, generous spacing, educational and visually engaging.</div>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Two flat FortiGate box icons side by side, Box A (left, labeled 'PRIMARY') and Box B (right, labeled 'SECONDARY'), each drawn with two internal layers stacked vertically: an upper layer shaped like a soft ledger/book icon labeled 'KERNEL SESSION TABLE' in coral, and a lower layer shaped like a small circuit-board chip icon labeled 'NP7 HARDWARE TABLE' in sage green. A thick gold arrow runs between the two upper ledger layers labeled 'FGCP session sync', clearly crossing between the boxes. A second thick gold arrow is drawn starting at Box A's lower chip icon but stopping abruptly at a dashed 'X' barrier exactly at the midpoint between the boxes, labeled 'cannot cross — local silicon only'. Box B's chip icon is shown empty/faded with a small clock icon beside it labeled 'must reprogram after failover'. Bottom caption bar: 'Kernel state syncs. Hardware state doesn't.' Clean structured composition, generous spacing, educational and visually engaging.</div>
         </div>
       </div>
 
       <!-- Body content: paragraphs, lists, callouts, tables, code blocks -->
-      <p>The reconstructed sequence: power failure on Box A, heartbeat loss detected, virtual IP and primary role move to Box B in about a second. At that instant, Box B's kernel already holds every synced session — but its NP7 holds none of the corresponding hardware entries. Every one of those sessions' next packets gets CPU-processed to rebuild the fast path, which is what produces the 45-second window of elevated CPU before things normalize.</p>
+      <p>Every offloaded session actually exists in two places at once: a kernel-level session table entry (software, holds the connection's metadata and the offload verdict) and a corresponding hardware entry programmed directly into the NP7 chip (silicon, is what actually lets packets bypass the CPU). FGCP's session synchronization link is a software mechanism between the two kernels — it keeps the kernel-level entries mirrored continuously while both boxes are alive.</p>
       <!-- ← First paragraph: what the concept is, why it exists, how it fits the architecture -->
-      <p>The VPN tunnel evidence matters here as more than a good outcome — it's diagnostic proof that FGCP's session-state synchronization actually worked as designed. If the tunnels had dropped, that would point to a sync failure, not a sizing issue. Since they didn't, the CPU spike is best read as the visible cost of a mechanism that succeeded, not a separate malfunction.</p>
+      <p>What it cannot do is reach into the NP7 chip on the far side and program hardware entries remotely — that silicon state is local to each box. So the instant failover completes, the new primary's kernel already recognizes every synced session, but its NP7 has never heard of any of them. The very first packet of each session has to be re-processed by the CPU, which in turn reprograms the local NP7 so the fast path can resume for subsequent packets.</p>
 
-      <div class="callout callout-amber">
-        <strong>Don't confuse this with Sunday's outage:</strong> Sunday (Session 15's opening incident) was a cold-spare recovery with no live FGCP pair running — hours of manual work and full tunnel renegotiation. Thursday is a warm, continuously-synced FGCP pair — automatic failover in ~1 second with tunnels intact. Same failure trigger (dead power supply), architecturally different outcome.
+      <table class="data-table">
+        <thead><tr><th>What's involved</th><th>Travels over FGCP sync?</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>Kernel session entry</td><td>Yes</td><td>Software record — a kernel-to-kernel software channel can copy it</td></tr>
+          <tr><td>Configuration (policies, routes, profiles)</td><td>Yes — continuously</td><td>Kept identical proactively, before any failure</td></tr>
+          <tr><td>VPN SA / tunnel state</td><td>Yes</td><td>Part of the synced session state, same channel as TCP sessions</td></tr>
+          <tr><td>NP7 hardware offload entry</td><td>No — never</td><td>Local silicon state; no remote-write path into another box's chip</td></tr>
+        </tbody>
+      </table>
+
+      <div class="analogy-box expanded">
+        <div class="analogy-label">Analogy</div>
+        <div class="analogy-text">
+          <p class="analogy-summary">Inheriting someone's address book, but not their muscle memory.</p>
+          <ul>
+            <li>Kernel sync = the address book. You now know exactly who everyone is and how to reach them — nothing was lost.</li>
+            <li>NP7 hardware entry = speed-dial. Even with the address book in hand, you still have to dial the full number by hand the first time before speed-dial remembers it.</li>
+            <li>The CPU spike is you dialing every contact by hand, once, right after inheriting the book — briefly slower, then back to speed-dial speed.</li>
+          </ul>
+        </div>
       </div>
 
       <!-- ← Second paragraph: mechanism / how it works in practice -->
@@ -463,7 +475,7 @@ Switch# write memory</code></pre>
         <div class="mental-note-block-icon">🧠</div>
         <div class="mental-note-block-inner">
           <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">The tunnels staying up and the CPU spiking are not contradictory facts — they're two symptoms of the same correctly-working mechanism: state synced perfectly, hardware fast path did not (and structurally can't).</div>
+          <div class="mental-note-block-text">Kernel sync ≠ hardware sync. The first packet of every inherited session is CPU-processed after failover, even though FGCP never dropped the connection itself.</div>
           <!--
             ← 2–3 sentences. Lead with a concrete number, ordered list, or key relationship.
                e.g. "An access port belongs to exactly one VLAN and strips/adds no 802.1Q tag.
@@ -479,13 +491,13 @@ Switch# write memory</code></pre>
       <div class="lesson-tools-grid">
         <div>
           <div class="tool-label">ASK A QUESTION</div>
-          <textarea class="tool-textarea" id="q-section-incident-timeline" placeholder="What are you unsure about in this section?" rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-incident-timeline','The Incident')">Add Question</button></div>
+          <textarea class="tool-textarea" id="q-section-two-tables" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-two-tables','Two Tables')">Add Question</button></div>
         </div>
         <div>
           <div class="tool-label">ADD A NOTE</div>
-          <textarea class="tool-textarea" id="note-section-incident-timeline" placeholder="Write a note about this section..." rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-incident-timeline')">+ Add Note</button></div>
+          <textarea class="tool-textarea" id="note-section-two-tables" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-two-tables')">+ Add Note</button></div>
         </div>
       </div>
     </div>
@@ -496,14 +508,14 @@ Switch# write memory</code></pre>
     <div class="socratic-block">
       <div class="socratic-header">
         <span class="socratic-icon">💭</span>
-        <span class="socratic-label">THINK FIRST · FROM DATA TO A VERDICT</span>
+        <span class="socratic-label">THINK FIRST · SIZING FOR THE WORST SECOND</span>
       </div>
-      <p class="socratic-insight">Gathering evidence isn't the end goal — Priya needs an actual answer for the board.</p>
+      <p class="socratic-insight">This is where the concept turns into a real design decision — and a real exam question.</p>
       <ul class="socratic-questions">
-        <li>Given everything gathered, what's the actual verdict — success, warning, or 'depends on X'?</li>
-        <li>What's one proactive test that would validate the pair's safety margin, instead of waiting for a real market-open failover to find out?</li>
+        <li>At the exact moment of failover, what fraction of the old primary's previously-offloaded traffic suddenly needs full CPU processing on the new primary?</li>
+        <li>If the CPU can't keep up with that surge, what specific failure mode follows — and why does it get worse instead of better?</li>
       </ul>
-      <div class="answer-area" data-section="verdict">
+      <div class="answer-area" data-section="sizing-consequence">
         <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
         <div class="answer-buttons">
           <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
@@ -512,36 +524,41 @@ Switch# write memory</code></pre>
         <div class="model-answers" style="display:none;">
           <div class="model-answer-item">
             <div class="model-answer-q">Q1 — MODEL ANSWER</div>
-            <div class="model-answer-text">Thursday's failover succeeded exactly as designed — the CPU spike is the expected cost of NP7 resync, not a malfunction. It becomes a genuine warning only if drop/retransmit counters show real packet loss during the spike, or if Thursday's throughput was already close to the historical peak, leaving no margin for a worse event.</div>
+            <div class="model-answer-text">In the worst case, 100%. Every previously-offloaded session becomes CPU-bound simultaneously, all at once, for a brief window right after takeover.</div>
           </div>
           <div class="model-answer-item">
             <div class="model-answer-q">Q2 — MODEL ANSWER</div>
-            <div class="model-answer-text">A controlled, scheduled failover test during a monitored maintenance window timed to approximate peak throughput — directly observing whether CPU saturation and packet loss occur under worst-case load, rather than inferring the answer from a quiet Thursday afternoon.</div>
+            <div class="model-answer-text">An overloaded CPU drops packets instead of queuing them. TCP interprets those drops as loss and retransmits — and those retransmissions add even more load onto an already-overloaded CPU. That's a feedback loop, not a graceful slowdown, and it can turn a brief spike into a sustained outage.</div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="section-block" id="section-verdict">
+    <div class="section-block" id="section-sizing-consequence">
       <div class="section-label">SECTION 02</div>
-      <h2>From Data <em>to a Verdict</em></h2>
+      <h2>Sizing for the Worst Second, <em>Not the Average Day</em></h2>
       <div class="section-img-wrap">
-        <img src="images/s2-verdict.png" class="section-img" alt="Decision checklist for verdict on post-failover CPU spike"
+        <img src="images/s2-sizing-consequence.png" class="section-img" alt="Diagram illustrating CPU sizing margin between steady state and failover-induced surge"
              onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
-        <p class="img-caption">Evidence before verdict — every time.</p>
+        <p class="img-caption">Steady-state CPU load leaves no evidence of the surge it needs to survive.</p>
         <div class="si-placeholder">
-          <span class="si-filename">images/s2-verdict.png</span>
+          <span class="si-filename">images/s2-sizing-consequence.png</span>
           <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A clipboard icon in the centre with four small checkbox rows, each with a tiny icon beside its label: row 1 'Correlate timestamp with FortiAnalyzer peak throughput' — small chart-line icon; row 2 'Check retransmit / drop counters' — small warning-triangle icon; row 3 'Confirm VPN tunnel status logs' — small padlock icon; row 4 'Check CPU trend after the spike' — small downward-trending line icon. All four checkboxes shown ticked in gold. Below the clipboard, two branching arrows lead to two outcome cards: left card labeled 'SUCCESS' in sage green with a checkmark badge, right card labeled 'WARNING — test at peak load' in coral with an alert badge. Bottom caption: 'Evidence first. Verdict second.' Clean structured composition, generous spacing, educational and visually engaging.</div>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A simple horizontal gauge/speedometer icon styled flat, with a needle. Two versions side by side: LEFT gauge labeled 'Steady State' shows the needle low, in the sage-green safe zone, next to a small calm FortiGate icon with a content facial expression. RIGHT gauge labeled 'Moment of Failover' shows the needle pinned into a coral red zone at the far edge, next to a FortiGate icon glowing slightly with small motion-lines and a strained expression, with tiny packet icons piling up beside it and a couple shown falling off the edge labeled 'dropped'. Above both gauges a dashed arrow connects them labeled 'must survive both, sized only for the left one is not enough'. Bottom caption bar: 'Size for the worst second, not the average day.' Clean structured composition, generous spacing, educational and visually engaging.</div>
         </div>
       </div>
-      <p>The methodology matters more than this specific incident's answer: gather timestamped evidence (failover time, throughput correlation, retransmit/drop counters, tunnel status, CPU trend), compare it against the worst-case baseline the box actually needs to survive, and only then render a verdict. Treating 'it recovered' as automatically synonymous with 'it's safely sized' is the mistake to avoid — recovery is necessary evidence, not sufficient evidence.</p>
-      <p>The concrete next action for Priya isn't to wait and hope the next failure happens during a quiet period — it's to schedule a controlled failover test that approximates peak trading-floor throughput, and watch the same counters under conditions that actually stress the design.</p>
+      <p>This is the direct design consequence of the kernel/NP7 split: an FGCP secondary can't be sized for its own normal traffic alone — it has to be sized to survive its partner's entire offloaded workload landing on its CPU all at once. A lone, non-HA FortiGate never has to plan for this, because there's no partner whose session table can suddenly appear in its lap.</p>
+      <p>The diagnostic trap is that 'high CPU after failover' and 'CPU overloaded and dropping traffic' look identical in a quick glance at a monitoring dashboard. The distinguishing evidence is retransmit and drop counters during the spike window, correlated against historical peak-hour throughput from FortiAnalyzer — not the CPU percentage number alone.</p>
+
+      <div class="callout">
+        <strong>Exam tip:</strong> if a scenario describes an FGCP failover followed by a temporary CPU spike and asks "is this normal?" — the answer is almost always yes, that's expected NP7 resync behavior. The trap answer treats any CPU spike as a fault. The correct answer checks whether packets were actually dropped, not just whether the CPU was busy.
+      </div>
+
       <div class="mental-note-block">
         <div class="mental-note-block-icon">🧠</div>
         <div class="mental-note-block-inner">
           <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">Verdict checklist: (1) failover timestamp vs. FortiAnalyzer peak throughput, (2) drop/retransmit counters during the spike, (3) VPN tunnel status through the event, (4) CPU trend after the spike. All four before you speak to the board.</div>
+          <div class="mental-note-block-text">A CPU spike proves failover happened. It does not prove the box is safely sized. Check drop/retransmit counters against peak-hour traffic — a quiet-afternoon spike near the ceiling means no margin left for the worst-case failover.</div>
         </div>
       </div>
     </div>
@@ -550,13 +567,13 @@ Switch# write memory</code></pre>
       <div class="lesson-tools-grid">
         <div>
           <div class="tool-label">ASK A QUESTION</div>
-          <textarea class="tool-textarea" id="q-section-verdict" placeholder="What are you unsure about in this section?" rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-verdict','The Verdict')">Add Question</button></div>
+          <textarea class="tool-textarea" id="q-section-sizing-consequence" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-sizing-consequence','Sizing')">Add Question</button></div>
         </div>
         <div>
           <div class="tool-label">ADD A NOTE</div>
-          <textarea class="tool-textarea" id="note-section-verdict" placeholder="Write a note about this section..." rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-verdict')">+ Add Note</button></div>
+          <textarea class="tool-textarea" id="note-section-sizing-consequence" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-sizing-consequence')">+ Add Note</button></div>
         </div>
       </div>
     </div>
@@ -570,10 +587,10 @@ Switch# write memory</code></pre>
         <span class="socratic-icon">💭</span>
         <span class="socratic-label">THINK FIRST · SELF-TEST</span>
       </div>
-      <p class="socratic-insight">Recall the full diagnostic path from memory before checking below.</p>
+      <p class="socratic-insight">Final recall pass — no hints.</p>
       <ul class="socratic-questions">
-        <li>Name two pieces of evidence you'd pull before rendering a verdict on a post-failover CPU spike.</li>
-        <li>Why is a quiet-afternoon failover not sufficient evidence that the pair is safely sized for the worst case?</li>
+        <li>Why can't Box B's NP7 simply inherit Box A's hardware offload state directly?</li>
+        <li>What's the worst-case fraction of previously-offloaded traffic that becomes CPU-bound at once during failover?</li>
       </ul>
       <div class="answer-area" data-section="self-test">
         <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
@@ -584,11 +601,11 @@ Switch# write memory</code></pre>
         <div class="model-answers" style="display:none;">
           <div class="model-answer-item">
             <div class="model-answer-q">Q1 — MODEL ANSWER</div>
-            <div class="model-answer-text">FortiAnalyzer historical throughput correlated against the failover timestamp, and retransmit/drop counters during the spike window — at minimum. VPN tunnel status and post-spike CPU trend round out the full picture.</div>
+            <div class="model-answer-text">Because NP7 hardware programming is local silicon state that only the FGCP sync link's kernel-to-kernel software channel can't reach — there's no mechanism for one box's kernel to write directly into another box's chip.</div>
           </div>
           <div class="model-answer-item">
             <div class="model-answer-q">Q2 — MODEL ANSWER</div>
-            <div class="model-answer-text">Because the CPU margin observed during low traffic tells you nothing about the margin left over when the same failover happens during peak throughput — the worst-case scenario is exactly the one a quiet-period observation can't rule out.</div>
+            <div class="model-answer-text">100% in the worst case — every session that was offloaded on the old primary becomes CPU-bound simultaneously the moment the new primary takes over.</div>
           </div>
         </div>
       </div>
@@ -596,24 +613,24 @@ Switch# write memory</code></pre>
 
     <div class="section-block" id="section-self-test">
       <div class="section-label">SECTION 03</div>
-      <h2>Lock In <em>the Method</em></h2>
+      <h2>Lock It <em>In</em></h2>
       <div class="section-img-wrap">
-        <img src="images/s3-self-test.png" class="section-img" alt="Summary card of the troubleshooting methodology for post-failover CPU spikes"
+        <img src="images/s3-self-test.png" class="section-img" alt="Summary card recapping kernel versus NP7 sync boundary"
              onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
-        <p class="img-caption">Methodology over memorized fixes.</p>
+        <p class="img-caption">The full chain, start to finish.</p>
         <div class="si-placeholder">
           <span class="si-filename">images/s3-self-test.png</span>
           <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A simple circular process diagram with four arrows forming a loop, each segment labeled with a short phrase and small icon: 'Gather Evidence' (magnifying glass), 'Compare to Worst Case' (scale/balance icon), 'Render Verdict' (gavel icon), 'Recommend Proactive Test' (calendar icon with a small clock). In the centre of the circle, a small FortiGate icon sits calmly. Bottom caption bar: 'Recovery is necessary evidence. It is not sufficient evidence.' Clean structured composition, generous spacing, educational and visually engaging.</div>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A simple five-step horizontal flow diagram with rounded rectangle nodes connected by gold arrows: (1) 'Primary dies' — small broken FortiGate icon; (2) 'Kernel sessions already synced' — ledger icon with a checkmark; (3) 'NP7 has no hardware entries' — empty chip icon with a small dashed outline; (4) 'CPU re-establishes fast path' — CPU icon with small gear animation marks; (5) 'Fast path resumes' — chip icon now filled solid green with a checkmark. A small thermometer icon sits above node 4 showing a temporary spike into the coral zone that cools back to sage green above node 5. Bottom caption: 'The cost of stateful failover, one step at a time.' Clean structured composition, generous spacing, educational and visually engaging.</div>
         </div>
       </div>
-      <p>The transferable skill here isn't 'a 45-second spike is fine' — that number is specific to Thursday's traffic level and this pair's sizing. The transferable skill is the four-step method: gather evidence, compare against the worst case the box actually needs to survive, render a verdict grounded in that comparison, and recommend a proactive test rather than waiting for the real worst-case event to arrive uninvited.</p>
-      <p>Use this bite for retrieval practice before your next HA troubleshooting scenario — cover the mental notes and try to reconstruct the four-item checklist from memory first.</p>
+      <p>Chain it together, start to finish: FGCP session sync keeps kernel-level session entries mirrored continuously — but never touches the NP7's local hardware table. When failover happens, every one of those synced sessions is recognized by the new primary's kernel but unknown to its NP7. The first packets get CPU-processed to re-establish the fast path, and in the worst case every previously-offloaded session does this simultaneously — which is why sizing an FGCP secondary for its own steady-state load alone is a mistake.</p>
+      <p>Use this bite as retrieval practice, not a re-read: cover the mental notes below and try to reconstruct the full chain — kernel sync, NP7 locality, the 100% worst case, and the retransmit feedback loop — from memory first.</p>
       <div class="mental-note-block">
         <div class="mental-note-block-icon">🧠</div>
         <div class="mental-note-block-inner">
           <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">Self-test: (1) Two pieces of evidence before rendering a verdict? (2) What distinguishes 'busy' from 'overloaded and dropping'? (3) Why isn't a quiet-afternoon failover sufficient evidence? (4) What proactive test closes the gap? (5) Why did the tunnels surviving matter as evidence, not just as a good outcome?</div>
+          <div class="mental-note-block-text">Self-test: (1) What travels over the FGCP sync link, and what doesn't? (2) What happens to the first packet of a resynced session? (3) What's the worst-case CPU-bound fraction at failover? (4) What counters distinguish 'busy' from 'overloaded and dropping'? (5) Why does peak-hour throughput matter more than average throughput for sizing?</div>
         </div>
       </div>
     </div>
@@ -648,7 +665,7 @@ Switch# write memory</code></pre>
   </a>
   <a class="page-nav-btn page-nav-next" href="#">
     <span class="page-nav-label">NEXT →</span>
-    <span class="page-nav-title">Bite: NP7 Resync</span>
+    <span class="page-nav-title">Bite: FGCP vs FGSP</span>
   </a>
 </div>
 
@@ -656,7 +673,7 @@ Switch# write memory</code></pre>
      FOOTER
      ══════════════════════════════════════════════════════════ -->
 <footer>
-  NSE7 Enterprise Firewall 7.6<span>.</span> Session 15 — HA<span>.</span> Study Bite<span>.</span> Diagnosing a Post-Failover CPU Spike
+  NSE7 Enterprise Firewall 7.6<span>.</span> Session 15 — HA<span>.</span> Study Bite<span>.</span> NP7 Resync After Failover
 </footer>
 
 <!-- ══════════════════════════════════════════════════════════
@@ -664,13 +681,13 @@ Switch# write memory</code></pre>
      ══════════════════════════════════════════════════════════ -->
 <script>
 // ← PAGE_KEY must be unique across all pages. Format: ccna-chNN-subNN-slug
-const PAGE_KEY = 'nse7-s15-bite-cpu-spike-troubleshooting';
+const PAGE_KEY = 'nse7-s15-bite-np7-resync';
 // e.g. 'ccna-ch04-sub02-vlans'
 
 // ← One entry per section. Key = the id on the .section-block div (without #).
 const SECTIONS = {
-  'section-incident-timeline': 'The Incident',
-  'section-verdict': 'The Verdict',
+  'section-two-tables': 'Two Tables',
+  'section-sizing-consequence': 'Sizing',
   'section-self-test': 'Self-Test',
   // add more if needed
 };

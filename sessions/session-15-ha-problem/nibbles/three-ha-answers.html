@@ -21,7 +21,7 @@
 <script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Subtopic 15b — NP7 Resync After Failover</title><!-- ← e.g. "Subtopic 02 — Configure VLANs" -->
+<title>Subtopic 15n — Three HA Answers — One Glance</title><!-- ← e.g. "Subtopic 02 — Configure VLANs" -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   /* ── DESIGN TOKENS ── */
@@ -241,20 +241,14 @@
      ══════════════════════════════════════════════════════════ -->
 <header>
   <div class="header-left">
-    <div class="breadcrumb">
-      <span>NSE7 Enterprise Firewall 7.6</span>
-      <span class="breadcrumb-sep">›</span>
-      <span>Session 15 — HA</span>
-      <span class="breadcrumb-sep">›</span>
-      Study Bite
-    </div>
-    <div class="header-eyebrow"><span class="dot-live"></span> Study Bite · NSE7 EF 7.6</div>
-    <h1>The Hidden Cost of <em>Stateful Failover — NP7 Resync</em></h1>
+    <div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 15</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Nibble</span></div>
+    <div class="header-eyebrow"><span class="dot-live"></span> Study Nibble · under 2 minutes · NSE7 EF 7.6</div>
+    <h1>Three Problems, <em>Three HA Answers</em></h1>
     <!--
       ← H1 pattern: plain words first, key noun/phrase in <em>.
          e.g. "Configure <em>VLANs</em>" or "Understand <em>OSPF</em> Neighbor States"
     -->
-    <p>Why a synced session table doesn't mean a synced hardware fast path — and what that costs the CPU the instant failover happens.</p>
+    <p>Under two minutes: which protocol, and why the other two are wrong.</p>
     <!--
       ← One sentence (≤20 words) capturing the core insight of the subtopic.
          e.g. "How switches use 802.1Q tagging to carry multiple broadcast domains over a single trunk link."
@@ -266,12 +260,12 @@
      MOTIVATION BANNER
      ══════════════════════════════════════════════════════════ -->
 <div class="motivation-banner">
-  <div class="motivation-text">FGCP synchronizes what the <em>kernel</em> knows. It never touches what the <em>NP7</em> knows.</div>
+  <div class="motivation-text">Ask two questions: <em>Do the boxes share one identity?</em> Then: <em>Does state need to survive?</em></div>
   <!--
     ← Bold Playfair statement. Wrap the key phrase in <em>. 1–2 sentences.
        e.g. "VLANs don't just split a switch — they create <em>independent broadcast domains</em> that share the same physical hardware."
   -->
-  <p class="motivation-sub">That one-sentence gap is the entire reason failover causes a CPU spike instead of a silent handoff — and it's the sizing detail most engineers miss until it costs them.</p>
+  <p class="motivation-sub">Those two questions place every exam scenario. Everything below is just those questions, expanded.</p>
   <!--
     ← Smaller supporting sentence. Why this subtopic matters in the bigger picture.
        e.g. "Every inter-VLAN routing, trunking, and STP topic later in the blueprint assumes you can predict exactly which port belongs to which broadcast domain."
@@ -306,10 +300,8 @@
      STICKY SECTION NAV — one tab per section
      ══════════════════════════════════════════════════════════ -->
 <nav class="section-nav" id="section-nav">
-  <a class="nav-tab active" href="#section-two-tables">Two Tables</a><!-- ← e.g. href="#section-vlan-basics" >VLAN Basics -->
-  <a class="nav-tab" href="#section-sizing-consequence">Sizing</a>
-  <a class="nav-tab" href="#section-self-test">Self-Test</a>
-  <!-- Add more tabs if there are 4 or 5 sections -->
+  <a class="nav-tab active" href="#section-decision">The Decision</a><!-- ← e.g. href="#section-vlan-basics" >VLAN Basics -->
+  
 </nav>
 
 <main>
@@ -323,19 +315,19 @@
     <div class="socratic-block">
       <div class="socratic-header">
         <span class="socratic-icon">💭</span>
-        <span class="socratic-label">THINK FIRST · TWO TABLES</span>
+        <span class="socratic-label">THINK FIRST · THE DECISION</span>
         <!-- ← e.g. "THINK FIRST · VLAN BASICS" -->
       </div>
-      <p class="socratic-insight">"Session sync" sounds like it should mean everything transfers. Test that assumption before reading on.</p>
+      <p class="socratic-insight">Cover the table. Place these from memory: (a) two config-drifted boxes behind a load balancer; (b) matched edge pair, live SLA-bound VPNs; (c) FortiGate replacing a third-party router, no endpoint changes.</p>
       <!--
         ← 2–3 sentence framing of WHY these questions matter. Reveal the tension
            or the gotcha before asking the question.
       -->
       <ul class="socratic-questions">
-        <li>FGCP's sync link carries kernel-level session table entries between the two boxes. Does it also carry the NP7's internal hardware offload table? Why or why not?</li><!-- ← Specific, scenario-driven. Ends with a '?' -->
-        <li>When a synced session's first packet arrives at the new primary after failover, which component processes it — the NP7 or the CPU — and why?</li><!-- ← Second question. Use a third only if genuinely complex. -->
+        <li>Which two of the three technologies carry session state — and which is the only one that speaks to other vendors?</li><!-- ← Specific, scenario-driven. Ends with a '?' -->
+        <li>"The design is active/active, so it must be FGSP." What's wrong with that sentence?</li><!-- ← Second question. Use a third only if genuinely complex. -->
       </ul>
-      <div class="answer-area" data-section="two-tables">
+      <div class="answer-area" data-section="decision">
         <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
         <div class="answer-buttons">
           <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
@@ -344,63 +336,54 @@
         <div class="model-answers" style="display:none;">
           <div class="model-answer-item">
             <div class="model-answer-q">Q1 — MODEL ANSWER</div>
-            <div class="model-answer-text">No. The NP7's internal table is local hardware state living inside that specific chip — a kernel-to-kernel sync link has no way to write into another box's silicon. Only the kernel-level session entry, the software record of the connection, crosses the sync link.</div>
+            <div class="model-answer-text">FGCP and FGSP carry session state (both sync IPsec tunnels; FGSP syncs TCP + IPsec by default). VRRP carries identity only — and it's the only open standard, so the only multi-vendor option.</div>
             <!-- ← Precise. No hedging. 2–4 sentences. Lead with the core fact. -->
           </div>
           <div class="model-answer-item">
             <div class="model-answer-q">Q2 — MODEL ANSWER</div>
-            <div class="model-answer-text">The CPU. The new primary's NP7 starts with zero hardware entries for any 'inherited' session. The kernel recognizes the session and forwards the first packet(s) via the CPU path, which also reprograms the NP7 with a fresh hardware entry so later packets can ride the fast path again.</div>
+            <div class="model-answer-text">FGCP supports active-active too. Distribution style never distinguishes them — config coupling and shared cluster identity do.</div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- SECTION CONTENT BLOCK -->
-    <div class="section-block" id="section-two-tables">
+    <div class="section-block" id="section-decision">
       <div class="section-label">SECTION 01</div>
-      <h2>Two Tables, <em>One Sync Link</em></h2>
+      <h2>One Glance, <em>Right Protocol</em></h2>
       <!-- ← Same em-noun pattern as H1. e.g. "How a Switch Builds Its <em>MAC Address Table</em>" -->
 
       <!-- Section image — starts compact (260px), click to expand full-width -->
       <div class="section-img-wrap">
-        <img src="images/s1-two-tables.png" class="section-img"
-             alt="Diagram of kernel session table sync versus NP7 local hardware table during FGCP failover"
+        <img src="images/s1-decision.png" class="section-img"
+             alt="Decision tree for choosing FGCP, FGSP or VRRP"
              onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
-        <p class="img-caption">Kernel state crosses the sync link. NP7 hardware state never does.</p>
+        <p class="img-caption">Two questions place every scenario.</p>
         <!-- Shown only when image is missing: -->
         <div class="si-placeholder">
-          <span class="si-filename">images/s1-two-tables.png</span>
+          <span class="si-filename">images/s1-decision.png</span>
           <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Two flat FortiGate box icons side by side, Box A (left, labeled 'PRIMARY') and Box B (right, labeled 'SECONDARY'), each drawn with two internal layers stacked vertically: an upper layer shaped like a soft ledger/book icon labeled 'KERNEL SESSION TABLE' in coral, and a lower layer shaped like a small circuit-board chip icon labeled 'NP7 HARDWARE TABLE' in sage green. A thick gold arrow runs between the two upper ledger layers labeled 'FGCP session sync', clearly crossing between the boxes. A second thick gold arrow is drawn starting at Box A's lower chip icon but stopping abruptly at a dashed 'X' barrier exactly at the midpoint between the boxes, labeled 'cannot cross — local silicon only'. Box B's chip icon is shown empty/faded with a small clock icon beside it labeled 'must reprogram after failover'. Bottom caption bar: 'Kernel state syncs. Hardware state doesn't.' Clean structured composition, generous spacing, educational and visually engaging.</div>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A compact two-level decision tree. Top diamond: 'One shared cluster identity, synced config?' — YES arrow (gold) leads to a coral card 'FGCP' with two boxes in one dashed halo and a small padlock+ledger icon labeled 'stateful'. NO arrow leads to a second diamond: 'Must existing sessions survive on the other box?' — YES arrow leads to a sage card 'FGSP' with two independent boxes, a thin gold session-sync line, and an upstream load-balancer icon labeled 'network decides'; NO arrow leads to a gold card 'VRRP' with a floating medallion icon '.1 + vMAC' between two different-vendor devices, labeled 'identity only, open standard'. Small footnote badges: under FGCP 'A-P or A-A', under FGSP 'TCP+IPsec default', under VRRP 'stateless'. Bottom caption: 'Identity question first, state question second.' Clean structured composition, generous spacing.</div>
         </div>
       </div>
 
       <!-- Body content: paragraphs, lists, callouts, tables, code blocks -->
-      <p>Every offloaded session actually exists in two places at once: a kernel-level session table entry (software, holds the connection's metadata and the offload verdict) and a corresponding hardware entry programmed directly into the NP7 chip (silicon, is what actually lets packets bypass the CPU). FGCP's session synchronization link is a software mechanism between the two kernels — it keeps the kernel-level entries mirrored continuously while both boxes are alive.</p>
+      <p>Question 1 — one shared identity with synced config? Yes → FGCP: the pair is one logical device; heartbeat, config sync, stateful session sync (including IPsec SAs); failover owned entirely by the cluster; 2–4 devices; A-P or A-A.</p>
       <!-- ← First paragraph: what the concept is, why it exists, how it fits the architecture -->
-      <p>What it cannot do is reach into the NP7 chip on the far side and program hardware entries remotely — that silicon state is local to each box. So the instant failover completes, the new primary's kernel already recognizes every synced session, but its NP7 has never heard of any of them. The very first packet of each session has to be re-processed by the CPU, which in turn reprograms the local NP7 so the fast path can resume for subsequent packets.</p>
+      <p>No shared identity? Question 2 — must existing sessions survive landing on the other box? Yes → FGSP: independent peers syncing session data only (TCP + IPsec by default), external devices distribute traffic and detect failure; 2–16 peers, FGCP clusters can be peers. No → VRRP: the open-standard identity float — virtual IP + virtual MAC, endpoint ARP caches never change, multi-vendor, moves identity and never state.</p>
 
       <table class="data-table">
-        <thead><tr><th>What's involved</th><th>Travels over FGCP sync?</th><th>Why</th></tr></thead>
+        <thead><tr><th>Ask</th><th>FGCP</th><th>FGSP</th><th>VRRP</th></tr></thead>
         <tbody>
-          <tr><td>Kernel session entry</td><td>Yes</td><td>Software record — a kernel-to-kernel software channel can copy it</td></tr>
-          <tr><td>Configuration (policies, routes, profiles)</td><td>Yes — continuously</td><td>Kept identical proactively, before any failure</td></tr>
-          <tr><td>VPN SA / tunnel state</td><td>Yes</td><td>Part of the synced session state, same channel as TCP sessions</td></tr>
-          <tr><td>NP7 hardware offload entry</td><td>No — never</td><td>Local silicon state; no remote-write path into another box's chip</td></tr>
+          <tr><td>Identity</td><td>One cluster</td><td>Independent peers</td><td>Floating virtual IP + vMAC</td></tr>
+          <tr><td>Config sync</td><td>Native</td><td>Optional</td><td>None</td></tr>
+          <tr><td>Session state</td><td>Synced (incl. IPsec)</td><td>Synced — its whole job (TCP+IPsec default)</td><td>Never</td></tr>
+          <tr><td>Failover decided by</td><td>The cluster</td><td>Upstream device</td><td>Advertisement timeout</td></tr>
+          <tr><td>Vendors</td><td>FortiGate</td><td>FortiGate</td><td>Any (IETF standard)</td></tr>
+          <tr><td>Scale</td><td>2–4</td><td>2–16 (or FGCP clusters)</td><td>Unlimited compliant</td></tr>
+          <tr><td>Reach for it when…</td><td>Matched pair, seamless stateful takeover</td><td>Independent boxes, external load distribution</td><td>Multi-vendor gateway, migrations</td></tr>
         </tbody>
       </table>
-
-      <div class="analogy-box expanded">
-        <div class="analogy-label">Analogy</div>
-        <div class="analogy-text">
-          <p class="analogy-summary">Inheriting someone's address book, but not their muscle memory.</p>
-          <ul>
-            <li>Kernel sync = the address book. You now know exactly who everyone is and how to reach them — nothing was lost.</li>
-            <li>NP7 hardware entry = speed-dial. Even with the address book in hand, you still have to dial the full number by hand the first time before speed-dial remembers it.</li>
-            <li>The CPU spike is you dialing every contact by hand, once, right after inheriting the book — briefly slower, then back to speed-dial speed.</li>
-          </ul>
-        </div>
-      </div>
 
       <!-- ← Second paragraph: mechanism / how it works in practice -->
 
@@ -481,7 +464,7 @@ Switch# write memory</code></pre>
         <div class="mental-note-block-icon">🧠</div>
         <div class="mental-note-block-inner">
           <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">Kernel sync ≠ hardware sync. The first packet of every inherited session is CPU-processed after failover, even though FGCP never dropped the connection itself.</div>
+          <div class="mental-note-block-text">Firefighter test: FGCP = two firefighters sharing one badge number. FGSP = two stations texting each other every active call. VRRP = the emergency phone number itself, reassignable to whichever station answers. Traps: A-A ≠ FGSP; "FGCP can't fail over VPNs" is false (cold spares renegotiate, clusters don't); post-failover CPU spike = expected NP7 resync, not a fault.</div>
           <!--
             ← 2–3 sentences. Lead with a concrete number, ordered list, or key relationship.
                e.g. "An access port belongs to exactly one VLAN and strips/adds no 802.1Q tag.
@@ -497,166 +480,18 @@ Switch# write memory</code></pre>
       <div class="lesson-tools-grid">
         <div>
           <div class="tool-label">ASK A QUESTION</div>
-          <textarea class="tool-textarea" id="q-section-two-tables" placeholder="What are you unsure about in this section?" rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-two-tables','Two Tables')">Add Question</button></div>
+          <textarea class="tool-textarea" id="q-section-decision" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-decision','The Decision')">Add Question</button></div>
         </div>
         <div>
           <div class="tool-label">ADD A NOTE</div>
-          <textarea class="tool-textarea" id="note-section-two-tables" placeholder="Write a note about this section..." rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-two-tables')">+ Add Note</button></div>
+          <textarea class="tool-textarea" id="note-section-decision" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-decision')">+ Add Note</button></div>
         </div>
       </div>
     </div>
 
-    <!-- ══════════════════════════════════════════
-         SECTION 2  (duplicate and rename S1→S2)
-         ══════════════════════════════════════════ -->
-    <div class="socratic-block">
-      <div class="socratic-header">
-        <span class="socratic-icon">💭</span>
-        <span class="socratic-label">THINK FIRST · SIZING FOR THE WORST SECOND</span>
-      </div>
-      <p class="socratic-insight">This is where the concept turns into a real design decision — and a real exam question.</p>
-      <ul class="socratic-questions">
-        <li>At the exact moment of failover, what fraction of the old primary's previously-offloaded traffic suddenly needs full CPU processing on the new primary?</li>
-        <li>If the CPU can't keep up with that surge, what specific failure mode follows — and why does it get worse instead of better?</li>
-      </ul>
-      <div class="answer-area" data-section="sizing-consequence">
-        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
-        <div class="answer-buttons">
-          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
-          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
-        </div>
-        <div class="model-answers" style="display:none;">
-          <div class="model-answer-item">
-            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
-            <div class="model-answer-text">In the worst case, 100%. Every previously-offloaded session becomes CPU-bound simultaneously, all at once, for a brief window right after takeover.</div>
-          </div>
-          <div class="model-answer-item">
-            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
-            <div class="model-answer-text">An overloaded CPU drops packets instead of queuing them. TCP interprets those drops as loss and retransmits — and those retransmissions add even more load onto an already-overloaded CPU. That's a feedback loop, not a graceful slowdown, and it can turn a brief spike into a sustained outage.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section-block" id="section-sizing-consequence">
-      <div class="section-label">SECTION 02</div>
-      <h2>Sizing for the Worst Second, <em>Not the Average Day</em></h2>
-      <div class="section-img-wrap">
-        <img src="images/s2-sizing-consequence.png" class="section-img" alt="Diagram illustrating CPU sizing margin between steady state and failover-induced surge"
-             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
-        <p class="img-caption">Steady-state CPU load leaves no evidence of the surge it needs to survive.</p>
-        <div class="si-placeholder">
-          <span class="si-filename">images/s2-sizing-consequence.png</span>
-          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A simple horizontal gauge/speedometer icon styled flat, with a needle. Two versions side by side: LEFT gauge labeled 'Steady State' shows the needle low, in the sage-green safe zone, next to a small calm FortiGate icon with a content facial expression. RIGHT gauge labeled 'Moment of Failover' shows the needle pinned into a coral red zone at the far edge, next to a FortiGate icon glowing slightly with small motion-lines and a strained expression, with tiny packet icons piling up beside it and a couple shown falling off the edge labeled 'dropped'. Above both gauges a dashed arrow connects them labeled 'must survive both, sized only for the left one is not enough'. Bottom caption bar: 'Size for the worst second, not the average day.' Clean structured composition, generous spacing, educational and visually engaging.</div>
-        </div>
-      </div>
-      <p>This is the direct design consequence of the kernel/NP7 split: an FGCP secondary can't be sized for its own normal traffic alone — it has to be sized to survive its partner's entire offloaded workload landing on its CPU all at once. A lone, non-HA FortiGate never has to plan for this, because there's no partner whose session table can suddenly appear in its lap.</p>
-      <p>The diagnostic trap is that 'high CPU after failover' and 'CPU overloaded and dropping traffic' look identical in a quick glance at a monitoring dashboard. The distinguishing evidence is retransmit and drop counters during the spike window, correlated against historical peak-hour throughput from FortiAnalyzer — not the CPU percentage number alone.</p>
-
-      <div class="callout">
-        <strong>Exam tip:</strong> if a scenario describes an FGCP failover followed by a temporary CPU spike and asks "is this normal?" — the answer is almost always yes, that's expected NP7 resync behavior. The trap answer treats any CPU spike as a fault. The correct answer checks whether packets were actually dropped, not just whether the CPU was busy.
-      </div>
-
-      <div class="mental-note-block">
-        <div class="mental-note-block-icon">🧠</div>
-        <div class="mental-note-block-inner">
-          <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">A CPU spike proves failover happened. It does not prove the box is safely sized. Check drop/retransmit counters against peak-hour traffic — a quiet-afternoon spike near the ceiling means no margin left for the worst-case failover.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="lesson-tools">
-      <div class="lesson-tools-grid">
-        <div>
-          <div class="tool-label">ASK A QUESTION</div>
-          <textarea class="tool-textarea" id="q-section-sizing-consequence" placeholder="What are you unsure about in this section?" rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-sizing-consequence','Sizing')">Add Question</button></div>
-        </div>
-        <div>
-          <div class="tool-label">ADD A NOTE</div>
-          <textarea class="tool-textarea" id="note-section-sizing-consequence" placeholder="Write a note about this section..." rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-sizing-consequence')">+ Add Note</button></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════
-         SECTION 3  (duplicate S1 block, rename to S3)
-         Add more sections if needed (up to 5)
-         ══════════════════════════════════════════ -->
-    <div class="socratic-block">
-      <div class="socratic-header">
-        <span class="socratic-icon">💭</span>
-        <span class="socratic-label">THINK FIRST · SELF-TEST</span>
-      </div>
-      <p class="socratic-insight">Final recall pass — no hints.</p>
-      <ul class="socratic-questions">
-        <li>Why can't Box B's NP7 simply inherit Box A's hardware offload state directly?</li>
-        <li>What's the worst-case fraction of previously-offloaded traffic that becomes CPU-bound at once during failover?</li>
-      </ul>
-      <div class="answer-area" data-section="self-test">
-        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
-        <div class="answer-buttons">
-          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
-          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
-        </div>
-        <div class="model-answers" style="display:none;">
-          <div class="model-answer-item">
-            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
-            <div class="model-answer-text">Because NP7 hardware programming is local silicon state that only the FGCP sync link's kernel-to-kernel software channel can't reach — there's no mechanism for one box's kernel to write directly into another box's chip.</div>
-          </div>
-          <div class="model-answer-item">
-            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
-            <div class="model-answer-text">100% in the worst case — every session that was offloaded on the old primary becomes CPU-bound simultaneously the moment the new primary takes over.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section-block" id="section-self-test">
-      <div class="section-label">SECTION 03</div>
-      <h2>Lock It <em>In</em></h2>
-      <div class="section-img-wrap">
-        <img src="images/s3-self-test.png" class="section-img" alt="Summary card recapping kernel versus NP7 sync boundary"
-             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
-        <p class="img-caption">The full chain, start to finish.</p>
-        <div class="si-placeholder">
-          <span class="si-filename">images/s3-self-test.png</span>
-          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A simple five-step horizontal flow diagram with rounded rectangle nodes connected by gold arrows: (1) 'Primary dies' — small broken FortiGate icon; (2) 'Kernel sessions already synced' — ledger icon with a checkmark; (3) 'NP7 has no hardware entries' — empty chip icon with a small dashed outline; (4) 'CPU re-establishes fast path' — CPU icon with small gear animation marks; (5) 'Fast path resumes' — chip icon now filled solid green with a checkmark. A small thermometer icon sits above node 4 showing a temporary spike into the coral zone that cools back to sage green above node 5. Bottom caption: 'The cost of stateful failover, one step at a time.' Clean structured composition, generous spacing, educational and visually engaging.</div>
-        </div>
-      </div>
-      <p>Chain it together, start to finish: FGCP session sync keeps kernel-level session entries mirrored continuously — but never touches the NP7's local hardware table. When failover happens, every one of those synced sessions is recognized by the new primary's kernel but unknown to its NP7. The first packets get CPU-processed to re-establish the fast path, and in the worst case every previously-offloaded session does this simultaneously — which is why sizing an FGCP secondary for its own steady-state load alone is a mistake.</p>
-      <p>Use this bite as retrieval practice, not a re-read: cover the mental notes below and try to reconstruct the full chain — kernel sync, NP7 locality, the 100% worst case, and the retransmit feedback loop — from memory first.</p>
-      <div class="mental-note-block">
-        <div class="mental-note-block-icon">🧠</div>
-        <div class="mental-note-block-inner">
-          <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">Self-test: (1) What travels over the FGCP sync link, and what doesn't? (2) What happens to the first packet of a resynced session? (3) What's the worst-case CPU-bound fraction at failover? (4) What counters distinguish 'busy' from 'overloaded and dropping'? (5) Why does peak-hour throughput matter more than average throughput for sizing?</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="lesson-tools">
-      <div class="lesson-tools-grid">
-        <div>
-          <div class="tool-label">ASK A QUESTION</div>
-          <textarea class="tool-textarea" id="q-section-self-test" placeholder="What are you unsure about in this section?" rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-self-test','Self-Test')">Add Question</button></div>
-        </div>
-        <div>
-          <div class="tool-label">ADD A NOTE</div>
-          <textarea class="tool-textarea" id="note-section-self-test" placeholder="Write a note about this section..." rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-self-test')">+ Add Note</button></div>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /main-content -->
+      </div><!-- /main-content -->
 </main>
 
 <!-- ══════════════════════════════════════════════════════════
@@ -667,7 +502,7 @@ Switch# write memory</code></pre>
 <div class="page-nav">
   <a class="page-nav-btn page-nav-prev" href="#">
     <span class="page-nav-label">← BACK TO</span>
-    <span class="page-nav-title">Session 15 — Full Discussion</span>
+    <span class="page-nav-title">Session 15 — Complete Guide</span>
   </a>
   <a class="page-nav-btn page-nav-next" href="#">
     <span class="page-nav-label">NEXT →</span>
@@ -679,7 +514,7 @@ Switch# write memory</code></pre>
      FOOTER
      ══════════════════════════════════════════════════════════ -->
 <footer>
-  NSE7 Enterprise Firewall 7.6<span>.</span> Session 15 — HA<span>.</span> Study Bite<span>.</span> NP7 Resync After Failover
+  NSE7 Enterprise Firewall 7.6<span>.</span> Session 15<span>.</span> Nibble<span>.</span> Three HA Answers
 </footer>
 
 <!-- ══════════════════════════════════════════════════════════
@@ -687,15 +522,13 @@ Switch# write memory</code></pre>
      ══════════════════════════════════════════════════════════ -->
 <script>
 // ← PAGE_KEY must be unique across all pages. Format: ccna-chNN-subNN-slug
-const PAGE_KEY = 'nse7-s15-bite-np7-resync';
+const PAGE_KEY = 'nse7-s15-nibble-three-ha-answers';
 // e.g. 'ccna-ch04-sub02-vlans'
 
 // ← One entry per section. Key = the id on the .section-block div (without #).
 const SECTIONS = {
-  'section-two-tables': 'Two Tables',
-  'section-sizing-consequence': 'Sizing',
-  'section-self-test': 'Self-Test',
-  // add more if needed
+  'section-decision': 'The Decision',
+  // single-section nibble
 };
 
 /* ── Everything below is fixed — do not modify ── */

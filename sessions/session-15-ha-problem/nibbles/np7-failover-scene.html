@@ -21,7 +21,7 @@
 <script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Subtopic 15n — Three HA Answers — One Glance</title><!-- ← e.g. "Subtopic 02 — Configure VLANs" -->
+<title>Subtopic 15v — The 45 Seconds Nobody Saw Coming</title><!-- ← e.g. "Subtopic 02 — Configure VLANs" -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   /* ── DESIGN TOKENS ── */
@@ -241,20 +241,14 @@
      ══════════════════════════════════════════════════════════ -->
 <header>
   <div class="header-left">
-    <div class="breadcrumb">
-      <span>NSE7 Enterprise Firewall 7.6</span>
-      <span class="breadcrumb-sep">›</span>
-      <span>Session 15 — HA</span>
-      <span class="breadcrumb-sep">›</span>
-      Study Nibble
-    </div>
-    <div class="header-eyebrow"><span class="dot-live"></span> Study Nibble · under 2 minutes · NSE7 EF 7.6</div>
-    <h1>Three Problems, <em>Three HA Answers</em></h1>
+    <div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 15</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Nibble</span></div>
+    <div class="header-eyebrow"><span class="dot-live"></span> Visual Page · Troubleshooting Scene · NSE7 EF 7.6</div>
+    <h1>The 45 Seconds <em>Nobody Saw Coming</em></h1>
     <!--
       ← H1 pattern: plain words first, key noun/phrase in <em>.
          e.g. "Configure <em>VLANs</em>" or "Understand <em>OSPF</em> Neighbor States"
     -->
-    <p>Under two minutes: which protocol, and why the other two are wrong.</p>
+    <p>A cinematic troubleshooting scene: why an FGCP failover that worked perfectly still lit the CPU on fire.</p>
     <!--
       ← One sentence (≤20 words) capturing the core insight of the subtopic.
          e.g. "How switches use 802.1Q tagging to carry multiple broadcast domains over a single trunk link."
@@ -266,12 +260,12 @@
      MOTIVATION BANNER
      ══════════════════════════════════════════════════════════ -->
 <div class="motivation-banner">
-  <div class="motivation-text">Ask two questions: <em>Do the boxes share one identity?</em> Then: <em>Does state need to survive?</em></div>
+  <div class="motivation-text">Session sync moves what the kernel knows. It <em>cannot</em> move what the silicon knows.</div>
   <!--
     ← Bold Playfair statement. Wrap the key phrase in <em>. 1–2 sentences.
        e.g. "VLANs don't just split a switch — they create <em>independent broadcast domains</em> that share the same physical hardware."
   -->
-  <p class="motivation-sub">Those two questions place every exam scenario. Everything below is just those questions, expanded.</p>
+  <p class="motivation-sub">This page turns Thursday's incident at Vaultline into a three-scene visual story, so that six months from now, 'FGCP failover CPU spike' instantly reconstructs the whole mechanism in your head.</p>
   <!--
     ← Smaller supporting sentence. Why this subtopic matters in the bigger picture.
        e.g. "Every inter-VLAN routing, trunking, and STP topic later in the blueprint assumes you can predict exactly which port belongs to which broadcast domain."
@@ -306,8 +300,10 @@
      STICKY SECTION NAV — one tab per section
      ══════════════════════════════════════════════════════════ -->
 <nav class="section-nav" id="section-nav">
-  <a class="nav-tab active" href="#section-decision">The Decision</a><!-- ← e.g. href="#section-vlan-basics" >VLAN Basics -->
-  
+  <a class="nav-tab active" href="#section-scene-one">Scene 1 — The Handoff</a><!-- ← e.g. href="#section-vlan-basics" >VLAN Basics -->
+  <a class="nav-tab" href="#section-scene-two">Scene 2 — The Surge</a>
+  <a class="nav-tab" href="#section-scene-three">Scene 3 — The Verdict</a>
+  <!-- Add more tabs if there are 4 or 5 sections -->
 </nav>
 
 <main>
@@ -318,22 +314,33 @@
          ══════════════════════════════════════════ -->
 
     <!-- THINK FIRST — collapsed by default, user must expand -->
+    <div class="section-block" style="margin-bottom:36px;">
+      <div class="section-label">ABOUT THIS VISUAL</div>
+      <h2>Why a <em>Troubleshooting Scene</em></h2>
+      <p><strong>The concept:</strong> FGCP session synchronization mirrors kernel-level state (sessions, VPN SAs) continuously between cluster members — but the NP7's hardware offload table is local silicon state that can never cross the sync link. At failover, every inherited session must be CPU-processed once to re-establish the fast path, producing a temporary but potentially massive CPU surge.</p>
+      <p><strong>Why it exists as a problem:</strong> "session sync" quietly gets flattened in memory into "everything transfers." Under exam pressure — and worse, in a real incident review — that flattening leads to misreading an expected CPU spike as a fault, or to sizing an HA pair for steady-state load and discovering the missing margin at the worst possible moment.</p>
+      <p><strong>Chosen approach:</strong> a three-scene cinematic troubleshooting story, following Thursday's real incident at Vaultline Financial. Concepts encoded inside a narrative with characters and consequences are recalled far more reliably than labeled diagrams — you don't remember "the kernel/NP7 boundary," you remember the chips piled against the wall while the ledgers flowed past them.</p>
+      <div class="callout callout-green">
+        <strong>The mental model in one line:</strong> the failover moves the address book, not the muscle memory — Box B knows every session by name, but has to dial each number by hand once before speed-dial works again.
+      </div>
+    </div>
+
     <div class="socratic-block">
       <div class="socratic-header">
         <span class="socratic-icon">💭</span>
-        <span class="socratic-label">THINK FIRST · THE DECISION</span>
+        <span class="socratic-label">THINK FIRST · SCENE 1 — THE HANDOFF</span>
         <!-- ← e.g. "THINK FIRST · VLAN BASICS" -->
       </div>
-      <p class="socratic-insight">Cover the table. Place these from memory: (a) two config-drifted boxes behind a load balancer; (b) matched edge pair, live SLA-bound VPNs; (c) FortiGate replacing a third-party router, no endpoint changes.</p>
+      <p class="socratic-insight">Before revealing the scene, reconstruct it yourself: Box A just died. What does Box B already have, and what is it missing?</p>
       <!--
         ← 2–3 sentence framing of WHY these questions matter. Reveal the tension
            or the gotcha before asking the question.
       -->
       <ul class="socratic-questions">
-        <li>Which two of the three technologies carry session state — and which is the only one that speaks to other vendors?</li><!-- ← Specific, scenario-driven. Ends with a '?' -->
-        <li>"The design is active/active, so it must be FGSP." What's wrong with that sentence?</li><!-- ← Second question. Use a third only if genuinely complex. -->
+        <li>At the instant Box B becomes primary, list what it inherited via FGCP sync — and the one thing that structurally could not come with it.</li><!-- ← Specific, scenario-driven. Ends with a '?' -->
+        <li>The clearing-partner VPN tunnels never dropped. What does that prove about the sync, as evidence?</li><!-- ← Second question. Use a third only if genuinely complex. -->
       </ul>
-      <div class="answer-area" data-section="decision">
+      <div class="answer-area" data-section="scene-one">
         <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
         <div class="answer-buttons">
           <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
@@ -342,55 +349,41 @@
         <div class="model-answers" style="display:none;">
           <div class="model-answer-item">
             <div class="model-answer-q">Q1 — MODEL ANSWER</div>
-            <div class="model-answer-text">FGCP and FGSP carry session state (both sync IPsec tunnels; FGSP syncs TCP + IPsec by default). VRRP carries identity only — and it's the only open standard, so the only multi-vendor option.</div>
+            <div class="model-answer-text">Inherited: the full kernel session table (TCP sessions, VPN SAs, NAT state) and the identical configuration it already carried. Missing: the NP7 hardware offload entries — those live in Box A's silicon and there is no mechanism to write them remotely into Box B's chip.</div>
             <!-- ← Precise. No hedging. 2–4 sentences. Lead with the core fact. -->
           </div>
           <div class="model-answer-item">
             <div class="model-answer-q">Q2 — MODEL ANSWER</div>
-            <div class="model-answer-text">FGCP supports active-active too. Distribution style never distinguishes them — config coupling and shared cluster identity do.</div>
+            <div class="model-answer-text">It proves session-state synchronization worked exactly as designed — VPN SAs are part of the synced state. If the tunnels had renegotiated, that would indicate a sync failure rather than a sizing question.</div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- SECTION CONTENT BLOCK -->
-    <div class="section-block" id="section-decision">
+    <div class="section-block" id="section-scene-one">
       <div class="section-label">SECTION 01</div>
-      <h2>One Glance, <em>Right Protocol</em></h2>
+      <h2>Scene 1 — <em>The One-Second Handoff</em></h2>
       <!-- ← Same em-noun pattern as H1. e.g. "How a Switch Builds Its <em>MAC Address Table</em>" -->
 
       <!-- Section image — starts compact (260px), click to expand full-width -->
       <div class="section-img-wrap">
-        <img src="images/s1-decision.png" class="section-img"
-             alt="Decision tree for choosing FGCP, FGSP or VRRP"
+        <img src="images/s1-scene-one.png" class="section-img"
+             alt="Cinematic scene of FGCP failover handoff with kernel state transferring and NP7 state left behind"
              onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
-        <p class="img-caption">Two questions place every scenario.</p>
+        <p class="img-caption">02:47 AM equivalent, three weeks later: the crown moves in one second — but the speed-dial stays behind.</p>
         <!-- Shown only when image is missing: -->
         <div class="si-placeholder">
-          <span class="si-filename">images/s1-decision.png</span>
+          <span class="si-filename">images/s1-scene-one.png</span>
           <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A compact two-level decision tree. Top diamond: 'One shared cluster identity, synced config?' — YES arrow (gold) leads to a coral card 'FGCP' with two boxes in one dashed halo and a small padlock+ledger icon labeled 'stateful'. NO arrow leads to a second diamond: 'Must existing sessions survive on the other box?' — YES arrow leads to a sage card 'FGSP' with two independent boxes, a thin gold session-sync line, and an upstream load-balancer icon labeled 'network decides'; NO arrow leads to a gold card 'VRRP' with a floating medallion icon '.1 + vMAC' between two different-vendor devices, labeled 'identity only, open standard'. Small footnote badges: under FGCP 'A-P or A-A', under FGSP 'TCP+IPsec default', under VRRP 'stateless'. Bottom caption: 'Identity question first, state question second.' Clean structured composition, generous spacing.</div>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm modern colour palette with cream background, coral accents, muted gold highlights, sage greens, and soft brown outlines, clean bold line work, no gradients, no photorealism, no 3D rendering, highly structured composition with generous spacing. CINEMATIC WIDE SHOT of a dim network operations room rendered in warm cream and deep navy tones with soft pools of golden desk-lamp light. Centre-stage: a server rack drawn flat and stylised containing two FortiGate firewall boxes stacked vertically. TOP BOX (Box A): drawn dark and lifeless, small grey X marks over its status LEDs, a tiny broken power-plug icon beside it with a thin wisp line, its outline slightly faded to show it has died. BOTTOM BOX (Box B): glowing warmly awake, coral status LEDs lit, a small golden crown icon shown mid-hop between the two boxes along a dashed motion arc labeled '~1 second'. Between the boxes, TWO visual channels drawn clearly: (1) a thick gold ribbon flowing downward from Box A to Box B carrying tiny flat ledger-book icons and tiny padlock icons (labeled 'kernel sessions + VPN SAs — SYNCED'), the ribbon glowing to show successful transfer; (2) beside it, a second channel drawn as a sage-green pipe that stops abruptly at a dashed barrier wall halfway down, with tiny circuit-chip icons piled up on Box A's side unable to pass, labeled 'NP7 hardware entries — CANNOT CROSS, local silicon only'. In the foreground corner, a stylised flat engineer character (Marcus, wearing a headset, calm expression, holding a coffee cup) watches a wall monitor showing a green 'TUNNELS: UP' status badge with two small unbroken padlock icons. Perspective: slightly elevated three-quarter view looking down at the rack. Every object reinforces the concept: what synced (ledgers, padlocks) visibly crossed; what could not sync (chips) visibly stayed behind.</div>
         </div>
       </div>
 
       <!-- Body content: paragraphs, lists, callouts, tables, code blocks -->
-      <p>Question 1 — one shared identity with synced config? Yes → FGCP: the pair is one logical device; heartbeat, config sync, stateful session sync (including IPsec SAs); failover owned entirely by the cluster; 2–4 devices; A-P or A-A.</p>
+      <p>Thursday, 14:20. Box A's power supply dies — same failure type as the original Sunday incident that started this whole HA journey. But this time there's no cold spare, no config restore, no four-hour scramble. Box B has been standing in the rack the entire time, heartbeat pulsing, session table mirrored continuously. The virtual identity moves in roughly one second. The clearing-partner VPN tunnels — the ones that cost Vaultline an SLA penalty three weeks ago — don't even flicker.</p>
       <!-- ← First paragraph: what the concept is, why it exists, how it fits the architecture -->
-      <p>No shared identity? Question 2 — must existing sessions survive landing on the other box? Yes → FGSP: independent peers syncing session data only (TCP + IPsec by default), external devices distribute traffic and detect failure; 2–16 peers, FGCP clusters can be peers. No → VRRP: the open-standard identity float — virtual IP + virtual MAC, endpoint ARP caches never change, multi-vendor, moves identity and never state.</p>
-
-      <table class="data-table">
-        <thead><tr><th>Ask</th><th>FGCP</th><th>FGSP</th><th>VRRP</th></tr></thead>
-        <tbody>
-          <tr><td>Identity</td><td>One cluster</td><td>Independent peers</td><td>Floating virtual IP + vMAC</td></tr>
-          <tr><td>Config sync</td><td>Native</td><td>Optional</td><td>None</td></tr>
-          <tr><td>Session state</td><td>Synced (incl. IPsec)</td><td>Synced — its whole job (TCP+IPsec default)</td><td>Never</td></tr>
-          <tr><td>Failover decided by</td><td>The cluster</td><td>Upstream device</td><td>Advertisement timeout</td></tr>
-          <tr><td>Vendors</td><td>FortiGate</td><td>FortiGate</td><td>Any (IETF standard)</td></tr>
-          <tr><td>Scale</td><td>2–4</td><td>2–16 (or FGCP clusters)</td><td>Unlimited compliant</td></tr>
-          <tr><td>Reach for it when…</td><td>Matched pair, seamless stateful takeover</td><td>Independent boxes, external load distribution</td><td>Multi-vendor gateway, migrations</td></tr>
-        </tbody>
-      </table>
-
+      <p>But look closely at the scene: two channels run between the boxes, and only one of them flows. The kernel's knowledge — sessions, VPN SAs, NAT state — crosses freely. The NP7's knowledge is trapped in Box A's silicon, piled up against a wall it structurally cannot pass. Box B is about to discover what that means.</p>
       <!-- ← Second paragraph: mechanism / how it works in practice -->
 
       <!-- Optional: use a list for multi-item comparisons or enumerations -->
@@ -470,7 +463,7 @@ Switch# write memory</code></pre>
         <div class="mental-note-block-icon">🧠</div>
         <div class="mental-note-block-inner">
           <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">Firefighter test: FGCP = two firefighters sharing one badge number. FGSP = two stations texting each other every active call. VRRP = the emergency phone number itself, reassignable to whichever station answers. Traps: A-A ≠ FGSP; "FGCP can't fail over VPNs" is false (cold spares renegotiate, clusters don't); post-failover CPU spike = expected NP7 resync, not a fault.</div>
+          <div class="mental-note-block-text">The handoff is two channels, not one. Kernel state flows; silicon state hits a wall. Everything that happens next follows from that single asymmetry.</div>
           <!--
             ← 2–3 sentences. Lead with a concrete number, ordered list, or key relationship.
                e.g. "An access port belongs to exactly one VLAN and strips/adds no 802.1Q tag.
@@ -486,18 +479,177 @@ Switch# write memory</code></pre>
       <div class="lesson-tools-grid">
         <div>
           <div class="tool-label">ASK A QUESTION</div>
-          <textarea class="tool-textarea" id="q-section-decision" placeholder="What are you unsure about in this section?" rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-decision','The Decision')">Add Question</button></div>
+          <textarea class="tool-textarea" id="q-section-scene-one" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-scene-one','Scene 1 — The Handoff')">Add Question</button></div>
         </div>
         <div>
           <div class="tool-label">ADD A NOTE</div>
-          <textarea class="tool-textarea" id="note-section-decision" placeholder="Write a note about this section..." rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-decision')">+ Add Note</button></div>
+          <textarea class="tool-textarea" id="note-section-scene-one" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-scene-one')">+ Add Note</button></div>
         </div>
       </div>
     </div>
 
-      </div><!-- /main-content -->
+    <!-- ══════════════════════════════════════════
+         SECTION 2  (duplicate and rename S1→S2)
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · SCENE 2 — THE SURGE</span>
+      </div>
+      <p class="socratic-insight">Box B is now primary, holding thousands of sessions its NP7 has never seen. Predict the next 45 seconds before revealing.</p>
+      <ul class="socratic-questions">
+        <li>What fraction of previously-offloaded traffic becomes CPU-bound at this exact moment, in the worst case?</li>
+        <li>If the CPU can't keep pace, what feedback loop ignites — and why does it feed itself?</li>
+      </ul>
+      <div class="answer-area" data-section="scene-two">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">100%. Every session that was offloaded on Box A arrives at Box B's CPU simultaneously, because Box B's NP7 holds zero hardware entries for any of them until each session's first packet is CPU-processed and the fast path re-established.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Drops → TCP retransmits → more load on the already-overloaded CPU → more drops. The retransmissions intended to recover from loss become the fuel that sustains the overload — a congestion feedback loop, not a graceful slowdown.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-scene-two">
+      <div class="section-label">SECTION 02</div>
+      <h2>Scene 2 — <em>One Hundred Percent, All At Once</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/s2-scene-two.png" class="section-img" alt="Cinematic scene of CPU surge as all offloaded sessions arrive simultaneously after failover"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">45 seconds at 95%: every session queues at the one desk that's open.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/s2-scene-two.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm modern colour palette with cream background, coral accents, muted gold highlights, sage greens, and soft brown outlines, clean bold line work, no gradients, no photorealism, no 3D rendering, highly structured composition with generous spacing. CINEMATIC INTERIOR SHOT rendered as a cutaway view INSIDE Box B, drawn like a stylised flat cross-section of a building with two floors. UPPER FLOOR labeled 'CPU' : a single desk with a stylised flat CPU character (a square-headed figure with a coral headband, sweat-drop marks, determined expression) stamping papers rapidly, motion lines around its stamping arm, a wall thermometer beside the desk with the mercury pinned high in a coral zone reading '95%'. Leading to this desk: an enormous winding queue of tiny flat packet characters (small envelope-shaped figures with simple dot eyes), hundreds implied through repetition fading into the background, each holding a tiny ticket. A large sign over the queue reads '100% — EVERY OFFLOADED SESSION, ALL AT ONCE'. LOWER FLOOR labeled 'NP7 FAST PATH': a wide, empty express corridor drawn in sage green with turnstile gates, almost entirely vacant, a single 'NOW REOPENING' sign, and a small trickle of stamped packet characters beginning to flow through the first turnstile with speed lines — showing the fast path re-populating one session at a time as the CPU stamps each ticket. In one corner, a small red warning vignette drawn as a faded 'what-if' thought bubble: packets falling off the end of an overflowing queue with tiny 'RETRY' boomerang arrows curving back into the line, labeled 'if CPU can't keep up: drops → retransmits → more load'. Perspective: straight-on cross-section, architectural dollhouse style. Every object reinforces the concept: the single stamping desk (CPU-mediated re-establishment), the queue of 100%, the empty-then-refilling express corridor (NP7 reprogramming), the boomerang retry loop (congestion feedback).</div>
+        </div>
+      </div>
+      <p>The instant Box B takes over, its kernel greets every inherited session by name — and then has to walk each one, personally, through CPU processing, because the NP7 express lane is empty. Not some sessions. Not the busy ones. In the worst case, one hundred percent of the previously-offloaded workload arrives at the CPU's single desk simultaneously. That's the 95% spike Marcus watched on the monitoring wall, and the 45 seconds of trading-floor users reporting the portal 'hanging.'</p>
+      <p>The faded red vignette in the corner of the scene is the failure mode that didn't happen on Thursday — but could at market open. An undersized CPU doesn't degrade gracefully under this surge; it drops packets, TCP retransmits, and the retransmissions feed the very overload that caused them. Thursday's box kept up. Whether it would keep up at peak throughput is a question the quiet afternoon cannot answer.</p>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Size the pair for this scene — the worst second — not for the average day. A 95% spike on a quiet afternoon means the margin for a market-open failover may already be gone.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-scene-two" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-scene-two','Scene 2 — The Surge')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-scene-two" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-scene-two')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 3  (duplicate S1 block, rename to S3)
+         Add more sections if needed (up to 5)
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · SCENE 3 — THE VERDICT</span>
+      </div>
+      <p class="socratic-insight">The spike settles. Priya wants an answer for the board. Recall the evidence chain before revealing the final scene.</p>
+      <ul class="socratic-questions">
+        <li>Name the four pieces of evidence that turn 'CPU spiked, then recovered' into an actual verdict.</li>
+        <li>What proactive step answers the question a quiet-afternoon failover cannot?</li>
+      </ul>
+      <div class="answer-area" data-section="scene-three">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">(1) Failover timestamp correlated against FortiAnalyzer historical peak throughput, (2) drop/retransmit counters during the spike window, (3) VPN tunnel status through the event, (4) CPU trend after the spike. Recovery alone is necessary evidence, not sufficient evidence.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">A controlled, scheduled failover test during a monitored window that approximates peak trading-floor throughput — directly observing whether saturation and loss occur under worst-case load instead of inferring it.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-scene-three">
+      <div class="section-label">SECTION 03</div>
+      <h2>Scene 3 — <em>Evidence Before Verdict</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/s3-scene-three.png" class="section-img" alt="Cinematic scene of engineers reviewing failover evidence before rendering a verdict"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">The board wants 'nothing to worry about.' The engineer wants four checkmarks first.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/s3-scene-three.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm modern colour palette with cream background, coral accents, muted gold highlights, sage greens, and soft brown outlines, clean bold line work, no gradients, no photorealism, no 3D rendering, highly structured composition with generous spacing. CINEMATIC MEETING-ROOM SHOT, warm afternoon light through a flat-styled window. Two characters at a table: PRIYA (flat-styled professional woman, sage-green blazer, thoughtful expression, one eyebrow slightly raised) on the left holding a tablet showing a tiny CPU-spike graph shaped like a sharp mountain peak that quickly flattens; the CONSULTANT (flat-styled engineer, coral sweater, calm confident expression) on the right, gesturing at a large wall display between them. The wall display is drawn as a clean evidence board with four large checklist cards pinned in a two-by-two grid, each with a bold icon and short label: card 1 'PEAK THROUGHPUT CORRELATION' with a small line-chart icon overlaying a calendar; card 2 'DROP / RETRANSMIT COUNTERS' with a warning-triangle icon showing a zero; card 3 'TUNNELS HELD' with two unbroken gold padlock icons; card 4 'CPU TREND NORMALISED' with a downward-cooling thermometer icon. Three cards bear big gold checkmarks; card 1 bears a coral 'PENDING' stamp with a small magnifying glass, showing the one piece of evidence still being gathered. Below the board, a small callout plaque reads 'NEXT: scheduled failover test at peak load' with a tiny calendar-and-clock icon. On the table, a folder labeled 'BOARD BRIEFING' remains closed with a small paperclip, signalling the verdict is not delivered until the evidence is complete. Perspective: eye-level, slightly angled toward the evidence wall. Every object reinforces the concept: evidence cards before verdict, the closed briefing folder, the pending peak-correlation card, the proactive test plaque.</div>
+        </div>
+      </div>
+      <p>The final scene is the one that separates engineers from dashboard-watchers. Thursday's failover succeeded — the tunnels held, the spike settled, the design did its job. But 'it recovered' is necessary evidence, not sufficient evidence. The briefing folder stays closed until all four cards on the evidence wall carry checkmarks: peak-throughput correlation, drop and retransmit counters, tunnel status, CPU trend. Three are checked. One is pending.</p>
+      <p>And the plaque under the board is the real deliverable to Priya: don't wait for the next real failure to reveal the answer. Schedule a controlled failover test at peak-equivalent load, watch the same counters, and turn the one unanswerable question — 'would it survive market open?' — into a measured fact.</p>
+
+      <table class="data-table">
+        <thead><tr><th>Key takeaway</th><th>Why it matters</th></tr></thead>
+        <tbody>
+          <tr><td>Kernel state syncs; NP7 state doesn't</td><td>The single asymmetry that explains the entire incident — and the exam's favorite hidden detail</td></tr>
+          <tr><td>Worst case: 100% CPU-bound at once</td><td>The sizing number for an FGCP pair is the partner's full offloaded workload, not steady-state</td></tr>
+          <tr><td>Drops feed retransmits feed drops</td><td>An undersized CPU doesn't slow down gracefully — it can spiral at the moment redundancy is gone</td></tr>
+          <tr><td>Recovery ≠ safety margin</td><td>A quiet-period spike near the ceiling means the peak-load answer is still unknown</td></tr>
+          <tr><td>Tunnels holding = sync proof</td><td>VPN SAs are part of synced state; intact tunnels are diagnostic evidence, not just a good outcome</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <strong>Exam notes:</strong> (1) A temporary CPU spike immediately after FGCP failover is <em>expected</em> NP7 resync behavior — distractor answers will frame it as a cluster fault or sync failure. (2) FGCP synchronizes IPsec tunnel state; "VPNs must renegotiate after FGCP failover" is a trap built on confusing cold-spare recovery with clustered failover. (3) "Session sync" in Fortinet documentation means kernel session state — never hardware offload state.
+      </div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Memory hooks: Scene 1 = two channels, one wall (kernel crosses, silicon doesn't). Scene 2 = one desk, 100% of the queue (CPU re-establishes every fast path). Scene 3 = four cards, closed folder (evidence before verdict). Exam note: a temporary post-failover CPU spike on an FGCP pair is EXPECTED NP7 resync behavior — the trap answer calls it a fault; the correct answer asks whether packets were dropped.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-scene-three" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-scene-three','Scene 3 — The Verdict')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-scene-three" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-scene-three')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
 </main>
 
 <!-- ══════════════════════════════════════════════════════════
@@ -508,11 +660,11 @@ Switch# write memory</code></pre>
 <div class="page-nav">
   <a class="page-nav-btn page-nav-prev" href="#">
     <span class="page-nav-label">← BACK TO</span>
-    <span class="page-nav-title">Session 15 — Complete Guide</span>
+    <span class="page-nav-title">Session 15 — Full Discussion</span>
   </a>
   <a class="page-nav-btn page-nav-next" href="#">
     <span class="page-nav-label">NEXT →</span>
-    <span class="page-nav-title">Bite: FGCP vs FGSP</span>
+    <span class="page-nav-title">Bite: NP7 Resync After Failover</span>
   </a>
 </div>
 
@@ -520,7 +672,7 @@ Switch# write memory</code></pre>
      FOOTER
      ══════════════════════════════════════════════════════════ -->
 <footer>
-  NSE7 Enterprise Firewall 7.6<span>.</span> Session 15<span>.</span> Nibble<span>.</span> Three HA Answers
+  NSE7 Enterprise Firewall 7.6<span>.</span> Session 15<span>.</span> Visual<span>.</span> The 45 Seconds Nobody Saw Coming
 </footer>
 
 <!-- ══════════════════════════════════════════════════════════
@@ -528,13 +680,15 @@ Switch# write memory</code></pre>
      ══════════════════════════════════════════════════════════ -->
 <script>
 // ← PAGE_KEY must be unique across all pages. Format: ccna-chNN-subNN-slug
-const PAGE_KEY = 'nse7-s15-nibble-three-ha-answers';
+const PAGE_KEY = 'nse7-s15-visual-np7-failover-scene';
 // e.g. 'ccna-ch04-sub02-vlans'
 
 // ← One entry per section. Key = the id on the .section-block div (without #).
 const SECTIONS = {
-  'section-decision': 'The Decision',
-  // single-section nibble
+  'section-scene-one': 'Scene 1 — The Handoff',
+  'section-scene-two': 'Scene 2 — The Surge',
+  'section-scene-three': 'Scene 3 — The Verdict',
+  // add more if needed
 };
 
 /* ── Everything below is fixed — do not modify ── */

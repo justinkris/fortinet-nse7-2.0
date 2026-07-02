@@ -1,0 +1,33 @@
+==============================================================================
+SECTION-IMAGE PROMPTS — session-15-ha-problem/complete.html
+Prompts: 5
+==============================================================================
+
+------------------------------------------------------------------------------
+SOURCE: complete.html
+------------------------------------------------------------------------------
+
+[1] filename (as declared in HTML): images/s1-the-problem.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Split composition. LEFT: a FortiGate box icon labeled 'CONFIG' holding a neat printed rulebook icon (policies, routes drawn as tidy lines on pages), caption 'what the box was told — restorable from backup'. RIGHT: the same FortiGate box labeled 'STATE' surrounded by dozens of small live glowing threads connecting to tiny padlock icons (VPN SAs) and tiny envelope icons (sessions), each thread pulsing with small motion dots, caption 'what the box currently knows — lost the instant it dies'. Between the halves, a gold arrow labeled 'backup restores this' points only to the left half, and a dashed crossed-out arrow labeled 'backup can never restore this' points to the right half. Bottom caption bar: 'Identical configuration is not identical state.' Clean structured composition, generous spacing.
+
+
+[2] filename (as declared in HTML): images/s2-fgcp.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Two identical FortiGate box icons side by side wearing matching coral badges reading 'CLUSTER-01', enclosed together in one rounded dashed boundary labeled 'one logical device'. Three distinct labeled links drawn between them: a pulsing red-gold line labeled 'heartbeat (0x8890)', a gold ribbon labeled 'config sync', and a wider gold ribbon carrying tiny ledger and padlock icons labeled 'session sync (incl. IPsec SAs)'. A crown icon over the left box labeled 'primary', a waiting figure pose on the right box labeled 'secondary'. Outside the boundary, network clouds above and below connect only to the boundary itself, not to individual boxes, showing the outside world sees one device. Bottom caption: 'FGCP: the cluster owns its own failover.' Clean structured composition, generous spacing.
+
+
+[3] filename (as declared in HTML): images/s3-fgsp.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Two visibly different FortiGate box icons (different accent colours, no shared boundary) labeled 'Peer_1' and 'Peer_2', each with its own separate small rulebook icon in different colours beside it labeled 'own config'. A single thin gold line between them carrying tiny ledger icons, labeled 'session sync only (incl. IPsec by default)'. Above them, a flat load-balancer icon with a small radar dish, arrows fanning down to both peers, labeled 'external LB: distributes traffic, detects failure'. Below, a server-farm icon. A small badge near the sync line reads '2–16 peers, or FGCP clusters as peers'. Bottom caption: 'FGSP: the network decides where traffic goes; FGSP makes sure it survives arriving.' Clean structured composition, generous spacing.
+
+
+[4] filename (as declared in HTML): images/s4-vrrp.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Centre: a floating badge icon showing '192.168.10.1 + virtual MAC' drawn as a glowing gold medallion suspended between two clearly different device icons — left an old, slightly weathered third-party router (different vendor styling, antenna, beige tones) labeled 'legacy router', right a modern FortiGate box labeled 'new FortiGate'. A curved gold arc shows the medallion able to swing to whichever device is master; the current master (left) holds a small flag labeled 'MASTER — answers ARP', the right device labeled 'BACKUP — listening for advertisements'. Below, a row of five small PC icons all with identical speech bubbles reading 'gateway = 192.168.10.1', their ARP-cache thought bubbles all showing the SAME virtual MAC, unchanged. A small banner between the devices reads 'IETF open standard — any compliant vendor'. A faded corner vignette shows a padlock breaking with the label 'sessions/VPNs NOT carried — stateless'. Bottom caption: 'VRRP moves the identity, never the state.' Clean structured composition, generous spacing.
+
+
+[5] filename (as declared in HTML): images/s5-np7-resync.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Three-panel horizontal storyboard. PANEL 1 'SYNCED': two FortiGate boxes, a gold ribbon of tiny ledger and padlock icons flowing between their upper 'kernel' layers, while their lower 'NP7 chip' layers each sit behind separate dashed walls labeled 'local silicon'. PANEL 2 'THE SURGE': cutaway of the surviving box — one CPU character at a single desk stamping tickets with sweat-drop marks, a giant queue of envelope-shaped packet characters under a banner reading '100% — all offloaded sessions at once', a thermometer pinned at 95% in coral, the NP7 express corridor below almost empty with a 'reopening' sign and the first stamped packets trickling through turnstiles. PANEL 3 'THE VERDICT': a small evidence board with four checklist cards (peak-throughput correlation, drop/retransmit counters, tunnels held, CPU trend), three checked in gold and one stamped 'PENDING' in coral, beside a closed folder labeled 'board briefing' and a calendar plaque labeled 'scheduled peak-load failover test'. Bottom caption bar: 'Size for the worst second, not the average day.' Clean structured composition, generous spacing.
+
