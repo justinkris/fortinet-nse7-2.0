@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visual — Flow-Based vs Proxy-Based Inspection</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+    --coral:#c0392b; --coral-light:#fdecea; --coral-border:#e8a09a;
+    --sage:#4a7c59; --sage-light:#e8f2ea;
+  }
+  html{scroll-behavior:smooth;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;}
+  header h1{font-family:'Playfair Display',serif;font-size:46px;font-weight:700;line-height:1.05;color:#fbf7ec;margin-bottom:10px;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+
+  .motivation-banner{padding:22px 60px;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);}
+  .motivation-text em{font-style:italic;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+
+  main{max-width:1200px;margin:0 auto;padding:48px 60px 80px;}
+
+  .section-block{margin-bottom:56px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-coral{border-left-color:var(--coral-border);background:var(--coral-light);}
+
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+
+  /* THE BIG VISUAL SCENE */
+  .visual-scene{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin:28px 0;}
+  .visual-scene-title{background:var(--ink-dark);padding:14px 24px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-accent);}
+  .visual-scene-body{padding:32px 28px;}
+
+  /* SVG ILLUSTRATION WRAPPER */
+  .svg-wrapper{width:100%;margin:0 auto;}
+  .svg-wrapper svg{width:100%;height:auto;display:block;}
+
+  /* ANNOTATION GRID below the illustration */
+  .annotation-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--border);margin-top:0;}
+  .annotation-col{padding:24px 28px;}
+  .annotation-col:first-child{border-right:1px solid var(--border);}
+  .annotation-col-head{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid;}
+  .annotation-col.flow-col .annotation-col-head{color:var(--sage);border-color:var(--sage);}
+  .annotation-col.proxy-col .annotation-col-head{color:var(--coral);border-color:var(--coral);}
+  .annotation-item{display:flex;gap:10px;margin-bottom:12px;align-items:flex-start;}
+  .annotation-badge{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+  .flow-col .annotation-badge{background:var(--sage-light);color:var(--sage);}
+  .proxy-col .annotation-badge{background:var(--coral-light);color:var(--coral);}
+  .annotation-text{font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.6;color:var(--text-soft);}
+  .annotation-text strong{color:var(--text);}
+
+  /* COMPARISON TABLE */
+  .data-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .td-flow{color:var(--sage)!important;font-weight:600!important;}
+  .td-proxy{color:var(--coral)!important;font-weight:600!important;}
+
+  /* EXAM CALLOUT */
+  .exam-strip{background:var(--ink-dark);border-radius:12px;padding:20px 24px;margin:20px 0;}
+  .exam-strip-head{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--ink-accent);text-transform:uppercase;margin-bottom:12px;}
+  .exam-items{display:flex;flex-direction:column;gap:8px;}
+  .exam-item{display:flex;gap:10px;align-items:flex-start;}
+  .exam-item-icon{color:var(--ink-accent);font-size:13px;margin-top:2px;flex-shrink:0;}
+  .exam-item-text{font-family:'Cormorant Garamond',serif;font-size:15px;color:rgba(251,247,236,0.75);line-height:1.6;}
+  .exam-item-text strong{color:#fbf7ec;}
+
+  /* IMAGE PROMPT BOX */
+  .prompt-box{background:var(--surface-2);border:1px dashed var(--border);border-radius:10px;padding:18px 22px;margin:20px 0;}
+  .prompt-box-head{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;}
+  .prompt-box-text{font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);line-height:1.7;font-style:italic;}
+
+  /* PACKET FLOW DIAGRAM (text-based) */
+  .packet-flow{display:flex;align-items:center;gap:0;margin:20px 0;overflow-x:auto;padding-bottom:4px;}
+  .pf-node{background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:8px 14px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;text-align:center;}
+  .pf-node.pf-fw{background:var(--ink-dark);color:var(--ink-accent);border-color:var(--ink-dark);}
+  .pf-node.pf-proxy{background:var(--coral-light);border-color:var(--coral-border);color:var(--coral);}
+  .pf-arrow{font-size:18px;color:var(--text-muted);padding:0 4px;flex-shrink:0;}
+  .pf-label{font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--text-muted);font-style:italic;text-align:center;margin-top:4px;}
+
+  /* TWO-COLUMN FLOW COMPARISON */
+  .flow-compare{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:20px 0;}
+  .flow-col-block{border-radius:10px;padding:18px 20px;border:1px solid;}
+  .flow-col-block.block-flow{background:var(--sage-light);border-color:#a7d8b0;}
+  .flow-col-block.block-proxy{background:var(--coral-light);border-color:var(--coral-border);}
+  .fcb-title{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:10px;}
+  .block-flow .fcb-title{color:var(--sage);}
+  .block-proxy .fcb-title{color:var(--coral);}
+  .fcb-steps{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;}
+  .fcb-step{display:flex;gap:8px;align-items:flex-start;}
+  .fcb-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+  .block-flow .fcb-num{background:var(--sage);color:#fff;}
+  .block-proxy .fcb-num{background:var(--coral);color:#fff;}
+  .fcb-text{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text-soft);line-height:1.5;}
+
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+
+  @media(max-width:720px){
+    header,main,footer{padding-left:24px;padding-right:24px;}
+    .motivation-banner{padding-left:24px;padding-right:24px;}
+    .annotation-grid,.flow-compare{grid-template-columns:1fr;}
+    .annotation-col:first-child{border-right:none;border-bottom:1px solid var(--border);}
+    header h1{font-size:32px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="breadcrumb">
+      <a href="#">NSE7 Enterprise Firewall 7.6</a>
+      <span style="color:rgba(155,184,230,0.4)">›</span>
+      Visual Reference
+    </div>
+    <div class="header-eyebrow"><span class="dot"></span> Visual Guide · Extra 02</div>
+    <h1>Flow-Based vs <em>Proxy-Based</em> Inspection</h1>
+    <p>Why the difference is about timing — not depth. The customs belt analogy explained.</p>
+  </div>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">Both modes read Layer 7. The only difference is <em>when the verdict is delivered</em>.</div>
+  <p class="motivation-sub">Flow-based decides while the traffic is still moving. Proxy-based halts traffic, buffers the entire stream, then decides. Same inspection depth — completely different performance profile.</p>
+</div>
+
+<main>
+
+  <!-- ══════════════════════════════════════════
+       THE CORE ANALOGY
+       ══════════════════════════════════════════ -->
+  <div class="section-block">
+    <div class="section-label">THE ANALOGY</div>
+    <h2>Two Customs Lanes at the <em>Same Airport</em></h2>
+    <p>Imagine an international airport with two security lanes side by side. Both lanes have the same scanner technology. Both can detect the same threats. But they work completely differently.</p>
+
+    <div class="visual-scene">
+      <div class="visual-scene-title">🛃 CUSTOMS INSPECTION — THE ANALOGY ILLUSTRATED</div>
+      <div class="visual-scene-body">
+
+        <!-- ILLUSTRATION — customs-lanes.png (falls back to dashed placeholder if the PNG isn't present yet) -->
+        <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:14px;">
+          <img src="images/customs-lanes.png" alt="Two customs lanes — flow-based vs proxy-based split-panel analogy" style="width:100%;max-width:900px;border-radius:12px;border:1px solid var(--border);display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div style="display:none;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:40px 28px;flex-direction:column;align-items:center;gap:20px;width:100%;">
+            <div style="font-size:40px;opacity:0.35;">🖼️</div>
+            <div style="text-align:center;">
+              <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">ILLUSTRATION PLACEHOLDER</div>
+              <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--text);margin-bottom:4px;">The Two Customs Lanes</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);">Flow-Based vs Proxy-Based · Split-panel analogy illustration</div>
+            </div>
+            <div style="font-family:'Outfit',sans-serif;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-align:center;">Drop the generated PNG at <code>images/customs-lanes.png</code> — see <code>images/prompts.txt</code> for the generation prompt.</div>
+          </div>
+        </div>
+        <div style="display:none"><svg viewBox="0 0 1 1" xmlns="http://www.w3.org/2000/svg" font-family="'Outfit', sans-serif">
+
+            <!-- BACKGROUND PANELS -->
+            <!-- Flow lane background -->
+            <rect x="10" y="10" width="420" height="420" rx="16" fill="#e8f2ea" stroke="#a7d8b0" stroke-width="1.5"/>
+            <!-- Proxy lane background -->
+            <rect x="470" y="10" width="420" height="420" rx="16" fill="#fdecea" stroke="#e8a09a" stroke-width="1.5"/>
+
+            <!-- LANE HEADERS -->
+            <rect x="10" y="10" width="420" height="48" rx="16" fill="#4a7c59"/>
+            <rect x="10" y="42" width="420" height="16" fill="#4a7c59"/>
+            <text x="220" y="39" text-anchor="middle" fill="white" font-size="13" font-weight="700" letter-spacing="2" font-family="'Outfit',sans-serif">FLOW-BASED LANE</text>
+
+            <rect x="470" y="10" width="420" height="48" rx="16" fill="#c0392b"/>
+            <rect x="470" y="42" width="420" height="16" fill="#c0392b"/>
+            <text x="680" y="39" text-anchor="middle" fill="white" font-size="13" font-weight="700" letter-spacing="2" font-family="'Outfit',sans-serif">PROXY-BASED LANE</text>
+
+            <!-- ═══════════════════════════════ -->
+            <!-- FLOW LANE SCENE -->
+            <!-- ═══════════════════════════════ -->
+
+            <!-- Conveyor belt -->
+            <rect x="40" y="200" width="360" height="20" rx="10" fill="#c8dbb0" stroke="#a7d8b0" stroke-width="1.5"/>
+            <!-- Belt lines -->
+            <line x1="80" y1="200" x2="80" y2="220" stroke="#a7d8b0" stroke-width="1"/>
+            <line x1="130" y1="200" x2="130" y2="220" stroke="#a7d8b0" stroke-width="1"/>
+            <line x1="180" y1="200" x2="180" y2="220" stroke="#a7d8b0" stroke-width="1"/>
+            <line x1="230" y1="200" x2="230" y2="220" stroke="#a7d8b0" stroke-width="1"/>
+            <line x1="280" y1="200" x2="280" y2="220" stroke="#a7d8b0" stroke-width="1"/>
+            <line x1="330" y1="200" x2="330" y2="220" stroke="#a7d8b0" stroke-width="1"/>
+
+            <!-- Belt rollers -->
+            <circle cx="50" cy="210" r="10" fill="#8fb87a" stroke="#4a7c59" stroke-width="1.5"/>
+            <circle cx="390" cy="210" r="10" fill="#8fb87a" stroke="#4a7c59" stroke-width="1.5"/>
+
+            <!-- Movement arrow on belt -->
+            <text x="215" y="215" text-anchor="middle" fill="#4a7c59" font-size="11" font-weight="700">→ → → → MOVING →</text>
+
+            <!-- BAGS on the belt (packets) — still moving -->
+            <!-- Bag 1 (past scanner, cleared) -->
+            <rect x="55" y="176" width="36" height="28" rx="5" fill="#6aab58" stroke="#4a7c59" stroke-width="1.5"/>
+            <text x="73" y="194" text-anchor="middle" fill="white" font-size="10" font-weight="700">✓</text>
+            <text x="73" y="168" text-anchor="middle" fill="#4a7c59" font-size="9" font-weight="600">PKT 1</text>
+
+            <!-- Bag 2 (at scanner) -->
+            <rect x="148" y="176" width="36" height="28" rx="5" fill="#f0c040" stroke="#b45309" stroke-width="1.5"/>
+            <text x="166" y="194" text-anchor="middle" fill="#7a4f0c" font-size="10" font-weight="700">?</text>
+            <text x="166" y="168" text-anchor="middle" fill="#b45309" font-size="9" font-weight="600">PKT 2</text>
+
+            <!-- Bag 3 (approaching) -->
+            <rect x="248" y="176" width="36" height="28" rx="5" fill="#8dbde0" stroke="#1e40af" stroke-width="1.5"/>
+            <text x="266" y="194" text-anchor="middle" fill="#0c1f5c" font-size="10" font-weight="700">…</text>
+            <text x="266" y="168" text-anchor="middle" fill="#1e40af" font-size="9" font-weight="600">PKT 3</text>
+
+            <!-- Bag 4 (queued) -->
+            <rect x="338" y="176" width="36" height="28" rx="5" fill="#8dbde0" stroke="#1e40af" stroke-width="1.5"/>
+            <text x="356" y="194" text-anchor="middle" fill="#0c1f5c" font-size="10" font-weight="700">…</text>
+            <text x="356" y="168" text-anchor="middle" fill="#1e40af" font-size="9" font-weight="600">PKT 4</text>
+
+            <!-- SCANNER machine -->
+            <rect x="125" y="135" width="80" height="70" rx="8" fill="#0d1a3a" stroke="#4a7c59" stroke-width="2"/>
+            <rect x="133" y="143" width="64" height="32" rx="4" fill="#1a7c4a" opacity="0.6"/>
+            <!-- Scanner beam -->
+            <line x1="125" y1="205" x2="205" y2="205" stroke="#6aff9e" stroke-width="2" opacity="0.8"/>
+            <line x1="125" y1="200" x2="205" y2="200" stroke="#6aff9e" stroke-width="1" opacity="0.4"/>
+            <text x="165" y="193" text-anchor="middle" fill="#9bb8e6" font-size="9" font-weight="700">SCANNING</text>
+            <text x="165" y="204" text-anchor="middle" fill="#6aff9e" font-size="8">LIVE</text>
+            <text x="165" y="222" text-anchor="middle" fill="#4a7c59" font-size="9" font-weight="600">FORTIGATE IPS</text>
+
+            <!-- OFFICER (flow) — watching the moving belt -->
+            <!-- Head -->
+            <circle cx="165" cy="105" r="18" fill="#f5d9b0" stroke="#b45309" stroke-width="1.5"/>
+            <!-- Hat -->
+            <rect x="148" y="88" width="34" height="8" rx="3" fill="#0d1a3a"/>
+            <rect x="144" y="93" width="42" height="5" rx="2" fill="#0d1a3a"/>
+            <!-- Eyes -->
+            <circle cx="158" cy="105" r="3" fill="#0d1a3a"/>
+            <circle cx="172" cy="105" r="3" fill="#0d1a3a"/>
+            <!-- Slight smile -->
+            <path d="M 158 112 Q 165 116 172 112" stroke="#7a4f0c" stroke-width="1.5" fill="none"/>
+            <!-- Body -->
+            <rect x="148" y="122" width="34" height="18" rx="4" fill="#1e40af"/>
+            <!-- Arms (relaxed, at sides) -->
+            <line x1="148" y1="126" x2="135" y2="138" stroke="#f5d9b0" stroke-width="4" stroke-linecap="round"/>
+            <line x1="182" y1="126" x2="195" y2="138" stroke="#f5d9b0" stroke-width="4" stroke-linecap="round"/>
+            <!-- Label -->
+            <text x="165" y="76" text-anchor="middle" fill="#4a7c59" font-size="10" font-weight="700">FORTIGATE</text>
+            <text x="165" y="64" text-anchor="middle" fill="#4a7c59" font-size="9">(watching, not stopping)</text>
+
+            <!-- Verdict labels: belt keeps moving -->
+            <text x="73" y="248" text-anchor="middle" fill="#4a7c59" font-size="9" font-weight="700">ALLOWED</text>
+            <text x="73" y="258" text-anchor="middle" fill="#4a7c59" font-size="8">belt kept moving</text>
+
+            <!-- DESCRIPTION (flow) -->
+            <text x="220" y="310" text-anchor="middle" fill="#0d1a3a" font-size="12" font-weight="700">Belt never stops.</text>
+            <text x="220" y="328" text-anchor="middle" fill="#4a7c59" font-size="11">FortiGate inspects each packet</text>
+            <text x="220" y="344" text-anchor="middle" fill="#4a7c59" font-size="11">as it passes. Verdict per packet.</text>
+            <text x="220" y="360" text-anchor="middle" fill="#4a7c59" font-size="11">One session entry. NP7 eligible.</text>
+
+            <!-- Session count -->
+            <rect x="60" y="374" width="320" height="36" rx="8" fill="#4a7c59" opacity="0.12"/>
+            <text x="220" y="388" text-anchor="middle" fill="#4a7c59" font-size="10" font-weight="700" letter-spacing="1">SESSION ENTRIES: 1   ·   CPU: LOW</text>
+            <text x="220" y="402" text-anchor="middle" fill="#4a7c59" font-size="10" letter-spacing="1">NP7 OFFLOAD: ✓ ELIGIBLE</text>
+
+
+            <!-- ═══════════════════════════════ -->
+            <!-- PROXY LANE SCENE -->
+            <!-- ═══════════════════════════════ -->
+
+            <!-- Two separate belts for proxy -->
+            <!-- Client-side belt -->
+            <rect x="500" y="180" width="165" height="16" rx="8" fill="#f0b8b0" stroke="#e8a09a" stroke-width="1.5"/>
+            <text x="582" y="174" text-anchor="middle" fill="#c0392b" font-size="9" font-weight="700">CLIENT → FORTIGATE</text>
+            <circle cx="508" cy="188" r="8" fill="#e07070" stroke="#c0392b" stroke-width="1.5"/>
+            <circle cx="657" cy="188" r="8" fill="#e07070" stroke="#c0392b" stroke-width="1.5"/>
+
+            <!-- Server-side belt -->
+            <rect x="695" y="180" width="165" height="16" rx="8" fill="#f0b8b0" stroke="#e8a09a" stroke-width="1.5"/>
+            <text x="778" y="174" text-anchor="middle" fill="#c0392b" font-size="9" font-weight="700">FORTIGATE → SERVER</text>
+            <circle cx="703" cy="188" r="8" fill="#e07070" stroke="#c0392b" stroke-width="1.5"/>
+            <circle cx="852" cy="188" r="8" fill="#e07070" stroke="#c0392b" stroke-width="1.5"/>
+
+            <!-- CLIENT bag — on client-side belt -->
+            <rect x="520" y="161" width="36" height="28" rx="5" fill="#8dbde0" stroke="#1e40af" stroke-width="1.5"/>
+            <text x="538" y="176" text-anchor="middle" fill="#0c1f5c" font-size="9" font-weight="700">CLIENT</text>
+            <text x="538" y="186" text-anchor="middle" fill="#0c1f5c" font-size="8">PKT</text>
+            <!-- Arrow from client belt stops -->
+            <text x="638" y="190" text-anchor="middle" fill="#c0392b" font-size="14" font-weight="700">✕</text>
+            <text x="638" y="205" text-anchor="middle" fill="#c0392b" font-size="8" font-weight="700">BELT STOPS</text>
+
+            <!-- BUFFER / INSPECTION TABLE in centre -->
+            <rect x="620" y="115" width="120" height="70" rx="8" fill="#0d1a3a" stroke="#c0392b" stroke-width="2"/>
+            <rect x="628" y="123" width="104" height="32" rx="4" fill="#3a1010" opacity="0.8"/>
+            <text x="680" y="137" text-anchor="middle" fill="#ff9090" font-size="9" font-weight="700">BUFFER</text>
+            <text x="680" y="150" text-anchor="middle" fill="#ff9090" font-size="8">COMPLETE STREAM</text>
+            <text x="680" y="161" text-anchor="middle" fill="#9bb8e6" font-size="8">REASSEMBLED</text>
+            <text x="680" y="176" text-anchor="middle" fill="#9bb8e6" font-size="8">then inspected</text>
+
+            <!-- OFFICER (proxy) — opening the bag at a table -->
+            <!-- Head -->
+            <circle cx="680" cy="85" r="18" fill="#f5d9b0" stroke="#b45309" stroke-width="1.5"/>
+            <!-- Hat -->
+            <rect x="663" y="68" width="34" height="8" rx="3" fill="#0d1a3a"/>
+            <rect x="659" y="73" width="42" height="5" rx="2" fill="#0d1a3a"/>
+            <!-- Stressed eyes -->
+            <circle cx="673" cy="84" r="3" fill="#0d1a3a"/>
+            <circle cx="687" cy="84" r="3" fill="#0d1a3a"/>
+            <!-- Frown (busy) -->
+            <path d="M 673 92 Q 680 88 687 92" stroke="#7a4f0c" stroke-width="1.5" fill="none"/>
+            <!-- Body -->
+            <rect x="663" y="102" width="34" height="18" rx="4" fill="#c0392b"/>
+            <!-- Arms (reaching into bag) -->
+            <line x1="663" y1="106" x2="645" y2="118" stroke="#f5d9b0" stroke-width="4" stroke-linecap="round"/>
+            <line x1="697" y1="106" x2="715" y2="118" stroke="#f5d9b0" stroke-width="4" stroke-linecap="round"/>
+            <!-- Label -->
+            <text x="680" y="56" text-anchor="middle" fill="#c0392b" font-size="10" font-weight="700">FORTIGATE PROXY</text>
+            <text x="680" y="44" text-anchor="middle" fill="#c0392b" font-size="9">(terminates connection)</text>
+
+            <!-- Bag contents spilling out on table (items inspected) -->
+            <ellipse cx="640" cy="128" rx="8" ry="5" fill="#f0c040" stroke="#b45309" stroke-width="1"/>
+            <ellipse cx="655" cy="124" rx="6" ry="4" fill="#e07070" stroke="#c0392b" stroke-width="1"/>
+            <ellipse cx="648" cy="132" rx="5" ry="4" fill="#8dbde0" stroke="#1e40af" stroke-width="1"/>
+
+            <!-- Server-side: new bag created -->
+            <rect x="714" y="161" width="36" height="28" rx="5" fill="#6aab58" stroke="#4a7c59" stroke-width="1.5"/>
+            <text x="732" y="176" text-anchor="middle" fill="white" font-size="9" font-weight="700">NEW</text>
+            <text x="732" y="186" text-anchor="middle" fill="white" font-size="8">PKT</text>
+            <text x="732" y="208" text-anchor="middle" fill="#c0392b" font-size="8" font-weight="700">new connection</text>
+
+            <!-- Arrow labels showing two connections -->
+            <text x="582" y="200" text-anchor="middle" fill="#c0392b" font-size="9">TCP #1: Client↔FortiGate</text>
+            <text x="778" y="200" text-anchor="middle" fill="#c0392b" font-size="9">TCP #2: FortiGate↔Server</text>
+
+            <!-- DESCRIPTION (proxy) -->
+            <text x="680" y="300" text-anchor="middle" fill="#0d1a3a" font-size="12" font-weight="700">Belt stops. Traffic buffered.</text>
+            <text x="680" y="318" text-anchor="middle" fill="#c0392b" font-size="11">FortiGate terminates the TCP connection.</text>
+            <text x="680" y="334" text-anchor="middle" fill="#c0392b" font-size="11">Entire stream buffered. Then inspected.</text>
+            <text x="680" y="350" text-anchor="middle" fill="#c0392b" font-size="11">New connection opened to server.</text>
+
+            <!-- Session count -->
+            <rect x="515" y="374" width="330" height="36" rx="8" fill="#c0392b" opacity="0.12"/>
+            <text x="680" y="388" text-anchor="middle" fill="#c0392b" font-size="10" font-weight="700" letter-spacing="1">SESSION ENTRIES: 2   ·   CPU: HIGH</text>
+            <text x="680" y="402" text-anchor="middle" fill="#c0392b" font-size="10" letter-spacing="1">NP7 OFFLOAD: ✗ NOT ELIGIBLE</text>
+
+            <!-- DIVIDER LINE -->
+            <line x1="450" y1="20" x2="450" y2="430" stroke="#d4c89a" stroke-width="2" stroke-dasharray="6,4"/>
+            <text x="450" y="235" text-anchor="middle" fill="#6b7794" font-size="9" font-weight="700" transform="rotate(-90, 450, 235)" letter-spacing="2">SAME FORTIGATE</text>
+
+          </svg></div>
+
+        <!-- ANNOTATION GRID -->
+        <div class="annotation-grid">
+          <div class="annotation-col flow-col">
+            <div class="annotation-col-head">Flow-Based — The Belt Never Stops</div>
+            <div class="annotation-item">
+              <div class="annotation-badge">1</div>
+              <div class="annotation-text"><strong>FortiGate acts as a forwarder.</strong> It examines each packet as it passes — like a scanner on a moving belt. The client-server TCP connection is never broken.</div>
+            </div>
+            <div class="annotation-item">
+              <div class="annotation-badge">2</div>
+              <div class="annotation-text"><strong>Verdict per packet, not per stream.</strong> The IPS engine flags threats in real time. If a packet is malicious, it's dropped immediately — no waiting for the full stream.</div>
+            </div>
+            <div class="annotation-item">
+              <div class="annotation-badge">3</div>
+              <div class="annotation-text"><strong>One session entry in the table.</strong> NP7 can take over after the session is established. CPU handles the handshake, then steps aside.</div>
+            </div>
+            <div class="annotation-item">
+              <div class="annotation-badge">4</div>
+              <div class="annotation-text"><strong>Recommended for high-throughput policies.</strong> Trading floors, data centre east-west, bulk file transfers. Lower latency, lower CPU cost.</div>
+            </div>
+          </div>
+          <div class="annotation-col proxy-col">
+            <div class="annotation-col-head">Proxy-Based — The Belt Stops Entirely</div>
+            <div class="annotation-item">
+              <div class="annotation-badge">1</div>
+              <div class="annotation-text"><strong>FortiGate terminates the TCP connection.</strong> The client connects to FortiGate. FortiGate opens a second, separate connection to the server. Two TCP handshakes. Two session entries.</div>
+            </div>
+            <div class="annotation-item">
+              <div class="annotation-badge">2</div>
+              <div class="annotation-text"><strong>The full stream is buffered before inspection.</strong> FortiGate reassembles the complete application-layer object — the entire email, the full HTTP response, the complete file transfer.</div>
+            </div>
+            <div class="annotation-item">
+              <div class="annotation-badge">3</div>
+              <div class="annotation-text"><strong>CPU-bound. NP7 cannot offload.</strong> The NP7 cannot terminate TCP connections or reassemble streams — that's architecturally incompatible with its design. The entire session runs on CPU.</div>
+            </div>
+            <div class="annotation-item">
+              <div class="annotation-badge">4</div>
+              <div class="annotation-text"><strong>Enables features flow-based cannot.</strong> Category usage quotas, VoIP inspection, certain DLP modes, proxy authentication. The complete stream enables capabilities the in-flight approach cannot match.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       THE CRITICAL INSIGHT
+       ══════════════════════════════════════════ -->
+  <div class="section-block">
+    <div class="section-label">THE CRITICAL INSIGHT</div>
+    <h2>Same Depth. Different <em>Timing</em>.</h2>
+
+    <p>This is the most common misconception about these two modes — and exactly what Fortinet tests on the exam.</p>
+
+    <div class="callout callout-amber">
+      <strong>Common misconception:</strong> "Flow-based only checks headers. Proxy-based does deep inspection." This is wrong. Both modes can read Layer 7 application data. The difference is not <em>what</em> is inspected — it is <em>when</em> the verdict is delivered relative to the flow of traffic.
+    </div>
+
+    <div class="flow-compare">
+      <div class="flow-col-block block-flow">
+        <div class="fcb-title">⚡ Flow-Based — In Motion</div>
+        <ol class="fcb-steps">
+          <li class="fcb-step"><div class="fcb-num">1</div><div class="fcb-text">Packet arrives at FortiGate interface</div></li>
+          <li class="fcb-step"><div class="fcb-num">2</div><div class="fcb-text">NP7 performs IP integrity check, ACL</div></li>
+          <li class="fcb-step"><div class="fcb-num">3</div><div class="fcb-text">IPS engine inspects payload in real time via NTurbo</div></li>
+          <li class="fcb-step"><div class="fcb-num">4</div><div class="fcb-text">Packet forwarded while inspection continues</div></li>
+          <li class="fcb-step"><div class="fcb-num">5</div><div class="fcb-text">NP7 offloads subsequent packets — CPU steps aside</div></li>
+        </ol>
+      </div>
+      <div class="flow-col-block block-proxy">
+        <div class="fcb-title">🛑 Proxy-Based — Buffered</div>
+        <ol class="fcb-steps">
+          <li class="fcb-step"><div class="fcb-num">1</div><div class="fcb-text">Client SYN arrives — FortiGate answers SYN/ACK</div></li>
+          <li class="fcb-step"><div class="fcb-num">2</div><div class="fcb-text">FortiGate opens separate TCP connection to server</div></li>
+          <li class="fcb-step"><div class="fcb-num">3</div><div class="fcb-text">Complete application stream buffered in CPU memory</div></li>
+          <li class="fcb-step"><div class="fcb-num">4</div><div class="fcb-text">Full stream inspected — then action taken</div></li>
+          <li class="fcb-step"><div class="fcb-num">5</div><div class="fcb-text">Traffic forwarded to server. CPU remains involved throughout.</div></li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="mental-note-block">
+      <div class="mental-note-block-icon">🧠</div>
+      <div class="mental-note-block-inner">
+        <div class="mental-note-block-label">Core Mental Model</div>
+        <div class="mental-note-block-text">In FortiOS 7.6, you do not explicitly choose flow or proxy per policy. The mode is <em>inferred</em> from the security profiles you attach. Add a proxy-only profile (VoIP inspection, certain DLP) and the entire policy silently becomes proxy-based — and loses NP7 offload eligibility immediately.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       COMPARISON TABLE
+       ══════════════════════════════════════════ -->
+  <div class="section-block">
+    <div class="section-label">SIDE BY SIDE</div>
+    <h2>The <em>Complete</em> Comparison</h2>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>Flow-Based</th>
+          <th>Proxy-Based</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>TCP Connection Handling</td><td class="td-flow">Forwarded — original connection preserved end-to-end</td><td class="td-proxy">Terminated — FortiGate is the endpoint; new connection opened to server</td></tr>
+        <tr><td>Session Table Entries</td><td class="td-flow">One entry per user connection</td><td class="td-proxy">Two entries per user connection</td></tr>
+        <tr><td>NP7 Hardware Offload</td><td class="td-flow">Eligible — after session established</td><td class="td-proxy">Never eligible — architecturally incompatible</td></tr>
+        <tr><td>CPU Usage</td><td class="td-flow">Low after session setup</td><td class="td-proxy">High throughout session lifetime</td></tr>
+        <tr><td>Inspection Timing</td><td class="td-flow">Per-packet, real time</td><td class="td-proxy">Per-stream, after full reassembly</td></tr>
+        <tr><td>Inspection Depth</td><td class="td-flow">Full Layer 7 — same as proxy</td><td class="td-proxy">Full Layer 7 — same as flow</td></tr>
+        <tr><td>Latency Impact</td><td class="td-flow">Minimal</td><td class="td-proxy">Higher — stream must be buffered before verdict</td></tr>
+        <tr><td>Category Usage Quota</td><td class="td-flow">Not available</td><td class="td-proxy">Available</td></tr>
+        <tr><td>VoIP Inspection</td><td class="td-flow">Not available</td><td class="td-proxy">Available</td></tr>
+        <tr><td>Proxy Authentication</td><td class="td-flow">Not available</td><td class="td-proxy">Available</td></tr>
+        <tr><td>Best Used For</td><td class="td-flow">High-throughput policies: data centre, trading, bulk transfers</td><td class="td-proxy">User traffic requiring deep content inspection or advanced features</td></tr>
+        <tr><td>Mixed Policy (both types)</td><td colspan="2" style="color:#c0392b;font-weight:600;text-align:center;">⚠ Proxy requirement wins — entire policy goes CPU-only. NP7 offload lost.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       EXAM NOTES
+       ══════════════════════════════════════════ -->
+  <div class="section-block">
+    <div class="section-label">EXAM PERSPECTIVE</div>
+    <h2>What Fortinet Actually <em>Tests</em></h2>
+
+    <div class="exam-strip">
+      <div class="exam-strip-head">🎯 NSE7 Exam-Critical Points</div>
+      <div class="exam-items">
+        <div class="exam-item">
+          <div class="exam-item-icon">▸</div>
+          <div class="exam-item-text"><strong>The mode is inferred, not explicitly set.</strong> In FortiOS 7.6, you do not choose "flow mode" or "proxy mode" on the policy. You choose security profiles. The presence of any proxy-only profile forces the entire policy into proxy mode.</div>
+        </div>
+        <div class="exam-item">
+          <div class="exam-item-icon">▸</div>
+          <div class="exam-item-text"><strong>A mixed policy never offloads.</strong> If a policy contains both flow-based and proxy-based profiles, proxy always wins. The NP7 will not offload any session from that policy. This is the all-or-nothing rule.</div>
+        </div>
+        <div class="exam-item">
+          <div class="exam-item-icon">▸</div>
+          <div class="exam-item-text"><strong>Depth is the same — timing is different.</strong> Exam distractors often claim flow-based "only inspects headers." Incorrect. Flow-based uses the same IPS engine and can inspect full application payloads. The difference is when the verdict is acted upon.</div>
+        </div>
+        <div class="exam-item">
+          <div class="exam-item-icon">▸</div>
+          <div class="exam-item-text"><strong>Two session entries is a proxy tell.</strong> Any question that describes "two session entries per connection" or "FortiGate terminates the TCP session" is describing proxy-based inspection.</div>
+        </div>
+        <div class="exam-item">
+          <div class="exam-item-icon">▸</div>
+          <div class="exam-item-text"><strong>NP7 offload requires flow-based profiles only.</strong> Proxy-based profiles on any policy = no offload. The NP7 cannot terminate TCP connections or buffer streams — this is an architectural constraint, not a configuration choice.</div>
+        </div>
+        <div class="exam-item">
+          <div class="exam-item-icon">▸</div>
+          <div class="exam-item-text"><strong>Proxy-only features to remember:</strong> Category usage quota, web profile override, VoIP inspection, certain DLP modes. Seeing any of these features in a question scenario implies proxy-based inspection is active.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       THE MEMORY HOOK
+       ══════════════════════════════════════════ -->
+  <div class="section-block">
+    <div class="section-label">MEMORY HOOK</div>
+    <h2>The One Thing to <em>Remember</em></h2>
+
+    <div class="callout callout-green">
+      <strong>The Belt Analogy — Three Facts in One Image:</strong><br><br>
+      1. <strong>Flow-based:</strong> Scanner on a moving belt. Traffic keeps flowing. One connection. NP7 takes over.<br>
+      2. <strong>Proxy-based:</strong> Officer pulls bag off the belt entirely, opens it, repacks it, sends it on a new belt. Two connections. CPU does everything.<br>
+      3. <strong>The belt analogy's key insight:</strong> The officer in both lanes has the same X-ray vision. What differs is whether the bag is <em>moving</em> or <em>stopped</em> when they use it.
+    </div>
+
+    <div class="prompt-box">
+      <div class="prompt-box-head">🎨 Image Generation Prompt — Customs Analogy Scene</div>
+      <div class="prompt-box-text">
+        Flat minimalistic but highly detailed cartoon illustration. Split-panel composition showing two airport customs lanes side by side. Left panel (labelled "FLOW-BASED"): a moving conveyor belt with colourful luggage bags passing under a glowing scanner arch. A calm customs officer in a dark uniform stands beside the belt watching packets flow through without stopping the belt. Green checkmarks appear on cleared bags still moving. Sage green palette. Right panel (labelled "PROXY-BASED"): a stopped conveyor belt. A stressed customs officer in a red uniform stands at a table with one bag fully open and contents spread out for inspection. A second empty belt on the other side waits for the repacked bag to continue to the server. Two TCP connection labels shown: "Client → FortiGate" and "FortiGate → Server." Red and coral palette. Both panels share the same background cream colour (#faf5e9). Bold text annotations label key concepts: "ONE SESSION ENTRY / NP7 ELIGIBLE" on left, "TWO SESSION ENTRIES / CPU ONLY" on right. Warm modern colour palette. Clean bold line work. No gradients. No photorealism. Educational flat vector art.
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  NSE7 Enterprise Firewall 7.6 &nbsp;·&nbsp; <span>Extra 02</span> &nbsp;·&nbsp; Visual Reference &nbsp;·&nbsp; Flow-Based vs Proxy-Based Inspection
+</footer>
+
+<script>
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+</script>
+</body>
+</html>

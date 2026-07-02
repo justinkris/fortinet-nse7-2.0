@@ -1491,6 +1491,12 @@ EXTRAS = [
         "title": "FortiOS CLI Reference",
         "tagline": "The five root commands and how to reason about which one to reach for.",
     },
+    {
+        "num": 2,
+        "slug": "visual-flow-vs-proxy",
+        "title": "Visual — Flow-Based vs Proxy-Based Inspection",
+        "tagline": "Split-panel customs-lanes analogy for how the two inspection modes differ inside the same FortiGate.",
+    },
 ]
 
 EXTRAS_DIR = ROOT / "extras"
