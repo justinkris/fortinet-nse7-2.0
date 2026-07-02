@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lab 07 — IPsec VPN (IKEv2) with Templates · NSE7 EF 7.6</title>
+<title>Lab 05 — Security Profiles — IPS False Positive, Unencrypted + Encrypted Attacks · NSE7 EF 7.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#faf5e9;--surface:#fffdf5;--surface-2:#f5eed9;--border:#d4c89a;--text:#0a1838;--text-soft:#1e2f5a;--text-muted:#6b7794;--blue:#1e40af;--blue-light:#eff4fc;--blue-border:#b8cce8;--ink-dark:#0d1a3a;--ink-accent:#9bb8e6;--green:#1a7c4a;--green-light:#dff0e1;--green-border:#a7d8b0;--amber:#b45309;--amber-light:#fcf2c3;--amber-border:#f3d68a;--red:#b91c1c;--red-light:#fee2e2;--red-border:#fca5a5;--teal:#0f766e;--teal-light:#ccfbf1;--teal-border:#5eead4;}
@@ -62,28 +62,28 @@
 <body>
 
 <header>
-  <div class="breadcrumb"><a href="../../index.html">Home</a><span class="breadcrumb-sep">›</span><a href="../index.html">Labs</a><span class="breadcrumb-sep">›</span>Lab 07</div>
-  <div class="eyebrow">Lab 07 · Socratic Lab · NSE7 EF 7.6</div>
-  <h1>IPsec VPN (IKEv2) with Templates</h1>
-  <p>Configure hub-and-spoke IPsec VPN using FortiManager IPsec templates, verify tunnels come up, then tear one down cleanly.</p>
+  <div class="breadcrumb"><a href="../../index.html">Home</a><span class="breadcrumb-sep">›</span><a href="../index.html">Labs</a><span class="breadcrumb-sep">›</span>Lab 05</div>
+  <div class="eyebrow">Lab 05 · Socratic Lab · NSE7 EF 7.6</div>
+  <h1>Security Profiles — IPS False Positive, Unencrypted + Encrypted Attacks</h1>
+  <p>Apply IPS profiles to detect and block simulated attacks, then handle SSL deep inspection with a dynamic local certificate.</p>
 </header>
 <main>
   <div class="section-block">
     <div class="section-label">Section 01 · Objectives &amp; Prereqs</div>
     <h2>What You'll <em>Learn</em></h2>
-    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;margin-bottom:16px;"><li>IKEv2 phase-1 / phase-2 template model in FortiManager</li><li>Normalized interfaces — abstract references that resolve per-device on install</li><li>Reading tunnel status from CLI (`get vpn ipsec tunnel summary`) vs GUI</li><li>Deleting an IPsec tunnel without breaking the remaining hub-and-spoke topology</li></ul>
+    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;margin-bottom:16px;"><li>How the IPS engine matches signatures — and what a false positive looks like in logs</li><li>Monitor vs Block modes and how to move safely between them</li><li>SSL/SSH deep inspection: dynamic local certificate + client CA trust</li><li>Reading `hping` output and correlating it with IPS log lines</li></ul>
     <table class="device-table" style="max-width:640px;">
       <tbody>
-        <tr><td style="width:180px;">Duration</td><td>60-75 minutes</td></tr>
-        <tr><td>Prereq labs</td><td><a href="../lab-02-central-management/index.html" style="color:var(--blue);text-decoration:none;">Lab 02</a>, <a href="../lab-05-dynamic-routing/index.html" style="color:var(--blue);text-decoration:none;">Lab 05</a></td></tr>
-        <tr><td>Prereq sessions</td><td><a href="../../sessions/session-32-ipsec-ikev2-fundamentals/index.html" style="color:var(--blue);text-decoration:none;">Session 32</a>, <a href="../../sessions/session-33-route-based-vs-policy-based-vpn/index.html" style="color:var(--blue);text-decoration:none;">Session 33</a></td></tr>
+        <tr><td style="width:180px;">Duration</td><td>60-90 minutes</td></tr>
+        <tr><td>Prereq labs</td><td><a href="../lab-01-central-management/index.html" style="color:var(--blue);text-decoration:none;">Lab 01</a>, <a href="../lab-02-vlans-and-vdoms/index.html" style="color:var(--blue);text-decoration:none;">Lab 02</a>, <a href="../lab-03-high-availability/index.html" style="color:var(--blue);text-decoration:none;">Lab 03</a>, <a href="../lab-04-dynamic-routing/index.html" style="color:var(--blue);text-decoration:none;">Lab 04</a></td></tr>
+        <tr><td>Prereq sessions</td><td><a href="../../sessions/session-27-ssl-ssh-deep-inspection/index.html" style="color:var(--blue);text-decoration:none;">Session 27</a>, <a href="../../sessions/session-28-web-filtering/index.html" style="color:var(--blue);text-decoration:none;">Session 28</a>, <a href="../../sessions/session-29-application-control-isdb/index.html" style="color:var(--blue);text-decoration:none;">Session 29</a>, <a href="../../sessions/session-30-ips-engine-signatures/index.html" style="color:var(--blue);text-decoration:none;">Session 30</a>, <a href="../../sessions/session-31-profile-performance-tuning/index.html" style="color:var(--blue);text-decoration:none;">Session 31</a></td></tr>
       </tbody>
     </table>
   </div>
   <div class="section-block">
     <div class="section-label">Section 02 · Topology</div>
     <h2>Devices in <em>This Lab</em></h2>
-    <p>Subset of the shared pod used in Lab 07. Full topology: <a href="../index.html" style="color:var(--blue);text-decoration:none;">labs hub →</a></p>
+    <p>Subset of the shared pod used in Lab 05. Full topology: <a href="../index.html" style="color:var(--blue);text-decoration:none;">labs hub →</a></p>
     
 <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;margin:16px 0 24px;">
   <img src="../images/topology.png" alt="Topology diagram" style="width:100%;max-width:900px;border-radius:12px;border:1px solid var(--border);display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
@@ -103,7 +103,7 @@
       <th>Device</th><th>Role</th><th>Model</th><th>Interface</th><th>IP</th><th>Zone</th><th>Connected to</th>
     </tr>
   </thead>
-  <tbody><tr><td rowspan="6">HQ-FGT-A</td><td rowspan="6">HQ FortiGate — primary in HA pair, VDOM host (root + Zone1 + Zone2), ADVPN hub</td><td rowspan="6" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiGate-VM 7.6.2</td><td>port1</td><td>100.65.0.111/24</td><td>WAN</td><td>Internet</td></tr><tr><td>port2</td><td>10.0.1.254/24</td><td>HQ-LAN</td><td>HQ-PC-1</td></tr><tr><td>port3</td><td>10.0.5.254/24</td><td>HQ-DMZ</td><td>HQ-Web-1</td></tr><tr><td>port4</td><td>10.0.99.1/30</td><td>HA-SYNC</td><td>HQ-FGT-B port4</td></tr><tr><td>port5.101</td><td>10.0.2.254/24</td><td>Zone1 (VLAN101)</td><td>HQ-PC-1 (VLAN101 sub-iface)</td></tr><tr><td>port5.102</td><td>10.0.3.254/24</td><td>Zone2 (VLAN102)</td><td>HQ-PC-1 (VLAN102 sub-iface)</td></tr><tr><td rowspan="2">BR1-FGT</td><td rowspan="2">Branch 1 FortiGate — ADVPN spoke, BGP peer</td><td rowspan="2" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiGate-VM 7.6.2</td><td>port1</td><td>100.65.1.111/24</td><td>WAN</td><td>Internet</td></tr><tr><td>port2</td><td>172.20.1.254/24</td><td>BR1-LAN</td><td>BR1-PC-1</td></tr><tr><td rowspan="2">BR2-FGT</td><td rowspan="2">Branch 2 FortiGate — ADVPN spoke, on-demand shortcut partner</td><td rowspan="2" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiGate-VM 7.6.2</td><td>port1</td><td>100.65.2.111/24</td><td>WAN</td><td>Internet</td></tr><tr><td>port2</td><td>172.20.2.254/24</td><td>BR2-LAN</td><td>BR2-PC-1</td></tr><tr><td rowspan="2">HQ-FMG-1</td><td rowspan="2">FortiManager — central management, ADOMs, policy packages, provisioning templates</td><td rowspan="2" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiManager-VM 7.6.2</td><td>port1</td><td>100.65.0.120/24</td><td>MGMT</td><td>Internet</td></tr><tr><td>port2</td><td>10.0.13.254/24</td><td>HQ-MGMT</td><td>HQ-LAN switch</td></tr></tbody>
+  <tbody><tr><td rowspan="6">HQ-FGT-A</td><td rowspan="6">HQ FortiGate — primary in HA pair, VDOM host (root + Zone1 + Zone2), ADVPN hub</td><td rowspan="6" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiGate-VM 7.6.2</td><td>port1</td><td>100.65.0.111/24</td><td>WAN</td><td>Internet</td></tr><tr><td>port2</td><td>10.0.1.254/24</td><td>HQ-LAN</td><td>HQ-PC-1</td></tr><tr><td>port3</td><td>10.0.5.254/24</td><td>HQ-DMZ</td><td>HQ-Web-1</td></tr><tr><td>port4</td><td>10.0.99.1/30</td><td>HA-SYNC</td><td>HQ-FGT-B port4</td></tr><tr><td>port5.101</td><td>10.0.2.254/24</td><td>Zone1 (VLAN101)</td><td>HQ-PC-1 (VLAN101 sub-iface)</td></tr><tr><td>port5.102</td><td>10.0.3.254/24</td><td>Zone2 (VLAN102)</td><td>HQ-PC-1 (VLAN102 sub-iface)</td></tr><tr><td rowspan="3">HQ-PC-1</td><td rowspan="3">HQ workstation — admin client + traffic generator (plays HQ-PC-2/3 on tagged sub-interfaces in Lab 3)</td><td rowspan="3" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">Linux VM</td><td>eth0</td><td>10.0.1.10/24</td><td>HQ-LAN</td><td>HQ-FGT-A port2</td></tr><tr><td>eth0.101</td><td>10.0.2.10/24</td><td>Zone1 (VLAN101)</td><td>HQ-FGT-A port5.101</td></tr><tr><td>eth0.102</td><td>10.0.3.10/24</td><td>Zone2 (VLAN102)</td><td>HQ-FGT-A port5.102</td></tr><tr><td rowspan="1">HQ-Web-1</td><td rowspan="1">HQ web server — attack target for IPS/SSL labs</td><td rowspan="1" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">Linux VM (nginx)</td><td>eth0</td><td>10.0.5.11/24</td><td>HQ-DMZ</td><td>HQ-FGT-A port3</td></tr></tbody>
 </table>
 
   </div>
@@ -115,19 +115,19 @@
   <div class="section-block">
     <div class="section-label">Section 04 · Verification</div>
     <h2>You're <em>Done When</em></h2>
-    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;"><li>Tunnel status shows UP for HQ↔BR1 and HQ↔BR2</li><li>BR1-PC-1 can ping HQ-PC-1 across the IPsec tunnel</li><li>Firewall policies referencing the normalized interface install without errors on both spokes</li></ul>
+    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;"><li>IPS log shows a blocked jumbo-packet signature match after hping simulation</li><li>HQ-FGT-A drops an encrypted attack once SSL deep inspection is applied</li><li>HQ-PC-1 browser trusts the SSL inspection CA after import</li></ul>
   </div>
   <div class="section-block">
     <div class="section-label">Section 05 · Cleanup</div>
     <h2>Before the <em>Next Lab</em></h2>
     <div class="step-callout callout-red">
       <div class="step-callout-label">Cleanup</div>
-      Leave the IPsec tunnels in place — Lab 8 layers ADVPN and BGP on top of them.
+      Detach heavy IPS profiles from broad policies — they slow later labs. Keep the CA on HQ-PC-1 for Lab 9.
     </div>
   </div>
   <div style="display:flex;justify-content:space-between;margin-top:32px;padding-top:20px;border-top:1px solid var(--border);font-family:'Outfit',sans-serif;font-size:13px;letter-spacing:0.06em;">
-    <div><a href="../lab-06-security-profiles/index.html" style="color:var(--blue);text-decoration:none;">← Lab 06</a></div>
-    <div><a href="../lab-08-advpn/index.html" style="color:var(--blue);text-decoration:none;">Lab 08 →</a></div>
+    <div><a href="../lab-04-dynamic-routing/index.html" style="color:var(--blue);text-decoration:none;">← Lab 04</a></div>
+    <div><a href="../lab-06-ipsec-vpn-ikev2/index.html" style="color:var(--blue);text-decoration:none;">Lab 06 →</a></div>
   </div>
 </main>
 

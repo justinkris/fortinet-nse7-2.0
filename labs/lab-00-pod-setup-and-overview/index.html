@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hands-On Labs · NSE7 EF 7.6</title>
+<title>Lab 00 — Pod Setup &amp; Curriculum Overview · NSE7 EF 7.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#faf5e9;--surface:#fffdf5;--surface-2:#f5eed9;--border:#d4c89a;--text:#0a1838;--text-soft:#1e2f5a;--text-muted:#6b7794;--blue:#1e40af;--blue-light:#eff4fc;--blue-border:#b8cce8;--ink-dark:#0d1a3a;--ink-accent:#9bb8e6;--green:#1a7c4a;--green-light:#dff0e1;--green-border:#a7d8b0;--amber:#b45309;--amber-light:#fcf2c3;--amber-border:#f3d68a;--red:#b91c1c;--red-light:#fee2e2;--red-border:#fca5a5;--teal:#0f766e;--teal-light:#ccfbf1;--teal-border:#5eead4;}
@@ -62,26 +62,53 @@
 <body>
 
 <header>
-  <div class="breadcrumb"><a href="../index.html">Home</a><span class="breadcrumb-sep">›</span>Labs</div>
-  <div class="eyebrow">Hands-On Labs · NSE7 EF 7.6</div>
-  <h1>Hands-On <em>Labs</em></h1>
-  <p>Four FortiGates, a FortiManager + FortiAnalyzer, and three hosts — the smallest pod that still covers every lab in the guide.</p>
+  <div class="breadcrumb"><a href="../../index.html">Home</a><span class="breadcrumb-sep">›</span><a href="../index.html">Labs</a><span class="breadcrumb-sep">›</span>Lab 00</div>
+  <div class="eyebrow">Lab 00 · Orientation · NSE7 EF 7.6</div>
+  <h1>Pod Setup &amp; <em>Curriculum Overview</em></h1>
+  <p>Get oriented with the shared lab topology and the arc of the nine hands-on labs before you start Lab 01.</p>
 </header>
 <main>
   <div class="section-block">
-    <div class="section-label">The pod · Vaultline Minimum Pod</div>
-    <h2>Shared <em>Topology</em></h2>
-    <p>Every lab exercises a subset of this topology. Build the pod once, then reuse it across all labs.</p>
+    <div class="section-label">Section 01 · Lab-mode Claude Instructions</div>
+    <h2>Load Your Lab <em>Coach</em></h2>
+    <p>Create a Claude Project for these labs, paste the block below into its Instructions field, and upload <code>reference/NSE7-LabGuide.pdf</code> to the Project's Files. Every lab from Lab 01 onwards runs inside a fresh chat in this Project.</p>
+    <div class="code-block">
+      <div class="code-label">Paste this into your Claude Project Instructions</div>
+      <pre><code>You are my Socratic lab coach for the NSE7 EF 7.6 hands-on labs.
+
+Your role is not to demonstrate commands but to guide me through each lab step by step using a strict Predict → Run → Verify → Reflect cadence. The goal is muscle memory backed by understanding, not efficient completion.
+
+For every step in a lab:
+
+1. PREDICT — When I paste a step, ask me what I think the command(s) will do BEFORE I run them. If I hedge or say "I don't know", coach me with a smaller sub-question — never give me the answer outright.
+2. RUN — Once I've predicted, tell me to run the command block exactly as written. Do not paraphrase or reorder.
+3. VERIFY — When I paste the output, ask me what the output tells me BEFORE you interpret it. Correct misreadings gently.
+4. REFLECT — After a successful step, if the lab has a reflect prompt, ask it and wait for my answer before moving on.
+
+Never advance to the next step until I've engaged with the current one. If I try to skip ahead, remind me why the cadence matters and rewind.
+
+SAFETY: If a step contains factoryreset, reboot, format, execute restore config, or execute erase, force me to confirm the target device and environment before I run it.
+
+STUCK: If I'm stuck on Predict for more than two prompts, reveal a partial hint (not the full answer). If I'm stuck on Verify, ask me to describe the output line by line.
+
+VOICE: patient, curious, never impatient. This is the muscle-memory phase — the reps matter more than the pace.</code></pre>
+    </div>
+    <p style="margin-top:14px;">Related concept material: <a href="../../sessions/session-01-nse7-story-exam-map/index.html" style="color:var(--blue);text-decoration:none;">Session 01 — The NSE7 Story — Roles, Audience &amp; Exam Map</a>.</p>
+  </div>
+  <div class="section-block">
+    <div class="section-label">Section 02 · Shared Topology</div>
+    <h2>The <em>Pod</em></h2>
+    <p>Four FortiGates, a FortiManager + FortiAnalyzer, and three hosts — the smallest pod that still covers every lab in the guide.</p>
     
 <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;margin:16px 0 24px;">
-  <img src="images/topology.png" alt="Topology diagram" style="width:100%;max-width:900px;border-radius:12px;border:1px solid var(--border);display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+  <img src="../images/topology.png" alt="Topology diagram" style="width:100%;max-width:900px;border-radius:12px;border:1px solid var(--border);display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
   <div style="display:none;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:40px 28px;flex-direction:column;align-items:center;gap:14px;width:100%;">
     <div style="font-size:44px;opacity:0.35;">🗺️</div>
     <div style="text-align:center;">
       <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">Topology diagram placeholder</div>
       <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--text);">Vaultline Minimum Pod</div>
     </div>
-    <div style="font-family:'Outfit',sans-serif;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-align:center;">Drop the generated PNG at <code>images/topology.png</code> — see <code>labs/images/prompts.txt</code> for the prompt.</div>
+    <div style="font-family:'Outfit',sans-serif;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-align:center;">Drop the generated PNG at <code>../images/topology.png</code> — see <code>labs/images/prompts.txt</code> for the prompt.</div>
   </div>
 </div>
 
@@ -96,9 +123,17 @@
 
   </div>
   <div class="section-block">
-    <div class="section-label">10 labs · 9 hands-on</div>
-    <h2>The <em>Labs</em></h2>
-    <div class="card-grid"><a class="lab-card" href="lab-00-pod-setup-and-overview/index.html"><span class="lab-card-num">Lab 00 · Orientation</span><span class="lab-card-title">Pod Setup &amp; Curriculum Overview</span><span class="lab-card-goal">Get oriented with the shared lab topology and the arc of the nine hands-on labs before you start Lab 01.</span><span class="lab-card-meta">Every device in the pod — role, model, interfaces, IPs, and how they connect</span></a><a class="lab-card" href="lab-01-central-management/index.html"><span class="lab-card-num">Lab 01 · 60-90 minutes</span><span class="lab-card-title">Central Management with FortiManager</span><span class="lab-card-goal">Use FortiManager to run scripts and provisioning templates against branch FortiGates without touching them directly.</span><span class="lab-card-meta">The three script scopes — Remote, Device DB, Policy Package / ADOM DB — and when each fits</span></a><a class="lab-card" href="lab-02-vlans-and-vdoms/index.html"><span class="lab-card-num">Lab 02 · 45-60 minutes</span><span class="lab-card-title">VLANs and VDOMs on ISFW</span><span class="lab-card-goal">Enable VDOMs on HQ-FGT-A, carve two zones with VLAN tagging, and prove inter-VDOM routing works via an inter-VDOM link.</span><span class="lab-card-meta">Enabling VDOM mode without wiping the running configuration</span></a><a class="lab-card" href="lab-03-high-availability/index.html"><span class="lab-card-num">Lab 03 · 75-90 minutes</span><span class="lab-card-title">High Availability — VDOM Partitioning + FGSP</span><span class="lab-card-goal">Split VDOMs across an HA cluster (partitioning), then configure FGSP so both firewalls forward asymmetric flows and survive failover.</span><span class="lab-card-meta">VDOM partitioning — distributing VDOMs between two HA cluster members</span></a><a class="lab-card" href="lab-04-dynamic-routing/index.html"><span class="lab-card-num">Lab 04 · 90-120 minutes</span><span class="lab-card-title">Dynamic Routing — OSPF ECMP + BGP</span><span class="lab-card-goal">Bring up OSPF between HQ VDOMs, enable ECMP, then peer BGP with a branch FortiGate via FortiManager BGP templates.</span><span class="lab-card-meta">OSPF neighbor formation across VDOMs and inter-VDOM links</span></a><a class="lab-card" href="lab-05-security-profiles/index.html"><span class="lab-card-num">Lab 05 · 60-90 minutes</span><span class="lab-card-title">Security Profiles — IPS False Positive, Unencrypted + Encrypted Attacks</span><span class="lab-card-goal">Apply IPS profiles to detect and block simulated attacks, then handle SSL deep inspection with a dynamic local certificate.</span><span class="lab-card-meta">How the IPS engine matches signatures — and what a false positive looks like in logs</span></a><a class="lab-card" href="lab-06-ipsec-vpn-ikev2/index.html"><span class="lab-card-num">Lab 06 · 60-75 minutes</span><span class="lab-card-title">IPsec VPN (IKEv2) with Templates</span><span class="lab-card-goal">Configure hub-and-spoke IPsec VPN using FortiManager IPsec templates, verify tunnels come up, then tear one down cleanly.</span><span class="lab-card-meta">IKEv2 phase-1 / phase-2 template model in FortiManager</span></a><a class="lab-card" href="lab-07-advpn/index.html"><span class="lab-card-num">Lab 07 · 90-120 minutes</span><span class="lab-card-title">Auto-Discovery VPN (ADVPN) with IBGP and EBGP</span><span class="lab-card-goal">Layer ADVPN on top of the IPsec templates, run BGP over the tunnels, and trigger an on-demand spoke-to-spoke shortcut.</span><span class="lab-card-meta">How ADVPN shortcut tunnels form on demand between spokes</span></a><a class="lab-card" href="lab-08-security-fabric/index.html"><span class="lab-card-num">Lab 08 · 75-90 minutes</span><span class="lab-card-title">Security Fabric + SAML SSO + Automation</span><span class="lab-card-goal">Wire HQ FortiGates and FortiAnalyzer into a Security Fabric, enable SAML SSO between them, and drive automation stitches from FortiManager.</span><span class="lab-card-meta">Root vs downstream Security Fabric device roles</span></a><a class="lab-card" href="lab-09-use-cases/index.html"><span class="lab-card-num">Lab 09 · 120-150 minutes</span><span class="lab-card-title">Use Cases — HR Network, ADVPN Deployment, Automated Backups</span><span class="lab-card-goal">Combine everything from Labs 1–8 into three realistic customer scenarios and validate each end-to-end.</span><span class="lab-card-meta">Translating a requirements list into a working configuration (HR network isolation)</span></a></div>
+    <div class="section-label">Section 03 · What You'll Learn</div>
+    <h2>The Nine <em>Hands-On Labs</em></h2>
+    <p>One-liner per lab so you know the arc before you start.</p>
+    <table class="device-table">
+      <thead><tr><th>Lab</th><th>Title &amp; Goal</th><th>Duration</th></tr></thead>
+      <tbody><tr><td style="width:90px;">Lab 01</td><td><a href="../lab-01-central-management/index.html" style="color:var(--blue);text-decoration:none;font-weight:700;">Central Management with FortiManager</a><div style="font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);margin-top:2px;">Use FortiManager to run scripts and provisioning templates against branch FortiGates without touching them directly.</div></td><td style="width:130px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.04em;">60-90 minutes</td></tr><tr><td style="width:90px;">Lab 02</td><td><a href="../lab-02-vlans-and-vdoms/index.html" style="color:var(--blue);text-decoration:none;font-weight:700;">VLANs and VDOMs on ISFW</a><div style="font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);margin-top:2px;">Enable VDOMs on HQ-FGT-A, carve two zones with VLAN tagging, and prove inter-VDOM routing works via an inter-VDOM link.</div></td><td style="width:130px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.04em;">45-60 minutes</td></tr><tr><td style="width:90px;">Lab 03</td><td><a href="../lab-03-high-availability/index.html" style="color:var(--blue);text-decoration:none;font-weight:700;">High Availability — VDOM Partitioning + FGSP</a><div style="font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);margin-top:2px;">Split VDOMs across an HA cluster (partitioning), then configure FGSP so both firewalls forward asymmetric flows and survive failover.</div></td><td style="width:130px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.04em;">75-90 minutes</td></tr><tr><td style="width:90px;">Lab 04</td><td><a href="../lab-04-dynamic-routing/index.html" style="color:var(--blue);text-decoration:none;font-weight:700;">Dynamic Routing — OSPF ECMP + BGP</a><div style="font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);margin-top:2px;">Bring up OSPF between HQ VDOMs, enable ECMP, then peer BGP with a branch FortiGate via FortiManager BGP templates.</div></td><td style="width:130px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.04em;">90-120 minutes</td></tr><tr><td style="width:90px;">Lab 05</td><td><a href="../lab-05-security-profiles/index.html" style="color:var(--blue);text-decoration:none;font-weight:700;">Security Profiles — IPS False Positive, Unencrypted + Encrypted Attacks</a><div style="font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);margin-top:2px;">Apply IPS profiles to detect and block simulated attacks, then handle SSL deep inspection with a dynamic local certificate.</div></td><td style="width:130px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.04em;">60-90 minutes</td></tr><tr><td style="width:90px;">Lab 06</td><td><a href="../lab-06-ipsec-vpn-ikev2/index.html" style="color:var(--blue);text-decoration:none;font-weight:700;">IPsec VPN (IKEv2) with Templates</a><div style="font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);margin-top:2px;">Configure hub-and-spoke IPsec VPN using FortiManager IPsec templates, verify tunnels come up, then tear one down cleanly.</div></td><td style="width:130px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.04em;">60-75 minutes</td></tr><tr><td style="width:90px;">Lab 07</td><td><a href="../lab-07-advpn/index.html" style="color:var(--blue);text-decoration:none;font-weight:700;">Auto-Discovery VPN (ADVPN) with IBGP and EBGP</a><div style="font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);margin-top:2px;">Layer ADVPN on top of the IPsec templates, run BGP over the tunnels, and trigger an on-demand spoke-to-spoke shortcut.</div></td><td style="width:130px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.04em;">90-120 minutes</td></tr><tr><td style="width:90px;">Lab 08</td><td><a href="../lab-08-security-fabric/index.html" style="color:var(--blue);text-decoration:none;font-weight:700;">Security Fabric + SAML SSO + Automation</a><div style="font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);margin-top:2px;">Wire HQ FortiGates and FortiAnalyzer into a Security Fabric, enable SAML SSO between them, and drive automation stitches from FortiManager.</div></td><td style="width:130px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.04em;">75-90 minutes</td></tr><tr><td style="width:90px;">Lab 09</td><td><a href="../lab-09-use-cases/index.html" style="color:var(--blue);text-decoration:none;font-weight:700;">Use Cases — HR Network, ADVPN Deployment, Automated Backups</a><div style="font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);margin-top:2px;">Combine everything from Labs 1–8 into three realistic customer scenarios and validate each end-to-end.</div></td><td style="width:130px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.04em;">120-150 minutes</td></tr></tbody>
+    </table>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:32px;padding-top:20px;border-top:1px solid var(--border);font-family:'Outfit',sans-serif;font-size:13px;letter-spacing:0.06em;">
+    <div><span style="color:var(--text-muted);">← (orientation)</span></div>
+    <div><a href="../lab-01-central-management/index.html" style="color:var(--blue);text-decoration:none;">Lab 01 →</a></div>
   </div>
 </main>
 

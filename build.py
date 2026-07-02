@@ -2166,16 +2166,16 @@ LABS = [
         "image_prompt": "",
     },
     {
-        "num": 10,
+        "num": 9,
         "slug": "use-cases",
         "title": "Use Cases — HR Network, ADVPN Deployment, Automated Backups",
-        "goal": "Combine everything from Labs 2–9 into three realistic customer scenarios and validate each end-to-end.",
+        "goal": "Combine everything from Labs 1–8 into three realistic customer scenarios and validate each end-to-end.",
         "learn_targets": [
             "Translating a requirements list into a working configuration (HR network isolation)",
             "Deploying ADVPN to a new site using existing templates — no template edits",
             "Scheduling and validating automated configuration backups from FortiManager",
         ],
-        "prereqs": {"labs": [2, 3, 5, 7, 8, 9], "sessions": [40]},
+        "prereqs": {"labs": [1, 2, 4, 6, 7, 8], "sessions": [40]},
         "topology_devices": ["HQ-FGT-A", "HQ-FGT-B", "BR1-FGT", "BR2-FGT", "HQ-FMG-1", "HQ-FAZ-1"],
         "duration": "120-150 minutes",
         "steps": [],
@@ -4177,7 +4177,13 @@ def render_labs_hub():
         cards = []
         for l in LABS:
             is_concept = l.get("concept_only", False)
-            chip = "Concept-only" if is_concept else html_escape(l.get("duration", ""))
+            is_orientation = l.get("is_orientation", False)
+            if is_orientation:
+                chip = "Orientation"
+            elif is_concept:
+                chip = "Concept-only"
+            else:
+                chip = html_escape(l.get("duration", ""))
             first_target = html_escape(l.get("learn_targets", [""])[0]) if l.get("learn_targets") else ""
             cards.append(
                 f'<a class="lab-card" href="{lab_filename(l)}">'
@@ -4192,7 +4198,7 @@ def render_labs_hub():
             "images/topology.png",
             topology_prompt=TOPOLOGY.get("diagram_prompt"),
         )
-        hands_on = sum(1 for l in LABS if not l.get("concept_only"))
+        hands_on = sum(1 for l in LABS if not l.get("concept_only") and not l.get("is_orientation"))
         body = f"""
 <header>
   {crumb}
@@ -4309,6 +4315,78 @@ def render_lab_page(l):
     )
 
     is_concept = l.get("concept_only", False)
+    is_orientation = l.get("is_orientation", False)
+
+    if is_orientation:
+        # Full pod topology + curriculum summary (Lab 0 / orientation page).
+        topology_block = _render_topology_block(
+            TOPOLOGY.get("devices", []),
+            "../images/topology.png",
+            topology_prompt=TOPOLOGY.get("diagram_prompt"),
+        )
+        # Summary rows for every hands-on lab (skip orientation + concept-only).
+        summary_rows = []
+        for other in LABS:
+            if other.get("is_orientation") or other.get("concept_only"):
+                continue
+            summary_rows.append(
+                f'<tr>'
+                f'<td style="width:90px;">Lab {other["num"]:02d}</td>'
+                f'<td><a href="{sibling_lab_href(other)}" style="color:var(--blue);text-decoration:none;font-weight:700;">{html_escape(other["title"])}</a>'
+                f'<div style="font-family:\'Cormorant Garamond\',serif;font-size:14px;font-style:italic;color:var(--text-muted);margin-top:2px;">{html_escape(other.get("goal", ""))}</div></td>'
+                f'<td style="width:130px;font-family:\'Outfit\',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.04em;">{html_escape(other.get("duration", ""))}</td>'
+                f'</tr>'
+            )
+        session_link = ""
+        s1 = _session_by_num(1)
+        if s1:
+            session_link = f'<a href="../../sessions/session-01-{s1["slug"]}/index.html" style="color:var(--blue);text-decoration:none;">Session 01 — {html_escape(s1["title"])}</a>'
+        next_l = _lab_by_num(1)
+        next_link = f'<a href="{sibling_lab_href(next_l)}" style="color:var(--blue);text-decoration:none;">Lab 01 →</a>' if next_l else ""
+        # Escape the lab-mode methodology once so the <pre> content is HTML-safe.
+        lab_mode_escaped = html_escape(LAB_MODE_METHODOLOGY_TEXT).strip()
+        body = f"""
+<header>
+  {crumb}
+  <div class="eyebrow">Lab 00 · Orientation · NSE7 EF 7.6</div>
+  <h1>Pod Setup &amp; <em>Curriculum Overview</em></h1>
+  <p>{html_escape(l.get('goal', ''))}</p>
+</header>
+<main>
+  <div class="section-block">
+    <div class="section-label">Section 01 · Lab-mode Claude Instructions</div>
+    <h2>Load Your Lab <em>Coach</em></h2>
+    <p>Create a Claude Project for these labs, paste the block below into its Instructions field, and upload <code>reference/NSE7-LabGuide.pdf</code> to the Project's Files. Every lab from Lab 01 onwards runs inside a fresh chat in this Project.</p>
+    <div class="code-block">
+      <div class="code-label">Paste this into your Claude Project Instructions</div>
+      <pre><code>{lab_mode_escaped}</code></pre>
+    </div>
+    <p style="margin-top:14px;">Related concept material: {session_link}.</p>
+  </div>
+  <div class="section-block">
+    <div class="section-label">Section 02 · Shared Topology</div>
+    <h2>The <em>Pod</em></h2>
+    <p>{html_escape(TOPOLOGY.get("tagline", ""))}</p>
+    {topology_block}
+  </div>
+  <div class="section-block">
+    <div class="section-label">Section 03 · What You'll Learn</div>
+    <h2>The Nine <em>Hands-On Labs</em></h2>
+    <p>One-liner per lab so you know the arc before you start.</p>
+    <table class="device-table">
+      <thead><tr><th>Lab</th><th>Title &amp; Goal</th><th>Duration</th></tr></thead>
+      <tbody>{"".join(summary_rows)}</tbody>
+    </table>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:32px;padding-top:20px;border-top:1px solid var(--border);font-family:'Outfit',sans-serif;font-size:13px;letter-spacing:0.06em;">
+    <div><span style="color:var(--text-muted);">← (orientation)</span></div>
+    <div>{next_link}</div>
+  </div>
+</main>
+"""
+        html = _lab_page_shell(f"Lab 00 — Pod Setup &amp; Curriculum Overview · NSE7 EF 7.6", crumb, body)
+        (out_dir / "index.html").write_text(html, encoding="utf-8")
+        return
 
     if is_concept:
         prereq_labs_str, prereq_sessions_str = _lab_prereq_html(l)
@@ -4416,7 +4494,7 @@ def render_landing(extras, completions, standalone_extras):
     tiles = [
         ("study-plan.html", "PLAN",      "chip-plan",     "Study Plan",              f"{n_sessions} sessions across {n_phases} phases — the full curriculum hub."),
         ("completed-sessions.html", "COMPLETED", "chip-complete", "Completed Study Guides", f"{n_completed} of {n_sessions} sessions finished — polished HTML study guides."),
-        ("labs/index.html",     "LABS",    "chip-labs",    "Hands-On Labs",           (f"{sum(1 for l in LABS if not l.get('concept_only'))} hands-on labs across the shared topology — Socratic predict → run → verify." if LABS else "Empty — feed a lab guide PDF and run /build-lab-plan.")),
+        ("labs/index.html",     "LABS",    "chip-labs",    "Hands-On Labs",           (f"{sum(1 for l in LABS if not l.get('concept_only') and not l.get('is_orientation'))} hands-on labs + orientation across the shared topology — Socratic predict → run → verify." if LABS else "Empty — feed a lab guide PDF and run /build-lab-plan.")),
         ("extras.html#guides",  "GUIDE",   "chip-guide",   "Guides",                  f"{n_guides} long-form companion pages that dive deeper than a session can."),
         ("extras.html#bites",   "BITE",    "chip-bite",    "Bites",                   f"{n_bites} focused single-concept explainers."),
         ("extras.html#nibbles", "NIBBLE",  "chip-nibble",  "Nibbles",                 f"{n_nibbles} short reference cards / cheat sheets."),

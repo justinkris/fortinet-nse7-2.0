@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lab 06 — Security Profiles — IPS False Positive, Unencrypted + Encrypted Attacks · NSE7 EF 7.6</title>
+<title>Lab 04 — Dynamic Routing — OSPF ECMP + BGP · NSE7 EF 7.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#faf5e9;--surface:#fffdf5;--surface-2:#f5eed9;--border:#d4c89a;--text:#0a1838;--text-soft:#1e2f5a;--text-muted:#6b7794;--blue:#1e40af;--blue-light:#eff4fc;--blue-border:#b8cce8;--ink-dark:#0d1a3a;--ink-accent:#9bb8e6;--green:#1a7c4a;--green-light:#dff0e1;--green-border:#a7d8b0;--amber:#b45309;--amber-light:#fcf2c3;--amber-border:#f3d68a;--red:#b91c1c;--red-light:#fee2e2;--red-border:#fca5a5;--teal:#0f766e;--teal-light:#ccfbf1;--teal-border:#5eead4;}
@@ -62,28 +62,28 @@
 <body>
 
 <header>
-  <div class="breadcrumb"><a href="../../index.html">Home</a><span class="breadcrumb-sep">›</span><a href="../index.html">Labs</a><span class="breadcrumb-sep">›</span>Lab 06</div>
-  <div class="eyebrow">Lab 06 · Socratic Lab · NSE7 EF 7.6</div>
-  <h1>Security Profiles — IPS False Positive, Unencrypted + Encrypted Attacks</h1>
-  <p>Apply IPS profiles to detect and block simulated attacks, then handle SSL deep inspection with a dynamic local certificate.</p>
+  <div class="breadcrumb"><a href="../../index.html">Home</a><span class="breadcrumb-sep">›</span><a href="../index.html">Labs</a><span class="breadcrumb-sep">›</span>Lab 04</div>
+  <div class="eyebrow">Lab 04 · Socratic Lab · NSE7 EF 7.6</div>
+  <h1>Dynamic Routing — OSPF ECMP + BGP</h1>
+  <p>Bring up OSPF between HQ VDOMs, enable ECMP, then peer BGP with a branch FortiGate via FortiManager BGP templates.</p>
 </header>
 <main>
   <div class="section-block">
     <div class="section-label">Section 01 · Objectives &amp; Prereqs</div>
     <h2>What You'll <em>Learn</em></h2>
-    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;margin-bottom:16px;"><li>How the IPS engine matches signatures — and what a false positive looks like in logs</li><li>Monitor vs Block modes and how to move safely between them</li><li>SSL/SSH deep inspection: dynamic local certificate + client CA trust</li><li>Reading `hping` output and correlating it with IPS log lines</li></ul>
+    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;margin-bottom:16px;"><li>OSPF neighbor formation across VDOMs and inter-VDOM links</li><li>ECMP: when you get load-sharing vs when a single route just wins</li><li>FortiManager BGP templates — pushing consistent peer config across sites</li><li>Advertising a loopback as a BGP source for stability across failover</li></ul>
     <table class="device-table" style="max-width:640px;">
       <tbody>
-        <tr><td style="width:180px;">Duration</td><td>60-90 minutes</td></tr>
-        <tr><td>Prereq labs</td><td><a href="../lab-02-central-management/index.html" style="color:var(--blue);text-decoration:none;">Lab 02</a>, <a href="../lab-03-vlans-and-vdoms/index.html" style="color:var(--blue);text-decoration:none;">Lab 03</a>, <a href="../lab-04-high-availability/index.html" style="color:var(--blue);text-decoration:none;">Lab 04</a>, <a href="../lab-05-dynamic-routing/index.html" style="color:var(--blue);text-decoration:none;">Lab 05</a></td></tr>
-        <tr><td>Prereq sessions</td><td><a href="../../sessions/session-27-ssl-ssh-deep-inspection/index.html" style="color:var(--blue);text-decoration:none;">Session 27</a>, <a href="../../sessions/session-28-web-filtering/index.html" style="color:var(--blue);text-decoration:none;">Session 28</a>, <a href="../../sessions/session-29-application-control-isdb/index.html" style="color:var(--blue);text-decoration:none;">Session 29</a>, <a href="../../sessions/session-30-ips-engine-signatures/index.html" style="color:var(--blue);text-decoration:none;">Session 30</a>, <a href="../../sessions/session-31-profile-performance-tuning/index.html" style="color:var(--blue);text-decoration:none;">Session 31</a></td></tr>
+        <tr><td style="width:180px;">Duration</td><td>90-120 minutes</td></tr>
+        <tr><td>Prereq labs</td><td><a href="../lab-01-central-management/index.html" style="color:var(--blue);text-decoration:none;">Lab 01</a>, <a href="../lab-02-vlans-and-vdoms/index.html" style="color:var(--blue);text-decoration:none;">Lab 02</a>, <a href="../lab-03-high-availability/index.html" style="color:var(--blue);text-decoration:none;">Lab 03</a></td></tr>
+        <tr><td>Prereq sessions</td><td><a href="../../sessions/session-20-why-dynamic-routing-on-firewall/index.html" style="color:var(--blue);text-decoration:none;">Session 20</a>, <a href="../../sessions/session-21-ospf-areas-lsas-neighbors/index.html" style="color:var(--blue);text-decoration:none;">Session 21</a>, <a href="../../sessions/session-22-ospf-auth-summarization-stub/index.html" style="color:var(--blue);text-decoration:none;">Session 22</a>, <a href="../../sessions/session-24-ibgp-ebgp-route-reflectors/index.html" style="color:var(--blue);text-decoration:none;">Session 24</a>, <a href="../../sessions/session-25-route-maps-prefix-lists/index.html" style="color:var(--blue);text-decoration:none;">Session 25</a></td></tr>
       </tbody>
     </table>
   </div>
   <div class="section-block">
     <div class="section-label">Section 02 · Topology</div>
     <h2>Devices in <em>This Lab</em></h2>
-    <p>Subset of the shared pod used in Lab 06. Full topology: <a href="../index.html" style="color:var(--blue);text-decoration:none;">labs hub →</a></p>
+    <p>Subset of the shared pod used in Lab 04. Full topology: <a href="../index.html" style="color:var(--blue);text-decoration:none;">labs hub →</a></p>
     
 <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;margin:16px 0 24px;">
   <img src="../images/topology.png" alt="Topology diagram" style="width:100%;max-width:900px;border-radius:12px;border:1px solid var(--border);display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
@@ -103,7 +103,7 @@
       <th>Device</th><th>Role</th><th>Model</th><th>Interface</th><th>IP</th><th>Zone</th><th>Connected to</th>
     </tr>
   </thead>
-  <tbody><tr><td rowspan="6">HQ-FGT-A</td><td rowspan="6">HQ FortiGate — primary in HA pair, VDOM host (root + Zone1 + Zone2), ADVPN hub</td><td rowspan="6" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiGate-VM 7.6.2</td><td>port1</td><td>100.65.0.111/24</td><td>WAN</td><td>Internet</td></tr><tr><td>port2</td><td>10.0.1.254/24</td><td>HQ-LAN</td><td>HQ-PC-1</td></tr><tr><td>port3</td><td>10.0.5.254/24</td><td>HQ-DMZ</td><td>HQ-Web-1</td></tr><tr><td>port4</td><td>10.0.99.1/30</td><td>HA-SYNC</td><td>HQ-FGT-B port4</td></tr><tr><td>port5.101</td><td>10.0.2.254/24</td><td>Zone1 (VLAN101)</td><td>HQ-PC-1 (VLAN101 sub-iface)</td></tr><tr><td>port5.102</td><td>10.0.3.254/24</td><td>Zone2 (VLAN102)</td><td>HQ-PC-1 (VLAN102 sub-iface)</td></tr><tr><td rowspan="3">HQ-PC-1</td><td rowspan="3">HQ workstation — admin client + traffic generator (plays HQ-PC-2/3 on tagged sub-interfaces in Lab 3)</td><td rowspan="3" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">Linux VM</td><td>eth0</td><td>10.0.1.10/24</td><td>HQ-LAN</td><td>HQ-FGT-A port2</td></tr><tr><td>eth0.101</td><td>10.0.2.10/24</td><td>Zone1 (VLAN101)</td><td>HQ-FGT-A port5.101</td></tr><tr><td>eth0.102</td><td>10.0.3.10/24</td><td>Zone2 (VLAN102)</td><td>HQ-FGT-A port5.102</td></tr><tr><td rowspan="1">HQ-Web-1</td><td rowspan="1">HQ web server — attack target for IPS/SSL labs</td><td rowspan="1" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">Linux VM (nginx)</td><td>eth0</td><td>10.0.5.11/24</td><td>HQ-DMZ</td><td>HQ-FGT-A port3</td></tr></tbody>
+  <tbody><tr><td rowspan="6">HQ-FGT-A</td><td rowspan="6">HQ FortiGate — primary in HA pair, VDOM host (root + Zone1 + Zone2), ADVPN hub</td><td rowspan="6" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiGate-VM 7.6.2</td><td>port1</td><td>100.65.0.111/24</td><td>WAN</td><td>Internet</td></tr><tr><td>port2</td><td>10.0.1.254/24</td><td>HQ-LAN</td><td>HQ-PC-1</td></tr><tr><td>port3</td><td>10.0.5.254/24</td><td>HQ-DMZ</td><td>HQ-Web-1</td></tr><tr><td>port4</td><td>10.0.99.1/30</td><td>HA-SYNC</td><td>HQ-FGT-B port4</td></tr><tr><td>port5.101</td><td>10.0.2.254/24</td><td>Zone1 (VLAN101)</td><td>HQ-PC-1 (VLAN101 sub-iface)</td></tr><tr><td>port5.102</td><td>10.0.3.254/24</td><td>Zone2 (VLAN102)</td><td>HQ-PC-1 (VLAN102 sub-iface)</td></tr><tr><td rowspan="3">HQ-FGT-B</td><td rowspan="3">HQ FortiGate — secondary in HA pair, FGSP session sync peer</td><td rowspan="3" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiGate-VM 7.6.2</td><td>port1</td><td>100.65.0.112/24</td><td>WAN</td><td>Internet</td></tr><tr><td>port2</td><td>10.0.1.253/24</td><td>HQ-LAN</td><td>HQ-LAN switch</td></tr><tr><td>port4</td><td>10.0.99.2/30</td><td>HA-SYNC</td><td>HQ-FGT-A port4</td></tr><tr><td rowspan="2">BR1-FGT</td><td rowspan="2">Branch 1 FortiGate — ADVPN spoke, BGP peer</td><td rowspan="2" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiGate-VM 7.6.2</td><td>port1</td><td>100.65.1.111/24</td><td>WAN</td><td>Internet</td></tr><tr><td>port2</td><td>172.20.1.254/24</td><td>BR1-LAN</td><td>BR1-PC-1</td></tr><tr><td rowspan="2">HQ-FMG-1</td><td rowspan="2">FortiManager — central management, ADOMs, policy packages, provisioning templates</td><td rowspan="2" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiManager-VM 7.6.2</td><td>port1</td><td>100.65.0.120/24</td><td>MGMT</td><td>Internet</td></tr><tr><td>port2</td><td>10.0.13.254/24</td><td>HQ-MGMT</td><td>HQ-LAN switch</td></tr></tbody>
 </table>
 
   </div>
@@ -115,19 +115,19 @@
   <div class="section-block">
     <div class="section-label">Section 04 · Verification</div>
     <h2>You're <em>Done When</em></h2>
-    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;"><li>IPS log shows a blocked jumbo-packet signature match after hping simulation</li><li>HQ-FGT-A drops an encrypted attack once SSL deep inspection is applied</li><li>HQ-PC-1 browser trusts the SSL inspection CA after import</li></ul>
+    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;"><li>`get router info ospf neighbor` shows Full adjacencies between the HQ VDOMs</li><li>`get router info routing-table` shows ECMP entries for the shared prefix</li><li>BGP session established between HQ hub and BR1-FGT via the loopback address</li></ul>
   </div>
   <div class="section-block">
     <div class="section-label">Section 05 · Cleanup</div>
     <h2>Before the <em>Next Lab</em></h2>
     <div class="step-callout callout-red">
       <div class="step-callout-label">Cleanup</div>
-      Detach heavy IPS profiles from broad policies — they slow later labs. Keep the CA on HQ-PC-1 for Lab 9.
+      Retain OSPF + BGP config — Labs 7 and 8 assume dynamic routing over the VPN tunnels.
     </div>
   </div>
   <div style="display:flex;justify-content:space-between;margin-top:32px;padding-top:20px;border-top:1px solid var(--border);font-family:'Outfit',sans-serif;font-size:13px;letter-spacing:0.06em;">
-    <div><a href="../lab-05-dynamic-routing/index.html" style="color:var(--blue);text-decoration:none;">← Lab 05</a></div>
-    <div><a href="../lab-07-ipsec-vpn-ikev2/index.html" style="color:var(--blue);text-decoration:none;">Lab 07 →</a></div>
+    <div><a href="../lab-03-high-availability/index.html" style="color:var(--blue);text-decoration:none;">← Lab 03</a></div>
+    <div><a href="../lab-05-security-profiles/index.html" style="color:var(--blue);text-decoration:none;">Lab 05 →</a></div>
   </div>
 </main>
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lab 01 — Network Security Architecture — Concepts Only · NSE7 EF 7.6</title>
+<title>Lab 07 — Auto-Discovery VPN (ADVPN) with IBGP and EBGP · NSE7 EF 7.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#faf5e9;--surface:#fffdf5;--surface-2:#f5eed9;--border:#d4c89a;--text:#0a1838;--text-soft:#1e2f5a;--text-muted:#6b7794;--blue:#1e40af;--blue-light:#eff4fc;--blue-border:#b8cce8;--ink-dark:#0d1a3a;--ink-accent:#9bb8e6;--green:#1a7c4a;--green-light:#dff0e1;--green-border:#a7d8b0;--amber:#b45309;--amber-light:#fcf2c3;--amber-border:#f3d68a;--red:#b91c1c;--red-light:#fee2e2;--red-border:#fca5a5;--teal:#0f766e;--teal-light:#ccfbf1;--teal-border:#5eead4;}
@@ -62,16 +62,72 @@
 <body>
 
 <header>
-  <div class="breadcrumb"><a href="../../index.html">Home</a><span class="breadcrumb-sep">›</span><a href="../index.html">Labs</a><span class="breadcrumb-sep">›</span>Lab 01</div>
-  <div class="eyebrow">Lab 01 · Concept-only · NSE7 EF 7.6</div>
-  <h1>Network Security Architecture — Concepts Only</h1>
-  <p>No hands-on exercise in the PDF for this chapter. Review the concepts in Session 01 before starting Lab 02.</p>
+  <div class="breadcrumb"><a href="../../index.html">Home</a><span class="breadcrumb-sep">›</span><a href="../index.html">Labs</a><span class="breadcrumb-sep">›</span>Lab 07</div>
+  <div class="eyebrow">Lab 07 · Socratic Lab · NSE7 EF 7.6</div>
+  <h1>Auto-Discovery VPN (ADVPN) with IBGP and EBGP</h1>
+  <p>Layer ADVPN on top of the IPsec templates, run BGP over the tunnels, and trigger an on-demand spoke-to-spoke shortcut.</p>
 </header>
 <main>
-  <div class="empty-state">
-    <h3>No hands-on exercise for this lab</h3>
-    <p>The lab guide PDF doesn't include a hands-on exercise here. Review the concepts in the linked study session, then move on to Lab 02.</p>
-    <p style="margin-top:12px;">Related study session: <a href="../../sessions/session-01-nse7-story-exam-map/index.html" style="color:var(--blue);text-decoration:none;">Session 01</a></p>
+  <div class="section-block">
+    <div class="section-label">Section 01 · Objectives &amp; Prereqs</div>
+    <h2>What You'll <em>Learn</em></h2>
+    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;margin-bottom:16px;"><li>How ADVPN shortcut tunnels form on demand between spokes</li><li>IBGP vs EBGP over ADVPN — route reflector vs full-mesh trade-offs</li><li>Verifying a shortcut with `diagnose vpn ike gateway list` after the first spoke-to-spoke packet</li><li>The hub's role in exchanging routes but not necessarily carrying data-plane traffic</li></ul>
+    <table class="device-table" style="max-width:640px;">
+      <tbody>
+        <tr><td style="width:180px;">Duration</td><td>90-120 minutes</td></tr>
+        <tr><td>Prereq labs</td><td><a href="../lab-04-dynamic-routing/index.html" style="color:var(--blue);text-decoration:none;">Lab 04</a>, <a href="../lab-06-ipsec-vpn-ikev2/index.html" style="color:var(--blue);text-decoration:none;">Lab 06</a></td></tr>
+        <tr><td>Prereq sessions</td><td><a href="../../sessions/session-34-advpn-concept/index.html" style="color:var(--blue);text-decoration:none;">Session 34</a>, <a href="../../sessions/session-35-advpn-shortcut-tunnels/index.html" style="color:var(--blue);text-decoration:none;">Session 35</a>, <a href="../../sessions/session-36-dynamic-routing-over-advpn/index.html" style="color:var(--blue);text-decoration:none;">Session 36</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="section-block">
+    <div class="section-label">Section 02 · Topology</div>
+    <h2>Devices in <em>This Lab</em></h2>
+    <p>Subset of the shared pod used in Lab 07. Full topology: <a href="../index.html" style="color:var(--blue);text-decoration:none;">labs hub →</a></p>
+    
+<div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;margin:16px 0 24px;">
+  <img src="../images/topology.png" alt="Topology diagram" style="width:100%;max-width:900px;border-radius:12px;border:1px solid var(--border);display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+  <div style="display:none;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:40px 28px;flex-direction:column;align-items:center;gap:14px;width:100%;">
+    <div style="font-size:44px;opacity:0.35;">🗺️</div>
+    <div style="text-align:center;">
+      <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">Topology diagram placeholder</div>
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--text);">Vaultline Minimum Pod</div>
+    </div>
+    
+  </div>
+</div>
+
+<table class="device-table">
+  <thead>
+    <tr>
+      <th>Device</th><th>Role</th><th>Model</th><th>Interface</th><th>IP</th><th>Zone</th><th>Connected to</th>
+    </tr>
+  </thead>
+  <tbody><tr><td rowspan="6">HQ-FGT-A</td><td rowspan="6">HQ FortiGate — primary in HA pair, VDOM host (root + Zone1 + Zone2), ADVPN hub</td><td rowspan="6" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiGate-VM 7.6.2</td><td>port1</td><td>100.65.0.111/24</td><td>WAN</td><td>Internet</td></tr><tr><td>port2</td><td>10.0.1.254/24</td><td>HQ-LAN</td><td>HQ-PC-1</td></tr><tr><td>port3</td><td>10.0.5.254/24</td><td>HQ-DMZ</td><td>HQ-Web-1</td></tr><tr><td>port4</td><td>10.0.99.1/30</td><td>HA-SYNC</td><td>HQ-FGT-B port4</td></tr><tr><td>port5.101</td><td>10.0.2.254/24</td><td>Zone1 (VLAN101)</td><td>HQ-PC-1 (VLAN101 sub-iface)</td></tr><tr><td>port5.102</td><td>10.0.3.254/24</td><td>Zone2 (VLAN102)</td><td>HQ-PC-1 (VLAN102 sub-iface)</td></tr><tr><td rowspan="2">BR1-FGT</td><td rowspan="2">Branch 1 FortiGate — ADVPN spoke, BGP peer</td><td rowspan="2" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiGate-VM 7.6.2</td><td>port1</td><td>100.65.1.111/24</td><td>WAN</td><td>Internet</td></tr><tr><td>port2</td><td>172.20.1.254/24</td><td>BR1-LAN</td><td>BR1-PC-1</td></tr><tr><td rowspan="2">BR2-FGT</td><td rowspan="2">Branch 2 FortiGate — ADVPN spoke, on-demand shortcut partner</td><td rowspan="2" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiGate-VM 7.6.2</td><td>port1</td><td>100.65.2.111/24</td><td>WAN</td><td>Internet</td></tr><tr><td>port2</td><td>172.20.2.254/24</td><td>BR2-LAN</td><td>BR2-PC-1</td></tr><tr><td rowspan="2">HQ-FMG-1</td><td rowspan="2">FortiManager — central management, ADOMs, policy packages, provisioning templates</td><td rowspan="2" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiManager-VM 7.6.2</td><td>port1</td><td>100.65.0.120/24</td><td>MGMT</td><td>Internet</td></tr><tr><td>port2</td><td>10.0.13.254/24</td><td>HQ-MGMT</td><td>HQ-LAN switch</td></tr></tbody>
+</table>
+
+  </div>
+  <div class="section-block">
+    <div class="section-label">Section 03 · Steps</div>
+    <h2>Predict → Run → Verify → <em>Reflect</em></h2>
+    <div class="empty-state"><h3>Steps not authored yet</h3><p>Predict → Run → Verify → Reflect step cards will land here once <code>steps</code> is populated for this lab in <code>build.py</code>.</p></div>
+  </div>
+  <div class="section-block">
+    <div class="section-label">Section 04 · Verification</div>
+    <h2>You're <em>Done When</em></h2>
+    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;"><li>`get router info bgp summary` on BR1 and BR2 shows established sessions to the hub</li><li>First ping from BR1-PC-1 → BR2-PC-1 triggers a shortcut visible with `diagnose vpn ike gateway list`</li><li>Subsequent BR1↔BR2 traffic bypasses the hub in the data plane</li></ul>
+  </div>
+  <div class="section-block">
+    <div class="section-label">Section 05 · Cleanup</div>
+    <h2>Before the <em>Next Lab</em></h2>
+    <div class="step-callout callout-red">
+      <div class="step-callout-label">Cleanup</div>
+      Retain ADVPN — Lab 10 use cases reuse it.
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:32px;padding-top:20px;border-top:1px solid var(--border);font-family:'Outfit',sans-serif;font-size:13px;letter-spacing:0.06em;">
+    <div><a href="../lab-06-ipsec-vpn-ikev2/index.html" style="color:var(--blue);text-decoration:none;">← Lab 06</a></div>
+    <div><a href="../lab-08-security-fabric/index.html" style="color:var(--blue);text-decoration:none;">Lab 08 →</a></div>
   </div>
 </main>
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lab 03 — VLANs and VDOMs on ISFW · NSE7 EF 7.6</title>
+<title>Lab 03 — High Availability — VDOM Partitioning + FGSP · NSE7 EF 7.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#faf5e9;--surface:#fffdf5;--surface-2:#f5eed9;--border:#d4c89a;--text:#0a1838;--text-soft:#1e2f5a;--text-muted:#6b7794;--blue:#1e40af;--blue-light:#eff4fc;--blue-border:#b8cce8;--ink-dark:#0d1a3a;--ink-accent:#9bb8e6;--green:#1a7c4a;--green-light:#dff0e1;--green-border:#a7d8b0;--amber:#b45309;--amber-light:#fcf2c3;--amber-border:#f3d68a;--red:#b91c1c;--red-light:#fee2e2;--red-border:#fca5a5;--teal:#0f766e;--teal-light:#ccfbf1;--teal-border:#5eead4;}
@@ -64,19 +64,19 @@
 <header>
   <div class="breadcrumb"><a href="../../index.html">Home</a><span class="breadcrumb-sep">›</span><a href="../index.html">Labs</a><span class="breadcrumb-sep">›</span>Lab 03</div>
   <div class="eyebrow">Lab 03 · Socratic Lab · NSE7 EF 7.6</div>
-  <h1>VLANs and VDOMs on ISFW</h1>
-  <p>Enable VDOMs on HQ-FGT-A, carve two zones with VLAN tagging, and prove inter-VDOM routing works via an inter-VDOM link.</p>
+  <h1>High Availability — VDOM Partitioning + FGSP</h1>
+  <p>Split VDOMs across an HA cluster (partitioning), then configure FGSP so both firewalls forward asymmetric flows and survive failover.</p>
 </header>
 <main>
   <div class="section-block">
     <div class="section-label">Section 01 · Objectives &amp; Prereqs</div>
     <h2>What You'll <em>Learn</em></h2>
-    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;margin-bottom:16px;"><li>Enabling VDOM mode without wiping the running configuration</li><li>How VLANs and VDOMs compose: one physical port, two Layer-3 segments, isolated by VDOM boundary</li><li>Inter-VDOM links as software cables — when you need them vs when you don't</li><li>Where firewall policies live once you're in multi-VDOM mode (per-VDOM policy tables)</li></ul>
+    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;margin-bottom:16px;"><li>VDOM partitioning — distributing VDOMs between two HA cluster members</li><li>FGSP vs FGCP: session-sync only vs full cluster, and when each is the right answer</li><li>Testing session synchronization with a real ICMP flow and a forced failover</li><li>Encrypting the session-sync channel with a pre-shared key</li></ul>
     <table class="device-table" style="max-width:640px;">
       <tbody>
-        <tr><td style="width:180px;">Duration</td><td>45-60 minutes</td></tr>
-        <tr><td>Prereq labs</td><td><a href="../lab-02-central-management/index.html" style="color:var(--blue);text-decoration:none;">Lab 02</a></td></tr>
-        <tr><td>Prereq sessions</td><td><a href="../../sessions/session-11-vlans-on-fortigate/index.html" style="color:var(--blue);text-decoration:none;">Session 11</a>, <a href="../../sessions/session-12-vdoms-multi-tenant/index.html" style="color:var(--blue);text-decoration:none;">Session 12</a>, <a href="../../sessions/session-14-inter-vdom-links/index.html" style="color:var(--blue);text-decoration:none;">Session 14</a></td></tr>
+        <tr><td style="width:180px;">Duration</td><td>75-90 minutes</td></tr>
+        <tr><td>Prereq labs</td><td><a href="../lab-02-vlans-and-vdoms/index.html" style="color:var(--blue);text-decoration:none;">Lab 02</a></td></tr>
+        <tr><td>Prereq sessions</td><td><a href="../../sessions/session-15-ha-problem/index.html" style="color:var(--blue);text-decoration:none;">Session 15</a>, <a href="../../sessions/session-16-fgcp-active-passive/index.html" style="color:var(--blue);text-decoration:none;">Session 16</a>, <a href="../../sessions/session-17-fgcp-active-active/index.html" style="color:var(--blue);text-decoration:none;">Session 17</a>, <a href="../../sessions/session-18-fgsp-session-sync/index.html" style="color:var(--blue);text-decoration:none;">Session 18</a></td></tr>
       </tbody>
     </table>
   </div>
@@ -103,7 +103,7 @@
       <th>Device</th><th>Role</th><th>Model</th><th>Interface</th><th>IP</th><th>Zone</th><th>Connected to</th>
     </tr>
   </thead>
-  <tbody><tr><td rowspan="6">HQ-FGT-A</td><td rowspan="6">HQ FortiGate — primary in HA pair, VDOM host (root + Zone1 + Zone2), ADVPN hub</td><td rowspan="6" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiGate-VM 7.6.2</td><td>port1</td><td>100.65.0.111/24</td><td>WAN</td><td>Internet</td></tr><tr><td>port2</td><td>10.0.1.254/24</td><td>HQ-LAN</td><td>HQ-PC-1</td></tr><tr><td>port3</td><td>10.0.5.254/24</td><td>HQ-DMZ</td><td>HQ-Web-1</td></tr><tr><td>port4</td><td>10.0.99.1/30</td><td>HA-SYNC</td><td>HQ-FGT-B port4</td></tr><tr><td>port5.101</td><td>10.0.2.254/24</td><td>Zone1 (VLAN101)</td><td>HQ-PC-1 (VLAN101 sub-iface)</td></tr><tr><td>port5.102</td><td>10.0.3.254/24</td><td>Zone2 (VLAN102)</td><td>HQ-PC-1 (VLAN102 sub-iface)</td></tr><tr><td rowspan="3">HQ-PC-1</td><td rowspan="3">HQ workstation — admin client + traffic generator (plays HQ-PC-2/3 on tagged sub-interfaces in Lab 3)</td><td rowspan="3" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">Linux VM</td><td>eth0</td><td>10.0.1.10/24</td><td>HQ-LAN</td><td>HQ-FGT-A port2</td></tr><tr><td>eth0.101</td><td>10.0.2.10/24</td><td>Zone1 (VLAN101)</td><td>HQ-FGT-A port5.101</td></tr><tr><td>eth0.102</td><td>10.0.3.10/24</td><td>Zone2 (VLAN102)</td><td>HQ-FGT-A port5.102</td></tr></tbody>
+  <tbody><tr><td rowspan="6">HQ-FGT-A</td><td rowspan="6">HQ FortiGate — primary in HA pair, VDOM host (root + Zone1 + Zone2), ADVPN hub</td><td rowspan="6" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiGate-VM 7.6.2</td><td>port1</td><td>100.65.0.111/24</td><td>WAN</td><td>Internet</td></tr><tr><td>port2</td><td>10.0.1.254/24</td><td>HQ-LAN</td><td>HQ-PC-1</td></tr><tr><td>port3</td><td>10.0.5.254/24</td><td>HQ-DMZ</td><td>HQ-Web-1</td></tr><tr><td>port4</td><td>10.0.99.1/30</td><td>HA-SYNC</td><td>HQ-FGT-B port4</td></tr><tr><td>port5.101</td><td>10.0.2.254/24</td><td>Zone1 (VLAN101)</td><td>HQ-PC-1 (VLAN101 sub-iface)</td></tr><tr><td>port5.102</td><td>10.0.3.254/24</td><td>Zone2 (VLAN102)</td><td>HQ-PC-1 (VLAN102 sub-iface)</td></tr><tr><td rowspan="3">HQ-FGT-B</td><td rowspan="3">HQ FortiGate — secondary in HA pair, FGSP session sync peer</td><td rowspan="3" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiGate-VM 7.6.2</td><td>port1</td><td>100.65.0.112/24</td><td>WAN</td><td>Internet</td></tr><tr><td>port2</td><td>10.0.1.253/24</td><td>HQ-LAN</td><td>HQ-LAN switch</td></tr><tr><td>port4</td><td>10.0.99.2/30</td><td>HA-SYNC</td><td>HQ-FGT-A port4</td></tr><tr><td rowspan="2">BR1-FGT</td><td rowspan="2">Branch 1 FortiGate — ADVPN spoke, BGP peer</td><td rowspan="2" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">FortiGate-VM 7.6.2</td><td>port1</td><td>100.65.1.111/24</td><td>WAN</td><td>Internet</td></tr><tr><td>port2</td><td>172.20.1.254/24</td><td>BR1-LAN</td><td>BR1-PC-1</td></tr><tr><td rowspan="3">HQ-PC-1</td><td rowspan="3">HQ workstation — admin client + traffic generator (plays HQ-PC-2/3 on tagged sub-interfaces in Lab 3)</td><td rowspan="3" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">Linux VM</td><td>eth0</td><td>10.0.1.10/24</td><td>HQ-LAN</td><td>HQ-FGT-A port2</td></tr><tr><td>eth0.101</td><td>10.0.2.10/24</td><td>Zone1 (VLAN101)</td><td>HQ-FGT-A port5.101</td></tr><tr><td>eth0.102</td><td>10.0.3.10/24</td><td>Zone2 (VLAN102)</td><td>HQ-FGT-A port5.102</td></tr><tr><td rowspan="1">BR1-PC-1</td><td rowspan="1">Branch 1 workstation — VPN + ADVPN traffic generator</td><td rowspan="1" style="font-family:'Cormorant Garamond',serif;font-weight:normal;color:var(--text-muted);">Linux VM</td><td>eth0</td><td>172.20.1.10/24</td><td>BR1-LAN</td><td>BR1-FGT port2</td></tr></tbody>
 </table>
 
   </div>
@@ -115,19 +115,19 @@
   <div class="section-block">
     <div class="section-label">Section 04 · Verification</div>
     <h2>You're <em>Done When</em></h2>
-    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;"><li>HQ-PC-1 (VLAN101 sub-interface) can ping HQ-PC-1 (VLAN102 sub-interface) via the inter-VDOM link</li><li>VLAN101 host can reach the internet through the root VDOM's default route</li><li>`get system status` shows VDOMs enabled and lists the three configured VDOMs (root, Zone1, Zone2)</li></ul>
+    <ul style="font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);padding-left:22px;"><li>`diagnose sys session list` on HQ-FGT-B lists sessions originated on HQ-FGT-A</li><li>A sustained ping from BR1-PC-1 survives a forced failover on the HQ HA pair</li><li>Session-sync traffic on port4 is IPsec-wrapped after the encryption exercise</li></ul>
   </div>
   <div class="section-block">
     <div class="section-label">Section 05 · Cleanup</div>
     <h2>Before the <em>Next Lab</em></h2>
     <div class="step-callout callout-red">
       <div class="step-callout-label">Cleanup</div>
-      Leave VDOMs enabled — Lab 4 and Lab 5 depend on the multi-VDOM layout.
+      Keep the HA cluster and FGSP config — Lab 5's dynamic routing runs on top.
     </div>
   </div>
   <div style="display:flex;justify-content:space-between;margin-top:32px;padding-top:20px;border-top:1px solid var(--border);font-family:'Outfit',sans-serif;font-size:13px;letter-spacing:0.06em;">
-    <div><a href="../lab-02-central-management/index.html" style="color:var(--blue);text-decoration:none;">← Lab 02</a></div>
-    <div><a href="../lab-04-high-availability/index.html" style="color:var(--blue);text-decoration:none;">Lab 04 →</a></div>
+    <div><a href="../lab-02-vlans-and-vdoms/index.html" style="color:var(--blue);text-decoration:none;">← Lab 02</a></div>
+    <div><a href="../lab-04-dynamic-routing/index.html" style="color:var(--blue);text-decoration:none;">Lab 04 →</a></div>
   </div>
 </main>
 
