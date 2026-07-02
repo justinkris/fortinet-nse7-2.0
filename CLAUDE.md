@@ -31,34 +31,52 @@ Standalone Extras are discovered by `discover_standalone_extras()` in `build.py`
 
 **Registering a new topic:** append to the `EXTRAS = [...]` list in `build.py` with `num`, `slug`, `title`, `tagline`. Then rebuild.
 
-## Sort workflow — sorting-hat extensions
+## Sort workflow — end-to-end mechanics
 
-The base skill's sort patterns cover `session-NN-{bite|nibble|guide|complete}-*` and `session-NN-*.txt`. This project adds two patterns:
+`sorting-hat/` is a plain inbox. Files land there; they never render or link from the site until they are sorted into their session/extras folder. Trigger phrases: **"sort"**, **"sort please"**, **"sort the hat"**, **"process the sorting hat"**, or `/build-study-plan sort`.
 
-| Pattern | Meaning | Destination | Extra step |
-|---|---|---|---|
-| `extras-<NN>-<slug>.html` | Standalone Extras topic index | `extras/extras-<NN>-<slug>/index.html` | Register in `EXTRAS` list in `build.py`. |
-| `session-<NN>-visual-<slug>.html` | Session-linked visual bite (`visual` is a semantic marker, not a standard kind) | Ask the user which kind to sort as — usually **bite**. Then `sessions/session-<NN>-<session-slug>/bites/<slug>.html`. | No registry — discovery scan finds it. |
+### Recognised filename patterns
 
-Both patterns typically ship with **multiple image placeholders + prompt-toggle blocks** — see next section.
+The base skill covers the first three rows. Everything below `session-<NN>-<slug>.txt` is a project-specific extension:
 
-For any other filename that doesn't match a known pattern, halt and ask the user (do not guess a destination).
+| Pattern | Kind | Destination |
+|---|---|---|
+| `session-<NN>-{bite\|nibble\|guide}-<slug>.html` | Session-linked extra | `sessions/session-<NN>-<session-slug>/{bites\|nibbles\|guides}/<slug>.html` |
+| `session-<NN>-complete-<slug>.html` | Completion study guide | `sessions/session-<NN>-<session-slug>/complete.html` |
+| `session-<NN>-<slug>.txt` | Session summary | `sessions/session-<NN>-<session-slug>/summary.txt` |
+| `session-<NN>-visual-<slug>.html` | Session visual companion (semantic marker, not a formal kind) | Ask which kind — default **bite**. Then `sessions/…/bites/<slug>.html`. |
+| `extras-<NN>-<slug>.html` | Standalone Extras topic index | `extras/extras-<NN>-<slug>/index.html` (create the folder, register in `EXTRAS`) |
+| `*.zip` | Container of the above | Extract in place with `unzip -o`, delete the zip, then re-run sort on the contents. |
 
-Sort steps for an `extras-NN-*.html` file:
+Anything else → halt and ask. Never invent a destination.
 
-1. Move to `extras/extras-<NN>-<slug>/index.html` (create the folder).
-2. **Handle image placeholders** (see next section).
-3. Add the topic to the `EXTRAS` list in `build.py` — pick a clean title (strip any `Extra(s) NN —` prefix from the HTML `<title>`) and write a one-sentence tagline describing what the topic covers.
-4. Run `python3 build.py`.
-5. Report the move and confirm the new card shows on `extras.html`.
+### The sort operation (steps you must always follow)
 
-Sort steps for a `session-NN-visual-*.html` file:
+1. **List** every file in `sorting-hat/`.
+2. **If any `.zip` is present**, extract it in place (`unzip -o files.zip` then `rm files.zip`) and continue with the contents.
+3. **Classify** each filename against the pattern table above, in the table order. Report any unrecognised filenames and stop — do not partially sort.
+4. **Look up** the target session by `<NN>` in `SESSIONS` (or the target extras topic by `<NN>` in `EXTRAS`). Non-existent number → halt.
+5. **Validate any `session-NN-complete-*.html`** against the canonical shell contract (see the base skill for the full marker list): `socratic-block`, `qpanel`, `notes-panel`, `lesson-tools`, `mental-note-block`, `page-nav`. Any missing → halt the entire sort. Don't partially move — the user regenerates in Claude with `templates/TEMPLATE-GUIDE-CREAM.html` and re-runs sort.
+6. **Collision check** against each destination:
+   - Extras (`bites/nibbles/guides/<slug>.html`) never overwrite silently — ask.
+   - `complete.html` and `summary.txt` overwrite silently but print a heads-up like `"replacing existing complete.html for session NN"`.
+7. **Move** with `mv` (never `cp`). Sorting-hat must be empty after a successful sort.
+8. **Post-move for `extras-NN-*.html` only**: append a new entry to the `EXTRAS = [...]` list in `build.py` with `num`, `slug`, and a hand-written `title` + one-sentence `tagline`. Strip any `Extra(s) NN —` prefix from the HTML `<title>` when picking the friendly title. (Not needed for session-linked files — they're discovered from the filesystem.)
+9. **Image placeholders**: if any sorted HTML file contains inline placeholders with prompt text, apply the "Image handling for sorted files with placeholders" rules below **before rebuilding**.
+10. **Rebuild** with `python3 build.py`. The build:
+    - Regenerates each affected session's page (Completion callout, Session Recap, Extras block).
+    - Updates `study-plan.html` (Completed badge `X/M`, Extras sidebar visibility).
+    - Rewrites `extras.html`, `completed-sessions.html`, `index.html`.
+    - Runs `normalize_sorted_breadcrumbs()` so every sorted file gets the `Home › Curriculum › …` (or `Home › Extras › …`) crumb — see the Breadcrumbs section.
+    - Runs the second-layer shell-contract check across all existing `complete.html` files and prints warnings (a defence in depth if a bad file slipped in via manual move).
+11. **Report** to the user: one table row per file (source → destination), plus links to `completed-sessions.html` and (if extras were touched) `extras.html`. Do **not** re-flag pre-existing shell-contract warnings — see Known standing warnings.
 
-1. Confirm the target kind with the user (default: bite). Move to `sessions/session-<NN>-<session-slug>/<kind>s/<slug>.html`.
-2. **Handle image placeholders** (see next section).
-3. Run `python3 build.py`.
+### Hard rules
 
-Session-linked bite/nibble/guide/complete/summary files still follow the base skill's rules for everything except image handling.
+- The sort is a pure **move + rebuild**. Never edit the file's non-image contents during the move.
+- If a file fails to parse or validate, leave it in `sorting-hat/` for the user to inspect. Do not delete.
+- `sorting-hat/` is the **only** inbox — do not accept content pasted directly. If the user pastes raw HTML asking for a bite, save it as `sorting-hat/session-NN-bite-<slug>.html` first, then run sort.
+- Version history is git's job, not sort's. Overwriting `complete.html` / `summary.txt` is not a data loss risk.
 
 ## Image handling for sorted files with placeholders
 
