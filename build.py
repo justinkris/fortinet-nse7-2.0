@@ -3,7 +3,8 @@
 NSE7 Enterprise Firewall 7.6 Socratic Curriculum Generator.
 
 Produces:
-  - study-plan.html (hub: 8 phases + roadmap + objective map + journey narrative)
+  - study-plan/index.html (hub: 8 phases + roadmap + objective map + journey narrative)
+  - sessions/index.html (flat listing of all 40 Socratic sessions)
   - sessions/session-NN-slug/index.html (40 per-session pages)
   - sessions/session-NN-slug/images/ (per-session image folder, holds hero.png)
   - images/hub/ (shared phase hero images used by the hub page)
@@ -2636,9 +2637,9 @@ SESSION_TEMPLATE = """<!DOCTYPE html>
     <div class="breadcrumb">
       <a href="../../index.html">Home</a>
       <span class="breadcrumb-sep">›</span>
-      <a href="../../study-plan.html">Curriculum</a>
+      <a href="../../study-plan/index.html">Curriculum</a>
       <span class="breadcrumb-sep">›</span>
-      <a href="../../study-plan.html#phase-{phase_num_pad}">Phase {phase_num} — {phase_title_esc}</a>
+      <a href="../../study-plan/index.html#phase-{phase_num_pad}">Phase {phase_num} — {phase_title_esc}</a>
       <span class="breadcrumb-sep">›</span>
       Session {num_pad}
     </div>
@@ -2909,7 +2910,7 @@ def render_session(s: dict, extras=None, completions=None):
         prev_disabled = ""
     else:
         prev_label = "the Curriculum Hub"
-        prev_href = "../../study-plan.html"
+        prev_href = "../../study-plan/index.html"
         prev_title = "NSE7 EF 7.6 Curriculum"
         prev_disabled = ""
 
@@ -2920,7 +2921,7 @@ def render_session(s: dict, extras=None, completions=None):
         next_disabled = ""
     else:
         next_label = "the Curriculum Hub"
-        next_href = "../../study-plan.html"
+        next_href = "../../study-plan/index.html"
         next_title = "Back to Curriculum Hub"
         next_disabled = ""
 
@@ -2987,22 +2988,20 @@ OBJECTIVE_DESCRIPTIONS = {
     "5.2": "Implement ADVPN to enable on-demand VPN tunnels between sites",
 }
 
-def render_hub(extras=None, completions=None, standalone_extras=None):
+def render_study_plan_index(extras=None, completions=None, standalone_extras=None):
+    """Emit study-plan/index.html — the curriculum hub with a top button row
+    (no sidebar) that swaps between panels: How to Use (default), Progress,
+    Phases (all 8 stacked), Roadmap, Objective Map, The Journey, Completed."""
     extras = extras or {}
     completions = completions or {}
     standalone_extras = standalone_extras or []
     completed_count = sum(1 for v in completions.values() if v.get("has_complete"))
-    extras_exist = any(bool(v) for v in extras.values()) or bool(standalone_extras)
-    has_extras = extras_exist
-    # Phase sections
-    phase_sections_html = []
-    nav_tabs_html = []
-    for phase in PHASES:
-        nav_tabs_html.append(
-            f'<a class="nav-tab" href="#phase-{phase["num"]:02d}">Phase {phase["num"]:02d}</a>'
-        )
 
-    # Build phase blocks
+    # Build individual phase blocks (rendered inside the single Phases panel,
+    # stacked one after another). Because the page now lives at
+    # study-plan/index.html, all session links become ../sessions/... and all
+    # hub-phase images become ../images/hub/...
+    phase_sections_html = []
     for phase in PHASES:
         sessions_in_phase = [s for s in SESSIONS if s["phase"] == phase["num"]]
         cards = []
@@ -3011,18 +3010,18 @@ def render_hub(extras=None, completions=None, standalone_extras=None):
             cards.append(f"""
         <div class="session-card">
           <div class="session-card-num">SESSION {s['num']:02d}</div>
-          <a class="session-card-title" href="sessions/{session_filename(s)}">{html_escape(s['title'])}</a>
+          <a class="session-card-title" href="../sessions/{session_filename(s)}">{html_escape(s['title'])}</a>
           <div class="session-card-meta">{html_escape(s['duration'])} · Objectives: {obj_str}</div>
           <p class="session-card-why">{html_escape(s['why'].split('.')[0] + '.')}</p>
         </div>""")
 
         full_prompt = f"{phase['image_prompt']}\n\n{STYLE_PREAMBLE}"
         phase_sections_html.append(f"""
-    <div class="section-block" id="phase-{phase['num']:02d}">
+    <div class="phase-block" id="phase-{phase['num']:02d}">
       <div class="section-label">PHASE {phase['num']:02d}</div>
       <h2>{html_escape(phase['title'].split(': ')[0])} — <em>{html_escape(phase['title'].split(': ', 1)[1] if ': ' in phase['title'] else phase['title'])}</em></h2>
       <div class="section-img-wrap">
-        <img src="images/hub/phase-{phase['num']:02d}-{phase['slug']}.png" class="section-img"
+        <img src="../images/hub/phase-{phase['num']:02d}-{phase['slug']}.png" class="section-img"
              alt="Illustration for Phase {phase['num']} — {html_escape(phase['title'])}"
              onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');this.parentElement.querySelector('.img-caption').style.display='none';">
         <p class="img-caption">{html_escape(phase['tagline'])}</p>
@@ -3046,7 +3045,7 @@ def render_hub(extras=None, completions=None, standalone_extras=None):
         links = []
         for sn in session_nums:
             s = next(x for x in SESSIONS if x["num"] == sn)
-            links.append(f'<a href="sessions/{session_filename(s)}">S{sn:02d}</a>')
+            links.append(f'<a href="../sessions/{session_filename(s)}">S{sn:02d}</a>')
         sess_links_html = ", ".join(links) if links else "<em>not taught</em>"
         desc = OBJECTIVE_DESCRIPTIONS.get(obj, "")
         obj_rows.append(
@@ -3062,113 +3061,128 @@ def render_hub(extras=None, completions=None, standalone_extras=None):
         )
         for s in sessions_in_phase:
             roadmap_rows.append(
-                f'<tr><td>{s["num"]:02d}</td><td><a href="sessions/{session_filename(s)}">{html_escape(s["title"])}</a></td><td>{html_escape(s["duration"])}</td></tr>'
+                f'<tr><td>{s["num"]:02d}</td><td><a href="../sessions/{session_filename(s)}">{html_escape(s["title"])}</a></td><td>{html_escape(s["duration"])}</td></tr>'
             )
 
-    # Build left sidebar entries.
-    # Structure: [collapse-toggle, Progress tab, Curriculum group, Reference group].
-    # Both groups are independently collapsible; the whole sidebar is collapsible to a thin icon rail.
-    side_entries = []
-
-    # Top-level collapse button for the whole sidebar
-    side_entries.append(
-        '<button class="hub-side-collapse" id="hub-side-collapse" aria-label="Toggle sidebar">'
-        '<span class="hub-side-collapse-chevron">«</span>'
-        '<span class="hub-side-collapse-label">Collapse</span>'
-        '</button>'
+    # Build the top button row. Buttons are grouped into 3 stacked rows with
+    # kicker labels: Learn (primary curriculum), Track, Get Started (help).
+    # Every button carries an SVG icon, title, subtitle, optional badge.
+    # data-target triggers showPanel() defined in the hub script.
+    ICON_PHASES = (
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        '<rect x="3" y="3" width="7" height="7" rx="1.5"/>'
+        '<rect x="14" y="3" width="7" height="7" rx="1.5"/>'
+        '<rect x="3" y="14" width="7" height="7" rx="1.5"/>'
+        '<rect x="14" y="14" width="7" height="7" rx="1.5"/>'
+        '</svg>'
+    )
+    ICON_ROADMAP = (
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        '<path d="M4 6c3 0 3 4 8 4s5-4 8-4"/>'
+        '<path d="M4 12c3 0 3 4 8 4s5-4 8-4"/>'
+        '<path d="M4 18h16"/>'
+        '</svg>'
+    )
+    ICON_TARGET = (
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        '<circle cx="12" cy="12" r="9"/>'
+        '<circle cx="12" cy="12" r="5"/>'
+        '<circle cx="12" cy="12" r="1.5" fill="currentColor"/>'
+        '</svg>'
+    )
+    ICON_JOURNEY = (
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        '<circle cx="12" cy="12" r="9"/>'
+        '<path d="M15.5 8.5l-2 5-5 2 2-5 5-2z" fill="currentColor" stroke="none"/>'
+        '</svg>'
+    )
+    ICON_CHECK = (
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        '<circle cx="12" cy="12" r="9"/>'
+        '<path d="M8 12.5l3 3 5-6"/>'
+        '</svg>'
+    )
+    ICON_PROGRESS = (
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        '<path d="M4 20V10"/>'
+        '<path d="M10 20V4"/>'
+        '<path d="M16 20v-8"/>'
+        '<path d="M3 20h18"/>'
+        '</svg>'
+    )
+    ICON_HELP = (
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        '<path d="M12 2l2 4 4 .5-3 3 .8 4.3L12 11.9 8.2 13.8 9 9.5 6 6.5 10 6z"/>'
+        '<path d="M8 20h8"/>'
+        '<path d="M10 22h4"/>'
+        '</svg>'
     )
 
-    # How-to-Use tab — pinned, first-time onboarding for the Claude Project workflow
-    side_entries.append(
-        '<button class="hub-side-tab" data-target="how-to-use">'
-        '<span class="hub-side-tab-icon">?</span>'
-        '<span class="hub-side-tab-title">How to Use</span>'
-        '</button>'
-    )
-
-    # Completed tab — pinned, external link to completed-sessions.html
-    side_entries.append(
-        f'<a class="hub-side-tab hub-side-tab-external" href="completed-sessions.html">'
-        f'<span class="hub-side-tab-icon">✓</span>'
-        f'<span class="hub-side-tab-title">Completed</span>'
-        f'<span class="hub-side-badge">{completed_count}/{len(SESSIONS)}</span>'
-        f'</a>'
-    )
-
-    # Progress tab — pinned, always visible (not inside a collapsible group)
-    side_entries.append(
-        '<button class="hub-side-tab" data-target="progress">'
-        '<span class="hub-side-tab-icon">P</span>'
-        '<span class="hub-side-tab-title">Progress</span>'
-        '<span class="hub-side-badge" id="side-progress-badge">0/40</span>'
-        '</button>'
-    )
-
-    # Curriculum group — 8 phases
-    curriculum_items = []
-    for phase in PHASES:
-        n_sessions = sum(1 for s in SESSIONS if s["phase"] == phase["num"])
-        short_title = phase["title"].split(": ", 1)[1] if ": " in phase["title"] else phase["title"]
-        curriculum_items.append(
-            f'<button class="hub-side-tab" data-target="phase-{phase["num"]:02d}">'
-            f'<span class="hub-side-tab-icon">{phase["num"]:02d}</span>'
-            f'<span class="hub-side-tab-title">Phase {phase["num"]:02d} — {html_escape(short_title)}</span>'
-            f'<span class="hub-side-tab-sub">{n_sessions}</span>'
+    def _btn(target, icon_svg, title, subtitle, extra_classes="", badge_html=""):
+        cls = "panel-btn"
+        if extra_classes:
+            cls += " " + extra_classes
+        sub = (
+            f'<span class="panel-btn-sub">{html_escape(subtitle)}</span>'
+            if subtitle else ""
+        )
+        return (
+            f'<button class="{cls}" role="tab" data-target="{target}" '
+            f'aria-controls="{target}" type="button">'
+            f'<span class="panel-btn-icon" aria-hidden="true">{icon_svg}</span>'
+            f'<span class="panel-btn-body">'
+            f'<span class="panel-btn-title">{html_escape(title)}</span>'
+            f'{sub}'
+            f'</span>'
+            f'{badge_html}'
+            f'<span class="panel-btn-glow" aria-hidden="true"></span>'
             f'</button>'
         )
-    side_entries.append('<div class="hub-sidebar-divider"></div>')
-    side_entries.append(
-        '<div class="hub-sidebar-group" data-group="curriculum">'
-        '<button class="hub-side-group-head" data-group-toggle="curriculum">'
-        '<span class="hub-side-group-chevron">▾</span>'
-        '<span class="hub-side-group-label">The Curriculum</span>'
-        '</button>'
-        '<div class="hub-sidebar-group-body">'
-        + "".join(curriculum_items) +
+
+    row1_buttons = (
+        _btn("phases", ICON_PHASES, "Phases",
+             f"All {len(PHASES)} phases · {len(SESSIONS)} sessions",
+             extra_classes="panel-btn-primary")
+        + _btn("roadmap", ICON_ROADMAP, "Roadmap", "Every session, in order")
+        + _btn("objective-map", ICON_TARGET, "Objective Map", "Blueprint codes → sessions")
+        + _btn("journey", ICON_JOURNEY, "The Journey", "The story arc, phase by phase")
+    )
+    completed_badge = (
+        f'<span class="panel-btn-badge" data-tone="green">{completed_count}/{len(SESSIONS)}</span>'
+    )
+    progress_badge = (
+        '<span class="panel-btn-badge" id="panel-progress-badge" data-tone="blue">0/40</span>'
+    )
+    row2_buttons = (
+        _btn("completed", ICON_CHECK, "Completed", "Finished study guides",
+             badge_html=completed_badge)
+        + _btn("progress", ICON_PROGRESS, "Progress", "Your check-off list",
+               badge_html=progress_badge)
+    )
+    row3_buttons = _btn("how-to-use", ICON_HELP, "How to Use",
+                        "Onboarding & Socratic methodology")
+
+    button_row_html = (
+        '<div class="panel-btn-group">'
+        '<div class="panel-btn-group-label">Learn</div>'
+        '<div class="panel-btn-row panel-btn-row-primary">' + row1_buttons + '</div>'
         '</div>'
+        '<div class="panel-btn-group">'
+        '<div class="panel-btn-group-label">Track</div>'
+        '<div class="panel-btn-row">' + row2_buttons + '</div>'
+        '</div>'
+        '<div class="panel-btn-group">'
+        '<div class="panel-btn-group-label">Get Started</div>'
+        '<div class="panel-btn-row">' + row3_buttons + '</div>'
         '</div>'
     )
-
-    # Reference group — Roadmap, Objective Map, Journey
-    reference_items = [
-        '<button class="hub-side-tab" data-target="roadmap"><span class="hub-side-tab-icon">R</span><span class="hub-side-tab-title">Roadmap</span></button>',
-        '<button class="hub-side-tab" data-target="objective-map"><span class="hub-side-tab-icon">O</span><span class="hub-side-tab-title">Objective Map</span></button>',
-        '<button class="hub-side-tab" data-target="journey"><span class="hub-side-tab-icon">J</span><span class="hub-side-tab-title">The Journey</span></button>',
-    ]
-    side_entries.append('<div class="hub-sidebar-divider"></div>')
-    side_entries.append(
-        '<div class="hub-sidebar-group" data-group="reference">'
-        '<button class="hub-side-group-head" data-group-toggle="reference">'
-        '<span class="hub-side-group-chevron">▾</span>'
-        '<span class="hub-side-group-label">Reference</span>'
-        '</button>'
-        '<div class="hub-sidebar-group-body">'
-        + "".join(reference_items) +
-        '</div>'
-        '</div>'
-    )
-
-    # Extras group — Guides / Bites / Nibbles anchors into extras.html (only when any extras exist)
-    if has_extras:
-        extras_items = [
-            '<a class="hub-side-tab hub-side-tab-external" href="extras.html#guides"><span class="hub-side-tab-icon">G</span><span class="hub-side-tab-title">Guides</span></a>',
-            '<a class="hub-side-tab hub-side-tab-external" href="extras.html#bites"><span class="hub-side-tab-icon">B</span><span class="hub-side-tab-title">Bites</span></a>',
-            '<a class="hub-side-tab hub-side-tab-external" href="extras.html#nibbles"><span class="hub-side-tab-icon">N</span><span class="hub-side-tab-title">Nibbles</span></a>',
-        ]
-        side_entries.append('<div class="hub-sidebar-divider"></div>')
-        side_entries.append(
-            '<div class="hub-sidebar-group" data-group="extras">'
-            '<button class="hub-side-group-head" data-group-toggle="extras">'
-            '<span class="hub-side-group-chevron">▾</span>'
-            '<span class="hub-side-group-label">Extras</span>'
-            '</button>'
-            '<div class="hub-sidebar-group-body">'
-            + "".join(extras_items) +
-            '</div>'
-            '</div>'
-        )
-
-    sidebar_html = "\n        ".join(side_entries)
 
     # Per-phase checkbox blocks for the progress section
     progress_blocks = []
@@ -3180,7 +3194,7 @@ def render_hub(extras=None, completions=None, standalone_extras=None):
                 f'<label class="progress-row" data-session="{s["num"]}">'
                 f'<input type="checkbox" class="progress-check" data-session="{s["num"]}">'
                 f'<span class="progress-num">{s["num"]:02d}</span>'
-                f'<a class="progress-title" href="sessions/{session_filename(s)}">{html_escape(s["title"])}</a>'
+                f'<a class="progress-title" href="../sessions/{session_filename(s)}">{html_escape(s["title"])}</a>'
                 f'<span class="progress-dur">{html_escape(s["duration"])}</span>'
                 f'</label>'
             )
@@ -3192,6 +3206,49 @@ def render_hub(extras=None, completions=None, standalone_extras=None):
     progress_phase_html = "".join(progress_blocks)
 
     socratic_methodology_esc = html_escape(SOCRATIC_METHODOLOGY_TEXT)
+
+    # Completed panel — inline list of finished sessions (mirrors
+    # completed-sessions.html but rendered inside a swap panel).
+    completed_sessions_pairs = []
+    for s in SESSIONS:
+        entry = completions.get(s["num"])
+        if entry and entry.get("has_complete"):
+            completed_sessions_pairs.append((s, entry))
+    total_sessions = len(SESSIONS)
+    n_done = len(completed_sessions_pairs)
+    if not completed_sessions_pairs:
+        completed_panel_body = (
+            '<div class="empty-state">'
+            'No completed sessions yet — finish a session in Claude and drop '
+            '<code>session-NN-complete-&lt;slug&gt;.html</code> + <code>session-NN-&lt;slug&gt;.txt</code> '
+            'into <code>sorting-hat/</code> to see this panel fill in.'
+            '</div>'
+        )
+    else:
+        cards = []
+        for s, entry in completed_sessions_pairs:
+            summary_hint = '<span class="hub-card-hint">Recap available</span>' if entry.get("has_summary") else ""
+            slug_dir = f"session-{s['num']:02d}-{s['slug']}"
+            title = html_escape(s["title"])
+            cards.append(
+                f'<a class="hub-card" href="../sessions/{slug_dir}/complete.html">'
+                f'<span class="hub-card-chip chip-complete">Completed</span>'
+                f'<span class="hub-card-sub">Session {s["num"]:02d}</span>'
+                f'<span class="hub-card-title">{title}</span>'
+                f'{summary_hint}'
+                f'</a>'
+            )
+        completed_panel_body = f'<div class="card-grid">{"".join(cards)}</div>'
+    completed_panel_html = (
+        '<div class="section-block" id="completed">'
+        '<div class="section-label">FINISHED WORK</div>'
+        f'<h2>Completed <em>Study Guides · {n_done} of {total_sessions}</em></h2>'
+        '<p>Polished HTML study guides produced at the end of each Socratic session. '
+        'Same content as the standalone <a href="../completed-sessions.html">completed-sessions</a> page, '
+        'shown here for one-click access without leaving the plan.</p>'
+        f'{completed_panel_body}'
+        '</div>'
+    )
 
     journey_html = """
       <p>This curriculum is one continuous story. We begin with the question <em>"who is responsible when something breaks at 2 a.m.?"</em> and end with a single automation stitch isolating an attacker across three FortiGates and a FortiNAC — all from one FortiAnalyzer event.</p>
@@ -3233,68 +3290,81 @@ def render_hub(extras=None, completions=None, standalone_extras=None):
   .motivation-text{{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--text);}}
   .motivation-text em{{font-style:italic;font-weight:500;color:var(--blue);}}
   .motivation-sub{{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}}
-  /* LAYOUT: left sidebar + right main pane */
-  .hub-layout{{display:flex;align-items:flex-start;max-width:1440px;margin:0 auto;}}
-  .hub-sidebar{{width:300px;flex-shrink:0;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--surface);border-right:1px solid var(--border);padding:24px 16px 32px;display:flex;flex-direction:column;gap:4px;transition:width 0.18s ease, padding 0.18s ease;}}
-  /* Top-level collapse toggle */
-  .hub-side-collapse{{display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:none;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:6px 14px 12px;cursor:pointer;}}
-  .hub-side-collapse:hover{{color:var(--text);}}
-  .hub-side-collapse-chevron{{display:inline-block;font-size:14px;line-height:1;transition:transform 0.18s ease;}}
-  /* Collapsible groups */
-  .hub-sidebar-group{{display:flex;flex-direction:column;gap:4px;}}
-  .hub-side-group-head{{display:flex;align-items:center;gap:8px;width:100%;background:transparent;border:none;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:6px 14px;cursor:pointer;text-align:left;}}
-  .hub-side-group-head:hover{{color:var(--text);}}
-  .hub-side-group-chevron{{display:inline-block;font-size:10px;line-height:1;width:10px;text-align:center;transition:transform 0.15s ease;}}
-  .hub-sidebar-group.group-collapsed .hub-side-group-chevron{{transform:rotate(-90deg);}}
-  .hub-sidebar-group-body{{display:flex;flex-direction:column;gap:4px;}}
-  .hub-sidebar-group.group-collapsed .hub-sidebar-group-body{{display:none;}}
-  /* Tab icon (hidden by default; shown only when sidebar is collapsed) */
-  .hub-side-tab-icon{{display:none;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.04em;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:3px 0;min-width:32px;text-align:center;flex-shrink:0;}}
-  .hub-side-tab.active .hub-side-tab-icon{{color:var(--blue);border-color:var(--blue);background:var(--blue-light);}}
-  /* COLLAPSED sidebar — thin icon rail */
-  .hub-sidebar.collapsed{{width:64px;padding:24px 6px 32px;}}
-  .hub-sidebar.collapsed .hub-side-collapse{{justify-content:center;padding:6px 0 12px;}}
-  .hub-sidebar.collapsed .hub-side-collapse-label{{display:none;}}
-  .hub-sidebar.collapsed .hub-side-collapse-chevron{{transform:scaleX(-1);}}
-  .hub-sidebar.collapsed .hub-side-group-head,
-  .hub-sidebar.collapsed .hub-sidebar-divider,
-  .hub-sidebar.collapsed .hub-sidebar-label{{display:none;}}
-  /* When sidebar is collapsed, always show group bodies regardless of group-collapsed */
-  .hub-sidebar.collapsed .hub-sidebar-group.group-collapsed .hub-sidebar-group-body{{display:flex;}}
-  .hub-sidebar.collapsed .hub-side-tab{{justify-content:center;padding:8px 4px;border-radius:8px;border-left:none;}}
-  .hub-sidebar.collapsed .hub-side-tab.active{{background:var(--blue-light);}}
-  .hub-sidebar.collapsed .hub-side-tab-title,
-  .hub-sidebar.collapsed .hub-side-tab-sub,
-  .hub-sidebar.collapsed .hub-side-badge{{display:none;}}
-  .hub-sidebar.collapsed .hub-side-tab-icon{{display:inline-flex;align-items:center;justify-content:center;}}
-  .hub-sidebar-label{{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);padding:0 14px;margin-bottom:8px;}}
-  .hub-sidebar-divider{{height:1px;background:var(--border-dim);margin:10px 14px;}}
-  .hub-side-tab{{display:flex;align-items:center;gap:8px;width:100%;background:transparent;border:none;border-left:3px solid transparent;color:var(--text-soft);font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.06em;text-align:left;padding:10px 14px;cursor:pointer;border-radius:0 8px 8px 0;transition:background 0.15s, color 0.15s, border-color 0.15s;}}
-  .hub-side-tab:hover{{background:var(--blue-glow);color:var(--text);}}
-  .hub-side-tab.active{{background:var(--blue-light);color:var(--blue);border-left-color:var(--blue);}}
-  .hub-side-tab-title{{flex:1;line-height:1.3;}}
-  .hub-side-tab-sub{{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:0.04em;}}
-  .hub-side-tab.active .hub-side-tab-sub{{color:var(--blue);}}
-  .hub-side-badge{{background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:0.04em;font-family:'Outfit',sans-serif;}}
-  .hub-side-tab.active .hub-side-badge{{background:var(--blue-deep);}}
-  a.hub-side-tab{{text-decoration:none;}}
-  .hub-side-tab-external:hover .hub-side-tab-title{{color:var(--blue);}}
-  .hub-main{{flex:1;min-width:0;}}
+  /* LAYOUT: single-column main pane (no sidebar) */
   main{{margin:0;padding:0;}}
-  .main-content{{padding:36px 48px 60px 48px;max-width:1080px;}}
+  .main-content{{padding:36px 48px 60px 48px;max-width:1200px;margin:0 auto;}}
   /* one-section-at-a-time view */
   .section-block{{display:none;}}
   .section-block.active-section{{display:block;}}
+  /* Button-row panel switcher (replaces the old sidebar) */
+  .panel-btn-rows{{position:relative;display:flex;flex-direction:column;gap:20px;margin-bottom:40px;padding:26px 28px 28px;background:linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);border:1px solid var(--border);border-radius:18px;box-shadow:0 22px 42px -32px rgba(10,24,56,0.18), inset 0 1px 0 rgba(255,255,255,0.6);overflow:hidden;}}
+  .panel-btn-rows::before{{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg, var(--blue) 0%, var(--blue-vivid) 50%, var(--teal, #0f766e) 100%);opacity:0.92;}}
+  .panel-btn-group{{display:flex;flex-direction:column;gap:8px;}}
+  .panel-btn-group-label{{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--text-muted);padding-left:2px;}}
+  .panel-btn-row{{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;}}
+  .panel-btn-row-primary{{gap:12px;}}
+  .panel-btn{{position:relative;isolation:isolate;display:inline-flex;align-items:center;gap:12px;background:rgba(255,255,255,0.55);border:1.5px solid var(--border);color:var(--text-soft);font-family:'Outfit',sans-serif;padding:12px 18px 12px 14px;border-radius:13px;cursor:pointer;text-align:left;text-decoration:none;line-height:1.15;overflow:hidden;transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1), background 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, color 0.22s ease;}}
+  .panel-btn::after{{content:'';position:absolute;left:14px;right:14px;bottom:5px;height:2px;border-radius:2px;background:var(--blue);transform:scaleX(0);transform-origin:left center;transition:transform 0.32s cubic-bezier(0.34,1.56,0.64,1);z-index:1;}}
+  .panel-btn:hover{{background:#fff;border-color:var(--blue-border);color:var(--text);transform:translateY(-3px);box-shadow:0 16px 30px -20px rgba(30,64,175,0.45);}}
+  .panel-btn:hover::after{{transform:scaleX(1);}}
+  .panel-btn:hover .panel-btn-icon{{background:#fff;color:var(--blue-vivid);border-color:var(--blue);transform:rotate(-6deg) scale(1.08);}}
+  .panel-btn:hover .panel-btn-sub{{color:var(--text-soft);}}
+  .panel-btn:focus-visible{{outline:none;box-shadow:0 0 0 3px rgba(30,64,175,0.28), 0 16px 30px -20px rgba(30,64,175,0.45);}}
+  .panel-btn:active{{transform:translateY(-1px) scale(0.99);}}
+  .panel-btn.active{{background:linear-gradient(135deg, var(--blue-vivid) 0%, var(--blue) 100%);border-color:var(--blue);color:#fff;transform:translateY(-2px);box-shadow:0 16px 32px -14px rgba(30,64,175,0.55), inset 0 1px 0 rgba(255,255,255,0.22);}}
+  .panel-btn.active::after{{transform:scaleX(1);background:rgba(255,255,255,0.6);}}
+  .panel-btn.active .panel-btn-icon{{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.32);color:#fff;transform:rotate(0deg) scale(1);}}
+  .panel-btn.active .panel-btn-sub{{color:rgba(239,244,252,0.85);}}
+  .panel-btn.active .panel-btn-badge{{background:rgba(255,255,255,0.22);color:#fff;border-color:rgba(255,255,255,0.4);}}
+  /* Prominent Phases button: sized larger than siblings, but idle state is
+     NEUTRAL — same warm cream as other buttons. It only lights up blue when
+     it becomes the active panel (via .panel-btn.active earlier). */
+  .panel-btn-primary{{padding:16px 22px 16px 18px;border-radius:14px;font-weight:700;}}
+  .panel-btn-primary .panel-btn-icon{{width:42px;height:42px;}}
+  .panel-btn-primary .panel-btn-icon svg{{width:22px;height:22px;}}
+  .panel-btn-primary .panel-btn-title{{font-size:15.5px;}}
+  .panel-btn-primary .panel-btn-sub{{font-size:13px;}}
+  .panel-btn-primary::after{{left:16px;right:16px;bottom:6px;height:2.5px;}}
+  .panel-btn-primary:hover{{transform:translateY(-4px);box-shadow:0 22px 40px -22px rgba(30,64,175,0.5);}}
+  .panel-btn-primary.active{{box-shadow:0 22px 44px -14px rgba(30,64,175,0.6), inset 0 1px 0 rgba(255,255,255,0.24);}}
+  .panel-btn-icon{{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;color:var(--blue-vivid);background:var(--blue-light);border:1px solid var(--blue-border);border-radius:10px;flex-shrink:0;transition:background 0.22s ease, color 0.22s ease, border-color 0.22s ease, transform 0.32s cubic-bezier(0.34,1.56,0.64,1);}}
+  .panel-btn-icon svg{{width:18px;height:18px;display:block;}}
+  .panel-btn-body{{display:flex;flex-direction:column;gap:2px;min-width:0;flex:0 1 auto;}}
+  .panel-btn-title{{font-size:13.5px;font-weight:700;letter-spacing:0.02em;line-height:1.15;}}
+  .panel-btn-sub{{font-family:'Cormorant Garamond',serif;font-size:12.5px;font-style:italic;color:var(--text-muted);letter-spacing:0.01em;line-height:1.2;transition:color 0.22s ease;}}
+  .panel-btn-badge{{display:inline-flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.04em;margin-left:auto;transition:background 0.22s ease, color 0.22s ease, border-color 0.22s ease;}}
+  .panel-btn-badge[data-tone="green"]{{background:var(--green-light);color:var(--green);border-color:var(--green-border);}}
+  .panel-btn-glow{{position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(circle at var(--rx, 50%) var(--ry, 50%), rgba(30,64,175,0.22) 0%, rgba(30,64,175,0) 55%);opacity:0;transition:opacity 0.75s ease;z-index:0;}}
+  .panel-btn.panel-btn-primary .panel-btn-glow{{background:radial-gradient(circle at var(--rx, 50%) var(--ry, 50%), rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 55%);}}
+  .panel-btn.rippling .panel-btn-glow{{opacity:1;transition:opacity 0s;}}
+  .panel-btn > *:not(.panel-btn-glow){{position:relative;z-index:1;}}
+  @media (prefers-reduced-motion: reduce){{
+    .panel-btn,.panel-btn-icon,.panel-btn::after,.panel-btn-glow{{transition:none !important;}}
+    .panel-btn:hover,.panel-btn.active,.panel-btn-primary:hover{{transform:none;}}
+  }}
+  /* Stacked phase blocks inside the single Phases panel */
+  .phase-block{{margin-bottom:56px;padding-bottom:24px;border-bottom:1px solid var(--border-dim);}}
+  .phase-block:last-child{{border-bottom:none;margin-bottom:0;}}
+  .phase-block .section-label{{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}}
+  .phase-block h2{{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}}
+  .phase-block h2 em{{font-style:italic;font-weight:500;color:var(--blue);}}
+  .phase-block p{{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}}
+  /* Completed panel cards */
+  .card-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}}
+  .hub-card{{display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;text-decoration:none;transition:border-color .15s;}}
+  .hub-card:hover{{border-color:var(--blue);}}
+  .hub-card-chip{{align-self:flex-start;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid;}}
+  .chip-complete{{background:var(--green-light);color:var(--green);border-color:var(--green-border);}}
+  .hub-card-title{{font-family:'Playfair Display',serif;font-size:19px;font-weight:600;color:var(--text);line-height:1.28;}}
+  .hub-card:hover .hub-card-title{{color:var(--blue);}}
+  .hub-card-sub{{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.1em;color:var(--text-muted);text-transform:uppercase;}}
+  .hub-card-hint{{font-family:'Outfit',sans-serif;font-size:9px;letter-spacing:0.14em;color:var(--green);text-transform:uppercase;background:var(--green-light);border:1px solid var(--green-border);border-radius:20px;padding:2px 9px;align-self:flex-start;}}
+  .empty-state{{background:var(--surface);border:1px dashed var(--border);border-radius:12px;padding:24px;color:var(--text-muted);font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.6;font-style:italic;}}
+  .empty-state code{{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--text);font-style:normal;}}
   @media(max-width:900px){{
-    .hub-layout{{flex-direction:column;}}
-    .hub-sidebar{{position:static;width:100%;height:auto;max-height:none;flex-direction:row;overflow-x:auto;overflow-y:hidden;border-right:none;border-bottom:1px solid var(--border);padding:10px 12px;gap:6px;}}
-    .hub-sidebar.collapsed{{width:100%;padding:10px 12px;}}
-    .hub-sidebar-label,.hub-sidebar-divider,.hub-side-collapse,.hub-side-group-head{{display:none;}}
-    .hub-sidebar-group,.hub-sidebar-group-body{{display:contents;}}
-    .hub-sidebar-group.group-collapsed .hub-sidebar-group-body{{display:contents;}}
-    .hub-side-tab{{flex-shrink:0;border-left:none;border-bottom:3px solid transparent;border-radius:8px 8px 0 0;padding:8px 14px;white-space:nowrap;}}
-    .hub-side-tab.active{{border-left-color:transparent;border-bottom-color:var(--blue);}}
     .main-content{{padding:24px 24px 40px;}}
+    .panel-btn-rows{{padding:16px 16px;gap:8px;margin-bottom:24px;}}
+    .panel-btn-primary{{padding:12px 18px;font-size:14px;}}
   }}
   .section-block{{margin-bottom:56px;}}
   .section-label{{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}}
@@ -3385,15 +3455,13 @@ def render_hub(extras=None, completions=None, standalone_extras=None):
   <p class="motivation-sub">Eight phases · 40 sessions · 100% blueprint coverage · One continuous story.</p>
 </div>
 
-<div class="hub-layout">
-
-  <aside class="hub-sidebar" id="hub-sidebar">
-    <div class="hub-sidebar-label">Navigate</div>
-        {sidebar_html}
-  </aside>
-
-  <main class="hub-main">
+<main>
   <div class="main-content">
+
+    <!-- BUTTON ROW: primary panel switcher (replaces the old sidebar) -->
+    <div class="panel-btn-rows" role="tablist" aria-label="Study plan panels">
+      {button_row_html}
+    </div>
 
     <!-- HOW TO USE -->
     <div class="section-block" id="how-to-use">
@@ -3429,7 +3497,7 @@ def render_hub(extras=None, completions=None, standalone_extras=None):
         <div class="howto-step-num">03</div>
         <div class="howto-step-body">
           <h3>Before each session, paste that session's <em>Claude prompt</em> into chat</h3>
-          <p>Open the session you're about to study (for example, <a href="sessions/session-01-nse7-story-exam-map/index.html">Session 01</a>). Scroll to the <em>Session context — paste into your Claude NSE7 tutor</em> block near the bottom of the page, click <strong>Copy</strong>, and paste it into a fresh chat inside your Claude Project. That prompt hands Claude the exact scenario, objectives, and Socratic setup for the session, so the tutor immediately picks up the investigation where the story left off.</p>
+          <p>Open the session you're about to study (for example, <a href="../sessions/session-01-nse7-story-exam-map/index.html">Session 01</a>). Scroll to the <em>Session context — paste into your Claude NSE7 tutor</em> block near the bottom of the page, click <strong>Copy</strong>, and paste it into a fresh chat inside your Claude Project. That prompt hands Claude the exact scenario, objectives, and Socratic setup for the session, so the tutor immediately picks up the investigation where the story left off.</p>
           <p class="howto-hint">Every one of the 40 session pages carries its own paste-ready prompt — no editing needed. Start a new chat per session so each investigation stays focused.</p>
         </div>
       </div>
@@ -3453,7 +3521,16 @@ def render_hub(extras=None, completions=None, standalone_extras=None):
       </div>
     </div>
 
+    <!-- PHASES (all 8 stacked inside one panel) -->
+    <div class="section-block" id="phases">
+      <div class="section-label">THE CURRICULUM</div>
+      <h2>The <em>Eight Phases</em></h2>
+      <p>Every phase is one movement of the continuous story. Scroll straight through — the sessions inside each phase are ordered so every one solves the problem the previous one left unfinished.</p>
 {''.join(phase_sections_html)}
+    </div>
+
+    <!-- COMPLETED (inline list of finished sessions) -->
+    {completed_panel_html}
 
     <!-- ROADMAP -->
     <div class="section-block" id="roadmap">
@@ -3488,8 +3565,7 @@ def render_hub(extras=None, completions=None, standalone_extras=None):
     </div>
 
   </div>
-  </main>
-</div>
+</main>
 
 <footer>
   NSE7 EF 7.6<span>.</span> 40-Session Socratic Curriculum<span>.</span> 100% Blueprint Coverage
@@ -3520,83 +3596,56 @@ document.querySelectorAll('.section-img').forEach(function(img) {{
   img.addEventListener('click', () => img.classList.toggle('si-expanded'));
 }});
 
-/* ── Section routing (left-sidebar single-pane view) ── */
-const VALID_SECTIONS = new Set(['how-to-use','progress','phase-01','phase-02','phase-03','phase-04','phase-05','phase-06','phase-07','phase-08','roadmap','objective-map','journey']);
-const DEFAULT_SECTION = 'how-to-use';
-function showSection(id, opts) {{
-  if (!VALID_SECTIONS.has(id)) id = DEFAULT_SECTION;
+/* ── Panel routing (button-row switcher — replaces the old sidebar) ── */
+const VALID_PANELS = new Set(['how-to-use','progress','phases','completed','roadmap','objective-map','journey']);
+const DEFAULT_PANEL = 'how-to-use';
+const ACTIVE_PANEL_KEY = 'nse7-ef-study-plan-panel';
+function showPanel(id, opts) {{
+  if (!VALID_PANELS.has(id)) id = DEFAULT_PANEL;
   document.querySelectorAll('.section-block').forEach(function(b) {{
     b.classList.toggle('active-section', b.id === id);
   }});
-  document.querySelectorAll('.hub-side-tab').forEach(function(t) {{
+  document.querySelectorAll('.panel-btn').forEach(function(t) {{
     t.classList.toggle('active', t.dataset.target === id);
   }});
-  /* Intentionally NO scroll — clicking a sidebar tab preserves the user's
-     current scroll position in both the main pane and the document. */
+  try {{ localStorage.setItem(ACTIVE_PANEL_KEY, id); }} catch(e) {{}}
   if (opts && opts.updateHash !== false) {{
     const newHash = '#' + id;
     if (location.hash !== newHash) history.pushState(null, '', newHash);
   }}
 }}
-document.querySelectorAll('.hub-side-tab').forEach(function(tab) {{
-  tab.addEventListener('click', function(e) {{
-    if (!tab.dataset.target) return;  /* external anchor (Completed / Extras) — let the browser navigate */
+document.querySelectorAll('.panel-btn').forEach(function(btn) {{
+  btn.addEventListener('click', function(e) {{
+    if (!btn.dataset.target) return;
     e.preventDefault();
-    showSection(tab.dataset.target);
+    /* Ripple burst originates from the pointer position (or button centre on keyboard). */
+    const rect = btn.getBoundingClientRect();
+    const rx = ((e.clientX || rect.left + rect.width/2) - rect.left) / rect.width * 100;
+    const ry = ((e.clientY || rect.top + rect.height/2) - rect.top) / rect.height * 100;
+    btn.style.setProperty('--rx', rx + '%');
+    btn.style.setProperty('--ry', ry + '%');
+    btn.classList.remove('rippling');
+    /* Force reflow so the class re-add restarts the animation. */
+    void btn.offsetWidth;
+    btn.classList.add('rippling');
+    setTimeout(function() {{ btn.classList.remove('rippling'); }}, 720);
+    showPanel(btn.dataset.target);
   }});
 }});
 window.addEventListener('hashchange', function() {{
-  const id = (location.hash || '#' + DEFAULT_SECTION).slice(1);
-  showSection(id, {{updateHash: false}});
+  const id = (location.hash || '').slice(1);
+  if (id) showPanel(id, {{updateHash: false}});
 }});
 
-/* Initial section from hash, or default */
+/* Initial panel: URL hash wins, else last-active from localStorage, else default. */
 (function() {{
-  const initial = (location.hash || '#' + DEFAULT_SECTION).slice(1);
-  if (!VALID_SECTIONS.has(initial)) {{
-    history.replaceState(null, '', '#' + DEFAULT_SECTION);
-    showSection(DEFAULT_SECTION, {{updateHash: false}});
-  }} else {{
-    showSection(initial, {{updateHash: false}});
+  let initial = (location.hash || '').slice(1);
+  if (!initial) {{
+    try {{ initial = localStorage.getItem(ACTIVE_PANEL_KEY) || ''; }} catch(e) {{ initial = ''; }}
   }}
+  if (!VALID_PANELS.has(initial)) initial = DEFAULT_PANEL;
+  showPanel(initial, {{updateHash: false}});
 }})();
-
-/* ── Sidebar collapse + group collapse (persistent via localStorage) ── */
-const SIDEBAR_KEY = 'nse7-ef-sidebar-collapsed';
-const GROUP_KEY_PREFIX = 'nse7-ef-sidebar-group-';
-const hubSidebar = document.getElementById('hub-sidebar');
-const sidebarCollapseBtn = document.getElementById('hub-side-collapse');
-function applySidebarCollapsed(collapsed) {{
-  if (!hubSidebar) return;
-  hubSidebar.classList.toggle('collapsed', collapsed);
-  if (collapsed) localStorage.setItem(SIDEBAR_KEY, '1');
-  else localStorage.removeItem(SIDEBAR_KEY);
-}}
-function applyGroupCollapsed(group, collapsed) {{
-  const el = document.querySelector('.hub-sidebar-group[data-group="' + group + '"]');
-  if (!el) return;
-  el.classList.toggle('group-collapsed', collapsed);
-  if (collapsed) localStorage.setItem(GROUP_KEY_PREFIX + group, '1');
-  else localStorage.removeItem(GROUP_KEY_PREFIX + group);
-}}
-if (sidebarCollapseBtn) {{
-  sidebarCollapseBtn.addEventListener('click', function() {{
-    applySidebarCollapsed(!hubSidebar.classList.contains('collapsed'));
-  }});
-}}
-document.querySelectorAll('.hub-side-group-head').forEach(function(head) {{
-  head.addEventListener('click', function() {{
-    const group = head.dataset.groupToggle;
-    const el = document.querySelector('.hub-sidebar-group[data-group="' + group + '"]');
-    if (!el) return;
-    applyGroupCollapsed(group, !el.classList.contains('group-collapsed'));
-  }});
-}});
-/* Apply persisted states immediately (default = expanded) */
-if (localStorage.getItem(SIDEBAR_KEY) === '1') applySidebarCollapsed(true);
-['curriculum','reference'].forEach(function(g) {{
-  if (localStorage.getItem(GROUP_KEY_PREFIX + g) === '1') applyGroupCollapsed(g, true);
-}});
 
 /* ── Progress tracking ── */
 const PROGRESS_KEY = 'nse7-ef-curriculum-progress';
@@ -3615,7 +3664,7 @@ function renderProgress() {{
   document.getElementById('progress-count').textContent = count;
   document.getElementById('progress-pct').textContent = pct + '%';
   document.getElementById('progress-fill').style.width = pct + '%';
-  const badge = document.getElementById('side-progress-badge');
+  const badge = document.getElementById('panel-progress-badge');
   if (badge) badge.textContent = count + '/' + total;
   document.querySelectorAll('.progress-check').forEach(function(cb) {{
     const n = Number(cb.dataset.session);
@@ -3661,7 +3710,9 @@ renderProgress();
 </html>
 """
 
-    (ROOT / "study-plan.html").write_text(hub_html, encoding="utf-8")
+    out_path = ROOT / "study-plan" / "index.html"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(hub_html, encoding="utf-8")
 
 # ---------------------------------------------------------------------------
 # STANDALONE HUB PAGES: completed-sessions.html, extras.html
@@ -3731,7 +3782,7 @@ def _standalone_page(title, header_h1, header_sub, body_html, crumb=None):
         f'<div class="breadcrumb">'
         f'<a href="index.html">Home</a>'
         f'<span class="breadcrumb-sep">›</span>'
-        f'<a href="study-plan.html">Curriculum</a>'
+        f'<a href="study-plan/index.html">Curriculum</a>'
         f'<span class="breadcrumb-sep">›</span>'
         f'{crumb_label}'
         f'</div>\n'
@@ -3963,7 +4014,7 @@ def normalize_sorted_breadcrumbs():
         if complete_path.is_file():
             _normalize_crumb_in_file(complete_path, _build_crumb([
                 ("Home", "../../index.html"),
-                ("Curriculum", "../../study-plan.html"),
+                ("Curriculum", "../../study-plan/index.html"),
                 (f"Session {s['num']:02d}", "index.html"),
                 ("Completed Study Guide", None),
             ]))
@@ -3975,7 +4026,7 @@ def normalize_sorted_breadcrumbs():
             for html_file in kind_dir.glob("*.html"):
                 _normalize_crumb_in_file(html_file, _build_crumb([
                     ("Home", "../../../index.html"),
-                    ("Curriculum", "../../../study-plan.html"),
+                    ("Curriculum", "../../../study-plan/index.html"),
                     (f"Session {s['num']:02d}", "../index.html"),
                     (singular, None),
                 ]))
@@ -4473,6 +4524,122 @@ def render_lab_page(l):
     (out_dir / "index.html").write_text(html, encoding="utf-8")
 
 # ---------------------------------------------------------------------------
+# SESSIONS INDEX (sessions/index.html) — flat listing of all 40 sessions
+# ---------------------------------------------------------------------------
+
+def render_sessions_index(completions=None):
+    """Emit sessions/index.html — a flat scrollable listing of every session.
+    Sits alongside the per-session directories, so links are relative to
+    session-NN-slug/index.html (no ../sessions/ prefix)."""
+    completions = completions or {}
+    by_phase = {p["num"]: p for p in PHASES}
+
+    cards = []
+    for s in SESSIONS:
+        phase = by_phase[s["phase"]]
+        entry = completions.get(s["num"], {})
+        completed_chip = (
+            '<span class="sess-chip sess-chip-done">Completed</span>'
+            if entry.get("has_complete") else ""
+        )
+        preview = s["why"].split(".")[0].strip() + "."
+        slug_dir = f"session-{s['num']:02d}-{s['slug']}"
+        phase_short = phase["title"].split(": ", 1)[1] if ": " in phase["title"] else phase["title"]
+        cards.append(
+            f'<a class="sess-card" href="{slug_dir}/index.html">'
+            f'<div class="sess-card-head">'
+            f'<span class="sess-num">SESSION {s["num"]:02d}</span>'
+            f'<span class="sess-phase">Phase {phase["num"]:02d} · {html_escape(phase_short)}</span>'
+            f'{completed_chip}'
+            f'</div>'
+            f'<div class="sess-title">{html_escape(s["title"])}</div>'
+            f'<div class="sess-preview">{html_escape(preview)}</div>'
+            f'<div class="sess-meta">{html_escape(s["duration"])}</div>'
+            f'</a>'
+        )
+
+    n_done = sum(1 for v in completions.values() if v.get("has_complete"))
+    n_total = len(SESSIONS)
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Socratic Sessions · NSE7 Enterprise Firewall 7.6</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {{
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+  }}
+  *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0;}}
+  html,body{{min-height:100vh;}}
+  body{{font-family:'Cormorant Garamond',serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}}
+  header{{padding:48px 60px 36px;background:var(--ink-dark);color:#fbf7ec;}}
+  .breadcrumb{{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.12em;color:var(--ink-accent);margin-bottom:12px;text-transform:uppercase;}}
+  .breadcrumb a{{color:var(--ink-accent);text-decoration:none;}}
+  .breadcrumb a:hover{{color:#fff;}}
+  .breadcrumb-sep{{margin:0 8px;opacity:0.6;}}
+  .eyebrow{{display:inline-flex;align-items:center;gap:8px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;text-transform:uppercase;}}
+  header h1{{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.02;margin-bottom:12px;letter-spacing:-0.01em;}}
+  header h1 em{{font-style:italic;font-weight:500;color:var(--ink-accent);}}
+  header p{{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:rgba(251,247,236,0.6);max-width:820px;line-height:1.6;}}
+  .count-strip{{padding:16px 60px;background:var(--surface);border-bottom:1px solid var(--border);font-family:'Outfit',sans-serif;font-size:12px;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;}}
+  .count-strip strong{{color:var(--blue);}}
+  main{{flex:1;padding:40px 60px 60px;max-width:1200px;margin:0 auto;width:100%;}}
+  .sess-grid{{display:flex;flex-direction:column;gap:14px;}}
+  .sess-card{{display:block;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;text-decoration:none;color:var(--text);transition:border-color .15s, transform .15s;}}
+  .sess-card:hover{{border-color:var(--blue);transform:translateY(-2px);}}
+  .sess-card-head{{display:flex;align-items:center;gap:14px;margin-bottom:8px;flex-wrap:wrap;}}
+  .sess-num{{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.2em;color:var(--blue);background:var(--blue-light);border:1px solid var(--blue-border);padding:3px 10px;border-radius:10px;text-transform:uppercase;}}
+  .sess-phase{{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;}}
+  .sess-chip{{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;padding:2px 9px;border-radius:12px;text-transform:uppercase;border:1px solid;}}
+  .sess-chip-done{{background:var(--green-light);color:var(--green);border-color:var(--green-border);}}
+  .sess-title{{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--text);line-height:1.22;margin-bottom:6px;}}
+  .sess-card:hover .sess-title{{color:var(--blue);}}
+  .sess-preview{{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:var(--text-soft);line-height:1.55;margin-bottom:8px;}}
+  .sess-meta{{font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.06em;}}
+  footer{{padding:18px 60px;border-top:1px solid var(--border);background:var(--surface);font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;text-align:center;}}
+  footer span{{color:var(--blue);}}
+  @media(max-width:640px){{
+    header{{padding:32px 24px 24px;}}
+    header h1{{font-size:32px;}}
+    .count-strip{{padding:12px 24px;}}
+    main{{padding:24px 20px 40px;}}
+    .sess-card{{padding:16px 18px;}}
+  }}
+</style>
+</head>
+<body>
+<header>
+  <div class="breadcrumb">
+    <a href="../index.html">Home</a>
+    <span class="breadcrumb-sep">›</span>Socratic Sessions
+  </div>
+  <div class="eyebrow">Socratic Sessions · NSE7 Enterprise Firewall 7.6</div>
+  <h1>Socratic <em>Sessions</em></h1>
+  <p>Flat listing of all {n_total} sessions in the order they're meant to be studied. Every session naturally follows the previous one — you can also enter the story at any point.</p>
+</header>
+<div class="count-strip"><strong>{n_total}</strong> sessions · <strong>{n_done}</strong> completed · one continuous learning story</div>
+<main>
+  <div class="sess-grid">
+    {"".join(cards)}
+  </div>
+</main>
+<footer>NSE7 EF 7.6 <span>·</span> Socratic Curriculum <span>·</span> {n_total} sessions</footer>
+</body>
+</html>
+"""
+    out_path = SESSIONS_DIR / "index.html"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(html, encoding="utf-8")
+
+# ---------------------------------------------------------------------------
 # LANDING PAGE (index.html) — one-stop front door to every hub
 # ---------------------------------------------------------------------------
 
@@ -4492,13 +4659,13 @@ def render_landing(extras, completions, standalone_extras):
     n_extras_total = n_guides + n_bites + n_nibbles
 
     tiles = [
-        ("study-plan.html", "PLAN",      "chip-plan",     "Study Plan",              f"{n_sessions} sessions across {n_phases} phases — the full curriculum hub."),
+        ("study-plan/index.html", "PLAN",      "chip-plan",     "Study Plan",              f"{n_sessions} sessions across {n_phases} phases — the full curriculum hub."),
+        ("sessions/index.html",   "SESSIONS",  "chip-sessions", "Socratic Sessions",       f"Flat listing of all {n_sessions} sessions in order — one card each."),
+        ("extras.html#bites",     "BITE",      "chip-bite",     "Bites",                   f"{n_bites} focused single-concept explainers."),
+        ("extras.html#nibbles",   "NIBBLE",    "chip-nibble",   "Nibbles",                 f"{n_nibbles} short reference cards / cheat sheets."),
         ("completed-sessions.html", "COMPLETED", "chip-complete", "Completed Study Guides", f"{n_completed} of {n_sessions} sessions finished — polished HTML study guides."),
-        ("labs/index.html",     "LABS",    "chip-labs",    "Hands-On Labs",           (f"{sum(1 for l in LABS if not l.get('concept_only') and not l.get('is_orientation'))} hands-on labs + orientation across the shared topology — Socratic predict → run → verify." if LABS else "Empty — feed a lab guide PDF and run /build-lab-plan.")),
-        ("extras.html#guides",  "GUIDE",   "chip-guide",   "Guides",                  f"{n_guides} long-form companion pages that dive deeper than a session can."),
-        ("extras.html#bites",   "BITE",    "chip-bite",    "Bites",                   f"{n_bites} focused single-concept explainers."),
-        ("extras.html#nibbles", "NIBBLE",  "chip-nibble",  "Nibbles",                 f"{n_nibbles} short reference cards / cheat sheets."),
-        ("extras.html",         "ALL",     "chip-all",     "Extras (all)",            f"{n_extras_total} items — combined guides · bites · nibbles."),
+        ("labs/index.html",       "LABS",      "chip-labs",     "Hands-On Labs",           (f"{sum(1 for l in LABS if not l.get('concept_only') and not l.get('is_orientation'))} hands-on labs + orientation across the shared topology — Socratic predict → run → verify." if LABS else "Empty — feed a lab guide PDF and run /build-lab-plan.")),
+        ("extras.html",           "ALL",       "chip-all",      "Extras (all)",            f"{n_extras_total} items — combined guides · bites · nibbles."),
     ]
 
     tiles_html = "".join(
@@ -4546,6 +4713,7 @@ def render_landing(extras, completions, standalone_extras):
   .tile:hover{{transform:translateY(-2px);box-shadow:0 8px 24px -12px rgba(10,24,56,0.18);border-color:var(--blue);}}
   .tile-chip{{align-self:flex-start;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;padding:4px 10px;border-radius:12px;text-transform:uppercase;}}
   .chip-plan{{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border);}}
+  .chip-sessions{{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border);}}
   .chip-complete{{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}}
   .chip-guide{{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}}
   .chip-bite{{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border);}}
@@ -4649,11 +4817,17 @@ def main():
     for s in SESSIONS:
         render_session(s, extras=extras, completions=completions)
 
-    render_hub(extras=extras, completions=completions, standalone_extras=standalone_extras)
+    render_study_plan_index(extras=extras, completions=completions, standalone_extras=standalone_extras)
+    render_sessions_index(completions=completions)
     render_completed_hub(completions)
     render_extras_hub(extras, standalone_extras=standalone_extras)
     render_landing(extras, completions, standalone_extras)
     render_labs_hub()
+
+    # Old root-level study-plan.html is superseded by study-plan/index.html.
+    old_study_plan = ROOT / "study-plan.html"
+    if old_study_plan.exists():
+        os.remove(old_study_plan)
     for l in LABS:
         render_lab_page(l)
     normalize_sorted_breadcrumbs()
@@ -4665,7 +4839,8 @@ def main():
     n_completed = sum(1 for v in completions.values() if v.get("has_complete"))
     n_summaries = sum(1 for v in completions.values() if v.get("has_summary"))
 
-    print(f"Wrote study-plan.html")
+    print(f"Wrote study-plan/index.html")
+    print(f"Wrote sessions/index.html (Socratic Sessions listing)")
     print(f"Wrote {len(SESSIONS)} session pages to sessions/session-NN-slug/index.html")
     print(f"Wrote images/prompts.txt with {len(PHASES) + len(SESSIONS)} prompts")
     print(f"Ensured images/hub/ and {len(SESSIONS)} per-session sessions/session-NN-slug/images/ folders")
