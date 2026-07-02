@@ -626,5 +626,6 @@ document.addEventListener('DOMContentLoaded',function(){
   document.querySelectorAll('.section-block').forEach(s=>observer.observe(s));
 });
 </script>
+<script>document.documentElement.classList.remove('pt-init');sessionStorage.removeItem('pt');</script>
 </body>
 </html>

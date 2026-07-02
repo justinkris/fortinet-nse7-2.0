@@ -131,6 +131,20 @@ Title: <optional title from the source>
 …
 ```
 
+## Page-transition normalization
+
+Session `index.html` uses a two-part page-transition system: a preloader `<script>` at the top of `<head>` that adds `pt-init` to `<html>` (which the CSS uses to hide body via `opacity:0`), plus a cleanup `<script>` before `</body>` that removes the class after DOMContentLoaded. When links are clicked, they set `sessionStorage.pt = 1` so the *next* page loads with body hidden and then fades in.
+
+Sorted files (`complete.html`, bites/nibbles/guides, standalone extras topic pages) sometimes ship from Claude with **only the preloader half**. If the user arrives at one of these pages after clicking a link (which set `pt=1`), the body stays permanently `opacity:0` = blank white page.
+
+`normalize_page_transitions()` in `build.py` runs after every rebuild and walks every sorted HTML file. For any file that contains `classList.add('pt-init')` but not `classList.remove('pt-init')`, it injects a small cleanup script right before `</body>`:
+
+```html
+<script>document.documentElement.classList.remove('pt-init');sessionStorage.removeItem('pt');</script>
+```
+
+Idempotent — safe to run on every build.
+
 ## Breadcrumbs
 
 Every page above the landing chains through a breadcrumb starting with **Home** (index.html), followed by either **Curriculum** (study-plan.html) for study-plan/session artifacts or **Extras** (extras.html) for standalone Extras topics.

@@ -3201,6 +3201,55 @@ def _normalize_crumb_in_file(path, crumb_html):
     if new_text != text:
         path.write_text(new_text, encoding="utf-8")
 
+def _normalize_pt_transition_in_file(path):
+    """If file has the pt-init preloader but not the cleanup, inject the cleanup before </body>.
+
+    Symptom without the fix: page loads with body opacity:0 forever → blank white screen.
+    """
+    try:
+        text = path.read_text(encoding="utf-8")
+    except Exception:
+        return
+    if "classList.add('pt-init')" not in text and 'classList.add("pt-init")' not in text:
+        return  # no preloader — nothing to fix
+    if "classList.remove('pt-init')" in text or 'classList.remove("pt-init")' in text:
+        return  # already has cleanup
+    cleanup = (
+        "<script>document.documentElement.classList.remove('pt-init');"
+        "sessionStorage.removeItem('pt');</script>\n"
+    )
+    if "</body>" in text:
+        new_text = text.replace("</body>", cleanup + "</body>", 1)
+    else:
+        new_text = text + "\n" + cleanup
+    path.write_text(new_text, encoding="utf-8")
+
+def normalize_page_transitions():
+    """Walk all sorted HTML files and heal broken pt-init preloaders."""
+    for s in SESSIONS:
+        session_dir = SESSIONS_DIR / f"session-{s['num']:02d}-{s['slug']}"
+        if not session_dir.is_dir():
+            continue
+        for p in [session_dir / "complete.html"]:
+            if p.is_file():
+                _normalize_pt_transition_in_file(p)
+        for kind in EXTRA_KINDS:
+            kind_dir = session_dir / kind
+            if kind_dir.is_dir():
+                for f in kind_dir.glob("*.html"):
+                    _normalize_pt_transition_in_file(f)
+    for e in EXTRAS:
+        topic_dir = EXTRAS_DIR / f"extras-{e['num']:02d}-{e['slug']}"
+        if not topic_dir.is_dir():
+            continue
+        if (topic_dir / "index.html").is_file():
+            _normalize_pt_transition_in_file(topic_dir / "index.html")
+        for kind in EXTRA_KINDS:
+            kind_dir = topic_dir / kind
+            if kind_dir.is_dir():
+                for f in kind_dir.glob("*.html"):
+                    _normalize_pt_transition_in_file(f)
+
 def normalize_sorted_breadcrumbs():
     """Rewrite/inject breadcrumbs on every sorted file (complete/bite/nibble/guide + standalone extras)."""
     # Session sorted files
@@ -3432,6 +3481,7 @@ def main():
     render_extras_hub(extras, standalone_extras=standalone_extras)
     render_landing(extras, completions, standalone_extras)
     normalize_sorted_breadcrumbs()
+    normalize_page_transitions()
     write_prompts_file()
 
     n_extras = sum(len(items) for kinds in extras.values() for items in kinds.values())

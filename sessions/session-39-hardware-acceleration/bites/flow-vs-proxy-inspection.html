@@ -297,5 +297,6 @@ function reveal(btn) {
   btn.textContent = answer.classList.contains('visible') ? 'Hide Answer' : 'Reveal Answer';
 }
 </script>
+<script>document.documentElement.classList.remove('pt-init');sessionStorage.removeItem('pt');</script>
 </body>
 </html>
