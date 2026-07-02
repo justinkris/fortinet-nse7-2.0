@@ -3184,10 +3184,10 @@ def render_study_plan_index(extras=None, completions=None, standalone_extras=Non
         '</div>'
     )
 
-    # Per-phase checkbox blocks for the progress section. Each row has two
-    # checkboxes — in-progress (amber) and complete (blue). They are mutually
-    # exclusive at the UI layer: checking one clears the other (see the JS
-    # handler at toggleSession()).
+    # Per-phase checkbox blocks for the progress section. Each row has three
+    # checkboxes — interested (green), in-progress (amber), complete (blue).
+    # They are mutually exclusive at the UI layer: checking one clears the
+    # others (see setSessionState() in the JS).
     progress_blocks = []
     for phase in PHASES:
         sessions_in_phase = [s for s in SESSIONS if s["phase"] == phase["num"]]
@@ -3195,6 +3195,14 @@ def render_study_plan_index(extras=None, completions=None, standalone_extras=Non
         for s in sessions_in_phase:
             rows.append(
                 f'<div class="progress-row" data-session="{s["num"]}">'
+                f'<span class="progress-num">{s["num"]:02d}</span>'
+                f'<a class="progress-title" href="../sessions/{session_filename(s)}">{html_escape(s["title"])}</a>'
+                f'<span class="progress-dur">{html_escape(s["duration"])}</span>'
+                f'<span class="progress-check-group">'
+                f'<label class="progress-check-wrap" title="Mark as interested">'
+                f'<input type="checkbox" class="progress-check progress-check-int" data-session="{s["num"]}" data-state="interested">'
+                f'<span class="progress-check-box progress-check-box-int" aria-hidden="true"></span>'
+                f'</label>'
                 f'<label class="progress-check-wrap" title="Mark as in progress">'
                 f'<input type="checkbox" class="progress-check progress-check-ip" data-session="{s["num"]}" data-state="in-progress">'
                 f'<span class="progress-check-box progress-check-box-ip" aria-hidden="true"></span>'
@@ -3203,15 +3211,14 @@ def render_study_plan_index(extras=None, completions=None, standalone_extras=Non
                 f'<input type="checkbox" class="progress-check progress-check-done" data-session="{s["num"]}" data-state="complete">'
                 f'<span class="progress-check-box progress-check-box-done" aria-hidden="true"></span>'
                 f'</label>'
-                f'<span class="progress-num">{s["num"]:02d}</span>'
-                f'<a class="progress-title" href="../sessions/{session_filename(s)}">{html_escape(s["title"])}</a>'
-                f'<span class="progress-dur">{html_escape(s["duration"])}</span>'
+                f'</span>'
                 f'</div>'
             )
         progress_blocks.append(
             f'<div class="progress-phase"><div class="progress-phase-head">'
             f'<span>PHASE {phase["num"]:02d} — {html_escape(phase["title"])}</span>'
             f' <span class="progress-phase-stats" data-phase="{phase["num"]}">'
+            f'<span class="stat-pill stat-pill-int"><span class="stat-pill-num" data-stat="int">0</span> interested</span>'
             f'<span class="stat-pill stat-pill-ip"><span class="stat-pill-num" data-stat="ip">0</span> in progress</span>'
             f'<span class="stat-pill stat-pill-done"><span class="stat-pill-num" data-stat="done">0</span> / {len(sessions_in_phase)} done</span>'
             f'</span>'
@@ -3416,29 +3423,42 @@ def render_study_plan_index(extras=None, completions=None, standalone_extras=Non
   .progress-stats em{{font-style:italic;color:var(--text-muted);font-family:'Cormorant Garamond',serif;font-size:14px;}}
   .progress-count-block{{font-weight:700;color:var(--blue);font-size:18px;}}
   .progress-count-inprogress{{font-weight:700;color:var(--amber);font-size:18px;}}
+  .progress-count-interested{{font-weight:700;color:var(--green);font-size:18px;}}
   .progress-reset{{margin-left:auto;font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);background:transparent;border:1px solid var(--border);border-radius:6px;padding:5px 12px;cursor:pointer;}}
   .progress-reset:hover{{color:var(--text);border-color:var(--text);}}
   .progress-bar-wrap{{width:100%;height:8px;background:var(--surface-2);border-radius:8px;overflow:hidden;display:flex;}}
   .progress-bar-fill{{height:100%;background:var(--blue);transition:width 0.25s ease;}}
   .progress-bar-fill-ip{{background:var(--amber);}}
+  .progress-bar-fill-int{{background:var(--green);}}
   .progress-phases{{display:flex;flex-direction:column;gap:16px;}}
   .progress-phase{{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 18px;}}
   .progress-phase-head{{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text);margin-bottom:8px;display:flex;justify-content:space-between;}}
   .progress-phase-stats{{display:inline-flex;gap:8px;font-weight:600;letter-spacing:0.04em;text-transform:none;}}
   .stat-pill{{display:inline-flex;align-items:center;gap:5px;font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:2px 9px;border-radius:12px;border:1px solid;}}
   .stat-pill-num{{font-weight:800;font-size:11px;}}
+  .stat-pill-int{{background:var(--green-light);color:var(--green);border-color:var(--green-border);}}
   .stat-pill-ip{{background:var(--amber-light);color:var(--amber);border-color:var(--amber-border);}}
   .stat-pill-done{{background:var(--blue-light);color:var(--blue);border-color:var(--blue-border);}}
   .progress-row{{display:flex;align-items:center;gap:10px;padding:6px 0;}}
+  .progress-check-group{{display:inline-flex;align-items:center;gap:8px;margin-left:6px;flex-shrink:0;}}
   .progress-row.completed .progress-title{{text-decoration:line-through;color:var(--text-muted);}}
   .progress-row.in-progress .progress-title{{color:var(--amber);font-style:italic;}}
+  .progress-row.interested .progress-title{{color:var(--green);}}
   .progress-check-wrap{{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;position:relative;}}
   .progress-check{{appearance:none;position:absolute;inset:0;margin:0;cursor:pointer;opacity:0;width:100%;height:100%;}}
   .progress-check-box{{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:1.5px solid var(--border);border-radius:5px;background:var(--surface);transition:background 0.15s, border-color 0.15s, transform 0.15s;position:relative;font-family:'Outfit',sans-serif;font-size:12px;font-weight:800;color:#fff;line-height:1;}}
+  /* Unchecked but tinted so each state is distinguishable at rest. */
+  .progress-check-box-int{{background:var(--green-light);border-color:var(--green-border);}}
+  .progress-check-box-ip{{background:var(--amber-light);border-color:var(--amber-border);}}
+  .progress-check-box-done{{background:var(--blue-light);border-color:var(--blue-border);}}
+  .progress-check-wrap:hover .progress-check-box-int{{border-color:var(--green);}}
   .progress-check-wrap:hover .progress-check-box-ip{{border-color:var(--amber);}}
   .progress-check-wrap:hover .progress-check-box-done{{border-color:var(--blue);}}
+  .progress-check-int:focus-visible + .progress-check-box{{box-shadow:0 0 0 3px rgba(26,124,74,0.24);}}
   .progress-check-ip:focus-visible + .progress-check-box{{box-shadow:0 0 0 3px rgba(180,83,9,0.24);}}
   .progress-check-done:focus-visible + .progress-check-box{{box-shadow:0 0 0 3px rgba(30,64,175,0.24);}}
+  .progress-check-int:checked + .progress-check-box-int{{background:var(--green);border-color:var(--green);}}
+  .progress-check-int:checked + .progress-check-box-int::after{{content:'★';color:#fff;font-size:12px;line-height:1;}}
   .progress-check-ip:checked + .progress-check-box-ip{{background:var(--amber);border-color:var(--amber);}}
   .progress-check-ip:checked + .progress-check-box-ip::after{{content:'●';color:#fff;font-size:11px;line-height:1;}}
   .progress-check-done:checked + .progress-check-box-done{{background:var(--blue);border-color:var(--blue);}}
@@ -3541,10 +3561,11 @@ def render_study_plan_index(extras=None, completions=None, standalone_extras=Non
         <div class="progress-stats">
           <span class="progress-count-block"><span id="progress-count">0</span> <em>of {total_sessions} complete</em></span>
           <span class="progress-count-inprogress"><span id="progress-inprogress-count">0</span> <em>in progress</em></span>
+          <span class="progress-count-interested"><span id="progress-interested-count">0</span> <em>interested</em></span>
           <span><span id="progress-pct">0%</span></span>
           <button class="progress-reset" onclick="resetProgress()">Reset progress</button>
         </div>
-        <div class="progress-bar-wrap"><div class="progress-bar-fill progress-bar-fill-ip" id="progress-fill-ip" style="width:0%"></div><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div><div class="progress-bar-fill progress-bar-fill-ip" id="progress-fill-ip" style="width:0%"></div><div class="progress-bar-fill progress-bar-fill-int" id="progress-fill-int" style="width:0%"></div></div>
       </div>
       <div class="progress-phases">
         {progress_phase_html}
@@ -3678,10 +3699,12 @@ window.addEventListener('hashchange', function() {{
 }})();
 
 /* ── Progress tracking ── */
-/* Two independent state buckets: "in-progress" (amber) and "complete" (blue).
-   They are mutually exclusive per session — checking one clears the other. */
+/* Three independent state buckets — mutually exclusive per session (checking
+   one clears the others): "interested" (green), "in-progress" (amber),
+   "complete" (blue). */
 const PROGRESS_KEY = 'nse7-ef-curriculum-progress';
 const INPROGRESS_KEY = 'nse7-ef-curriculum-inprogress';
+const INTERESTED_KEY = 'nse7-ef-curriculum-interested';
 function readSet(key) {{
   try {{ return new Set(JSON.parse(localStorage.getItem(key) || '[]')); }}
   catch(e) {{ return new Set(); }}
@@ -3691,67 +3714,88 @@ function writeSet(key, set) {{
 }}
 function getDone() {{ return readSet(PROGRESS_KEY); }}
 function getInProgress() {{ return readSet(INPROGRESS_KEY); }}
+function getInterested() {{ return readSet(INTERESTED_KEY); }}
 function renderProgress() {{
   const done = getDone();
   const ip = getInProgress();
+  const interested = getInterested();
   const total = {total_sessions};
   const doneCount = done.size;
   const ipCount = ip.size;
+  const intCount = interested.size;
   const donePct = Math.round((doneCount / total) * 100);
   const ipPct = Math.round((ipCount / total) * 100);
+  const intPct = Math.round((intCount / total) * 100);
   document.getElementById('progress-count').textContent = doneCount;
   const ipEl = document.getElementById('progress-inprogress-count');
   if (ipEl) ipEl.textContent = ipCount;
+  const intEl = document.getElementById('progress-interested-count');
+  if (intEl) intEl.textContent = intCount;
   document.getElementById('progress-pct').textContent = donePct + '%';
   document.getElementById('progress-fill').style.width = donePct + '%';
   const ipFill = document.getElementById('progress-fill-ip');
   if (ipFill) ipFill.style.width = ipPct + '%';
+  const intFill = document.getElementById('progress-fill-int');
+  if (intFill) intFill.style.width = intPct + '%';
   const badge = document.getElementById('panel-progress-badge');
   if (badge) badge.textContent = doneCount + '/' + total;
   document.querySelectorAll('.progress-row').forEach(function(row) {{
     const n = Number(row.dataset.session);
     const isDone = done.has(n);
     const isIP = ip.has(n);
+    const isInt = interested.has(n);
     row.classList.toggle('completed', isDone);
     row.classList.toggle('in-progress', isIP);
+    row.classList.toggle('interested', isInt);
     const cbDone = row.querySelector('.progress-check-done');
     const cbIP = row.querySelector('.progress-check-ip');
+    const cbInt = row.querySelector('.progress-check-int');
     if (cbDone) cbDone.checked = isDone;
     if (cbIP) cbIP.checked = isIP;
+    if (cbInt) cbInt.checked = isInt;
   }});
   document.querySelectorAll('.progress-phase-stats').forEach(function(el) {{
     const rows = el.closest('.progress-phase').querySelectorAll('.progress-row');
-    let phaseDone = 0, phaseIP = 0;
+    let phaseDone = 0, phaseIP = 0, phaseInt = 0;
     rows.forEach(function(r) {{
       const n = Number(r.dataset.session);
       if (done.has(n)) phaseDone++;
       if (ip.has(n)) phaseIP++;
+      if (interested.has(n)) phaseInt++;
     }});
     const doneNum = el.querySelector('[data-stat="done"]');
     const ipNum = el.querySelector('[data-stat="ip"]');
+    const intNum = el.querySelector('[data-stat="int"]');
     if (doneNum) doneNum.textContent = phaseDone;
     if (ipNum) ipNum.textContent = phaseIP;
+    if (intNum) intNum.textContent = phaseInt;
   }});
 }}
 function setSessionState(n, state, checked) {{
-  /* state = "in-progress" | "complete". Turning one on clears the other. */
+  /* state = "interested" | "in-progress" | "complete". Turning one on clears the other two. */
   const done = getDone();
   const ip = getInProgress();
+  const interested = getInterested();
   if (state === 'complete') {{
-    if (checked) {{ done.add(n); ip.delete(n); }}
+    if (checked) {{ done.add(n); ip.delete(n); interested.delete(n); }}
     else {{ done.delete(n); }}
   }} else if (state === 'in-progress') {{
-    if (checked) {{ ip.add(n); done.delete(n); }}
+    if (checked) {{ ip.add(n); done.delete(n); interested.delete(n); }}
     else {{ ip.delete(n); }}
+  }} else if (state === 'interested') {{
+    if (checked) {{ interested.add(n); done.delete(n); ip.delete(n); }}
+    else {{ interested.delete(n); }}
   }}
   writeSet(PROGRESS_KEY, done);
   writeSet(INPROGRESS_KEY, ip);
+  writeSet(INTERESTED_KEY, interested);
   renderProgress();
 }}
 function resetProgress() {{
-  if (!confirm('Reset all session progress (both in-progress and completed)?')) return;
+  if (!confirm('Reset all session progress (interested, in-progress, and completed)?')) return;
   writeSet(PROGRESS_KEY, new Set());
   writeSet(INPROGRESS_KEY, new Set());
+  writeSet(INTERESTED_KEY, new Set());
   renderProgress();
 }}
 document.querySelectorAll('.progress-check').forEach(function(cb) {{
