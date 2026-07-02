@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<!--
+  ╔══════════════════════════════════════════════════════════════════════╗
+  ║  CCNA STUDY GUIDE — PAGE TEMPLATE (CREAM / BLUE EDITION)            ║
+  ║                                                                      ║
+  ║  Fill every {{PLACEHOLDER}} with content from the Socratic session.  ║
+  ║  Comments marked ← tell you exactly what each field needs.          ║
+  ║  Save to: study-guides/Chapter NN - Title/subtopic-NN-slug.html     ║
+  ╚══════════════════════════════════════════════════════════════════════╝
+
+  MINIMUM REQUIRED PER PAGE:
+  · PAGE_KEY (unique, kebab-case, e.g. ccna-ch04-sub02-vlans)
+  · 3–5 section blocks
+  · 2 Socratic questions per section (model answers included)
+  · 1 mental note per section
+  · 5–8 quick-ref cards in the sidebar
+  · Prev / next navigation
+-->
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subtopic 15 — FGCP vs FGSP</title><!-- ← e.g. "Subtopic 02 — Configure VLANs" -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ── DESIGN TOKENS ── */
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* HEADER */
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb a:hover{text-decoration:underline;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+
+  /* MOTIVATION BANNER */
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.005em;}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+
+  /* TOP PANELS */
+  .top-panels{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+  .top-panels .qpanel{border-bottom:none;border-right:1px solid var(--border);}
+  .top-panels .qpanel-header{padding-left:32px;padding-right:32px;}
+  .top-panels .qpanel-body{padding-left:32px;padding-right:32px;}
+  .qpanel{background:var(--surface);}
+  .qpanel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .qpanel-header:hover,.qpanel-header.open{background:var(--surface-2);}
+  .qpanel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .qpanel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .qpanel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .qpanel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .qpanel-body{display:none;padding:0 20px 22px;}
+  .qpanel-body.open{display:block;}
+  .notes-panel{background:var(--surface);}
+  .notes-panel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 32px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .notes-panel-header:hover,.notes-panel-header.open{background:var(--surface-2);}
+  .notes-panel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .notes-panel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .notes-panel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .notes-panel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .notes-panel-body{display:none;padding:0 32px 22px;}
+  .notes-panel-body.open{display:block;}
+  .q-group{margin-bottom:16px;}
+  .q-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+  .q-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-dim);}
+  .q-item:last-child{border-bottom:none;}
+  .q-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;color:var(--blue);min-width:16px;margin-top:2px;}
+  .q-text{font-size:14px;color:var(--text-soft);line-height:1.5;flex:1;}
+  .q-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:0 4px;margin-top:1px;}
+  .q-del:hover{color:var(--blue);}
+  .no-questions{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);padding:8px 0;}
+  .btn-add-q{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-q:hover{opacity:0.85;}
+
+  /* STICKY SECTION NAV */
+  .section-nav{position:sticky;top:0;z-index:90;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px;overflow-x:auto;}
+  .nav-tab{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:12px 18px;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s,border-color 0.15s;}
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+  /* MAIN GRID */
+  main{max-width:1200px;margin:0 auto;padding:0;}
+  .main-content{padding:36px 60px 60px 60px;}
+
+  /* SECTION BLOCK */
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:4px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+
+  /* CALLOUTS */
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+
+  /* DATA TABLE */
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+
+  /* CODE BLOCK */
+  .code-block{background:var(--ink-dark);border-radius:10px;padding:0;margin:16px 0;overflow:hidden;border:1px solid var(--border);}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:8px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:16px;overflow-x:auto;}
+  .code-block code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12.5px;line-height:1.65;color:#e8efff;}
+
+  /* SECTION IMAGE */
+  .img-caption{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}
+  .section-img-wrap{margin:0 0 20px;display:flex;flex-direction:column;align-items:center;}
+  .section-img{width:260px;max-width:100%;border-radius:12px;cursor:zoom-in;transition:width 0.3s ease;border:1px solid var(--border);display:block;}
+  .section-img.si-expanded{width:100%;cursor:zoom-out;border-radius:16px;}
+  .si-placeholder{display:none;width:260px;max-width:100%;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}
+  .si-placeholder.si-show{display:flex;}
+  .si-filename{font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--text-muted);font-family:'SF Mono','Fira Code',monospace;}
+
+  /* SOCRATIC */
+  .socratic-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:16px;border-top:3px solid var(--blue);}
+  .socratic-header{display:flex;align-items:center;gap:8px;margin-bottom:0;cursor:pointer;user-select:none;}
+  .socratic-header::after{content:'▸ Expand';margin-left:auto;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-block.soc-open .socratic-header{margin-bottom:10px;}
+  .socratic-block.soc-open .socratic-header::after{content:'▾ Collapse';}
+  .socratic-block:not(.soc-open) .socratic-insight,
+  .socratic-block:not(.soc-open) .socratic-questions,
+  .socratic-block:not(.soc-open) .answer-area{display:none;}
+  .socratic-icon{font-size:17px;flex-shrink:0;}
+  .socratic-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-insight{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;margin-bottom:12px;border-left:3px solid var(--border);padding-left:14px;font-style:italic;}
+  .socratic-questions{list-style:none;padding:0;margin:0;}
+  .socratic-questions li{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--border-dim);line-height:1.6;}
+  .socratic-questions li:last-child{border-bottom:none;}
+  .socratic-questions li::before{content:'?';position:absolute;left:0;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:16px;top:7px;color:var(--blue);}
+  .answer-area{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .answer-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .answer-textarea:focus{border-color:var(--blue);}
+  .answer-textarea:disabled{opacity:0.75;background:var(--surface-2);cursor:default;}
+  .answer-buttons{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .btn-add-answer{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-answer:hover:not(:disabled){opacity:0.85;}
+  .btn-add-answer:disabled{opacity:0.5;cursor:default;}
+  .btn-see-answer{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-see-answer:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-see-answer:not(:disabled){color:var(--blue);border-color:var(--blue);}
+  .btn-see-answer:hover:not(:disabled){background:var(--blue-glow);}
+  .model-answers{margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .model-answer-item{padding:10px 0;border-bottom:1px solid var(--border-dim);}
+  .model-answer-item:first-child{padding-top:0;}
+  .model-answer-item:last-child{border-bottom:none;padding-bottom:0;}
+  .model-answer-q{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;}
+  .model-answer-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;}
+
+  /* MENTAL NOTE */
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+
+  /* ANALOGY BOX */
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+  .analogy-label{display:flex;align-items:center;gap:6px;user-select:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px;text-transform:uppercase;}
+  .analogy-label::after{content:'▾  Reveal illustration';margin-left:auto;font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:none;opacity:0.75;}
+  .analogy-label:hover::after{opacity:1;}
+  .analogy-box.expanded>.analogy-label::after{content:'▴  Hide illustration';}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
+  .analogy-text ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;}
+  .analogy-text li{padding-left:18px;position:relative;}
+  .analogy-text li::before{content:'•';position:absolute;left:0;font-weight:700;color:var(--amber);}
+  .analogy-box>.analogy-img{display:none;}
+  .analogy-box.expanded>.analogy-img{display:block;}
+  .analogy-img img{max-width:360px;width:100%;cursor:zoom-in;transition:max-width 0.25s ease;border-radius:8px;margin-top:10px;}
+  .analogy-img img.zoomed{max-width:100%;cursor:zoom-out;}
+  .analogy-img .img-missing-msg{display:none!important;}
+  .prompt-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}
+  .prompt-toggle:hover{color:var(--text);border-color:var(--text);}
+  .prompt-content{margin-top:10px;padding:10px 14px;background:rgba(0,0,0,0.04);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.65;text-align:left;}
+  .prompt-content[hidden]{display:none;}
+
+  /* LESSON TOOLS */
+  .lesson-tools{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:40px;}
+  .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .tool-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .tool-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .tool-textarea:focus{border-color:var(--blue);}
+  .tool-row{margin-top:8px;display:flex;gap:8px;}
+
+  /* PAGE NAV */
+  .page-nav{display:flex;border-top:2px solid var(--border);background:var(--surface);}
+  .page-nav-btn{flex:1;display:flex;flex-direction:column;gap:4px;padding:16px 28px;text-decoration:none;transition:background 0.15s;cursor:pointer;}
+  .page-nav-btn:hover:not(.page-nav-disabled){background:var(--surface-2);}
+  .page-nav-prev{border-right:1px solid var(--border);}
+  .page-nav-next{text-align:right;}
+  .page-nav-disabled{opacity:0.3;pointer-events:none;}
+  .page-nav-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);display:block;text-transform:uppercase;}
+  .page-nav-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;font-style:italic;color:var(--blue);display:block;}
+
+  /* FOOTER */
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+
+  /* RESPONSIVE */
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:34px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}.section-nav{padding:0 16px;}.top-panels{grid-template-columns:1fr;}.top-panels .qpanel{border-right:none;border-bottom:1px solid var(--border);}.lesson-tools-grid{grid-template-columns:1fr;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     HEADER
+     ══════════════════════════════════════════════════════════ -->
+<header>
+  <div class="header-left">
+    <div class="breadcrumb">
+      <span>NSE7 Enterprise Firewall 7.6</span>
+      <span class="breadcrumb-sep">›</span>
+      <span>Session 15 — HA</span>
+      <span class="breadcrumb-sep">›</span>
+      Study Bite
+    </div>
+    <div class="header-eyebrow"><span class="dot-live"></span> Study Bite · NSE7 EF 7.6</div>
+    <h1>One Cluster, or Two Independent Firewalls — <em>FGCP vs FGSP</em></h1>
+    <!--
+      ← H1 pattern: plain words first, key noun/phrase in <em>.
+         e.g. "Configure <em>VLANs</em>" or "Understand <em>OSPF</em> Neighbor States"
+    -->
+    <p>How to tell which HA problem you're actually solving before you pick a protocol.</p>
+    <!--
+      ← One sentence (≤20 words) capturing the core insight of the subtopic.
+         e.g. "How switches use 802.1Q tagging to carry multiple broadcast domains over a single trunk link."
+    -->
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════
+     MOTIVATION BANNER
+     ══════════════════════════════════════════════════════════ -->
+<div class="motivation-banner">
+  <div class="motivation-text">FGCP is one cluster that happens to have two bodies. FGSP is <em>two independent firewalls</em> that just tell each other what they know.</div>
+  <!--
+    ← Bold Playfair statement. Wrap the key phrase in <em>. 1–2 sentences.
+       e.g. "VLANs don't just split a switch — they create <em>independent broadcast domains</em> that share the same physical hardware."
+  -->
+  <p class="motivation-sub">Get this backwards on the exam and you'll misread every HA scenario — waiting for a clustered failover that was never built, or forcing config sync onto two boxes that were designed to stay independent.</p>
+  <!--
+    ← Smaller supporting sentence. Why this subtopic matters in the bigger picture.
+       e.g. "Every inter-VLAN routing, trunking, and STP topic later in the blueprint assumes you can predict exactly which port belongs to which broadcast domain."
+  -->
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MY QUESTIONS + MY NOTES PANELS (no changes needed here)
+     ══════════════════════════════════════════════════════════ -->
+<div class="top-panels">
+  <div class="qpanel" id="qpanel">
+    <button class="qpanel-header" onclick="toggleQPanel()" id="qpanel-header">
+      <span class="qpanel-title">MY QUESTIONS</span>
+      <span class="qpanel-count" id="qpanel-count">0</span>
+      <span class="qpanel-hint">— click to expand</span>
+      <span class="qpanel-chevron" id="qpanel-chevron">▾</span>
+    </button>
+    <div class="qpanel-body" id="qpanel-body"></div>
+  </div>
+  <div class="notes-panel" id="notes-panel">
+    <button class="notes-panel-header" onclick="toggleNotesPanel()" id="notes-panel-header">
+      <span class="notes-panel-title">MY NOTES</span>
+      <span class="notes-panel-count" id="notes-panel-count">0</span>
+      <span class="notes-panel-hint">— click to expand</span>
+      <span class="notes-panel-chevron" id="notes-panel-chevron">▾</span>
+    </button>
+    <div class="notes-panel-body" id="notes-panel-body"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     STICKY SECTION NAV — one tab per section
+     ══════════════════════════════════════════════════════════ -->
+<nav class="section-nav" id="section-nav">
+  <a class="nav-tab active" href="#section-core-distinction">Core Distinction</a><!-- ← e.g. href="#section-vlan-basics" >VLAN Basics -->
+  <a class="nav-tab" href="#section-packet-flow">Packet Flow</a>
+  <a class="nav-tab" href="#section-exam-traps">Exam Traps</a>
+  <!-- Add more tabs if there are 4 or 5 sections -->
+</nav>
+
+<main>
+  <div class="main-content">
+
+    <!-- ══════════════════════════════════════════
+         SECTION 1  (repeat this block per section)
+         ══════════════════════════════════════════ -->
+
+    <!-- THINK FIRST — collapsed by default, user must expand -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · CORE DISTINCTION</span>
+        <!-- ← e.g. "THINK FIRST · VLAN BASICS" -->
+      </div>
+      <p class="socratic-insight">Before reading on, force the recall. Both scenarios below involve two FortiGates — the only question is which relationship they have with each other.</p>
+      <!--
+        ← 2–3 sentence framing of WHY these questions matter. Reveal the tension
+           or the gotcha before asking the question.
+      -->
+      <ul class="socratic-questions">
+        <li>Two datacenter FortiGates, independently managed, config has drifted between them, both actively passing live traffic right now. Which protocol fits — and why can't the other one work here?</li><!-- ← Specific, scenario-driven. Ends with a '?' -->
+        <li>Two edge FortiGates, one ISP uplink, one box should sit ready to seamlessly take over live VPN tunnels the instant the other dies. Which protocol — and why?</li><!-- ← Second question. Use a third only if genuinely complex. -->
+      </ul>
+      <div class="answer-area" data-section="core-distinction">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">FGSP. It only needs session-table data shared between the boxes — it tolerates drifted config because there's no single cluster identity to keep in sync. FGCP is disqualified because it requires near-identical configuration and a single logical cluster identity from the start; you don't retrofit it onto two already-diverged, independently-managed devices.</div>
+            <!-- ← Precise. No hedging. 2–4 sentences. Lead with the core fact. -->
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">FGCP. Heartbeat detects the failure, synchronized config means Box B is a mirror of Box A, and synchronized session state means live VPN SAs and sessions survive the takeover invisibly to the remote peer. FGSP has no election or failover logic of its own — it can't deliver a seamless single-box takeover by itself.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION CONTENT BLOCK -->
+    <div class="section-block" id="section-core-distinction">
+      <div class="section-label">SECTION 01</div>
+      <h2>Same Two Boxes, <em>Two Completely Different Relationships</em></h2>
+      <!-- ← Same em-noun pattern as H1. e.g. "How a Switch Builds Its <em>MAC Address Table</em>" -->
+
+      <!-- Section image — starts compact (260px), click to expand full-width -->
+      <div class="section-img-wrap">
+        <img src="images/s1-core-distinction.png" class="section-img"
+             alt="Diagram comparing FGCP clustered identity versus FGSP independent session sync"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">FGCP: one logical cluster, two bodies. FGSP: two independent firewalls sharing only session data.</p>
+        <!-- Shown only when image is missing: -->
+        <div class="si-placeholder">
+          <span class="si-filename">images/s1-core-distinction.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Split composition, left half vs right half, divided by a thin dashed sage-green vertical line. LEFT HALF labeled 'FGCP' in bold coral header text: two identical FortiGate boxes (simple flat rectangular firewall icons with a small flame-shield logo) standing side by side wearing matching coral name-badges reading 'CLUSTER-01', connected by two thick gold cables labeled 'heartbeat' and 'session + config sync' with small flowing dot animation marks along them, a single dashed-outline halo drawn around both boxes together to show they present as one logical unit, a small crown icon over the current primary box and a 'standby' tag on the second. RIGHT HALF labeled 'FGSP' in bold sage-green header text: two clearly different-looking FortiGate boxes (slightly different shape/colour to show independence) standing apart with no shared halo, each with its own separate configuration folder icon beside it in a different muted colour to show config drift, a single thin gold line labeled 'session table sync only' connecting them, and above both boxes a separate cloud-shaped icon labeled 'upstream switch / load balancer' with two arrows pointing down to each box to show traffic being distributed by something external. Bottom of image: small caption bar reading 'FGCP: the boxes manage failover themselves — FGSP: something upstream decides where traffic goes.' Clean structured composition, generous spacing, educational but visually engaging, every object reinforces the networking concept.</div>
+        </div>
+      </div>
+
+      <!-- Body content: paragraphs, lists, callouts, tables, code blocks -->
+      <p>FGCP (FortiGate Clustering Protocol) builds two FortiGates into a single logical device. Configuration is synchronized so both boxes are near-identical, a heartbeat link continuously checks liveness, and session state is synchronized so the standby unit can seamlessly assume the primary's identity — including live VPN tunnels — the instant a failure is detected. The two boxes don't just cooperate; they present to the rest of the network as one cluster.</p>
+      <!-- ← First paragraph: what the concept is, why it exists, how it fits the architecture -->
+      <p>FGSP (FortiGate Session Life Support Protocol) is a much narrower agreement between two otherwise fully independent FortiGates: share session table data, and nothing else. No config sync, no shared identity, no heartbeat-driven election. Both boxes stay alive and pass traffic simultaneously. FGSP exists purely so that if traffic for an existing connection is redirected to the 'other' box — by something upstream, not by the FortiGates themselves — that box can still find the session and forward the packet correctly instead of dropping it.</p>
+
+      <table class="data-table">
+        <thead><tr><th>Question</th><th>FGCP</th><th>FGSP</th></tr></thead>
+        <tbody>
+          <tr><td>Configuration</td><td>Synchronized, near-identical</td><td>Independent, can drift</td></tr>
+          <tr><td>Identity</td><td>Single logical cluster</td><td>Two independent devices</td></tr>
+          <tr><td>What's shared</td><td>Heartbeat + full session sync</td><td>Session table sync only</td></tr>
+          <tr><td>Who decides failover</td><td>The cluster itself</td><td>Something upstream (router / LB / ECMP)</td></tr>
+          <tr><td>Deployment fit</td><td>Matched pair, built as a cluster from day one</td><td>Independently-managed boxes, config allowed to differ</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-amber">
+        <strong>Common misconception:</strong> "Active/standby means FGCP, active/active means FGSP." False — FGCP supports active-active too. The real test is config coupling and shared identity, not traffic distribution style.
+      </div>
+
+      <div class="analogy-box expanded">
+        <div class="analogy-label">Analogy</div>
+        <div class="analogy-text">
+          <p class="analogy-summary">Two firefighters sharing a badge number, versus two firefighters at different stations who just text each other every address.</p>
+          <ul>
+            <li>FGCP: same badge number, same radio, same gear — either one can answer as "Unit 12." One identity, kept in sync continuously.</li>
+            <li>FGSP: two separate responders at separate stations, fully independent — they just text each other the address of every active call, so whichever one gets flagged down next already knows what's happening.</li>
+            <li>Dispatch deciding who gets flagged down = the upstream router/switch/load balancer, not the firefighters themselves.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ← Second paragraph: mechanism / how it works in practice -->
+
+      <!-- Optional: use a list for multi-item comparisons or enumerations -->
+      <!--
+      <ul>
+        <li><strong>Item A:</strong> {{ITEM_A_TEXT}}</li>
+        <li><strong>Item B:</strong> {{ITEM_B_TEXT}}</li>
+      </ul>
+      -->
+
+      <!-- Optional callout — use for exam flags, gotchas, or common misconceptions -->
+      <!--
+      <div class="callout">
+        <strong>Exam tip:</strong> {{CALLOUT_TEXT}}
+      </div>
+      -->
+      <!--
+      <div class="callout callout-amber">
+        <strong>Common misconception:</strong> {{CALLOUT_TEXT}}
+      </div>
+      -->
+      <!--
+      <div class="callout callout-green">
+        <strong>Remember:</strong> {{CALLOUT_TEXT}}
+      </div>
+      -->
+
+      <!-- Optional CLI code block -->
+      <!--
+      <div class="code-block">
+        <div class="code-label">Cisco IOS CLI</div>
+        <pre><code>Switch> enable
+Switch# configure terminal
+Switch(config)# {{CMD_1}}
+Switch(config-if)# {{CMD_2}}
+Switch(config-if)# end
+Switch# write memory</code></pre>
+      </div>
+      -->
+
+      <!-- Optional data table -->
+      <!--
+      <table class="data-table">
+        <thead><tr><th>{{COL1}}</th><th>{{COL2}}</th><th>{{COL3}}</th></tr></thead>
+        <tbody>
+          <tr><td>{{VAL}}</td><td>{{VAL}}</td><td>{{VAL}}</td></tr>
+        </tbody>
+      </table>
+      -->
+
+      <!-- Optional analogy — only for abstract/counterintuitive concepts -->
+      <!--
+      <div class="analogy-box">
+        <div class="analogy-label">Analogy</div>
+        <div class="analogy-text">
+          <p class="analogy-summary">{{ANALOGY_ONE_LINER}}</p>
+          <ul>
+            <li>{{ANALOGY_BULLET_1}}</li>
+            <li>{{ANALOGY_BULLET_2}}</li>
+            <li>{{ANALOGY_BULLET_3}}</li>
+          </ul>
+        </div>
+        <div class="analogy-img" style="margin-top:14px;background:rgba(255,255,255,0.5);border-radius:10px;padding:14px;text-align:center;">
+          <img src="images/a1-{{ANALOGY_SLUG}}.png" alt="{{ANALOGY_IMG_ALT}}"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='block';"
+               style="max-width:100%;border-radius:8px;display:block;margin:0 auto 4px;">
+          <p class="img-caption" style="margin-bottom:8px;">{{ANALOGY_CAPTION}}</p>
+          <div class="img-missing-msg" style="display:none;padding:24px 12px;background:rgba(0,0,0,0.03);border:1px dashed #f3d68a;border-radius:8px;color:#5c3d09;font-size:14px;margin-bottom:10px;font-family:'Cormorant Garamond',serif;">📷 <strong>images/a1-{{ANALOGY_SLUG}}.png</strong> — add this image</div>
+          <button class="prompt-toggle" onclick="togglePrompt(this)" type="button">▾ Show analogy image prompt</button>
+          <div class="prompt-content" hidden>{{ANALOGY_IMG_PROMPT}}</div>
+        </div>
+      </div>
+      -->
+
+      <!-- Mental note — required, one per section -->
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">FGCP = the two boxes manage the failover themselves (heartbeat + election + full sync = one cluster identity). FGSP = something upstream decides where traffic goes; the FortiGates only make sure that whichever box the traffic lands on already knows about the session.</div>
+          <!--
+            ← 2–3 sentences. Lead with a concrete number, ordered list, or key relationship.
+               e.g. "An access port belongs to exactly one VLAN and strips/adds no 802.1Q tag.
+               A trunk carries many VLANs and tags every frame except those in the native VLAN —
+               mismatched native VLANs on either end cause CDP/STP errors but traffic may still pass."
+          -->
+        </div>
+      </div>
+    </div>
+
+    <!-- LESSON TOOLS — required after every section block -->
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-core-distinction" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-core-distinction','Core Distinction')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-core-distinction" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-core-distinction')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 2  (duplicate and rename S1→S2)
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · PACKET FLOW</span>
+      </div>
+      <p class="socratic-insight">The exam loves to test where each protocol's responsibility actually stops. This is the boundary to get precise.</p>
+      <ul class="socratic-questions">
+        <li>In FGSP, Box A dies mid-connection. What has to happen before Box B ever sees the next packet of that connection — and whose job is that, exactly?</li>
+        <li>In FGCP, what specifically moves from Box A to Box B during failover, and what stays put?</li>
+      </ul>
+      <div class="answer-area" data-section="packet-flow">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Something upstream of the FortiGates — a router, switch, ECMP path, or load balancer — has to detect Box A is gone and start sending that traffic toward Box B instead. This detection and redirection is not something FGSP itself performs; FGSP's only job is making sure Box B has the session data ready for when that redirected packet arrives.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">The cluster's shared identity — its virtual IP addresses and its role as primary — moves to Box B. What stays fixed is the synchronized configuration itself (policies, routes, profiles) which was already identical on both boxes before the failure. FGCP doesn't 'copy' config during failover; it was kept in sync continuously beforehand.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-packet-flow">
+      <div class="section-label">SECTION 02</div>
+      <h2>Where Each Protocol's <em>Job Actually Stops</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/s2-packet-flow.png" class="section-img" alt="Diagram showing failover responsibility boundary between FortiGate HA and upstream network"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">FGCP owns its own failover. FGSP depends on an upstream device to redirect traffic.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/s2-packet-flow.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Centre composition: a vertical thin dashed line splits the scene into 'INSIDE THE CLUSTER' (left, coral wash) and 'OUTSIDE THE CLUSTER' (right, sage wash). On the left, two small flat FortiGate icons enclosed in a single rounded dashed boundary, a gold heartbeat pulse-line and a second gold line labeled 'session + config sync' looping between them, a tiny crown icon hopping from one box to the other with a motion-arc arrow to show failover happening entirely inside the boundary. On the right, a single FortiGate icon sits OUTSIDE any boundary next to a second identical-style FortiGate icon, both under a large cloud-shaped 'upstream switch / router' icon with a question-mark bubble over it labeled 'who decides?', dashed arrows from the cloud icon pointing down to each FortiGate to show external redirection, and a small magnifying glass icon hovering near the right FortiGate labeled 'session table only' to show its limited scope. Bottom caption bar: 'FGCP owns its failover. FGSP waits for someone else to send it traffic.' Clean structured composition, generous spacing, educational and visually engaging.</div>
+        </div>
+      </div>
+      <p>This is the single most exam-relevant boundary in this topic. FGCP is self-contained — the two FortiGates own the entire failover process end to end, including deciding who is primary and taking over the shared identity. Nothing outside the cluster needs to know a failure happened.</p>
+      <p>FGSP is deliberately incomplete on its own. It solves the 'does the receiving box recognize this session' problem, but it does not solve the 'why did this box receive the packet at all' problem. That second problem belongs to whatever is distributing traffic across the two independent FortiGates in the first place — which is exactly the open question from this session, and the natural bridge into the next protocol on the blueprint.</p>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">FGCP's failover is entirely internal — two boxes, one boundary, nothing outside needs to react. FGSP's failover is entirely external — the FortiGates only guarantee session recognition; something else in the network has to decide where the packet goes.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-packet-flow" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-packet-flow','Packet Flow')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-packet-flow" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-packet-flow')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 3  (duplicate S1 block, rename to S3)
+         Add more sections if needed (up to 5)
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · EXAM TRAPS & CHECKLIST</span>
+      </div>
+      <p class="socratic-insight">Quick self-test before moving on — no hints, just recall.</p>
+      <ul class="socratic-questions">
+        <li>Why is 'active/standby vs active/active' NOT a reliable way to tell FGCP and FGSP apart?</li>
+        <li>If FGSP has no election logic, what determines which box a given packet actually lands on after a failure?</li>
+      </ul>
+      <div class="answer-area" data-section="exam-traps">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Because FGCP supports both active-passive and active-active modes — active-active alone doesn't rule out FGCP. The real dividing line is whether the two boxes share one logical cluster identity and synchronized config (FGCP) or remain fully independent devices sharing only session data (FGSP).</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Whatever mechanism sits upstream of the two FortiGates — routing convergence, ECMP hashing, a load balancer's health check, or a first-hop redundancy protocol. FGSP has no say in this; it only guarantees that wherever the packet lands, the session will be recognized.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-exam-traps">
+      <div class="section-label">SECTION 03</div>
+      <h2>Don't Fall For <em>These Two Traps</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/s3-exam-traps.png" class="section-img" alt="Troubleshooting checklist diagram for FGCP and FGSP failure isolation"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">Two separate jobs, two separate failure points — diagnose them independently.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/s3-exam-traps.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A simple two-branch troubleshooting flowchart drawn as a friendly diagram: at the top, a coral rounded rectangle reads 'Connections dropping between two FortiGates'. Below it a gold diamond decision shape reads 'Was this meant to be ONE cluster identity?'. Left branch (labeled YES, coral arrow) leads to a small icon of two FortiGates inside a dashed boundary with two separate small gauge icons labeled 'heartbeat link' and 'session + config sync' — each gauge shown independently, one green (up) one red (down), with a caption 'check each independently — one can fail without the other'. Right branch (labeled NO, sage arrow) leads to an icon of a cloud/router above two independent FortiGates with a magnifying glass over the cloud icon and caption 'check the upstream device's failure detection FIRST — before blaming session sync'. Bottom of image: small caption bar reading 'Two different jobs, two different failure domains.' Clean structured composition, generous spacing, educational and visually engaging.</div>
+        </div>
+      </div>
+      <p>Common misconception: assuming 'active/active' automatically means FGSP and 'active/standby' automatically means FGCP. FGCP can run active-active. The dividing question is never about traffic distribution style — it's always about whether the boxes share one identity and synced config, or stay independent.</p>
+      <p>Troubleshooting checklist: (1) Confirm the intended relationship first — was this ever meant to be one cluster identity, or two independent boxes? Check for a shared HA group name/hostname. (2) If FGCP, remember heartbeat and session-sync are two separate mechanisms from Session 15's earlier reasoning — either can fail while the other keeps working, so isolate which one broke before assuming the whole cluster is down. (3) If FGSP, a 'dropped connection' complaint may not be an FGSP problem at all — check the upstream redirection mechanism first, since FGSP can only be blamed once you've confirmed traffic actually reached the other box.</p>
+
+      <div class="callout">
+        <strong>Self-test — answer from memory before scrolling back:</strong>
+        <ol style="margin-top:8px;padding-left:20px;">
+          <li>Two independently-managed, config-drifted boxes, load-balanced by an upstream switch — which protocol?</li>
+          <li>Two identically-configured boxes behind one ISP, needing zero-touch seamless VPN takeover — which protocol?</li>
+          <li>Name the two separate jobs FGCP performs that FGSP does not.</li>
+          <li>Why is "active/active" not proof that a design must be FGSP?</li>
+          <li>After an FGSP failover complaint, which two failure domains would you check, and in what order?</li>
+        </ol>
+      </div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Self-test: (1) Two independently-managed, config-drifted boxes load-balanced by an upstream switch — which protocol? (2) Two identically-configured boxes behind one ISP needing zero-touch VPN takeover — which protocol? (3) Name the two jobs FGCP performs that FGSP does not. (4) After an FGSP failover, which two failure domains would you check separately, and in what order?</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-exam-traps" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-exam-traps','Exam Traps')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-exam-traps" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-exam-traps')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</main>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE NAV — links to prev/next subtopic or chapter hub
+     If at the start: prev href="index.html", label "← BACK TO HUB", title "Chapter NN Hub"
+     If at the end:   next href="index.html", label "CHAPTER HUB →", title "Chapter NN Hub"
+     ══════════════════════════════════════════════════════════ -->
+<div class="page-nav">
+  <a class="page-nav-btn page-nav-prev" href="#">
+    <span class="page-nav-label">← BACK TO</span>
+    <span class="page-nav-title">Session 15 — Full Discussion</span>
+  </a>
+  <a class="page-nav-btn page-nav-next" href="#">
+    <span class="page-nav-label">NEXT →</span>
+    <span class="page-nav-title">Next: VRRP — the third HA answer</span>
+  </a>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     FOOTER
+     ══════════════════════════════════════════════════════════ -->
+<footer>
+  NSE7 Enterprise Firewall 7.6<span>.</span> Session 15<span>.</span> Study Bite<span>.</span> FGCP vs FGSP
+</footer>
+
+<!-- ══════════════════════════════════════════════════════════
+     SCRIPT — update PAGE_KEY and SECTIONS only; rest is fixed
+     ══════════════════════════════════════════════════════════ -->
+<script>
+// ← PAGE_KEY must be unique across all pages. Format: ccna-chNN-subNN-slug
+const PAGE_KEY = 'nse7-s15-bite-fgcp-fgsp';
+// e.g. 'ccna-ch04-sub02-vlans'
+
+// ← One entry per section. Key = the id on the .section-block div (without #).
+const SECTIONS = {
+  'section-core-distinction': 'Core Distinction',
+  'section-packet-flow': 'Packet Flow',
+  'section-exam-traps': 'Exam Traps',
+  // add more if needed
+};
+
+/* ── Everything below is fixed — do not modify ── */
+document.querySelectorAll('.socratic-header').forEach(function(h) {
+  h.addEventListener('click', function() { h.closest('.socratic-block').classList.toggle('soc-open'); });
+});
+function getQArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-qs') || '[]'); }
+function saveQArr(qs) { localStorage.setItem(PAGE_KEY+'-qs', JSON.stringify(qs)); }
+function addQuestion(key, name) {
+  const ta = document.getElementById('q-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const qs = getQArr(); qs.push({id: Date.now(), section: key, sectionName: name, text});
+  saveQArr(qs); ta.value = ''; renderQPanel();
+  if (!document.getElementById('qpanel-body').classList.contains('open')) toggleQPanel();
+}
+function deleteQ(id) { saveQArr(getQArr().filter(q => q.id !== id)); renderQPanel(); }
+function toggleQPanel() {
+  const body = document.getElementById('qpanel-body');
+  const header = document.getElementById('qpanel-header');
+  const chevron = document.getElementById('qpanel-chevron');
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-qpanel-open', open);
+}
+function renderQPanel() {
+  const qs = getQArr();
+  const count = document.getElementById('qpanel-count');
+  if (count) { count.textContent = qs.length; count.style.display = qs.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.qpanel-hint');
+  if (hint) hint.textContent = qs.length ? `— ${qs.length} question${qs.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('qpanel-body'); if (!body) return;
+  if (!qs.length) { body.innerHTML = '<p class="no-questions">No questions yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  qs.forEach(q => { if (groups[q.section]) groups[q.section].push(q); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(q => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${q.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteQ(${q.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function getNotesArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-notes') || '[]'); }
+function saveNotesArr(ns) { localStorage.setItem(PAGE_KEY+'-notes', JSON.stringify(ns)); }
+function addNote(key) {
+  const ta = document.getElementById('note-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const ns = getNotesArr(); ns.push({id: Date.now(), section: key, sectionName: SECTIONS[key]||key, text});
+  saveNotesArr(ns); ta.value = ''; renderNotesPanel();
+  if (!document.getElementById('notes-panel-body').classList.contains('open')) toggleNotesPanel();
+}
+function deleteNote(id) { saveNotesArr(getNotesArr().filter(n => n.id !== id)); renderNotesPanel(); }
+function toggleNotesPanel() {
+  const body = document.getElementById('notes-panel-body');
+  const header = document.getElementById('notes-panel-header');
+  const chevron = document.getElementById('notes-panel-chevron');
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-notes-panel-open', open);
+}
+function renderNotesPanel() {
+  const ns = getNotesArr();
+  const count = document.getElementById('notes-panel-count');
+  if (count) { count.textContent = ns.length; count.style.display = ns.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.notes-panel-hint');
+  if (hint) hint.textContent = ns.length ? `— ${ns.length} note${ns.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('notes-panel-body'); if (!body) return;
+  if (!ns.length) { body.innerHTML = '<p class="no-questions">No notes yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  ns.forEach(n => { if (groups[n.section]) groups[n.section].push(n); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(n => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteNote(${n.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function saveSocAnswer(btn) {
+  const area = btn.closest('.answer-area');
+  const ta = area.querySelector('.answer-textarea');
+  if (!ta.value.trim()) { ta.focus(); return; }
+  const key = PAGE_KEY+'-socans-'+area.dataset.section;
+  try { localStorage.setItem(key, ta.value); } catch(e) {}
+  ta.disabled = true; btn.textContent = '✓ Answer saved'; btn.disabled = true;
+  const seeBtn = area.querySelector('.btn-see-answer');
+  seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+}
+function revealSocAnswer(btn) {
+  if (btn.disabled) return;
+  const answers = btn.closest('.answer-area').querySelector('.model-answers');
+  const isHidden = answers.style.display === 'none' || !answers.style.display;
+  answers.style.display = isHidden ? 'block' : 'none';
+  btn.textContent = isHidden ? '▲ Hide Model Answer' : '💡 See Model Answer';
+}
+function togglePrompt(btn) {
+  const c = btn.nextElementSibling;
+  const isHidden = c.hasAttribute('hidden');
+  if (isHidden) { c.removeAttribute('hidden'); btn.textContent = '▴ Hide prompt'; }
+  else { c.setAttribute('hidden', ''); btn.textContent = '▾ Show image prompt'; }
+}
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+document.addEventListener('DOMContentLoaded', function() {
+  renderQPanel(); renderNotesPanel();
+  if (localStorage.getItem(PAGE_KEY+'-qpanel-open') === 'true') toggleQPanel();
+  if (localStorage.getItem(PAGE_KEY+'-notes-panel-open') === 'true') toggleNotesPanel();
+  document.querySelectorAll('.answer-area').forEach(function(area) {
+    const key = PAGE_KEY+'-socans-'+area.dataset.section;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const ta = area.querySelector('.answer-textarea'); ta.value = saved; ta.disabled = true;
+        const addBtn = area.querySelector('.btn-add-answer'); addBtn.textContent = '✓ Answer saved'; addBtn.disabled = true;
+        const seeBtn = area.querySelector('.btn-see-answer'); seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+      }
+    } catch(e) {}
+  });
+  document.querySelectorAll('.analogy-box').forEach(function(box) {
+    if (box.dataset.collapsibleInit) return;
+    box.dataset.collapsibleInit = '1';
+    box.classList.add('expanded');
+    const label = box.querySelector(':scope > .analogy-label');
+    if (label) label.addEventListener('click', () => box.classList.toggle('expanded'));
+  });
+  document.querySelectorAll('.analogy-img img').forEach(function(img) {
+    if (img.dataset.zoomInit) return;
+    img.dataset.zoomInit = '1';
+    img.addEventListener('click', () => img.classList.toggle('zoomed'));
+  });
+  document.querySelectorAll('.section-img').forEach(function(img) {
+    img.addEventListener('click', () => img.classList.toggle('si-expanded'));
+  });
+});
+</script>
+</body>
+</html>
