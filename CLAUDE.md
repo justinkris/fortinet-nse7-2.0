@@ -1,0 +1,92 @@
+# NSE7 EF 7.6 — Project Instructions
+
+This project follows the shared `build-study-plan` skill layout (see that skill for the base workflow: PHASES/SESSIONS in `build.py`, per-session folders, `sorting-hat/` inbox, session-linked extras/completions/summaries). This file only documents **deltas and project-specific conventions** the skill doesn't cover.
+
+## Standalone Extras (extras-NN-slug)
+
+In addition to session-linked extras, this project supports **standalone Extras topics** — Socratic explorations of subjects that aren't tied to a specific session (CLI reference, cross-session visual analogies, etc.).
+
+**Directory layout**
+
+```
+extras/
+  extras-NN-<slug>/
+    index.html         # the main guide (long-form)
+    images/            # PNGs + prompts.txt for this topic
+    bites/*.html       # optional focused explainers
+    nibbles/*.html     # optional short reference cards
+```
+
+Standalone Extras are discovered by `discover_standalone_extras()` in `build.py` and rendered on `extras.html` alongside session-linked items, distinguished by an `Extras NN · <title>` chip (versus `Session NN`).
+
+**Registering a new topic:** append to the `EXTRAS = [...]` list in `build.py` with `num`, `slug`, `title`, `tagline`. Then rebuild.
+
+## Sort workflow — sorting-hat extension
+
+The base skill's sort patterns cover `session-NN-*` files. This project adds one more pattern:
+
+| Pattern | Meaning | Destination |
+|---|---|---|
+| `extras-<NN>-<slug>.html` | Standalone Extras topic index | `extras/extras-<NN>-<slug>/index.html` |
+
+Sort steps for an `extras-NN-*.html` file:
+
+1. Move to `extras/extras-<NN>-<slug>/index.html` (create the folder).
+2. **Handle image placeholders** (see next section).
+3. Add the topic to the `EXTRAS` list in `build.py` — pick a clean title (strip any `Extra(s) NN —` prefix from the HTML `<title>`) and write a one-sentence tagline describing what the topic covers.
+4. Run `python3 build.py`.
+5. Report the move and confirm the new card shows on `extras.html`.
+
+Session-linked bite/nibble/guide/complete/summary files still follow the base skill's rules — nothing changes there.
+
+## Image handling for standalone Extras
+
+When an `extras-NN-*.html` file contains one or more **image placeholders** (dashed-border blocks with an inline generation prompt), do this on sort:
+
+1. Create an `images/` subfolder inside the extras topic folder.
+2. For each placeholder:
+   - Pick a descriptive PNG filename (kebab-case, e.g. `customs-lanes.png`, `s1-reading-order.png`).
+   - Replace the placeholder block with an `<img src="images/<filename>.png">` that degrades gracefully to a dashed fallback if the PNG is missing. Pattern:
+
+     ```html
+     <img src="images/<filename>.png" alt="..." style="..." onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+     <div style="display:none;border:2px dashed var(--border);...">
+       <!-- short placeholder card: title + "Drop the generated PNG at images/<filename>.png — see images/prompts.txt for the prompt" -->
+     </div>
+     ```
+
+   - **Do not leave the long prompt text inline in the HTML.** Move it to `images/prompts.txt`.
+3. Create or append to `extras/extras-NN-<slug>/images/prompts.txt` — one block per image, in this shape:
+
+   ```
+   <filename>.png
+
+   <full generation prompt, verbatim>
+
+   ============================================================
+   ```
+
+   If the file already exists, append; do not overwrite.
+
+**Exception:** if the file already uses the `<img src=... onerror=...>` pattern with a `.si-placeholder` fallback (e.g. Claude generated it that way), don't rewrite the HTML — just extract each prompt to `images/prompts.txt` and leave the toggle-to-view inline prompts in place.
+
+## Hub cards + card titles
+
+- Hub cards on `extras.html` and `completed-sessions.html` must be a **single `<a>`** — no nested `<a>` inside (nested anchors render as phantom clickable boxes in Chromium/WebKit).
+- Card titles come from `extract_html_title()`, which strips these prefixes from the HTML `<title>` before display:
+  - `Session NN — `
+  - `Extras? NN [Bite|Nibble|Guide] — `
+  - `Study Bite — `, `Study Guide — `, `Guide — `, `Nibble — `, `Bite — `, `Study Nibble — `
+- If a new file uses a different prefix that isn't being stripped, extend the regex in `extract_html_title()` rather than editing the source file's `<title>` tag.
+
+## Known standing warnings
+
+- `sessions/session-39-hardware-acceleration/complete.html` is missing the `socratic-block` marker (sorted before the shell-contract validation existed). The build script prints a warning on every run. Fix: regenerate that session's completed guide in Claude using `templates/TEMPLATE-GUIDE-CREAM.html` and drop the new file into `sorting-hat/` for a re-sort. Do not re-flag this in every sort report — user is aware.
+
+## Quick command reference
+
+```bash
+cd ~/Desktop/Projects/fortinet-nse7-2.0
+python3 build.py                 # rebuild everything
+ls sorting-hat/                  # check the inbox
+```

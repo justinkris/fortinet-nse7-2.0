@@ -1497,6 +1497,12 @@ EXTRAS = [
         "title": "Visual — Flow-Based vs Proxy-Based Inspection",
         "tagline": "Split-panel customs-lanes analogy for how the two inspection modes differ inside the same FortiGate.",
     },
+    {
+        "num": 3,
+        "slug": "session-entry-anatomy",
+        "title": "Anatomy of a Session Table Entry",
+        "tagline": "Six regions of a FortiOS session entry — and why the npu info verdict line is the one to read first.",
+    },
 ]
 
 EXTRAS_DIR = ROOT / "extras"
@@ -1615,7 +1621,7 @@ def extract_html_title(path):
         return None
     # Strip prefixes like "Session 39 — " / "Extras 01 Bite — " and friendly labels
     title = _re.sub(r"^Session\s+\d+\s+—\s+", "", title)
-    title = _re.sub(r"^Extras\s+\d+(?:\s+(?:Bite|Nibble|Guide))?\s+—\s+", "", title)
+    title = _re.sub(r"^Extras?\s+\d+(?:\s+(?:Bite|Nibble|Guide))?\s+—\s+", "", title)
     for pref in _TITLE_STRIP_PREFIXES:
         if title.startswith(pref):
             title = title[len(pref):]

@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<!--
+  ╔══════════════════════════════════════════════════════════════════════╗
+  ║  NSE7 EF 7.6 — VISUAL PAGE (CREAM EDITION)                           ║
+  ║  Extra 02 — Anatomy of a Session Table Entry                         ║
+  ║  Visual type: Single Concept Visual (annotated anatomy dissection)   ║
+  ╚══════════════════════════════════════════════════════════════════════╝
+-->
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Extra 02 — Anatomy of a Session Table Entry</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ── DESIGN TOKENS ── */
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* HEADER */
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb a:hover{text-decoration:underline;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+
+  /* MOTIVATION BANNER */
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.005em;}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+
+  /* TOP PANELS */
+  .top-panels{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+  .top-panels .qpanel{border-bottom:none;border-right:1px solid var(--border);}
+  .top-panels .qpanel-header{padding-left:32px;padding-right:32px;}
+  .top-panels .qpanel-body{padding-left:32px;padding-right:32px;}
+  .qpanel{background:var(--surface);}
+  .qpanel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .qpanel-header:hover,.qpanel-header.open{background:var(--surface-2);}
+  .qpanel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .qpanel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .qpanel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .qpanel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .qpanel-body{display:none;padding:0 20px 22px;}
+  .qpanel-body.open{display:block;}
+  .notes-panel{background:var(--surface);}
+  .notes-panel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 32px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .notes-panel-header:hover,.notes-panel-header.open{background:var(--surface-2);}
+  .notes-panel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .notes-panel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .notes-panel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .notes-panel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .notes-panel-body{display:none;padding:0 32px 22px;}
+  .notes-panel-body.open{display:block;}
+  .q-group{margin-bottom:16px;}
+  .q-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+  .q-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-dim);}
+  .q-item:last-child{border-bottom:none;}
+  .q-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;color:var(--blue);min-width:16px;margin-top:2px;}
+  .q-text{font-size:14px;color:var(--text-soft);line-height:1.5;flex:1;}
+  .q-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:0 4px;margin-top:1px;}
+  .q-del:hover{color:var(--blue);}
+  .no-questions{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);padding:8px 0;}
+  .btn-add-q{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-q:hover{opacity:0.85;}
+
+  /* STICKY SECTION NAV */
+  .section-nav{position:sticky;top:0;z-index:90;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px;overflow-x:auto;}
+  .nav-tab{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:12px 18px;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s,border-color 0.15s;}
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+  /* MAIN GRID */
+  main{max-width:1200px;margin:0 auto;padding:0;}
+  .main-content{padding:36px 60px 60px 60px;}
+
+  /* SECTION BLOCK */
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:4px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+
+  /* CALLOUTS */
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+
+  /* DATA TABLE */
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+
+  /* CODE BLOCK */
+  .code-block{background:var(--ink-dark);border-radius:10px;padding:0;margin:16px 0;overflow:hidden;border:1px solid var(--border);}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:8px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:16px;overflow-x:auto;}
+  .code-block code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12.5px;line-height:1.65;color:#e8efff;}
+  .code-block code .hl{color:#ffd479;font-weight:700;}
+  .code-block code .dim{color:#7a8bb5;}
+
+  /* SECTION IMAGE */
+  .img-caption{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}
+  .section-img-wrap{margin:0 0 20px;display:flex;flex-direction:column;align-items:center;}
+  .section-img{width:260px;max-width:100%;border-radius:12px;cursor:zoom-in;transition:width 0.3s ease;border:1px solid var(--border);display:block;}
+  .section-img.si-expanded{width:100%;cursor:zoom-out;border-radius:16px;}
+  .si-placeholder{display:none;width:100%;max-width:720px;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}
+  .si-placeholder.si-show{display:flex;}
+  .si-filename{font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--text-muted);font-family:'SF Mono','Fira Code',monospace;}
+
+  /* SOCRATIC */
+  .socratic-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:16px;border-top:3px solid var(--blue);}
+  .socratic-header{display:flex;align-items:center;gap:8px;margin-bottom:0;cursor:pointer;user-select:none;}
+  .socratic-header::after{content:'▸ Expand';margin-left:auto;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-block.soc-open .socratic-header{margin-bottom:10px;}
+  .socratic-block.soc-open .socratic-header::after{content:'▾ Collapse';}
+  .socratic-block:not(.soc-open) .socratic-insight,
+  .socratic-block:not(.soc-open) .socratic-questions,
+  .socratic-block:not(.soc-open) .answer-area{display:none;}
+  .socratic-icon{font-size:17px;flex-shrink:0;}
+  .socratic-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-insight{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;margin-bottom:12px;border-left:3px solid var(--border);padding-left:14px;font-style:italic;}
+  .socratic-questions{list-style:none;padding:0;margin:0;}
+  .socratic-questions li{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--border-dim);line-height:1.6;}
+  .socratic-questions li:last-child{border-bottom:none;}
+  .socratic-questions li::before{content:'?';position:absolute;left:0;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:16px;top:7px;color:var(--blue);}
+  .answer-area{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .answer-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .answer-textarea:focus{border-color:var(--blue);}
+  .answer-textarea:disabled{opacity:0.75;background:var(--surface-2);cursor:default;}
+  .answer-buttons{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .btn-add-answer{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-answer:hover:not(:disabled){opacity:0.85;}
+  .btn-add-answer:disabled{opacity:0.5;cursor:default;}
+  .btn-see-answer{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-see-answer:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-see-answer:not(:disabled){color:var(--blue);border-color:var(--blue);}
+  .btn-see-answer:hover:not(:disabled){background:var(--blue-glow);}
+  .model-answers{margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .model-answer-item{padding:10px 0;border-bottom:1px solid var(--border-dim);}
+  .model-answer-item:first-child{padding-top:0;}
+  .model-answer-item:last-child{border-bottom:none;padding-bottom:0;}
+  .model-answer-q{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;}
+  .model-answer-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;}
+
+  /* MENTAL NOTE */
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+
+  /* ANALOGY BOX */
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+  .analogy-label{display:flex;align-items:center;gap:6px;user-select:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px;text-transform:uppercase;}
+  .analogy-label::after{content:'▾  Reveal illustration';margin-left:auto;font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:none;opacity:0.75;}
+  .analogy-label:hover::after{opacity:1;}
+  .analogy-box.expanded>.analogy-label::after{content:'▴  Hide illustration';}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
+  .analogy-text ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;}
+  .analogy-text li{padding-left:18px;position:relative;}
+  .analogy-text li::before{content:'•';position:absolute;left:0;font-weight:700;color:var(--amber);}
+  .analogy-box>.analogy-img{display:none;}
+  .analogy-box.expanded>.analogy-img{display:block;}
+  .analogy-img img{max-width:360px;width:100%;cursor:zoom-in;transition:max-width 0.25s ease;border-radius:8px;margin-top:10px;}
+  .analogy-img img.zoomed{max-width:100%;cursor:zoom-out;}
+  .analogy-img .img-missing-msg{display:none!important;}
+  .prompt-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}
+  .prompt-toggle:hover{color:var(--text);border-color:var(--text);}
+  .prompt-content{margin-top:10px;padding:10px 14px;background:rgba(0,0,0,0.04);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.65;text-align:left;}
+  .prompt-content[hidden]{display:none;}
+
+  /* LESSON TOOLS */
+  .lesson-tools{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:40px;}
+  .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .tool-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .tool-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .tool-textarea:focus{border-color:var(--blue);}
+  .tool-row{margin-top:8px;display:flex;gap:8px;}
+
+  /* PAGE NAV */
+  .page-nav{display:flex;border-top:2px solid var(--border);background:var(--surface);}
+  .page-nav-btn{flex:1;display:flex;flex-direction:column;gap:4px;padding:16px 28px;text-decoration:none;transition:background 0.15s;cursor:pointer;}
+  .page-nav-btn:hover:not(.page-nav-disabled){background:var(--surface-2);}
+  .page-nav-prev{border-right:1px solid var(--border);}
+  .page-nav-next{text-align:right;}
+  .page-nav-disabled{opacity:0.3;pointer-events:none;}
+  .page-nav-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);display:block;text-transform:uppercase;}
+  .page-nav-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;font-style:italic;color:var(--blue);display:block;}
+
+  /* FOOTER */
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+
+  /* RESPONSIVE */
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:34px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}.section-nav{padding:0 16px;}.top-panels{grid-template-columns:1fr;}.top-panels .qpanel{border-right:none;border-bottom:1px solid var(--border);}.lesson-tools-grid{grid-template-columns:1fr;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     HEADER
+     ══════════════════════════════════════════════════════════ -->
+<header>
+  <div class="header-left">
+    <div class="breadcrumb">
+      <a href="#">NSE7 Enterprise Firewall 7.6</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="#">Extras</a>
+      <span class="breadcrumb-sep">›</span>
+      Extra 02 — Visual
+    </div>
+    <div class="header-eyebrow"><span class="dot-live"></span> Visual Study Page · NSE7 EF 7.6</div>
+    <h1>Anatomy of a <em>Session Table Entry</em></h1>
+    <p>One annotated dissection of the most important artefact in FortiOS troubleshooting — and the exact reading order an experienced engineer uses.</p>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════
+     MOTIVATION BANNER
+     ══════════════════════════════════════════════════════════ -->
+<div class="motivation-banner">
+  <div class="motivation-text">Every field in a session entry answers a different question — but only <em>one line delivers the verdict</em>.</div>
+  <p class="motivation-sub">Sessions 39, 40, and 02 all ended at the same place: reading <code>diagnose sys session list</code> output under pressure. This page turns that skill into a single spatial picture — where your eyes go first, what each region tells you, and what it deliberately doesn't.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MY QUESTIONS + MY NOTES PANELS
+     ══════════════════════════════════════════════════════════ -->
+<div class="top-panels">
+  <div class="qpanel" id="qpanel">
+    <button class="qpanel-header" onclick="toggleQPanel()" id="qpanel-header">
+      <span class="qpanel-title">MY QUESTIONS</span>
+      <span class="qpanel-count" id="qpanel-count">0</span>
+      <span class="qpanel-hint">— click to expand</span>
+      <span class="qpanel-chevron" id="qpanel-chevron">▾</span>
+    </button>
+    <div class="qpanel-body" id="qpanel-body"></div>
+  </div>
+  <div class="notes-panel" id="notes-panel">
+    <button class="notes-panel-header" onclick="toggleNotesPanel()" id="notes-panel-header">
+      <span class="notes-panel-title">MY NOTES</span>
+      <span class="notes-panel-count" id="notes-panel-count">0</span>
+      <span class="notes-panel-hint">— click to expand</span>
+      <span class="notes-panel-chevron" id="notes-panel-chevron">▾</span>
+    </button>
+    <div class="notes-panel-body" id="notes-panel-body"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     STICKY SECTION NAV
+     ══════════════════════════════════════════════════════════ -->
+<nav class="section-nav" id="section-nav">
+  <a class="nav-tab active" href="#section-reading-order">Reading Order</a>
+  <a class="nav-tab" href="#section-master-anatomy">Master Anatomy</a>
+  <a class="nav-tab" href="#section-verdict-line">The Verdict Line</a>
+  <a class="nav-tab" href="#section-ofld-reason">Constraint vs Decision</a>
+</nav>
+
+<main>
+  <div class="main-content">
+
+    <!-- ══════════════════════════════════════════
+         SECTION 1 — READING ORDER
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · READING ORDER</span>
+      </div>
+      <p class="socratic-insight">When Marcus starred those session entries during the trading floor recovery, he read them top to bottom like a paragraph — and got lost in NAT hooks and hex flags before ever reaching the line that mattered. An experienced engineer reads a session entry the way a doctor reads an X-ray: verdict first, context second.</p>
+      <ul class="socratic-questions">
+        <li>The session entry records dozens of fields, but a senior engineer investigating a performance complaint reads exactly one line first. Which line — and why does everything else count as context rather than evidence?</li>
+        <li>Why does this output live under <code>diagnose</code> rather than <code>get</code>? What does that placement tell you about what you're actually looking at?</li>
+      </ul>
+      <div class="answer-area" data-section="reading-order">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">The <strong>npu info</strong> line. It is the only line that tells you <em>where processing is happening</em> — NP7 fast path or CPU slow path. Every other field (proto, duration, NAT translations, byte counts) describes the session itself but says nothing about the processing path. For a performance investigation, the verdict is the evidence; the rest is context you pull in only after the verdict raises a question.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text"><code>get</code> commands produce operational summaries formatted for administrators. <code>diagnose</code> exposes raw internal engine state. The session table lives under <code>diagnose</code> because it shows what the forwarding engine is <em>actually doing</em> — not a summary of what the configuration says should happen. When you need proof, you need engine state.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-reading-order">
+      <div class="section-label">SECTION 01</div>
+      <h2>Why the Entry Exists — and the <em>Reading Order</em></h2>
+
+      <div class="section-img-wrap">
+        <img src="images/s1-reading-order.png" class="section-img"
+             alt="Engineer's eye-path over a session entry: verdict line first, context regions second"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">The senior engineer's eye-path: verdict line first, reason line second, context last.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/s1-reading-order.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic. Warm cream background (#faf5e9), coral accents, muted gold highlights, sage greens, soft brown outlines, clean bold line work, no gradients, no photorealism, no 3D. Composition: a large cream-coloured terminal window occupies the right two-thirds of the frame, drawn as a friendly rounded rectangle with a soft brown outline, containing six horizontal rows of stylised "text" (drawn as simple line-blocks, not real words) representing a FortiOS session entry. The bottom row of the terminal is highlighted in coral and labelled in small clean type "npu info — THE VERDICT LINE". The row directly above it is highlighted in muted gold and labelled "no_ofld_reason". The four upper rows are sage green and collectively labelled "context". On the left third, a calm female network engineer (Priya-like: dark hair in a bun, sage-green blazer, confident slight smile) stands holding a clipboard, drawn in the same flat style. From her eyes, a dashed coral arrow numbered "1" arcs directly to the coral verdict line at the bottom of the terminal, skipping every other row. A second dashed gold arrow numbered "2" arcs to the gold reason row. A third thin sage arrow numbered "3" sweeps up to the context rows. Perspective: flat frontal, generous white space, structured grid composition. Lighting: even and warm, no shadows beyond soft flat shapes. Small decorative touches: a tiny NP7 chip icon (coral square with pin legs, labelled "NP7") beside the verdict line, and a small CPU icon (gold square labelled "CPU") beside it with a versus dash between them. Overall mood: calm, methodical, educational — the picture should teach that experienced eyes jump straight to the bottom verdict line before reading anything else.</div>
+        </div>
+      </div>
+
+      <p>The session table exists because <strong>re-evaluating every packet from scratch would be ruinously expensive</strong>. When the first packet of a connection arrives, the CPU does the full expensive work once — route lookup, policy evaluation, NAT decision, offload eligibility — and writes the outcome into a session entry. Every subsequent packet in that connection simply follows the recorded verdict. The entry is therefore not a log; it is a <em>standing instruction</em> that governs live traffic.</p>
+      <p>That is why the reading order matters. The entry mixes two very different kinds of information: the <strong>verdict</strong> (where packets are being processed, and why) and the <strong>context</strong> (who is talking to whom, for how long, through which policy). Reading top-to-bottom drowns the verdict in context. Reading verdict-first turns a wall of text into a two-second diagnosis.</p>
+
+      <div class="analogy-box">
+        <div class="analogy-label">Analogy — The Boarding Pass</div>
+        <div class="analogy-text">
+          <p class="analogy-summary">A session entry is a boarding pass stamped once at check-in — and the fast-track stamp is the only thing the gate ever reads.</p>
+          <ul>
+            <li><strong>Check-in desk = CPU first-packet evaluation.</strong> The one moment where a human (the CPU) inspects your documents, checks the rules (firewall policy), and decides your path.</li>
+            <li><strong>The boarding pass = the session entry.</strong> Name, seat, flight time — that's proto, src/dst, duration. Useful context, but not what determines your experience at the gate.</li>
+            <li><strong>The fast-track stamp = <code>offload=9/9</code>.</strong> If the stamp is there, every checkpoint afterwards waves you through at hardware speed. No stamp (<code>offload=0/0</code>) means the slow queue for the entire journey.</li>
+            <li><strong>The stamp is issued once.</strong> Changing airport policy after check-in doesn't reprint passes already in passengers' hands — exactly as policy changes never retroactively rewrite existing session verdicts.</li>
+            <li><strong>The gate staff = the NP7.</strong> They read the stamp; they never re-interview you. The NP7 forwards according to the verdict — it does not re-evaluate policy.</li>
+          </ul>
+        </div>
+        <div class="analogy-img" style="margin-top:14px;background:rgba(255,255,255,0.5);border-radius:10px;padding:14px;text-align:center;">
+          <img src="images/a1-boarding-pass.png" alt="Boarding pass with fast-track stamp compared to a session entry with an offload verdict"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='block';"
+               style="max-width:100%;border-radius:8px;display:block;margin:0 auto 4px;">
+          <p class="img-caption" style="margin-bottom:8px;">Stamped once at check-in; read at every gate; never re-issued mid-journey.</p>
+          <div class="img-missing-msg" style="display:none;padding:24px 12px;background:rgba(0,0,0,0.03);border:1px dashed #f3d68a;border-radius:8px;color:#5c3d09;font-size:14px;margin-bottom:10px;font-family:'Cormorant Garamond',serif;">📷 <strong>images/a1-boarding-pass.png</strong> — add this image</div>
+          <button class="prompt-toggle" onclick="togglePrompt(this)" type="button">▾ Show analogy image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic. Warm cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, bold clean line work, no gradients, no photorealism. Composition: split scene. Left half: an airport check-in desk drawn flat and friendly; a smiling check-in agent (representing the CPU, wearing a gold badge literally labelled "CPU") stamps a large oversized boarding pass held by a small cheerful packet character (a rounded coral envelope with stubby legs and wide eyes). The stamp being pressed onto the pass glows coral and reads "OFFLOAD 9/9". The boarding pass itself shows flat mock fields labelled in tiny clean type: "proto", "src→dst", "policy 12", "duration". Right half: a fast-track airport lane drawn as a sage-green corridor with a gate scanner arch labelled "NP7"; three identical packet characters stride confidently through the arch, each holding up the stamped pass; the scanner emits a small coral checkmark above each one. Behind them, a separate slower grey queue labelled "CPU slow path" shows one droopy-eyed packet character waiting behind a rope barrier, its pass visibly stamp-less with "0/0" in muted grey. Perspective: flat frontal side-view, single horizon line, generous spacing between elements. A thin dashed timeline arrow runs along the bottom from "check-in (first packet)" to "gate (every later packet)" reinforcing that the decision happens once. Mood: playful but precise; every object maps to exactly one FortiOS concept.</div>
+        </div>
+      </div>
+
+      <div class="callout callout-green">
+        <strong>The three-step eye-path:</strong> ① <code>npu info</code> — what's the verdict? ② If <code>no_offload</code> → <code>no_ofld_reason</code> — is it a constraint or a decision? ③ Only then read context fields (proto, tunnel, policy_id) to confirm the story.
+      </div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">A session entry is a standing instruction, not a log. The verdict is written once, at first-packet time, by the CPU — and every later packet obeys it without re-evaluation. Read the entry the way it is used: verdict first, context second.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-reading-order" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-reading-order','Reading Order')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-reading-order" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-reading-order')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 2 — MASTER ANATOMY
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · MASTER ANATOMY</span>
+      </div>
+      <p class="socratic-insight">Below is a complete entry from a healthy Vaultline trading session — the proof Priya asked Marcus for. Before you read the dissection, test whether the regions already have meaning for you.</p>
+      <ul class="socratic-questions">
+        <li>The entry contains two mirrored NAT lines — one <code>dir=org act=snat</code>, one <code>dir=reply act=dnat</code>. Why must a single session record <em>both</em> directions, and what does that tell you about why <code>offload=X/Y</code> has two numbers?</li>
+        <li><code>proto=6 proto_state=01</code> — without memorising codes, what category of information is this region giving you, and when in a troubleshooting flow would you actually consult it?</li>
+      </ul>
+      <div class="answer-area" data-section="master-anatomy">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">A firewall session is bidirectional by nature — the reply traffic must be matched to the same session and un-NATted correctly, so the entry records the translation for both the originating (org) and reply directions. Because the two directions are tracked separately, they can also be <em>offloaded</em> separately — which is exactly why the verdict reads <code>offload=X/Y</code>: X is the forward direction's processor, Y is the reverse direction's.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">It is identity-and-lifecycle context: <code>proto=6</code> is TCP, and <code>proto_state</code> describes where the connection sits in its lifecycle (01 = established for TCP). You consult it <em>after</em> the verdict raises a question — e.g. "is this session even long-lived enough to have been offloaded?" or "is this a protocol that needs a session helper?" It never tells you where packets are being processed.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-master-anatomy">
+      <div class="section-label">SECTION 02</div>
+      <h2>The Master <em>Dissection</em></h2>
+
+      <div class="section-img-wrap">
+        <img src="images/s2-master-anatomy.png" class="section-img"
+             alt="Full annotated dissection of a FortiOS session entry with six labelled regions"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">The master anatomy plate — six regions, one verdict. Click to expand.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/s2-master-anatomy.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration in the style of a vintage anatomical dissection plate, redrawn as modern vector art. Warm cream background (#faf5e9), coral accents, muted gold highlights, sage greens, soft brown outlines, bold clean line work, no gradients, no photorealism, no 3D. Composition: centred, a tall cream parchment-style card (like a museum specimen plate) containing a stylised FortiOS session entry rendered as six stacked horizontal bands, each band a rounded rectangle in its own tint. From top to bottom: Band 1 sage green labelled "IDENTITY &amp; LIFETIME" containing small clean monospace-style text "proto=6 proto_state=01 duration=847 expire=3597"; Band 2 pale gold labelled "STATE FLAGS" containing "state=log may_dirty npu"; Band 3 soft sage labelled "STATISTICS" containing "org=48210/312  reply=39804/287"; Band 4 pale blue-grey labelled "NAT HOOKS (BOTH DIRECTIONS)" containing two mirrored mini-arrows: "org: snat →" and "reply: dnat ←"; Band 5 muted gold labelled "POLICY VERDICT" containing "policy_id=12  vd=0"; Band 6, the widest and boldest band at the bottom, coral with a thicker outline and a small crown icon, labelled "NPU VERDICT — READ ME FIRST" containing "npu info: offload=9/9". On both sides of the plate, elegant thin annotation lines (like anatomy diagram callouts, soft brown, ending in small dots) extend outward to handwritten-style labels: left side labels describe WHAT each region tells you ("who &amp; how long", "session behaviours", "traffic volume", "translation both ways", "which rule matched"); right side labels describe WHAT IT DOES NOT tell you, each in muted grey italic ("not the processing path", "not the verdict", "not the verdict", "not the verdict", "not the verdict") with the bottom coral band's right label reading in coral bold: "THIS is the processing path". Above the plate, a small brass-style plaque reads "diagnose sys session list — one entry, dissected". Two tiny flat cartoon engineers stand at the bottom corners examining the plate: on the left, a young man with headphones around his neck (Marcus-like, curious expression, pointing up at band 6); on the right, a bearded senior engineer with glasses calmly holding a magnifying glass over the coral band. Perspective: flat frontal, generous margins, museum-poster spacing. Mood: scholarly, precise, slightly playful — a specimen plate that makes the six-region structure and the primacy of the bottom verdict band unforgettable.</div>
+        </div>
+      </div>
+
+      <p>Here is the real artefact — the session Marcus starred, captured after the rollback restored NP7 offloading on the trading VLAN. Read it once top-to-bottom now; after this section you should never need to read one that way again.</p>
+
+      <div class="code-block">
+        <div class="code-label">FortiOS CLI — FGT-VAULTLINE-01</div>
+        <pre><code>FGT-VAULTLINE-01 # diagnose sys session list
+
+<span class="dim">── ① IDENTITY &amp; LIFETIME ─────────────────────────────────────</span>
+session info: proto=6 proto_state=01 duration=847 expire=3597 timeout=3600
+flags=00000000 socktype=0 sockport=0 av_idx=0 use=3
+<span class="dim">── ② STATE FLAGS ─────────────────────────────────────────────</span>
+class_id=0 ha_id=0 policy_dir=0 tunnel=/ vlan_cos=0/255
+state=log may_dirty npu
+<span class="dim">── ③ STATISTICS ──────────────────────────────────────────────</span>
+statistic(bytes/packets/allow_err): org=48210/312/1 reply=39804/287/1 tuples=2
+tx speed(Bps/kbps): 4210/33 rx speed(Bps/kbps): 3980/31
+<span class="dim">── ④ NAT HOOKS — BOTH DIRECTIONS ─────────────────────────────</span>
+orgin-&gt;sink: org pre-&gt;post, reply pre-&gt;post dev=17-&gt;19/19-&gt;17 gwy=203.0.113.1/10.20.10.55
+hook=post dir=org act=snat 10.20.10.55:51402-&gt;198.51.100.20:443(203.0.113.10:51402)
+hook=pre dir=reply act=dnat 198.51.100.20:443-&gt;203.0.113.10:51402(10.20.10.55:51402)
+<span class="dim">── ⑤ POLICY VERDICT ──────────────────────────────────────────</span>
+misc=0 policy_id=12 pol_uuid_idx=581 auth_info=0 chk_client_info=0 vd=0
+serial=00c8a2f1 tos=ff/ff app_list=0 app=0 url_cat=0
+<span class="dim">── ⑥ NPU VERDICT — READ ME FIRST ─────────────────────────────</span>
+npu_state=0x4000c00
+<span class="hl">npu info: flag=0x81/0x81, offload=9/9, ips_offload=0/0, epid=160/162, ipid=162/160, vlan=0x0000/0x0000</span></code></pre>
+      </div>
+
+      <table class="data-table">
+        <thead><tr><th>Region</th><th>Key fields</th><th>What it tells you</th><th>What it does <em>not</em> tell you</th></tr></thead>
+        <tbody>
+          <tr><td>① Identity &amp; lifetime</td><td><code>proto=6</code>, <code>proto_state=01</code>, <code>duration</code>, <code>expire</code>, <code>timeout</code></td><td>What kind of connection this is (6 = TCP, 17 = UDP), where it sits in its lifecycle (01 = established TCP), how long it has lived, and when it will age out.</td><td>Where packets are processed.</td></tr>
+          <tr><td>② State flags</td><td><code>state=log may_dirty npu</code>, <code>tunnel=/</code></td><td>Session behaviours: logging is on; <code>may_dirty</code> means the session can be flagged for re-check if policy changes; the <code>npu</code> flag shows it was marked for hardware offload. An empty <code>tunnel=/</code> rules out software-tunnel constraints.</td><td>The per-direction verdict — the flag signals intent; the <code>npu info</code> line confirms outcome.</td></tr>
+          <tr><td>③ Statistics</td><td><code>org=…</code> / <code>reply=…</code> bytes &amp; packets</td><td>Volume in each direction — useful for spotting one-way traffic or a session that never really exchanged data.</td><td>The processing path.</td></tr>
+          <tr><td>④ NAT hooks</td><td><code>dir=org act=snat</code>, <code>dir=reply act=dnat</code></td><td>The exact translation applied to each direction — the mirrored pair that lets reply packets find their way home.</td><td>The processing path — but it <em>explains</em> why the verdict has two numbers.</td></tr>
+          <tr><td>⑤ Policy verdict</td><td><code>policy_id=12</code>, <code>vd=0</code></td><td>Which firewall policy admitted this session and which VDOM owns it — your pivot point into <code>show firewall policy 12</code>.</td><td>Whether that policy's settings resulted in offload — the policy is the cause, the npu line is the effect.</td></tr>
+          <tr><td>⑥ NPU verdict</td><td><code>npu_state</code>, <code>npu info: offload=9/9</code></td><td><strong>The verdict.</strong> Where each direction of this session is actually being processed, right now.</td><td>— (this is the line everything else exists to explain)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-amber">
+        <strong>Common misconception:</strong> the <code>npu</code> flag in the state line (region ②) and the <code>npu info</code> line (region ⑥) are not the same evidence. The flag says the session was <em>marked</em> for offload; the <code>npu info</code> line shows what <em>actually happened</em>, per direction. On the exam, if both appear in an exhibit, the <code>npu info</code> line is authoritative.
+      </div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Six regions, one verdict. Regions ①–⑤ answer "who, how long, how much, translated how, admitted by what." Only region ⑥ answers "processed where." A session is tracked — and offloaded — per direction, which is why NAT hooks come in mirrored pairs and the verdict comes as X/Y.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-master-anatomy" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-master-anatomy','Master Anatomy')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-master-anatomy" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-master-anatomy')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 3 — THE VERDICT LINE
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · THE VERDICT LINE</span>
+      </div>
+      <p class="socratic-insight">Priya didn't want a general explanation — she wanted proof that trading sessions were back on the NP7. The proof is nine characters long: <code>offload=9/9</code>. But only if you can decode it under pressure.</p>
+      <ul class="socratic-questions">
+        <li>In <code>offload=9/9</code>, what exactly do the first 9, the slash, and the second 9 each represent — and what is the classic misreading of these numbers?</li>
+        <li>What would <code>offload=0/0</code> tell Priya, and what is the very next thing you would look at — before touching any configuration?</li>
+      </ul>
+      <div class="answer-area" data-section="verdict-line">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">X/Y are per-direction <strong>processor codes</strong>: X = forward direction (source → destination), Y = reverse. Code 9 = NP7 fast path; code 0 = CPU slow path. So <code>offload=9/9</code> means both directions bypass the CPU after session setup. The classic misreading is treating the numbers as packet counts or a quantity of offloading — they are identifiers of <em>which engine</em> is doing the work, nothing more.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text"><code>offload=0/0</code> means both directions are on the CPU — the session is riding the slow path in full. The next move is not a config change; it is reading <code>no_ofld_reason</code> on the same entry. One glance categorises the problem as an architectural constraint you must accept or a configuration decision you can reverse — and that categorisation determines everything you do next.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-verdict-line">
+      <div class="section-label">SECTION 03</div>
+      <h2>Close-Up: Decoding the <em>Verdict Line</em></h2>
+
+      <div class="section-img-wrap">
+        <img src="images/s3-verdict-line.png" class="section-img"
+             alt="Magnified close-up decoding npu info offload=9/9 field by field"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">The verdict line under the magnifying glass: two directions, two processor codes.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/s3-verdict-line.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic. Warm cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, bold clean lines, no gradients, no photorealism. Composition: a giant flat magnifying glass (soft brown handle, sage rim) dominates the centre, held from the lower-right by the hand of a partially visible senior engineer. Inside the lens, hugely enlarged, the single line "npu info: offload=9/9" in clean monospace lettering on a cream card. The two 9s are the heroes: the first 9 is coloured coral with a small upward arrow labelled "forward · src → dst"; the second 9 is muted gold with a downward arrow labelled "reverse · dst → src". The slash between them is drawn as a tiny road divider. Beneath the lens, a small legend card with two rows: a coral chip icon (square with pin legs) labelled "9 = NP7 · fast path — CPU bypassed after setup" and a grey gear icon labelled "0 = CPU · slow path — full software processing". Around the lens, outside the magnified area, the rest of the session entry is drawn as faint, blurred sage line-blocks — deliberately out of focus to reinforce that everything else is background context. Above the composition, two miniature parallel lanes illustrate the consequence: the top coral lane shows three happy packet envelopes zipping left-to-right through a chip-shaped archway labelled "NP7" with motion lines; the bottom grey lane shows one packet trudging through a queue of gears labelled "CPU". A small crossed-out thought bubble near the legend shows "9 packets?" with a red X — explicitly killing the packet-count misreading. Perspective: flat frontal, strong central focus, generous negative space. Mood: forensic, satisfying clarity — the image should make offload=9/9 readable at a glance forever.</div>
+        </div>
+      </div>
+
+      <p>The verdict line packs several fields, but the exam — and production — really turn on one: <code>offload=X/Y</code>. <strong>X is the forward direction, Y is the reverse, and the number is an internal processor code, not a count.</strong> Code 9 is the NP7; code 0 is the CPU. Because each direction carries its own verdict, asymmetry is possible — which is precisely why Fortinet prints two numbers instead of one.</p>
+      <p>The supporting fields corroborate the story rather than change it: <code>ips_offload</code> reports whether IPS inspection is riding the hardware path, and <code>epid</code>/<code>ipid</code> are the NP7's internal egress/ingress port identifiers for each direction — visible proof the forwarding engine has programmed the session into silicon. You will rarely need them, but recognising them stops an exhibit from feeling alien.</p>
+
+      <div class="callout">
+        <strong>Exam tip:</strong> exhibits will show the <em>entire</em> entry — thirty-plus lines — and ask a one-line question. That's a time trap by design. Train the reflex: scan for <code>npu info</code>, decode <code>offload=X/Y</code>, and only read upward if the question demands context. <code>offload=9/9</code> was literally the proof Priya accepted.
+      </div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">offload=X/Y → X forward, Y reverse; 9 = NP7 fast path, 0 = CPU slow path. Processor codes, never packet counts. 9/9 is the stamp on the boarding pass — both directions fast-tracked, CPU consulted only at check-in.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-verdict-line" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-verdict-line','The Verdict Line')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-verdict-line" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-verdict-line')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 4 — CONSTRAINT VS DECISION
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · CONSTRAINT VS DECISION</span>
+      </div>
+      <p class="socratic-insight">Daniel's question was the hard one: are there sessions that flat-out cannot be offloaded, regardless of policy? The answer lives in a single field — and in the framework that turns that field into an engineering decision.</p>
+      <ul class="socratic-questions">
+        <li>An FTP transfer shows <code>no_ofld_reason: helper</code>. Why can no amount of policy tuning ever move this session onto the NP7 — what is the NP7 fundamentally unable to do here?</li>
+        <li>Another entry shows <code>no_ofld_reason: disabled-by-policy</code>. How does your response to this reason differ in kind — not just in detail — from your response to <code>helper</code>?</li>
+      </ul>
+      <div class="answer-area" data-section="ofld-reason">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">FTP negotiates its data-connection ports <em>inside the application payload</em>. The session helper — CPU software — must read that payload and dynamically open pinholes. The NP7 is a forwarding engine, not a payload parser: it cannot follow the negotiation. The session therefore stays on the CPU for its entire lifetime. This is an architectural <strong>constraint</strong> — there is nothing to configure away.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text"><code>disabled-by-policy</code> means an engineer set <code>auto-asic-offload disable</code> on the matching policy — a configuration <strong>decision</strong>, and decisions can be reversed. Your response shifts from acceptance ("this is how the platform works") to investigation ("who disabled it, why, and is the reason still valid?"). Often it's a leftover from a packet-capture troubleshooting session that was never re-enabled.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-ofld-reason">
+      <div class="section-label">SECTION 04</div>
+      <h2>Close-Up: <em>no_ofld_reason</em> — Constraint or Decision?</h2>
+
+      <div class="section-img-wrap">
+        <img src="images/s4-constraint-decision.png" class="section-img"
+             alt="Two doors: a sealed stone archway for constraints and an unlockable wooden door for decisions"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">Two kinds of "no": the sealed archway you accept, and the locked door you can open.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/s4-constraint-decision.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic. Warm cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, bold clean line work, no gradients, no photorealism, no 3D. Composition: two large doorways side by side on a cream wall, framed like a museum diptych, with a single packet character (rounded coral envelope with legs and expressive eyes) standing between them looking up, deciding. LEFT DOORWAY: a solid stone archway drawn in sage-grey blocks, permanently bricked up with no handle and no keyhole; carved into its lintel in clean capitals: "ARCHITECTURAL CONSTRAINT". Mounted beside it, three small stone plaques listing reasons in monospace style: "helper — FTP / SIP pinholes", "software tunnel — GRE / SSL VPN", each plaque with a tiny icon (a payload scroll being read by a CPU gear for helper; a coiled tube for tunnel). A small sign hanging on the bricks reads "The NP7 cannot parse payloads — no key exists". The stone doorway's colour language is cool, muted, final. RIGHT DOORWAY: a warm wooden door in muted gold with a large friendly coral keyhole and an oversized brass key hanging on a hook beside it, tagged with a label reading "auto-asic-offload enable". Its lintel reads "CONFIGURATION DECISION". Beside it, two wooden plaques: "disabled-by-policy — capture leftover?" and "proxy profile attached — inferred mode", each with a tiny icon (a paused packet-capture reel; a clipboard profile sheet). The wooden door stands slightly ajar with warm light leaking out, and a small coral arrow points from the key to the keyhole. Between and above the doors, a signpost reads "no_ofld_reason — read this before anything else", with two arrows: a grey arrow to the stone arch labelled "accept &amp; design around", a coral arrow to the wooden door labelled "investigate &amp; reverse". Perspective: flat frontal, symmetric diptych composition, generous spacing. Mood: a fable-like decision scene — one glance should permanently encode that some offload denials are walls and some are merely locks.</div>
+        </div>
+      </div>
+
+      <p>When the verdict is <code>0/0</code>, the entry usually tells you why — and this is where the entry from Friday night's incident differed from Marcus's healthy capture:</p>
+
+      <div class="code-block">
+        <div class="code-label">FortiOS CLI — the Friday-night entry (contrast)</div>
+        <pre><code>npu_state=0x000001 <span class="hl">no_offload</span>
+<span class="hl">no_ofld_reason: disabled-by-policy</span>   <span class="dim">← auto-asic-offload set to disable on the policy</span></code></pre>
+      </div>
+
+      <p>The framework from Session 40 turns this field into a fork in the road. <strong>Constraints</strong> are architectural — the platform cannot do otherwise, and your job is to accept them and design around them. <strong>Decisions</strong> are configuration — a human chose this, and your job is to find out whether the choice is still justified.</p>
+
+      <table class="data-table">
+        <thead><tr><th>no_ofld_reason</th><th>Category</th><th>Root cause</th><th>Engineer's move</th></tr></thead>
+        <tbody>
+          <tr><td><code>helper</code></td><td>Constraint</td><td>Protocol (FTP, SIP, H.323) negotiates ports inside payloads; only CPU software can watch and open pinholes. NP7 forwards — it doesn't parse.</td><td>Accept. Design around it (e.g. keep helper-dependent traffic off latency-critical paths).</td></tr>
+          <tr><td>software tunnel</td><td>Constraint</td><td>GRE and SSL VPN terminate in software on the CPU. (IPsec is the exception — NP7 has native crypto engines.)</td><td>Accept — or redesign the transport (e.g. IPsec instead of GRE/SSL VPN where offload matters).</td></tr>
+          <tr><td><code>disabled-by-policy</code></td><td>Decision</td><td><code>auto-asic-offload disable</code> set on the matching policy — often a leftover from a packet-capture session.</td><td>Investigate the change history; re-enable once the original reason has expired.</td></tr>
+          <tr><td>proxy-mode profile</td><td>Decision (often accidental)</td><td>A proxy-requiring security profile on the policy forces CPU processing for the whole session — inferred, not explicitly configured, in 7.6.</td><td>Ask whether proxy inspection is genuinely required here; consider flow-based equivalents or the split-policy / VDOM design.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-amber">
+        <strong>Frequent distractor:</strong> the exam loves offering "enable auto-asic-offload" as the fix for a session showing <code>no_ofld_reason: helper</code>. It's a trap — no policy setting overrides an architectural constraint. Categorise the reason <em>before</em> evaluating any answer that changes configuration.
+      </div>
+
+      <div class="callout callout-green">
+        <strong>Remember the Vaultline thread:</strong> Friday's incident was a <em>decision</em> reason wearing an innocent face — a junior engineer attaching a proxy profile without realising the mode consequence. The proposed Trading VDOM exists precisely to make that class of decision impossible on the latency-critical path.
+      </div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Read no_ofld_reason before any other command. Helper and software tunnels are walls — accept and design around. disabled-by-policy and proxy profiles are locks — a key exists, so investigate who locked the door and whether the reason still stands.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-ofld-reason" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-ofld-reason','Constraint vs Decision')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-ofld-reason" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-ofld-reason')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</main>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE NAV
+     ══════════════════════════════════════════════════════════ -->
+<div class="page-nav">
+  <a class="page-nav-btn page-nav-prev" href="extras-01-cli-reference.html">
+    <span class="page-nav-label">← PREVIOUS EXTRA</span>
+    <span class="page-nav-title">Extra 01 — CLI Reference</span>
+  </a>
+  <a class="page-nav-btn page-nav-next page-nav-disabled" href="#">
+    <span class="page-nav-label">NEXT →</span>
+    <span class="page-nav-title">To be continued…</span>
+  </a>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     FOOTER
+     ══════════════════════════════════════════════════════════ -->
+<footer>
+  NSE7 EF 7.6<span>.</span> Extras<span>.</span> Extra 02<span>.</span> Anatomy of a Session Table Entry
+</footer>
+
+<script>
+const PAGE_KEY = 'nse7-extras-02-session-entry-anatomy';
+
+const SECTIONS = {
+  'section-reading-order': 'Reading Order',
+  'section-master-anatomy': 'Master Anatomy',
+  'section-verdict-line': 'The Verdict Line',
+  'section-ofld-reason': 'Constraint vs Decision',
+};
+
+/* ── Everything below is fixed — do not modify ── */
+document.querySelectorAll('.socratic-header').forEach(function(h) {
+  h.addEventListener('click', function() { h.closest('.socratic-block').classList.toggle('soc-open'); });
+});
+function getQArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-qs') || '[]'); }
+function saveQArr(qs) { localStorage.setItem(PAGE_KEY+'-qs', JSON.stringify(qs)); }
+function addQuestion(key, name) {
+  const ta = document.getElementById('q-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const qs = getQArr(); qs.push({id: Date.now(), section: key, sectionName: name, text});
+  saveQArr(qs); ta.value = ''; renderQPanel();
+  if (!document.getElementById('qpanel-body').classList.contains('open')) toggleQPanel();
+}
+function deleteQ(id) { saveQArr(getQArr().filter(q => q.id !== id)); renderQPanel(); }
+function toggleQPanel() {
+  const body = document.getElementById('qpanel-body');
+  const header = document.getElementById('qpanel-header');
+  const chevron = document.getElementById('qpanel-chevron');
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-qpanel-open', open);
+}
+function renderQPanel() {
+  const qs = getQArr();
+  const count = document.getElementById('qpanel-count');
+  if (count) { count.textContent = qs.length; count.style.display = qs.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.qpanel-hint');
+  if (hint) hint.textContent = qs.length ? `— ${qs.length} question${qs.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('qpanel-body'); if (!body) return;
+  if (!qs.length) { body.innerHTML = '<p class="no-questions">No questions yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  qs.forEach(q => { if (groups[q.section]) groups[q.section].push(q); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(q => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${q.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteQ(${q.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function getNotesArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-notes') || '[]'); }
+function saveNotesArr(ns) { localStorage.setItem(PAGE_KEY+'-notes', JSON.stringify(ns)); }
+function addNote(key) {
+  const ta = document.getElementById('note-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const ns = getNotesArr(); ns.push({id: Date.now(), section: key, sectionName: SECTIONS[key]||key, text});
+  saveNotesArr(ns); ta.value = ''; renderNotesPanel();
+  if (!document.getElementById('notes-panel-body').classList.contains('open')) toggleNotesPanel();
+}
+function deleteNote(id) { saveNotesArr(getNotesArr().filter(n => n.id !== id)); renderNotesPanel(); }
+function toggleNotesPanel() {
+  const body = document.getElementById('notes-panel-body');
+  const header = document.getElementById('notes-panel-header');
+  const chevron = document.getElementById('notes-panel-chevron');
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-notes-panel-open', open);
+}
+function renderNotesPanel() {
+  const ns = getNotesArr();
+  const count = document.getElementById('notes-panel-count');
+  if (count) { count.textContent = ns.length; count.style.display = ns.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.notes-panel-hint');
+  if (hint) hint.textContent = ns.length ? `— ${ns.length} note${ns.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('notes-panel-body'); if (!body) return;
+  if (!ns.length) { body.innerHTML = '<p class="no-questions">No notes yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  ns.forEach(n => { if (groups[n.section]) groups[n.section].push(n); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(n => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteNote(${n.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function saveSocAnswer(btn) {
+  const area = btn.closest('.answer-area');
+  const ta = area.querySelector('.answer-textarea');
+  if (!ta.value.trim()) { ta.focus(); return; }
+  const key = PAGE_KEY+'-socans-'+area.dataset.section;
+  try { localStorage.setItem(key, ta.value); } catch(e) {}
+  ta.disabled = true; btn.textContent = '✓ Answer saved'; btn.disabled = true;
+  const seeBtn = area.querySelector('.btn-see-answer');
+  seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+}
+function revealSocAnswer(btn) {
+  if (btn.disabled) return;
+  const answers = btn.closest('.answer-area').querySelector('.model-answers');
+  const isHidden = answers.style.display === 'none' || !answers.style.display;
+  answers.style.display = isHidden ? 'block' : 'none';
+  btn.textContent = isHidden ? '▲ Hide Model Answer' : '💡 See Model Answer';
+}
+function togglePrompt(btn) {
+  const c = btn.nextElementSibling;
+  const isHidden = c.hasAttribute('hidden');
+  if (isHidden) { c.removeAttribute('hidden'); btn.textContent = '▴ Hide prompt'; }
+  else { c.setAttribute('hidden', ''); btn.textContent = '▾ Show image prompt'; }
+}
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+document.addEventListener('DOMContentLoaded', function() {
+  renderQPanel(); renderNotesPanel();
+  if (localStorage.getItem(PAGE_KEY+'-qpanel-open') === 'true') toggleQPanel();
+  if (localStorage.getItem(PAGE_KEY+'-notes-panel-open') === 'true') toggleNotesPanel();
+  document.querySelectorAll('.answer-area').forEach(function(area) {
+    const key = PAGE_KEY+'-socans-'+area.dataset.section;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const ta = area.querySelector('.answer-textarea'); ta.value = saved; ta.disabled = true;
+        const addBtn = area.querySelector('.btn-add-answer'); addBtn.textContent = '✓ Answer saved'; addBtn.disabled = true;
+        const seeBtn = area.querySelector('.btn-see-answer'); seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+      }
+    } catch(e) {}
+  });
+  document.querySelectorAll('.analogy-box').forEach(function(box) {
+    if (box.dataset.collapsibleInit) return;
+    box.dataset.collapsibleInit = '1';
+    box.classList.add('expanded');
+    const label = box.querySelector(':scope > .analogy-label');
+    if (label) label.addEventListener('click', () => box.classList.toggle('expanded'));
+  });
+  document.querySelectorAll('.analogy-img img').forEach(function(img) {
+    if (img.dataset.zoomInit) return;
+    img.dataset.zoomInit = '1';
+    img.addEventListener('click', () => img.classList.toggle('zoomed'));
+  });
+  document.querySelectorAll('.section-img').forEach(function(img) {
+    img.addEventListener('click', () => img.classList.toggle('si-expanded'));
+  });
+});
+</script>
+</body>
+</html>
