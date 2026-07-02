@@ -12,6 +12,20 @@ Chip colour scheme reuses existing theme tokens: plan = blue, completed/guide = 
 
 If you add or remove a hub page, update the `tiles` list in `render_landing()`. Keep tiles as single `<a>` elements — no nested anchors (see "Hub cards" rule below).
 
+## Hands-on labs (`/build-lab-plan`)
+
+Peer of the study system, not a replacement. Governed by the `build-lab-plan` skill (see `~/.claude/skills/build-lab-plan/SKILL.md` for the full authoring workflow).
+
+**Data lives in `build.py`:** `TOPOLOGY` (one shared minimum-viable network), `LABS = [...]` (ordered hands-on exercises using subsets of TOPOLOGY), and `LAB_MODE_METHODOLOGY_TEXT` (the copy-paste Claude Instructions block that enforces the Predict → Run → Verify → Reflect cadence).
+
+**Output lives under `labs/`:** `labs/index.html` (hub with topology table + labs card grid + lab-mode prompt) and `labs/lab-NN-<slug>/index.html` per lab (Learning Objectives + Prereqs · Topology · Steps · Verification · Cleanup). Per-lab image folder at `labs/lab-NN-<slug>/images/`; shared topology diagram at `labs/images/topology.png`.
+
+**Landing page tile** — teal `LABS` chip on `index.html`. Empty state until `LABS` is populated.
+
+**Authoring:** drop the lab guide PDF into `reference/`, invoke `/build-lab-plan`. The skill reads the PDF, designs the minimum topology (collapsing similar roles wherever the labs don't contradict), reshapes each PDF exercise into Predict/Run/Verify/Reflect step cards, and fills in `TOPOLOGY` + `LABS`. Then `python3 build.py`.
+
+**Lab-mode Claude Instructions** — paste `LAB_MODE_METHODOLOGY_TEXT` (rendered on `labs/index.html`'s How-to-Use panel) into a Claude Project's Instructions field. Different from study-mode: action-oriented, mandatory predict-before-run discipline, safety hooks on destructive commands (`factoryreset`, `reboot`, `execute erase`).
+
 ## Standalone Extras (extras-NN-slug)
 
 In addition to session-linked extras, this project supports **standalone Extras topics** — Socratic explorations of subjects that aren't tied to a specific session (CLI reference, cross-session visual analogies, etc.).

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hands-On Labs · NSE7 EF 7.6</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#faf5e9;--surface:#fffdf5;--surface-2:#f5eed9;--border:#d4c89a;--text:#0a1838;--text-soft:#1e2f5a;--text-muted:#6b7794;--blue:#1e40af;--blue-light:#eff4fc;--blue-border:#b8cce8;--ink-dark:#0d1a3a;--ink-accent:#9bb8e6;--green:#1a7c4a;--green-light:#dff0e1;--green-border:#a7d8b0;--amber:#b45309;--amber-light:#fcf2c3;--amber-border:#f3d68a;--red:#b91c1c;--red-light:#fee2e2;--red-border:#fca5a5;--teal:#0f766e;--teal-light:#ccfbf1;--teal-border:#5eead4;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html,body{min-height:100vh;}
+  body{font-family:'Cormorant Garamond',serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);color:#fbf7ec;}
+  .breadcrumb{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);margin:0 6px;}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;text-transform:uppercase;}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.05;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:rgba(251,247,236,0.55);max-width:760px;margin-top:6px;line-height:1.6;}
+  main{flex:1;padding:44px 60px 72px;max-width:1200px;margin:0 auto;width:100%;}
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;line-height:1.15;margin-bottom:14px;padding-left:14px;border-left:3px solid var(--blue);}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:12px;}
+  .empty-state{border:2px dashed var(--border);border-radius:14px;background:var(--surface);padding:44px 32px;text-align:center;color:var(--text-muted);}
+  .empty-state h3{font-family:'Playfair Display',serif;font-size:22px;color:var(--text);margin-bottom:8px;}
+  .empty-state p{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;font-style:italic;}
+  .empty-state code{font-family:'SF Mono','Fira Code',monospace;font-size:13px;background:var(--surface-2);padding:2px 8px;border-radius:4px;color:var(--text);font-style:normal;}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;}
+  .lab-card{display:flex;flex-direction:column;gap:8px;padding:22px 24px 26px;background:var(--surface);border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--text);transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;}
+  .lab-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px -12px rgba(10,24,56,0.18);border-color:var(--blue);}
+  .lab-card-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--text-muted);text-transform:uppercase;}
+  .lab-card-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;line-height:1.2;}
+  .lab-card-meta{font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.04em;}
+  .lab-card-goal{font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.55;color:var(--text-soft);font-style:italic;}
+  .device-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px;background:var(--surface);border-radius:10px;overflow:hidden;}
+  .device-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .device-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;vertical-align:top;}
+  .device-table td:first-child{font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;color:var(--text);font-weight:700;white-space:nowrap;}
+  .step-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 26px;margin-bottom:22px;}
+  .step-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  .step-chip{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border);padding:3px 10px;border-radius:12px;text-transform:uppercase;}
+  .step-goal{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--text);line-height:1.25;}
+  .step-callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 18px;margin:12px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .step-callout strong{color:var(--text);}
+  .step-callout.callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .step-callout.callout-red{border-left-color:var(--red-border);background:var(--red-light);}
+  .step-callout-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--blue);margin-bottom:6px;}
+  .callout-amber .step-callout-label{color:var(--amber);}
+  .callout-red .step-callout-label{color:var(--red);}
+  .code-block{background:var(--ink-dark);border-radius:10px;padding:0;margin:12px 0;overflow:hidden;}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:8px 14px;background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:14px 16px;margin:0;overflow:auto;}
+  .code-block code{font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;line-height:1.65;color:#e8efff;white-space:pre;}
+  footer{padding:18px 60px;border-top:1px solid var(--border);background:var(--surface);font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;text-align:center;}
+  footer span{color:var(--blue);}
+  @media(max-width:640px){header{padding:32px 24px 24px;}header h1{font-size:32px;}main{padding:28px 20px 44px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="breadcrumb"><a href="../index.html">Home</a><span class="breadcrumb-sep">›</span>Labs</div>
+  <div class="eyebrow">Hands-On Labs · NSE7 EF 7.6</div>
+  <h1>Hands-On <em>Labs</em></h1>
+  <p>Empty — no labs authored yet.</p>
+</header>
+<main>
+  <div class="empty-state">
+    <h3>No labs yet</h3>
+    <p>Drop a lab guide PDF into <code>reference/</code> and run <code>/build-lab-plan</code> to design a minimum shared topology and generate lab pages here.</p>
+  </div>
+</main>
+
+<footer>NSE7 EF 7.6 <span>·</span> Hands-On Labs</footer>
+</body>
+</html>

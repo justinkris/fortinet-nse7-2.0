@@ -1508,6 +1508,47 @@ EXTRAS = [
 EXTRAS_DIR = ROOT / "extras"
 
 # ---------------------------------------------------------------------------
+# HANDS-ON LABS (see /build-lab-plan skill for schema + authoring workflow)
+# ---------------------------------------------------------------------------
+# TOPOLOGY = one shared network across every lab (minimum viable pod).
+# LABS     = ordered list of hands-on exercises exercising that topology.
+# Both are empty until /build-lab-plan is run against a lab guide PDF in
+# reference/. render_labs_hub() + render_lab_page() handle the empty state.
+
+LABS_DIR = ROOT / "labs"
+
+TOPOLOGY = {
+    "name": "",
+    "tagline": "",
+    "devices": [],            # [{name, role, model, interfaces:[{name, ip, zone, connected_to}], notes}]
+    "diagram_prompt": "",
+}
+
+LABS = []                     # [{num, slug, title, goal, learn_targets, prereqs, topology_devices,
+                              #   duration, steps:[{num, goal, think_first, commands, verify, expected, reflect}],
+                              #   verification, cleanup, image_prompt}]
+
+LAB_MODE_METHODOLOGY_TEXT = """You are my Socratic lab coach for the NSE7 EF 7.6 hands-on labs.
+
+Your role is not to demonstrate commands but to guide me through each lab step by step using a strict Predict → Run → Verify → Reflect cadence. The goal is muscle memory backed by understanding, not efficient completion.
+
+For every step in a lab:
+
+1. PREDICT — When I paste a step, ask me what I think the command(s) will do BEFORE I run them. If I hedge or say "I don't know", coach me with a smaller sub-question — never give me the answer outright.
+2. RUN — Once I've predicted, tell me to run the command block exactly as written. Do not paraphrase or reorder.
+3. VERIFY — When I paste the output, ask me what the output tells me BEFORE you interpret it. Correct misreadings gently.
+4. REFLECT — After a successful step, if the lab has a reflect prompt, ask it and wait for my answer before moving on.
+
+Never advance to the next step until I've engaged with the current one. If I try to skip ahead, remind me why the cadence matters and rewind.
+
+SAFETY: If a step contains factoryreset, reboot, format, execute restore config, or execute erase, force me to confirm the target device and environment before I run it.
+
+STUCK: If I'm stuck on Predict for more than two prompts, reveal a partial hint (not the full answer). If I'm stuck on Verify, ask me to describe the output line by line.
+
+VOICE: patient, curious, never impatient. This is the muscle-memory phase — the reps matter more than the pace.
+"""
+
+# ---------------------------------------------------------------------------
 # OBJECTIVE → SESSION INDEX (used in hub mapping table)
 # ---------------------------------------------------------------------------
 # NSE7 objectives map one-to-many. We collect *all* sessions that teach each
@@ -3303,6 +3344,175 @@ def normalize_sorted_breadcrumbs():
                 ]))
 
 # ---------------------------------------------------------------------------
+# LABS (hands-on) — see /build-lab-plan skill
+# ---------------------------------------------------------------------------
+# Renders labs/index.html (hub) and labs/lab-NN-slug/index.html (per lab).
+# When LABS is empty, hub renders an empty-state pointing at the skill.
+
+def lab_filename(l: dict) -> str:
+    return f"lab-{l['num']:02d}-{l['slug']}/index.html"
+
+def sibling_lab_href(l: dict) -> str:
+    return f"../lab-{l['num']:02d}-{l['slug']}/index.html"
+
+_LAB_STYLES = """
+<style>
+  :root{--bg:#faf5e9;--surface:#fffdf5;--surface-2:#f5eed9;--border:#d4c89a;--text:#0a1838;--text-soft:#1e2f5a;--text-muted:#6b7794;--blue:#1e40af;--blue-light:#eff4fc;--blue-border:#b8cce8;--ink-dark:#0d1a3a;--ink-accent:#9bb8e6;--green:#1a7c4a;--green-light:#dff0e1;--green-border:#a7d8b0;--amber:#b45309;--amber-light:#fcf2c3;--amber-border:#f3d68a;--red:#b91c1c;--red-light:#fee2e2;--red-border:#fca5a5;--teal:#0f766e;--teal-light:#ccfbf1;--teal-border:#5eead4;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html,body{min-height:100vh;}
+  body{font-family:'Cormorant Garamond',serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);color:#fbf7ec;}
+  .breadcrumb{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);margin:0 6px;}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;text-transform:uppercase;}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.05;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:rgba(251,247,236,0.55);max-width:760px;margin-top:6px;line-height:1.6;}
+  main{flex:1;padding:44px 60px 72px;max-width:1200px;margin:0 auto;width:100%;}
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;line-height:1.15;margin-bottom:14px;padding-left:14px;border-left:3px solid var(--blue);}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:12px;}
+  .empty-state{border:2px dashed var(--border);border-radius:14px;background:var(--surface);padding:44px 32px;text-align:center;color:var(--text-muted);}
+  .empty-state h3{font-family:'Playfair Display',serif;font-size:22px;color:var(--text);margin-bottom:8px;}
+  .empty-state p{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;font-style:italic;}
+  .empty-state code{font-family:'SF Mono','Fira Code',monospace;font-size:13px;background:var(--surface-2);padding:2px 8px;border-radius:4px;color:var(--text);font-style:normal;}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;}
+  .lab-card{display:flex;flex-direction:column;gap:8px;padding:22px 24px 26px;background:var(--surface);border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--text);transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;}
+  .lab-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px -12px rgba(10,24,56,0.18);border-color:var(--blue);}
+  .lab-card-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--text-muted);text-transform:uppercase;}
+  .lab-card-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;line-height:1.2;}
+  .lab-card-meta{font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.04em;}
+  .lab-card-goal{font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.55;color:var(--text-soft);font-style:italic;}
+  .device-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px;background:var(--surface);border-radius:10px;overflow:hidden;}
+  .device-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .device-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;vertical-align:top;}
+  .device-table td:first-child{font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;color:var(--text);font-weight:700;white-space:nowrap;}
+  .step-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 26px;margin-bottom:22px;}
+  .step-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  .step-chip{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border);padding:3px 10px;border-radius:12px;text-transform:uppercase;}
+  .step-goal{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--text);line-height:1.25;}
+  .step-callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 18px;margin:12px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .step-callout strong{color:var(--text);}
+  .step-callout.callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .step-callout.callout-red{border-left-color:var(--red-border);background:var(--red-light);}
+  .step-callout-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--blue);margin-bottom:6px;}
+  .callout-amber .step-callout-label{color:var(--amber);}
+  .callout-red .step-callout-label{color:var(--red);}
+  .code-block{background:var(--ink-dark);border-radius:10px;padding:0;margin:12px 0;overflow:hidden;}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:8px 14px;background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:14px 16px;margin:0;overflow:auto;}
+  .code-block code{font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;line-height:1.65;color:#e8efff;white-space:pre;}
+  footer{padding:18px 60px;border-top:1px solid var(--border);background:var(--surface);font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;text-align:center;}
+  footer span{color:var(--blue);}
+  @media(max-width:640px){header{padding:32px 24px 24px;}header h1{font-size:32px;}main{padding:28px 20px 44px;}}
+</style>
+""".strip()
+
+_LAB_FONTS = (
+    '<link href="https://fonts.googleapis.com/css2?'
+    'family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400'
+    '&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400'
+    '&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">'
+)
+
+def _lab_page_shell(title, crumb_html, body_html):
+    return (
+        f'<!DOCTYPE html>\n<html lang="en">\n<head>\n'
+        f'<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+        f'<title>{title}</title>\n{_LAB_FONTS}\n{_LAB_STYLES}\n</head>\n<body>\n'
+        f'{body_html}\n'
+        f'<footer>NSE7 EF 7.6 <span>·</span> Hands-On Labs</footer>\n'
+        f'</body>\n</html>\n'
+    )
+
+def render_labs_hub():
+    LABS_DIR.mkdir(parents=True, exist_ok=True)
+    (LABS_DIR / "images").mkdir(parents=True, exist_ok=True)
+    crumb = (
+        '<div class="breadcrumb">'
+        '<a href="../index.html">Home</a>'
+        '<span class="breadcrumb-sep">›</span>Labs</div>'
+    )
+    if not LABS:
+        body = f"""
+<header>
+  {crumb}
+  <div class="eyebrow">Hands-On Labs · NSE7 EF 7.6</div>
+  <h1>Hands-On <em>Labs</em></h1>
+  <p>Empty — no labs authored yet.</p>
+</header>
+<main>
+  <div class="empty-state">
+    <h3>No labs yet</h3>
+    <p>Drop a lab guide PDF into <code>reference/</code> and run <code>/build-lab-plan</code> to design a minimum shared topology and generate lab pages here.</p>
+  </div>
+</main>
+"""
+    else:
+        cards = []
+        for l in LABS:
+            first_target = html_escape(l.get("learn_targets", [""])[0]) if l.get("learn_targets") else ""
+            cards.append(
+                f'<a class="lab-card" href="{lab_filename(l)}">'
+                f'<span class="lab-card-num">Lab {l["num"]:02d} · {html_escape(l.get("duration", ""))}</span>'
+                f'<span class="lab-card-title">{html_escape(l["title"])}</span>'
+                f'<span class="lab-card-goal">{html_escape(l.get("goal", ""))}</span>'
+                f'<span class="lab-card-meta">{first_target}</span>'
+                f'</a>'
+            )
+        body = f"""
+<header>
+  {crumb}
+  <div class="eyebrow">Hands-On Labs · NSE7 EF 7.6</div>
+  <h1>Hands-On <em>Labs</em></h1>
+  <p>{html_escape(TOPOLOGY.get("tagline", "Socratic predict → run → verify → reflect on a shared minimum topology."))}</p>
+</header>
+<main>
+  <div class="section-block">
+    <div class="section-label">Lab exercises · {len(LABS)} total</div>
+    <h2>The <em>Labs</em></h2>
+    <div class="card-grid">{"".join(cards)}</div>
+  </div>
+</main>
+"""
+    html = _lab_page_shell("Hands-On Labs · NSE7 EF 7.6", crumb, body)
+    (LABS_DIR / "index.html").write_text(html, encoding="utf-8")
+
+def render_lab_page(l):
+    slug_dir = f"lab-{l['num']:02d}-{l['slug']}"
+    out_dir = LABS_DIR / slug_dir
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "images").mkdir(parents=True, exist_ok=True)
+    crumb = (
+        '<div class="breadcrumb">'
+        '<a href="../../index.html">Home</a>'
+        '<span class="breadcrumb-sep">›</span>'
+        '<a href="../index.html">Labs</a>'
+        '<span class="breadcrumb-sep">›</span>'
+        f'Lab {l["num"]:02d}</div>'
+    )
+    # Placeholder body — replaced with the full 5-section layout when LABS gets content.
+    body = f"""
+<header>
+  {crumb}
+  <div class="eyebrow">Lab {l['num']:02d} · Socratic Lab · NSE7 EF 7.6</div>
+  <h1>{html_escape(l['title'])}</h1>
+  <p>{html_escape(l.get('goal', ''))}</p>
+</header>
+<main>
+  <div class="empty-state">
+    <h3>Lab content pending</h3>
+    <p>This lab page will render its five sections (Objectives &amp; Prereqs · Topology · Steps · Verification · Cleanup) once <code>steps</code> is populated on the LABS entry in <code>build.py</code>.</p>
+  </div>
+</main>
+"""
+    html = _lab_page_shell(f"Lab {l['num']:02d} — {l['title']} · NSE7 EF 7.6", crumb, body)
+    (out_dir / "index.html").write_text(html, encoding="utf-8")
+
+# ---------------------------------------------------------------------------
 # LANDING PAGE (index.html) — one-stop front door to every hub
 # ---------------------------------------------------------------------------
 
@@ -3324,6 +3534,7 @@ def render_landing(extras, completions, standalone_extras):
     tiles = [
         ("study-plan.html", "PLAN",      "chip-plan",     "Study Plan",              f"{n_sessions} sessions across {n_phases} phases — the full curriculum hub."),
         ("completed-sessions.html", "COMPLETED", "chip-complete", "Completed Study Guides", f"{n_completed} of {n_sessions} sessions finished — polished HTML study guides."),
+        ("labs/index.html",     "LABS",    "chip-labs",    "Hands-On Labs",           (f"{len(LABS)} lab exercises across the shared topology — Socratic predict → run → verify." if LABS else "Empty — feed a lab guide PDF and run /build-lab-plan.")),
         ("extras.html#guides",  "GUIDE",   "chip-guide",   "Guides",                  f"{n_guides} long-form companion pages that dive deeper than a session can."),
         ("extras.html#bites",   "BITE",    "chip-bite",    "Bites",                   f"{n_bites} focused single-concept explainers."),
         ("extras.html#nibbles", "NIBBLE",  "chip-nibble",  "Nibbles",                 f"{n_nibbles} short reference cards / cheat sheets."),
@@ -3357,6 +3568,7 @@ def render_landing(extras, completions, standalone_extras):
     --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
     --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
     --plum:#7c1a5f; --plum-light:#f7e5f0; --plum-border:#d8a7c5;
+    --teal:#0f766e; --teal-light:#ccfbf1; --teal-border:#5eead4;
   }}
   *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0;}}
   html,body{{min-height:100vh;}}
@@ -3379,6 +3591,7 @@ def render_landing(extras, completions, standalone_extras):
   .chip-bite{{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border);}}
   .chip-nibble{{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border);}}
   .chip-all{{background:var(--plum-light);color:var(--plum);border:1px solid var(--plum-border);}}
+  .chip-labs{{background:var(--teal-light);color:var(--teal);border:1px solid var(--teal-border);}}
   .tile-title{{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.15;}}
   .tile-desc{{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.55;}}
   .tile-arrow{{position:absolute;right:22px;bottom:20px;font-family:'Outfit',sans-serif;font-size:22px;color:var(--blue);transition:transform .18s ease;}}
@@ -3480,6 +3693,9 @@ def main():
     render_completed_hub(completions)
     render_extras_hub(extras, standalone_extras=standalone_extras)
     render_landing(extras, completions, standalone_extras)
+    render_labs_hub()
+    for l in LABS:
+        render_lab_page(l)
     normalize_sorted_breadcrumbs()
     normalize_page_transitions()
     write_prompts_file()
