@@ -1,0 +1,13 @@
+==============================================================================
+SECTION-IMAGE PROMPTS — session-02-fortios-architecture/complete.html
+Prompts: 1
+==============================================================================
+
+------------------------------------------------------------------------------
+SOURCE: complete.html
+------------------------------------------------------------------------------
+
+[1] filename (as declared in HTML): images/analogy-toll-vs-customs.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Split scene divided by a soft vertical dashed line. LEFT half labeled 'FLOW MODE — Toll Gate': a straight highway with a gold overhead gantry, a car passing beneath with a small camera icon scanning its number plate, motion lines behind the car, tiny badge 'NP7 offload capable' beside the gantry, and a stopwatch icon showing 'fast, minimal interruption'. RIGHT half labeled 'PROXY MODE — Customs Checkpoint': a coral customs booth where a car has stopped, the driver is out and an inspector with a magnifying glass opens the trunk showing luggage icons, a second identical car waits on the far side with an arrow labeled 'reassembled + continues', small badge 'CPU only · deeper inspection'. Between them a small caption card 'Same road. Different depth of check.' Clean structured composition, generous spacing, educational and visually engaging.
+

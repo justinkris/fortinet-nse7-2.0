@@ -1,0 +1,13 @@
+==============================================================================
+SECTION-IMAGE PROMPTS — session-40-spu-offload-troubleshooting/complete.html
+Prompts: 1
+==============================================================================
+
+------------------------------------------------------------------------------
+SOURCE: complete.html
+------------------------------------------------------------------------------
+
+[1] filename (as declared in HTML): images/analogy-rfid-toll-lane.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A wide toll plaza scene. Centre: a sleek gold RFID lane labeled 'NP7 · session key installed', a small sedan gliding through unbothered with a glowing tag on its windscreen, above it a small chip icon and label 'offload · sail through'. To the sides, three coral 'REJECTED' side-lanes each with a large red 'X' over the RFID gate: (1) an oversized truck being pulled onto a weighbridge with an inspector — label 'session helper · needs deep look' → maps to 'no_ofld_reason: helper'; (2) a car taking a dashed by-pass road that curves around and completely misses the toll booth — label 'software tunnel · never enters silicon path' → 'ipsec-sw / gre / ssl-vpn'; (3) a tiny motorbike zooming past a still-sleeping RFID reader with 'Z' sleep icons above it — label 'session too short · reader never woke' → 'session-too-short'. Small bottom footer bar: 'These vehicles never take the fast lane. No policy change fixes that.' Clean structured composition, generous spacing, educational and visually engaging.
+

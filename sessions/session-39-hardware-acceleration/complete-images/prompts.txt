@@ -1,0 +1,13 @@
+==============================================================================
+SECTION-IMAGE PROMPTS — session-39-hardware-acceleration/complete.html
+Prompts: 1
+==============================================================================
+
+------------------------------------------------------------------------------
+SOURCE: complete.html
+------------------------------------------------------------------------------
+
+[1] filename (as declared in HTML): images/analogy-fast-lane-collapse.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A cream 'before/after' diptych with a soft central divider. LEFT panel labeled 'BEFORE — NP7 fast lane': a wide sage-green highway with a small chip icon labeled 'NP7' along the shoulder, a stream of tiny gold packet icons flowing smoothly, and a stopwatch above reading 'sub-ms · offloaded'. A small building icon labeled 'Vaultline · trading VLAN' feeds into the highway. RIGHT panel labeled 'AFTER — one policy change': the same highway with a coral toll-boot dropped in the middle labeled 'proxy-based profile added', a CPU chip icon behind it labeled 'CPU slow path' turning coral-red with a small thermometer at 94%, and packets piling up in a queue behind the booth; the stopwatch above now reads '8–12 ms'. A small clock icon in the corner shows 3:00 AM. Bottom caption bar spans the whole scene: 'Acceleration isn't a feature — it's the architecture.' Clean structured composition, generous spacing, educational and visually engaging.
+

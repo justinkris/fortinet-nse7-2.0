@@ -1,0 +1,13 @@
+==============================================================================
+SECTION-IMAGE PROMPTS — session-03-enterprise-deployment-patterns/complete.html
+Prompts: 1
+==============================================================================
+
+------------------------------------------------------------------------------
+SOURCE: complete.html
+------------------------------------------------------------------------------
+
+[1] filename (as declared in HTML): images/analogy-branch-post-office.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A cream small-town street scene. Centre: a cosy sage-green post office with a coral roof, a small 'BRANCH' sign above the door, and one calm postal worker behind a modest counter (no queue, one waiting resident icon) — labeled 'fixed local population · flow-mode inspection'. Above the post office, three route icons fan out to the horizon: a mail van on a solid gold highway labeled 'MPLS · primary', a courier bicycle on a dashed sage path labeled 'broadband · backup', and a small aeroplane on a coral path labeled 'LTE · last resort'. The postal worker holds a parcel and points to a small decision-diamond above the counter labeled 'Which route today?', with three arrows to the three transports. To the left, a shrunken oversized industrial sorting facility icon crossed out in coral labeled 'waste · overprovisioned'; to the right, a tiny card table with one clerk crossed out in coral labeled 'inadequacy · underprovisioned'. Bottom caption bar: 'Right-sized. Route-aware. Not the biggest sorter — the smartest route-picker.' Clean structured composition, generous spacing, educational and visually engaging.
+

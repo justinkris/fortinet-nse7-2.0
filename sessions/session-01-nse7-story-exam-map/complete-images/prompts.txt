@@ -1,0 +1,13 @@
+==============================================================================
+SECTION-IMAGE PROMPTS — session-01-nse7-story-exam-map/complete.html
+Prompts: 1
+==============================================================================
+
+------------------------------------------------------------------------------
+SOURCE: complete.html
+------------------------------------------------------------------------------
+
+[1] filename (as declared in HTML): images/analogy-bank-branches.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A cream horizontal scene with three grouped elements. LEFT: three small identical bank-branch buildings in a row, each with a sturdy coral vault door in the middle, small icons of a customer being allowed and a masked figure being denied at each door; a single label sweeps under all three: 'FortiGate · enforces at the door'. CENTER: a taller gold head-office building above the branches with a large scroll/rulebook icon on its roof, three dashed gold arrows fanning downward to each vault labeled 'policy pushed once'; underneath it 'FortiManager · one policy, every vault'. RIGHT: a sage-green compliance office with a stylised magnifying glass over a stack of ledgers and a small chart icon; three dashed sage arrows curve from each branch upward into the ledgers labeled 'logs in'; below it 'FortiAnalyzer · search, correlate, report'. Bottom caption bar spanning the whole scene: 'Three roles. One security system.' Clean structured composition, generous spacing, educational and visually engaging.
+

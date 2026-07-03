@@ -1,0 +1,13 @@
+==============================================================================
+SECTION-IMAGE PROMPTS — session-16-fgcp-active-passive/complete.html
+Prompts: 1
+==============================================================================
+
+------------------------------------------------------------------------------
+SOURCE: complete.html
+------------------------------------------------------------------------------
+
+[1] filename (as declared in HTML): images/analogy-phone-number.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. On the left, a large cream office phone with a permanent gold number tag on its side labeled 'virtual MAC · 04:...:01', with a small customer character on a curly cord dialing it — labeled 'client ARP: never changes'. From the phone, a labeled 'switchboard' mini-diagram (a small rounded box with two outgoing lines) connects to two desks: 'Box A · ACTIVE' with a coral highlight and a happy engineer, and 'Box B · STANDBY' with a sage tint and a resting engineer; the active line is solid gold, the standby line is dashed. A tiny burst label above the switchboard reads 'GARP updates switch MAC table only'. On the right, a smaller contrast card labeled 'Same group-id, same segment' shows two identical vMAC phones ringing at once with two competing companies (icons of two office buildings) and a confused customer with a question mark, arrow curving to the wrong office — footnote in coral 'misroute chaos · no phone reports a fault'. Clean structured composition, generous spacing, educational and visually engaging.
+

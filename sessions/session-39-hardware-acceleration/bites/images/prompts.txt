@@ -1,0 +1,13 @@
+==============================================================================
+SECTION-IMAGE PROMPTS — session-39-hardware-acceleration/bites
+Prompts: 1
+==============================================================================
+
+------------------------------------------------------------------------------
+SOURCE: flow-vs-proxy-inspection.html
+------------------------------------------------------------------------------
+
+[1] filename (as declared in HTML): images/analogy-guard-vs-waiting-room.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A side-by-side split scene. LEFT panel labeled 'FLOW-BASED · Security Guard': a long sage-green corridor with a calm guard beside a badge reader, a continuous line of visitors walking past without stopping while the guard glances at each badge; motion lines behind them, a stopwatch icon labeled 'instant decision · queue never pauses'. RIGHT panel labeled 'PROXY-BASED · Waiting Room': a warm cream waiting room with all visitors seated holding document folders, a coral inspector at a desk reading a large open stack of papers, a dashed gold arrow from a highlighted final page labeled 'forged signature caught only when full stack is assembled'; a small timer icon labeled 'everyone waits until decision'. A shared bottom caption bar: 'Same information. Different moment of decision.' Clean structured composition, generous spacing, educational and visually engaging.
+
