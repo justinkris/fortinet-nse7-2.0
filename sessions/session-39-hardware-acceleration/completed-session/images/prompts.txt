@@ -1,10 +1,10 @@
 ==============================================================================
-SECTION-IMAGE PROMPTS — session-39-hardware-acceleration/complete.html
+SECTION-IMAGE PROMPTS — session-39-hardware-acceleration/completed-session/index.html
 Prompts: 1
 ==============================================================================
 
 ------------------------------------------------------------------------------
-SOURCE: complete.html
+SOURCE: index.html
 ------------------------------------------------------------------------------
 
 [1] filename (as declared in HTML): images/analogy-fast-lane-collapse.png

@@ -21,7 +21,7 @@
 <script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Subtopic 15 — The HA Problem — FGCP, FGSP & VRRP</title><!-- ← e.g. "Subtopic 02 — Configure VLANs" -->
+<title>Subtopic 17 — FGCP Active-Active and Load Balancing</title><!-- ← e.g. "Subtopic 02 — Configure VLANs" -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   /* ── DESIGN TOKENS ── */
@@ -241,14 +241,14 @@
      ══════════════════════════════════════════════════════════ -->
 <header>
   <div class="header-left">
-    <div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="index.html" style="color:#9bb8e6;text-decoration:none;">Session 15</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Completed Study Guide</span></div>
-    <div class="header-eyebrow"><span class="dot-live"></span> Complete Study Guide · NSE7 EF 7.6</div>
-    <h1>Why One FortiGate <em>Isn't Enough</em></h1>
+    <div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 17</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Completed Study Guide</span></div>
+    <div class="header-eyebrow"><span class="dot-live"></span> Study Guide · CCNA 200-301</div>
+    <h1>Active-Active <em>Load Balancing</em></h1>
     <!--
       ← H1 pattern: plain words first, key noun/phrase in <em>.
          e.g. "Configure <em>VLANs</em>" or "Understand <em>OSPF</em> Neighbor States"
     -->
-    <p>Every device dies eventually. The question is whether traffic dies with it — and which of three HA answers keeps the answer 'no'.</p>
+    <p>Why the secondary FortiGate isn't the idle-capacity fix it looks like — and exactly what crosses the wire between the two boxes.</p>
     <!--
       ← One sentence (≤20 words) capturing the core insight of the subtopic.
          e.g. "How switches use 802.1Q tagging to carry multiple broadcast domains over a single trunk link."
@@ -260,12 +260,12 @@
      MOTIVATION BANNER
      ══════════════════════════════════════════════════════════ -->
 <div class="motivation-banner">
-  <div class="motivation-text">The blueprint doesn't ask you to define FGCP, FGSP and VRRP — it asks you to <em>choose between them for a scenario</em>.</div>
+  <div class="motivation-text">A-A does not split traffic across two boxes — it lends <em>Box A's CPU-expensive work</em> to Box B, one session at a time.</div>
   <!--
     ← Bold Playfair statement. Wrap the key phrase in <em>. 1–2 sentences.
        e.g. "VLANs don't just split a switch — they create <em>independent broadcast domains</em> that share the same physical hardware."
   -->
-  <p class="motivation-sub">Choosing wrong cascades: broken failover, asymmetric routing, session drops, and — as Vaultline learned twice — SLA penalties. This guide rebuilds all three from the problems they solve, the way you derived them in the session.</p>
+  <p class="motivation-sub">Every endpoint still talks to Box A first. What changes in A-A is what happens to a session <em>after</em> it's matched — and that difference is where most NSE7 candidates get tripped up.</p>
   <!--
     ← Smaller supporting sentence. Why this subtopic matters in the bigger picture.
        e.g. "Every inter-VLAN routing, trunking, and STP topic later in the blueprint assumes you can predict exactly which port belongs to which broadcast domain."
@@ -300,11 +300,10 @@
      STICKY SECTION NAV — one tab per section
      ══════════════════════════════════════════════════════════ -->
 <nav class="section-nav" id="section-nav">
-  <a class="nav-tab active" href="#section-the-problem">The Problem</a><!-- ← e.g. href="#section-vlan-basics" >VLAN Basics -->
-  <a class="nav-tab" href="#section-fgcp">FGCP</a>
-  <a class="nav-tab" href="#section-fgsp">FGSP</a>
-  <a class="nav-tab" href="#section-vrrp">VRRP</a>
-  <a class="nav-tab" href="#section-np7-resync">NP7 &amp; Sizing</a>
+  <a class="nav-tab active" href="#section-what-gets-balanced">What Gets Balanced</a><!-- ← e.g. href="#section-vlan-basics" >VLAN Basics -->
+  <a class="nav-tab" href="#section-the-relay-mechanism">The Relay</a>
+  <a class="nav-tab" href="#section-asymmetric-path">Asymmetric Path</a>
+  <a class="nav-tab" href="#section-when-it-makes-sense">Worth It?</a>
 </nav>
 
 <main>
@@ -318,19 +317,19 @@
     <div class="socratic-block">
       <div class="socratic-header">
         <span class="socratic-icon">💭</span>
-        <span class="socratic-label">THINK FIRST · THE PROBLEM</span>
+        <span class="socratic-label">THINK FIRST · WHAT GETS BALANCED</span>
         <!-- ← e.g. "THINK FIRST · VLAN BASICS" -->
       </div>
-      <p class="socratic-insight">Vaultline's HQ edge FortiGate died at 02:47 on a Sunday. Marcus restored a cold spare in four hours — a textbook recovery. The board was still furious. Before reading on, reconstruct why.</p>
+      <p class="socratic-insight">Box B sits at single-digit CPU while Box A carries the whole load. The obvious fix looks like flipping to Active-Active. Before accepting that, work out what actually happens to a plain HTTPS session — no UTM profile, just a firewall policy doing flow-based forwarding — the instant A-A is enabled.</p>
       <!--
         ← 2–3 sentence framing of WHY these questions matter. Reveal the tension
            or the gotcha before asking the question.
       -->
       <ul class="socratic-questions">
-        <li>A cold spare on a shelf IS a second FortiGate. Why did four hours of MTTR and an SLA penalty happen anyway — where did the time and damage actually come from?</li><!-- ← Specific, scenario-driven. Ends with a '?' -->
-        <li>Suppose the second box was racked, cabled, powered, with identical config. Two separate mechanisms are still missing before a failure becomes invisible to remote VPN peers. What are they, and why are they different jobs?</li><!-- ← Second question. Use a third only if genuinely complex. -->
+        <li>A plain firewall-policy session (no UTM) arrives at the cluster. In A-A mode, does it get processed by whichever box has spare CPU, or does it stay exactly where it would in A-P?</li><!-- ← Specific, scenario-driven. Ends with a '?' -->
+        <li>Why would FortiGate bother distributing one category of session and not another — what's actually expensive enough to be worth the overhead of handing it to a second box?</li><!-- ← Second question. Use a third only if genuinely complex. -->
       </ul>
-      <div class="answer-area" data-section="the-problem">
+      <div class="answer-area" data-section="what-gets-balanced">
         <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
         <div class="answer-buttons">
           <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
@@ -339,41 +338,41 @@
         <div class="model-answers" style="display:none;">
           <div class="model-answer-item">
             <div class="model-answer-q">Q1 — MODEL ANSWER</div>
-            <div class="model-answer-text">The four hours were pure MTTR logistics: locating hardware, finding the backup, racking, cabling, restoring config, validating. And even after recovery, every live connection — including the clearing-partner VPN tunnels — had to renegotiate from scratch, because a config backup carries no live state. The SLA penalty came from the tunnels dropping, not from the hardware failure itself.</div>
+            <div class="model-answer-text">It stays on the primary. Only the primary owns the vMAC, so all ingress traffic lands there regardless of mode. By default, only sessions subject to <strong>proxy-based UTM inspection</strong> are distributed to the secondary — flow-based and no-inspection sessions never leave the primary unless <code>load-balance-all</code> is explicitly enabled.</div>
             <!-- ← Precise. No hedging. 2–4 sentences. Lead with the core fact. -->
           </div>
           <div class="model-answer-item">
             <div class="model-answer-q">Q2 — MODEL ANSWER</div>
-            <div class="model-answer-text">(1) A heartbeat — a continuous liveness check so the survivor knows the peer is dead; without it nobody ever fails over, or both boxes think they're primary. (2) Session synchronization — a continuous stream of live state (session table, VPN SAs) so the survivor can take over mid-connection without renegotiation. They're separate mechanisms with separate failure modes: either one can break while the other keeps working.</div>
+            <div class="model-answer-text">Plain policy matching, NAT, and flow-based inspection are cheap — largely NP-offloaded, microseconds of CPU. Proxy-based inspection (proxy AV, DLP, explicit web proxy) has to buffer and terminate the session, which is genuinely CPU/memory expensive. That's the only work worth the cost of shipping to a second box.</div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- SECTION CONTENT BLOCK -->
-    <div class="section-block" id="section-the-problem">
+    <div class="section-block" id="section-what-gets-balanced">
       <div class="section-label">SECTION 01</div>
-      <h2>Same Config <em>Is Not Same State</em></h2>
+      <h2>What Active-Active Actually <em>Distributes</em></h2>
       <!-- ← Same em-noun pattern as H1. e.g. "How a Switch Builds Its <em>MAC Address Table</em>" -->
 
       <!-- Section image — starts compact (260px), click to expand full-width -->
       <div class="section-img-wrap">
-        <img src="images/s1-the-problem.png" class="section-img"
-             alt="Diagram distinguishing configuration backup from live session state"
+        <img src="images/s1-what-gets-balanced.png" class="section-img"
+             alt="Diagram showing only proxy-based UTM sessions being distributed from primary to secondary"
              onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
-        <p class="img-caption">A backup restores what the box was told. It cannot restore what the box knew.</p>
+        <p class="img-caption">Only proxy-inspected sessions leave the primary — everything else stays put.</p>
         <!-- Shown only when image is missing: -->
         <div class="si-placeholder">
-          <span class="si-filename">images/s1-the-problem.png</span>
+          <span class="si-filename">images/s1-what-gets-balanced.png</span>
           <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Split composition. LEFT: a FortiGate box icon labeled 'CONFIG' holding a neat printed rulebook icon (policies, routes drawn as tidy lines on pages), caption 'what the box was told — restorable from backup'. RIGHT: the same FortiGate box labeled 'STATE' surrounded by dozens of small live glowing threads connecting to tiny padlock icons (VPN SAs) and tiny envelope icons (sessions), each thread pulsing with small motion dots, caption 'what the box currently knows — lost the instant it dies'. Between the halves, a gold arrow labeled 'backup restores this' points only to the left half, and a dashed crossed-out arrow labeled 'backup can never restore this' points to the right half. Bottom caption bar: 'Identical configuration is not identical state.' Clean structured composition, generous spacing.</div>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, warm modern colour palette with cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, no gradients, no 3D. Two identical FortiGate appliances labelled 'Box A' and 'Box B' side by side on a rack. A stream of small envelope icons (plain traffic) flows into Box A and stays there, glowing sage green with a small checkmark. A second stream of envelope icons has a small magnifying-glass badge (proxy-inspected traffic) — these turn coral and an arrow shows a subset physically moving from Box A to Box B, where Box B is shown opening and inspecting them. Clean bold line work, generous spacing, educational composition.</div>
         </div>
       </div>
 
       <!-- Body content: paragraphs, lists, callouts, tables, code blocks -->
-      <p>The vocabulary first: MTBF (mean time between failures) measures how often things break; MTTR (mean time to repair) measures how long recovery takes; availability is the fraction of time the service is actually up, and it's dominated by MTTR far more than most people expect. Sunday's cold-spare recovery had a respectable MTTR of four hours — and it still cost an SLA penalty, because availability isn't the only thing that matters. What also matters is what happens to live connections at the moment of failure.</p>
+      <p>Active-Active does not divide the cluster's total traffic in half. Every packet from every endpoint still arrives at the primary's virtual MAC — that never changes between A-P and A-A. What A-A adds is a distribution step that happens <em>after</em> the firewall policy match, and only for one category of session.</p>
       <!-- ← First paragraph: what the concept is, why it exists, how it fits the architecture -->
-      <p>That's the config-vs-state distinction at the heart of everything in this session. Configuration is what the box was told: policies, routes, profiles — fully restorable from a backup. State is what the box currently knows: the session table, negotiated VPN SAs, NAT bindings — created live, held in memory, and gone the instant the box dies. Two boxes with identical config still have completely different state. A failover design that only replicates config produces stateless failover: the survivor takes over, but every connection restarts. A design that continuously replicates state produces stateful failover: existing connections continue and the remote end never notices. Which one is acceptable depends entirely on the traffic — a browser reload is invisible; a mid-transaction settlement VPN dropping at 2am is an SLA penalty.</p>
+      <p>By default, FortiOS only distributes sessions that are subject to <strong>proxy-based inspection</strong> — proxy AV, DLP, explicit web proxy, and similar features that require the session to be buffered and effectively terminated for inspection. Flow-based inspection and plain flow-based policies (the bulk of most firewalls' traffic) are cheap enough that FortiOS doesn't bother distributing them — unless you force it with the <code>load-balance-all</code> setting.</p>
       <!-- ← Second paragraph: mechanism / how it works in practice -->
 
       <!-- Optional: use a list for multi-item comparisons or enumerations -->
@@ -453,7 +452,7 @@ Switch# write memory</code></pre>
         <div class="mental-note-block-icon">🧠</div>
         <div class="mental-note-block-inner">
           <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">Two mechanisms, two jobs: heartbeat answers 'is the peer alive?', session sync answers 'can I take over mid-connection?'. Stateful failover = state carried across (seamless). Stateless failover = config only (every connection restarts). The traffic type decides which is acceptable.</div>
+          <div class="mental-note-block-text">A-A load-balances <strong>proxy-based UTM sessions only</strong>, by default. Plain flow-based traffic — the majority of most firewalls' load — never leaves the primary unless <code>load-balance-all</code> is explicitly enabled. If a candidate's traffic mix is mostly flow-based, flipping to A-A buys almost nothing.</div>
           <!--
             ← 2–3 sentences. Lead with a concrete number, ordered list, or key relationship.
                e.g. "An access port belongs to exactly one VLAN and strips/adds no 802.1Q tag.
@@ -469,13 +468,13 @@ Switch# write memory</code></pre>
       <div class="lesson-tools-grid">
         <div>
           <div class="tool-label">ASK A QUESTION</div>
-          <textarea class="tool-textarea" id="q-section-the-problem" placeholder="What are you unsure about in this section?" rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-the-problem','The Problem')">Add Question</button></div>
+          <textarea class="tool-textarea" id="q-section-what-gets-balanced" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-what-gets-balanced','What Gets Balanced')">Add Question</button></div>
         </div>
         <div>
           <div class="tool-label">ADD A NOTE</div>
-          <textarea class="tool-textarea" id="note-section-the-problem" placeholder="Write a note about this section..." rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-the-problem')">+ Add Note</button></div>
+          <textarea class="tool-textarea" id="note-section-what-gets-balanced" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-what-gets-balanced')">+ Add Note</button></div>
         </div>
       </div>
     </div>
@@ -486,14 +485,14 @@ Switch# write memory</code></pre>
     <div class="socratic-block">
       <div class="socratic-header">
         <span class="socratic-icon">💭</span>
-        <span class="socratic-label">THINK FIRST · FGCP — ONE CLUSTER, TWO BODIES</span>
+        <span class="socratic-label">THINK FIRST · THE RELAY</span>
       </div>
-      <p class="socratic-insight">You derived FGCP's requirements before learning its name. Test that the derivation stuck.</p>
+      <p class="socratic-insight">A session is eligible for offload. The primary has to physically hand a live, in-progress packet to the secondary. That's not the same job as session-sync-dev, which just mirrors the session table for failover continuity — this is active, real-time forwarding of a session the primary is still alive and responsible for.</p>
       <ul class="socratic-questions">
-        <li>For Box B to seamlessly assume Box A's sessions and addresses, what must be true about B's configuration BEFORE the failure — and what are the only permitted differences?</li>
-        <li>Priya asks: 'why not just use VRRP at the HQ edge — cheaper, open standard?' It would fail over the gateway IP cleanly. What's the precise answer?</li>
+        <li>Is the mechanism carrying this forwarded traffic the same session-sync-dev link used for HA session-table mirroring, or something else entirely?</li>
+        <li>If the decision of which box handles a session has to be made once and stay fixed for the life of that session, what can the primary hash on to guarantee a consistent, stable result?</li>
       </ul>
-      <div class="answer-area" data-section="fgcp">
+      <div class="answer-area" data-section="the-relay-mechanism">
         <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
         <div class="answer-buttons">
           <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
@@ -502,36 +501,36 @@ Switch# write memory</code></pre>
         <div class="model-answers" style="display:none;">
           <div class="model-answer-item">
             <div class="model-answer-q">Q1 — MODEL ANSWER</div>
-            <div class="model-answer-text">Near-identical configuration — policies, routes, profiles, VDOMs all matching — kept synchronized continuously, with only HA identity (host name, priority) and HA-specific settings differing. The pair behaves as one logical device with two bodies; that tight coupling is what makes seamless takeover possible.</div>
+            <div class="model-answer-text">Something else. FGCP traffic — including this forwarding — rides over the HA heartbeat interconnect, but uses <strong>Ethernet type 0x8891</strong>, distinct from the 0x8890 hello frames and completely separate from session-sync-dev, which mirrors the session table for standby failover continuity, not live session forwarding.</div>
           </div>
           <div class="model-answer-item">
             <div class="model-answer-q">Q2 — MODEL ANSWER</div>
-            <div class="model-answer-text">VRRP moves the gateway identity but no state — no session table, no VPN SAs, no config sync. Every live connection dies and renegotiates: Sunday's SLA penalty with a faster gateway swap. FGCP solves who owns the address AND carries the state across. For an edge with live SLA-bound tunnels, only stateful failover is acceptable.</div>
+            <div class="model-answer-text">The 4-tuple: source IP, destination IP, source port, destination port. These are the only header fields guaranteed identical on every packet of a TCP session from SYN to FIN. Hashing on anything that varies per-packet (like the IP Identification field) would scatter one session's packets across boxes mid-stream, which is impossible to reconcile.</div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="section-block" id="section-fgcp">
+    <div class="section-block" id="section-the-relay-mechanism">
       <div class="section-label">SECTION 02</div>
-      <h2>FGCP — <em>One Cluster, Two Bodies</em></h2>
+      <h2>How the Handoff Actually <em>Happens</em></h2>
       <div class="section-img-wrap">
-        <img src="images/s2-fgcp.png" class="section-img" alt="FGCP cluster diagram with heartbeat, config sync and session sync"
+        <img src="images/s2-the-relay-mechanism.png" class="section-img" alt="Primary forwarding a session to the secondary using an 0x8891 encapsulated frame over the heartbeat link"
              onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
-        <p class="img-caption">Everything synced, one logical identity — failover handled entirely inside the boundary.</p>
+        <p class="img-caption">0x8891 frames ride the heartbeat link but carry real session data, not hello packets.</p>
         <div class="si-placeholder">
-          <span class="si-filename">images/s2-fgcp.png</span>
+          <span class="si-filename">images/s2-the-relay-mechanism.png</span>
           <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Two identical FortiGate box icons side by side wearing matching coral badges reading 'CLUSTER-01', enclosed together in one rounded dashed boundary labeled 'one logical device'. Three distinct labeled links drawn between them: a pulsing red-gold line labeled 'heartbeat (0x8890)', a gold ribbon labeled 'config sync', and a wider gold ribbon carrying tiny ledger and padlock icons labeled 'session sync (incl. IPsec SAs)'. A crown icon over the left box labeled 'primary', a waiting figure pose on the right box labeled 'secondary'. Outside the boundary, network clouds above and below connect only to the boundary itself, not to individual boxes, showing the outside world sees one device. Bottom caption: 'FGCP: the cluster owns its own failover.' Clean structured composition, generous spacing.</div>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, warm modern colour palette, cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, no gradients, no 3D. Two FortiGate boxes connected by a single labelled cable marked 'heartbeat link'. Two small parallel lanes travel along the cable: one lane carries tiny heart-shaped icons labelled '0x8890 hello', the other carries small envelope icons labelled '0x8891 forwarded session' moving from Box A toward Box B. A separate, clearly distinct dashed cable below is labelled 'session-sync-dev — table mirror only', visually disconnected from the forwarding lane to show it's a different job. Clean bold line work, generous spacing.</div>
         </div>
       </div>
-      <p>FGCP (FortiGate Clustering Protocol) is the tight-coupling answer: two to four FortiGate devices built into a single logical cluster. Configuration is synchronized continuously and automatically. A heartbeat — running over dedicated links with its own Ethernet types (0x8890/0x8891 for heartbeat and election, 0x8893 for config sync) — detects failure and drives primary election. Session synchronization carries live state, including IPsec tunnel SAs, so failover is stateful: the clearing-partner tunnels at Vaultline survived Thursday's power failure without a flicker. Best practice is dedicating separate interfaces for session sync (session-sync-dev), because heavy session sync sharing the heartbeat link can delay heartbeats and cause false failovers.</p>
-      <p>FGCP supports active-passive mode (one primary forwards, secondary waits — no load balancing, though VDOM partitioning / virtual clustering allows load sharing per-VDOM) and active-active mode (the primary distributes sessions to members — by default only proxy-inspected sessions are distributed unless load-balance-all is enabled). Two election-related details matter for the exam: the override setting makes a recovered high-priority unit reclaim primacy (causing a second failover event), and both override and device priority are NOT synchronized — they must be set per-member. Fit: matched pairs deployed as a cluster from day one, edge and datacenter roles where seamless stateful takeover is mandatory.</p>
+      <p>The offload decision happens once, at the SYN, because that's the earliest point where a policy match exists and the only guaranteed-stable identifier — the 4-tuple — is available. FortiOS hashes on this 4-tuple (or a variant of it, depending on the configured <code>schedule</code>) to pick a secondary and keeps that mapping fixed for the life of the session. This is per-session distribution, not per-packet load balancing.</p>
+      <p>The actual forwarded packet travels over the same physical interconnect as heartbeat, but as a distinct Ethernet type — 0x8891 — separate from the 0x8890 hello frames and entirely separate from session-sync-dev (which only mirrors session-table state for failover, and is a passive backup copy, not live traffic). Confusing these three is one of the most common exam distractors in this topic.</p>
       <div class="mental-note-block">
         <div class="mental-note-block-icon">🧠</div>
         <div class="mental-note-block-inner">
           <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">FGCP = one identity, everything synced, failover owned entirely by the cluster. Supports A-P and A-A (so 'active-active' alone never rules FGCP in or out). Override + priority are per-member settings, never synced. Session sync deserves its own dedicated links.</div>
+          <div class="mental-note-block-text">Three distinct jobs, easy to conflate: <strong>0x8890</strong> = heartbeat hello (alive/dead, election). <strong>0x8891</strong> = FGCP traffic redistribution (the actual A-A session forwarding). <strong>session-sync-dev</strong> = passive session-table mirroring for failover, unrelated to A-A forwarding. The offload decision itself is a one-time 4-tuple hash at the SYN — never re-evaluated mid-session.</div>
         </div>
       </div>
     </div>
@@ -540,13 +539,13 @@ Switch# write memory</code></pre>
       <div class="lesson-tools-grid">
         <div>
           <div class="tool-label">ASK A QUESTION</div>
-          <textarea class="tool-textarea" id="q-section-fgcp" placeholder="What are you unsure about in this section?" rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-fgcp','FGCP')">Add Question</button></div>
+          <textarea class="tool-textarea" id="q-section-the-relay-mechanism" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-the-relay-mechanism','The Relay')">Add Question</button></div>
         </div>
         <div>
           <div class="tool-label">ADD A NOTE</div>
-          <textarea class="tool-textarea" id="note-section-fgcp" placeholder="Write a note about this section..." rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-fgcp')">+ Add Note</button></div>
+          <textarea class="tool-textarea" id="note-section-the-relay-mechanism" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-the-relay-mechanism')">+ Add Note</button></div>
         </div>
       </div>
     </div>
@@ -558,14 +557,14 @@ Switch# write memory</code></pre>
     <div class="socratic-block">
       <div class="socratic-header">
         <span class="socratic-icon">💭</span>
-        <span class="socratic-label">THINK FIRST · FGSP — SESSION LIFE SUPPORT</span>
+        <span class="socratic-label">THINK FIRST · ASYMMETRIC PATH</span>
       </div>
-      <p class="socratic-insight">Two datacenter FortiGates, deployed months apart by different teams, config drifted, both actively passing traffic behind an external load balancer. FGCP can't be retrofitted here — reason out what CAN work.</p>
+      <p class="socratic-insight">The natural assumption is that once Box B finishes inspecting a session, it hands the result back to Box A, which forwards it out — a clean round trip through the primary. For proxy-based sessions, that assumption is wrong, and the real behaviour is one of the most-tested nuances in this whole topic.</p>
       <ul class="socratic-questions">
-        <li>Box A dies mid-connection and the load balancer redirects the next packet to Box B. What's the one thing Box B needs to have received continuously for that packet to survive — and why doesn't it need config sync or a shared identity?</li>
-        <li>Whose job is it to notice Box A died and stop sending it traffic — and what does that imply about where FGSP fits in a topology?</li>
+        <li>If you ran a packet capture on Box A's interface for a proxy-inspected session that completed successfully, what would you actually see?</li>
+        <li>What does this mean for how you troubleshoot a session that looks 'stuck' or 'dropped' on the primary in an A-A cluster?</li>
       </ul>
-      <div class="answer-area" data-section="fgsp">
+      <div class="answer-area" data-section="asymmetric-path">
         <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
         <div class="answer-buttons">
           <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
@@ -574,36 +573,36 @@ Switch# write memory</code></pre>
         <div class="model-answers" style="display:none;">
           <div class="model-answer-item">
             <div class="model-answer-q">Q1 — MODEL ANSWER</div>
-            <div class="model-answer-text">Session table data. With a synced session entry, Box B recognizes the mid-flight connection and forwards it instead of dropping an unknown packet. Config can differ because Box B applies its own policies to new traffic — it isn't impersonating Box A, just recognizing A's sessions. No shared identity exists to synchronize.</div>
+            <div class="model-answer-text">Every <strong>inbound</strong> packet of the session (client→cluster and server→cluster) with no replies visible. Endpoints keep addressing the cluster's vMAC — their ARP caches are unchanged — so Box A receives and relays every inbound packet to Box B via 0x8891. But every outbound packet is sent by Box B directly from its own physical MAC, so Box A never sees a single reply.</div>
           </div>
           <div class="model-answer-item">
             <div class="model-answer-q">Q2 — MODEL ANSWER</div>
-            <div class="model-answer-text">The external device's — upstream load balancer, router, or ECMP. FGSP has no election, no heartbeat-driven takeover, no virtual identity. It only guarantees whichever box receives the traffic already knows the session. FGSP therefore fits topologies where external devices already own traffic distribution and failure detection.</div>
+            <div class="model-answer-text">A single-box capture is not trustworthy evidence in A-A. A SYN with no visible reply on Box A does not mean the session failed — it may have completed perfectly on Box B. Diagnosing a session in an A-A cluster requires knowing to check <strong>both</strong> boxes, not just the primary where the traffic first arrived.</div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="section-block" id="section-fgsp">
+    <div class="section-block" id="section-asymmetric-path">
       <div class="section-label">SECTION 03</div>
-      <h2>FGSP — <em>Session Life Support</em></h2>
+      <h2>The Asymmetric <em>Return Path</em></h2>
       <div class="section-img-wrap">
-        <img src="images/s3-fgsp.png" class="section-img" alt="FGSP topology with external load balancers and session-only sync"
+        <img src="images/s3-asymmetric-path.png" class="section-img" alt="Secondary replying directly to the client and server, bypassing the primary for the rest of the session"
              onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
-        <p class="img-caption">Independent peers, one shared thing: the session table.</p>
+        <p class="img-caption">After the handoff, Box B owns the rest of the conversation — Box A never sees it again.</p>
         <div class="si-placeholder">
-          <span class="si-filename">images/s3-fgsp.png</span>
+          <span class="si-filename">images/s3-asymmetric-path.png</span>
           <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Two visibly different FortiGate box icons (different accent colours, no shared boundary) labeled 'Peer_1' and 'Peer_2', each with its own separate small rulebook icon in different colours beside it labeled 'own config'. A single thin gold line between them carrying tiny ledger icons, labeled 'session sync only (incl. IPsec by default)'. Above them, a flat load-balancer icon with a small radar dish, arrows fanning down to both peers, labeled 'external LB: distributes traffic, detects failure'. Below, a server-farm icon. A small badge near the sync line reads '2–16 peers, or FGCP clusters as peers'. Bottom caption: 'FGSP: the network decides where traffic goes; FGSP makes sure it survives arriving.' Clean structured composition, generous spacing.</div>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, warm modern colour palette, cream background, coral accents, sage greens, soft brown outlines, no gradients, no 3D. A network engineer stands in front of a monitor showing a packet capture window with a single lonely SYN packet and a large question mark, captured from 'Box A'. Behind them, a second smaller inset screen shows Box B calmly completing a full green checkmarked TCP handshake with a client icon and a server icon, with dashed direct-connection lines bypassing Box A entirely. Engineer has a puzzled but curious expression, one eyebrow raised. Clean bold line work, generous spacing, educational composition.</div>
         </div>
       </div>
-      <p>FGSP (FortiGate Session Life Support Protocol) is the loose-coupling answer: a peer-to-peer session-sharing agreement between otherwise independent FortiGate devices. No cluster identity, no election, no primary. By default it synchronizes all IPv4/IPv6 TCP sessions and IPsec tunnels; connectionless (UDP/ICMP), expectation (session-helper pinholes like FTP/SIP), and NAT sessions require explicit enabling (session-pickup-connectionless, session-pickup-expectation, session-pickup-nat), and sync filters can narrow what's shared. An FGSP deployment scales from 2 to 16 standalone devices — or 2 to 16 FGCP clusters as peers, meaning the two technologies compose rather than compete. It's also compatible with VRRP.</p>
-      <p>Load balancing and failover are performed by external network devices — that division of labour is FGSP's defining property. If the external balancers send everything to one peer with the other as backup, the effect resembles active-passive; balanced across both, it resembles active-active. FGSP also solves asymmetric traffic under inspection: all packets of a session are forwarded back to the session owner (the peer that saw the first packet) — over layer 2 if peers share subnets and direct connectivity, or UDP-encapsulated over layer 3 where L2 isn't available (cloud). Session sync itself runs over layer 3 by default, over layer 2 if session-sync-dev is configured, and can be encrypted with an automatically-created IPsec tunnel (set encryption enable + psksecret) — useful between datacenters. Optional standalone configuration synchronization exists (same mechanism as FGCP's, layer 2 required, elects a 'primary' for config purposes only, not traffic).</p>
+      <p>For proxy-based inspection sessions, the two directions split permanently. Inbound: every packet from the client or the server still arrives at Box A's vMAC (endpoint ARP caches are unchanged) and Box A relays each one to Box B in an 0x8891 frame — this repeats per-packet for the life of the session. Outbound: Box B effectively terminates the proxy session on both sides, replying to the client and talking to the server directly from its own physical MAC. Box A relays every inbound leg and never sees a single outbound leg.</p>
+      <p>This is a genuine operational cost, not just an exam trivia point: it makes single-box packet captures unreliable, and it creates real asymmetric-path risk for anything upstream that expects symmetric flows (some stateful devices, WAN optimizers, certain routing/security appliances). This is precisely why the session outline flagged 'harder troubleshooting' and 'asymmetric path risk' as A-A's core drawbacks.</p>
       <div class="mental-note-block">
         <div class="mental-note-block-icon">🧠</div>
         <div class="mental-note-block-inner">
           <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">FGSP = independent peers + session sync only. TCP + IPsec synced by default; UDP/ICMP/expectation/NAT are opt-in. External devices own distribution and failure detection. Asymmetric traffic returns to the session owner. 2–16 peers, FGCP clusters can BE peers, VRRP-compatible.</div>
+          <div class="mental-note-block-text">For proxy-inspected sessions: door IN is always Box A (every inbound packet hits the vMAC and is relayed via 0x8891), door OUT is always Box B (every reply sent directly from B's physical MAC) — repeating per-packet for the whole session. A single-box capture in A-A is not reliable evidence of failure; Box A shows only inbound halves, Box B shows the complete picture.</div>
         </div>
       </div>
     </div>
@@ -612,30 +611,32 @@ Switch# write memory</code></pre>
       <div class="lesson-tools-grid">
         <div>
           <div class="tool-label">ASK A QUESTION</div>
-          <textarea class="tool-textarea" id="q-section-fgsp" placeholder="What are you unsure about in this section?" rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-fgsp','FGSP')">Add Question</button></div>
+          <textarea class="tool-textarea" id="q-section-asymmetric-path" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-asymmetric-path','Asymmetric Path')">Add Question</button></div>
         </div>
         <div>
           <div class="tool-label">ADD A NOTE</div>
-          <textarea class="tool-textarea" id="note-section-fgsp" placeholder="Write a note about this section..." rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-fgsp')">+ Add Note</button></div>
+          <textarea class="tool-textarea" id="note-section-asymmetric-path" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-asymmetric-path')">+ Add Note</button></div>
         </div>
       </div>
     </div>
 
-
-    <!-- SECTION 4 -->
+  <!-- ══════════════════════════════════════════
+         SECTION 3  (duplicate S1 block, rename to S4)
+         Add more sections if needed (up to 5)
+         ══════════════════════════════════════════ -->
     <div class="socratic-block">
       <div class="socratic-header">
         <span class="socratic-icon">💭</span>
-        <span class="socratic-label">THINK FIRST · VRRP — THE OPEN-STANDARD ANSWER</span>
+        <span class="socratic-label">THINK FIRST · WHEN IS IT WORTH IT</span>
       </div>
-      <p class="socratic-insight">The Meridian branch: 25 endpoints all pointing at gateway 192.168.10.1, which lives on an ageing third-party router. A new FortiGate must coexist with it for a two-week transition — if either dies, the branch stays up, and nobody touches an endpoint.</p>
+      <p class="socratic-insight">Priya wants Box B doing real work because it's sitting idle. You now know A-A only offloads proxy-based UTM sessions, that the primary always sees every packet regardless, and that A-A adds real troubleshooting cost. Time to give her the actual senior-engineer answer.</p>
       <ul class="socratic-questions">
-        <li>When a PC sends to its gateway, what does it actually put on the wire — and why does that make 'the survivor answers with its own MAC' a flawed failover design?</li>
-        <li>For a virtual-IP-plus-virtual-MAC mechanism to work between a FortiGate and a different vendor's router, what does the protocol have to be — and what does VRRP deliberately NOT move at failover?</li>
+        <li>Does flipping to A-A meaningfully reduce Box A's CPU load — always, sometimes, or rarely? What determines the answer?</li>
+        <li>In a two-node cluster specifically, does the <code>schedule</code> setting (round-robin, ip, ipport, leastconnection...) actually do anything meaningful?</li>
       </ul>
-      <div class="answer-area" data-section="vrrp">
+      <div class="answer-area" data-section="when-it-makes-sense">
         <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
         <div class="answer-buttons">
           <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
@@ -644,37 +645,36 @@ Switch# write memory</code></pre>
         <div class="model-answers" style="display:none;">
           <div class="model-answer-item">
             <div class="model-answer-q">Q1 — MODEL ANSWER</div>
-            <div class="model-answer-text">A frame addressed to whatever MAC its ARP cache holds for the gateway IP. If the survivor answers with its own burned-in MAC, every endpoint keeps sending to the dead box's MAC until its ARP entry expires — minutes of staggered, unpredictable outage across 25 caches.</div>
+            <div class="model-answer-text">It depends entirely on the traffic mix. If a meaningful share of sessions are proxy-inspected, A-A genuinely frees real CPU on Box A by handing that expensive work to Box B. If the load is mostly plain flow-based traffic, A-A offloads almost nothing — Fortinet's own guidance is explicit that A-A's goal is spending idle secondary capacity, not equalizing load; the primary will always carry more total traffic than any secondary.</div>
           </div>
           <div class="model-answer-item">
             <div class="model-answer-q">Q2 — MODEL ANSWER</div>
-            <div class="model-answer-text">An open standard (IETF), because proprietary protocols like FGCP/FGSP only speak FortiGate — VRRP is the shared language. And VRRP moves only the gateway identity (virtual IP + well-known virtual MAC). No sessions, no VPN SAs, no config: stateless failover. Live connections through the failed box renegotiate from scratch.</div>
+            <div class="model-answer-text">Almost nothing. Every <code>schedule</code> option (round-robin, leastconnection, ip, ipport, weight-round-robin, random) exists to answer 'which of several secondaries gets this session' — with only one possible secondary, the answer is always the same box no matter which algorithm is configured. The setting only becomes meaningful once a cluster has more than two members.</div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="section-block" id="section-vrrp">
+    <div class="section-block" id="section-when-it-makes-sense">
       <div class="section-label">SECTION 04</div>
-      <h2>VRRP — <em>The Open-Standard Answer</em></h2>
+      <h2>When A-A Makes Sense — <em>and When It Doesn't</em></h2>
       <div class="section-img-wrap">
-        <img src="images/s4-vrrp.png" class="section-img" alt="VRRP virtual IP and virtual MAC floating between multi-vendor gateways"
+        <img src="images/s3-when-it-makes-sense.png" class="section-img" alt="Decision comparison between a proxy-heavy firewall (A-A worth it) and a flow-heavy firewall (A-A adds cost with little benefit)"
              onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
-        <p class="img-caption">The gateway address belongs to the group, not to either box.</p>
+        <p class="img-caption">A-A's value is entirely a function of how much of your traffic is proxy-inspected.</p>
         <div class="si-placeholder">
-          <span class="si-filename">images/s4-vrrp.png</span>
+          <span class="si-filename">images/s3-when-it-makes-sense.png</span>
           <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Centre: a floating badge icon showing '192.168.10.1 + virtual MAC' drawn as a glowing gold medallion suspended between two clearly different device icons — left an old, slightly weathered third-party router (different vendor styling, antenna, beige tones) labeled 'legacy router', right a modern FortiGate box labeled 'new FortiGate'. A curved gold arc shows the medallion able to swing to whichever device is master; the current master (left) holds a small flag labeled 'MASTER — answers ARP', the right device labeled 'BACKUP — listening for advertisements'. Below, a row of five small PC icons all with identical speech bubbles reading 'gateway = 192.168.10.1', their ARP-cache thought bubbles all showing the SAME virtual MAC, unchanged. A small banner between the devices reads 'IETF open standard — any compliant vendor'. A faded corner vignette shows a padlock breaking with the label 'sessions/VPNs NOT carried — stateless'. Bottom caption: 'VRRP moves the identity, never the state.' Clean structured composition, generous spacing.</div>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, warm modern colour palette, cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, no gradients, no 3D. Split composition: left side shows a firewall with many coral 'proxy inspection' icons flowing to a helpful, busy Box B labelled 'worth it'; right side shows a near-identical firewall with mostly sage-green 'flow-based' icons that all stay stuck at Box A, with Box B shown idle and slightly sleepy, labelled 'limited benefit'. A small scale/balance icon sits between the two halves. Clean bold line work, generous spacing, educational composition.</div>
         </div>
       </div>
-      <p>VRRP (Virtual Router Redundancy Protocol) solves a different problem from the other two: gateway identity redundancy. A VRRP group shares a virtual IP and a well-known virtual MAC that belongs to neither box's physical hardware. Endpoints ARP for the gateway once and cache the virtual MAC — which never changes. At failover, the only thing that changes is which physical device answers to that MAC, so the outage window collapses from 'wait for 25 ARP caches to expire' to 'failure detection time'. The master advertises regularly; when advertisements stop, a backup promotes itself. Because it's an IETF open standard, it's the only one of the three that works multi-vendor — the exact requirement of Vaultline's transition scenario, and the reason redundancy capacity is effectively unlimited to any compliant device.</p>
-      <p>Two FortiOS-specific details are exam-relevant. First, VRRP on FortiGate supports monitoring up to two destination addresses — best practice is remote addresses (e.g. an internet IP): if the master can't reach them, it stops sending advertisements so the backup takes over, catching upstream failures a simple link-state check would miss. Second, and most important: VRRP provides no session synchronization and no configuration synchronization natively. It is stateless failover. That's exactly why Priya's 'just use VRRP at the HQ edge' fails — the gateway would move cleanly while every clearing-partner tunnel died. VRRP's home is multi-vendor gateway redundancy and migrations; note it can also be combined with FGSP where session survival is needed alongside it.</p>
-      
+      <p>A-A is not a load-balancing feature in the traffic-engineering sense — Fortinet's own material is explicit that its purpose is to spend otherwise-idle CPU and memory on the secondary, not to equalize traffic across the cluster. The primary always sees more total traffic than any secondary, because ingress (and for most session types, egress) never leaves it.</p>
+      <p>That makes the honest answer to 'should we flip to A-A' entirely traffic-mix-dependent: genuinely valuable if a meaningful share of sessions are proxy-inspected, marginal if the load is mostly plain flow-based traffic — and either way, it comes with a real operational cost in troubleshooting complexity and asymmetric-path risk that has to be weighed against the CPU gain.</p>
       <div class="mental-note-block">
         <div class="mental-note-block-icon">🧠</div>
         <div class="mental-note-block-inner">
           <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">VRRP = virtual IP + virtual MAC shared by the group; endpoints' ARP caches never change. Open standard = multi-vendor = the migration answer. Moves identity, never state. Can monitor up to two (ideally remote) destinations to catch upstream failures. Combinable with FGSP.</div>
+          <div class="mental-note-block-text">A-A's stated goal is <strong>using idle secondary capacity</strong>, not traffic-engineering load balancing — the primary always carries more traffic than any secondary. In a two-node cluster, the <code>schedule</code> algorithm is functionally irrelevant since there's only one possible secondary to send a session to.</div>
         </div>
       </div>
     </div>
@@ -683,98 +683,13 @@ Switch# write memory</code></pre>
       <div class="lesson-tools-grid">
         <div>
           <div class="tool-label">ASK A QUESTION</div>
-          <textarea class="tool-textarea" id="q-section-vrrp" placeholder="What are you unsure about in this section?" rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-vrrp','VRRP')">Add Question</button></div>
+          <textarea class="tool-textarea" id="q-section-when-it-makes-sense" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-when-it-makes-sense','Worth It?')">Add Question</button></div>
         </div>
         <div>
           <div class="tool-label">ADD A NOTE</div>
-          <textarea class="tool-textarea" id="note-section-vrrp" placeholder="Write a note about this section..." rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-vrrp')">+ Add Note</button></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SECTION 5 -->
-    <div class="socratic-block">
-      <div class="socratic-header">
-        <span class="socratic-icon">💭</span>
-        <span class="socratic-label">THINK FIRST · NP7 RESYNC & THE THURSDAY INCIDENT</span>
-      </div>
-      <p class="socratic-insight">Three weeks after the FGCP pair went live, Box A's power supply died. Failover took ~1 second, tunnels never dropped — but Box B's CPU hit 95% for 45 seconds and users saw the portal 'hang'. Explain it before reading.</p>
-      <ul class="socratic-questions">
-        <li>FGCP synced the full session table to Box B. Why did the CPU spike anyway — what exactly does NOT travel over the sync link, and what fraction of offloaded traffic hits the CPU at once in the worst case?</li>
-        <li>Is '45 seconds at 95%, then recovered' a success or a warning sign — and what four pieces of evidence settle it?</li>
-      </ul>
-      <div class="answer-area" data-section="np7-resync">
-        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
-        <div class="answer-buttons">
-          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
-          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
-        </div>
-        <div class="model-answers" style="display:none;">
-          <div class="model-answer-item">
-            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
-            <div class="model-answer-text">The NP7's internal hardware offload table is local silicon state — a kernel-to-kernel sync link cannot write into another box's chip. Only kernel session entries cross. So every inherited session's first packet is CPU-processed to reprogram the local NP7 before the fast path resumes — and in the worst case that's 100% of previously-offloaded sessions, simultaneously.</div>
-          </div>
-          <div class="model-answer-item">
-            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
-            <div class="model-answer-text">Neither, until the evidence is in: (1) failover timestamp correlated against FortiAnalyzer peak throughput, (2) drop/retransmit counters during the spike (busy vs. overloaded-and-dropping), (3) VPN tunnel status through the event, (4) post-spike CPU trend. If a quiet-afternoon failover already pinned the CPU, there's no margin for a market-open failover — the proactive answer is a controlled failover test at peak-equivalent load.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section-block" id="section-np7-resync">
-      <div class="section-label">SECTION 05</div>
-      <h2>The Hidden Cost of <em>Stateful Failover</em></h2>
-      <div class="section-img-wrap">
-        <img src="images/s5-np7-resync.png" class="section-img" alt="Kernel session sync versus NP7 hardware state during FGCP failover with resulting CPU surge"
-             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
-        <p class="img-caption">Kernel state crosses; silicon state doesn't. The CPU pays the difference — all at once.</p>
-        <div class="si-placeholder">
-          <span class="si-filename">images/s5-np7-resync.png</span>
-          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Three-panel horizontal storyboard. PANEL 1 'SYNCED': two FortiGate boxes, a gold ribbon of tiny ledger and padlock icons flowing between their upper 'kernel' layers, while their lower 'NP7 chip' layers each sit behind separate dashed walls labeled 'local silicon'. PANEL 2 'THE SURGE': cutaway of the surviving box — one CPU character at a single desk stamping tickets with sweat-drop marks, a giant queue of envelope-shaped packet characters under a banner reading '100% — all offloaded sessions at once', a thermometer pinned at 95% in coral, the NP7 express corridor below almost empty with a 'reopening' sign and the first stamped packets trickling through turnstiles. PANEL 3 'THE VERDICT': a small evidence board with four checklist cards (peak-throughput correlation, drop/retransmit counters, tunnels held, CPU trend), three checked in gold and one stamped 'PENDING' in coral, beside a closed folder labeled 'board briefing' and a calendar plaque labeled 'scheduled peak-load failover test'. Bottom caption bar: 'Size for the worst second, not the average day.' Clean structured composition, generous spacing.</div>
-        </div>
-      </div>
-      <p>This is where Session 15 connects back to Sessions 39/40. An offloaded session exists in two places: a kernel session-table entry (software) and a hardware entry programmed into the NP7 (silicon). FGCP session sync is kernel-to-kernel — it mirrors the software record continuously but has no mechanism to program the peer's NP7. At failover, the new primary's kernel recognizes every inherited session while its NP7 knows none of them: the first packet of each is CPU-punted, the NP7 gets reprogrammed, and the fast path resumes per-session. Thursday's 45-second spike at 95% was that mechanism operating exactly as designed — visible cost, not malfunction. The tunnels surviving was itself diagnostic evidence: VPN SAs are part of synced state, so intact tunnels prove the sync worked.</p>
-      <p>The design consequence is the sizing principle: an FGCP member cannot be sized for its own steady-state load — it must survive its partner's entire offloaded workload landing on its CPU simultaneously, because the worst case is 100% of sessions becoming CPU-bound at once. An undersized CPU doesn't degrade gracefully under that surge: it drops packets, TCP retransmits, and the retransmissions feed the overload — a congestion feedback loop at the precise moment the business has zero redundancy left. And the diagnostic discipline: 'it recovered' is necessary evidence, never sufficient. A 95% spike on a quiet Thursday afternoon means the margin for a peak-hour failover may already be gone — which only a controlled peak-load failover test can answer before reality does.</p>
-      
-      <table class="data-table">
-        <thead><tr><th>Feature</th><th>FGCP</th><th>FGSP</th><th>VRRP</th></tr></thead>
-        <tbody>
-          <tr><td>Redundancy capacity</td><td>2–4 FortiGate devices</td><td>2–16 standalone devices or 2–16 FGCP clusters</td><td>Unlimited, any VRRP-compliant vendor</td></tr>
-          <tr><td>Load balancing</td><td>Native in A-A; none in A-P (VDOM partitioning for load sharing)</td><td>Via external load balancers</td><td>Not available</td></tr>
-          <tr><td>Session synchronization</td><td>Available through configuration</td><td>Available through configuration (its whole purpose)</td><td>Not available</td></tr>
-          <tr><td>Configuration synchronization</td><td>Native</td><td>Available if required (standalone config sync)</td><td>Not available</td></tr>
-          <tr><td>Vendor scope</td><td>FortiGate only</td><td>FortiGate only</td><td>Open standard — multi-vendor</td></tr>
-          <tr><td>Who decides failover</td><td>The cluster itself</td><td>External devices</td><td>VRRP group (advertisement timeout)</td></tr>
-        </tbody>
-      </table>
-      <div class="callout">
-        <strong>Exam tip:</strong> a temporary CPU spike immediately after FGCP failover is <em>expected</em> NP7 resync behavior — distractors will frame it as a cluster fault. And "VPN tunnels must renegotiate after FGCP failover" is a trap built on confusing cold-spare recovery with clustered stateful failover: FGCP (and FGSP) synchronize IPsec tunnel state.
-      </div>
-
-      <div class="mental-note-block">
-        <div class="mental-note-block-icon">🧠</div>
-        <div class="mental-note-block-inner">
-          <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">Kernel sync ≠ hardware sync. Worst case at failover: 100% of offloaded sessions CPU-bound simultaneously. Undersized CPU → drops → retransmits → feedback loop. Verdict requires four pieces of evidence; recovery alone proves nothing about margin. Size the pair for the worst second, not the average day.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="lesson-tools">
-      <div class="lesson-tools-grid">
-        <div>
-          <div class="tool-label">ASK A QUESTION</div>
-          <textarea class="tool-textarea" id="q-section-np7-resync" placeholder="What are you unsure about in this section?" rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-np7-resync','NP7 & Sizing')">Add Question</button></div>
-        </div>
-        <div>
-          <div class="tool-label">ADD A NOTE</div>
-          <textarea class="tool-textarea" id="note-section-np7-resync" placeholder="Write a note about this section..." rows="3"></textarea>
-          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-np7-resync')">+ Add Note</button></div>
+          <textarea class="tool-textarea" id="note-section-when-it-makes-sense" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-when-it-makes-sense')">+ Add Note</button></div>
         </div>
       </div>
     </div>
@@ -784,17 +699,17 @@ Switch# write memory</code></pre>
 
 <!-- ══════════════════════════════════════════════════════════
      PAGE NAV — links to prev/next subtopic or chapter hub
-     If at the start: prev href="index.html", label "← BACK TO HUB", title "Chapter NN Hub"
-     If at the end:   next href="index.html", label "CHAPTER HUB →", title "Chapter NN Hub"
+     If at the start: prev href="../index.html", label "← BACK TO HUB", title "Chapter NN Hub"
+     If at the end:   next href="../index.html", label "CHAPTER HUB →", title "Chapter NN Hub"
      ══════════════════════════════════════════════════════════ -->
 <div class="page-nav">
-  <a class="page-nav-btn page-nav-prev" href="#">
-    <span class="page-nav-label">← BACK TO</span>
-    <span class="page-nav-title">Session 14</span>
+  <a class="page-nav-btn page-nav-prev" href="session-16-fgcp-fundamentals-a-p.html">
+    <span class="page-nav-label">← BACK</span>
+    <span class="page-nav-title">Session 16 — FGCP Fundamentals (A-P)</span>
   </a>
-  <a class="page-nav-btn page-nav-next" href="#">
+  <a class="page-nav-btn page-nav-next" href="../index.html">
     <span class="page-nav-label">NEXT →</span>
-    <span class="page-nav-title">Session 16</span>
+    <span class="page-nav-title">Session 18 (TBD)</span>
   </a>
 </div>
 
@@ -802,7 +717,7 @@ Switch# write memory</code></pre>
      FOOTER
      ══════════════════════════════════════════════════════════ -->
 <footer>
-  NSE7 Enterprise Firewall 7.6<span>.</span> Session 15<span>.</span> Complete Guide<span>.</span> The HA Problem — FGCP, FGSP &amp; VRRP
+  CCNA 200-301<span>.</span> Chapter 04<span>.</span> Subtopic 17<span>.</span> FGCP Active-Active and Load Balancing
 </footer>
 
 <!-- ══════════════════════════════════════════════════════════
@@ -810,16 +725,15 @@ Switch# write memory</code></pre>
      ══════════════════════════════════════════════════════════ -->
 <script>
 // ← PAGE_KEY must be unique across all pages. Format: ccna-chNN-subNN-slug
-const PAGE_KEY = 'nse7-s15-complete-ha';
+const PAGE_KEY = 'nse7-ef76-s17-fgcp-aa';
 // e.g. 'ccna-ch04-sub02-vlans'
 
 // ← One entry per section. Key = the id on the .section-block div (without #).
 const SECTIONS = {
-  'section-the-problem': 'The Problem',
-  'section-fgcp': 'FGCP',
-  'section-fgsp': 'FGSP',
-  'section-vrrp': 'VRRP',
-  'section-np7-resync': 'NP7 & Sizing',
+  'section-what-gets-balanced': 'What Gets Balanced',
+  'section-the-relay-mechanism': 'The Relay',
+  'section-asymmetric-path': 'Asymmetric Path',
+  'section-when-it-makes-sense': 'Worth It?',
 };
 
 /* ── Everything below is fixed — do not modify ── */

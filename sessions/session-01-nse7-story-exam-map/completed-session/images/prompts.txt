@@ -1,10 +1,10 @@
 ==============================================================================
-SECTION-IMAGE PROMPTS — session-01-nse7-story-exam-map/complete.html
+SECTION-IMAGE PROMPTS — session-01-nse7-story-exam-map/completed-session/index.html
 Prompts: 1
 ==============================================================================
 
 ------------------------------------------------------------------------------
-SOURCE: complete.html
+SOURCE: index.html
 ------------------------------------------------------------------------------
 
 [1] filename (as declared in HTML): images/analogy-bank-branches.png

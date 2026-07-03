@@ -2270,6 +2270,8 @@ def build_claude_prompt(s: dict) -> str:
 import re as _re
 
 EXTRA_KINDS = ("guides", "bites", "nibbles")
+EXTRAS = []
+EXTRAS_DIR = ROOT / "extras"
 _TITLE_STRIP_PREFIXES = (
     "Study Bite — ", "Study Guide — ", "Guide — ", "Nibble — ",
     "Bite — ", "Study Nibble — ",
@@ -2353,8 +2355,8 @@ def discover_completions():
     out = {}
     for s in SESSIONS:
         session_dir = SESSIONS_DIR / f"session-{s['num']:02d}-{s['slug']}"
-        has_complete = (session_dir / "complete.html").is_file()
-        summary_path = session_dir / "summary.txt"
+        has_complete = (session_dir / "completed-session" / "index.html").is_file()
+        summary_path = session_dir / "completed-session" / "summary.txt"
         has_summary = summary_path.is_file()
         if not (has_complete or has_summary):
             continue
@@ -2397,7 +2399,7 @@ def report_completion_validation(completions):
         if not entry or not entry.get("has_complete"):
             continue
         session_dir = SESSIONS_DIR / f"session-{s['num']:02d}-{s['slug']}"
-        missing = validate_complete_html(session_dir / "complete.html")
+        missing = validate_complete_html(session_dir / "completed-session" / "index.html")
         if missing:
             problems.append((s["num"], missing))
     if problems:
@@ -2407,28 +2409,108 @@ def report_completion_validation(completions):
     else:
         print("✓ every complete.html passes the canonical shell contract")
 
+_RECAP_KV_RE = _re.compile(r'^([A-Z][A-Za-z][A-Za-z /&-]{1,32}):\s+(.+)$')
+_RECAP_NUM_RE = _re.compile(r'^(\d+)\.\s+(.+)$')
+_RECAP_SUBLABEL_RE = _re.compile(r'^([A-Z][A-Za-z][A-Za-z ,&/-]{2,60}):$')
+_BULLET_PREFIXES = ("* ", "- ", "• ")
+
+def _recap_render_bullets(block_lines):
+    return "<ul>" + "".join(
+        f"<li>{html_escape(l.lstrip()[2:].strip())}</li>"
+        for l in block_lines if l.strip() and l.lstrip().startswith(_BULLET_PREFIXES)
+    ) + "</ul>"
+
+def _recap_render_prose(block_lines):
+    """Render a block that is not a numbered header block: paragraphs + bullets + sublabels."""
+    out = []
+    ul_buf = []
+    def flush_ul():
+        if ul_buf:
+            out.append("<ul>" + "".join(f"<li>{html_escape(x)}</li>" for x in ul_buf) + "</ul>")
+            ul_buf.clear()
+    for raw in block_lines:
+        line = raw.strip()
+        if not line:
+            flush_ul()
+            continue
+        if line.startswith(_BULLET_PREFIXES):
+            ul_buf.append(line[2:].strip())
+            continue
+        flush_ul()
+        m_sub = _RECAP_SUBLABEL_RE.match(line)
+        if m_sub:
+            out.append(f'<span class="recap-sublabel">{html_escape(m_sub.group(1))}</span>')
+            continue
+        out.append(f"<p>{html_escape(line)}</p>")
+    flush_ul()
+    return "".join(out)
+
 def render_summary_body(body):
-    """Convert a summary body block to HTML paragraphs / bullet lists."""
+    """Convert a summary body block to structured HTML.
+
+    Recognises four inline patterns so recap cards read as scannable structure
+    rather than a wall of text:
+      * `Key: value` blocks (Session Information) → definition-list-style .recap-kv
+      * `N. Title` followed by a body block → numbered .recap-h4 heading + body
+      * single-line `N. Sentence.` items → .recap-numitem callouts (Takeaways)
+      * `Label:` on its own line → .recap-sublabel sub-heading before bullets
+    Falls back to plain paragraphs + bullet lists.
+    """
     if not body.strip():
         return ""
-    parts = []
-    current_ul = []
-    def _flush_ul():
-        if current_ul:
-            parts.append("<ul>" + "".join(f"<li>{html_escape(x)}</li>" for x in current_ul) + "</ul>")
-            current_ul.clear()
-    for raw in body.splitlines():
-        line = raw.rstrip()
-        if not line.strip():
-            _flush_ul()
-            continue
-        stripped = line.lstrip()
-        if stripped.startswith(("* ", "- ", "• ")):
-            current_ul.append(stripped[2:].strip())
+    lines = [l.rstrip() for l in body.splitlines()]
+
+    # Case 1: whole block is Key:value lines (Session Information style).
+    non_empty = [l for l in lines if l.strip()]
+    if non_empty and all(_RECAP_KV_RE.match(l.strip()) for l in non_empty):
+        items = []
+        for l in non_empty:
+            m = _RECAP_KV_RE.match(l.strip())
+            key, val = m.group(1), m.group(2)
+            items.append(
+                f'<li><span class="recap-kv-key">{html_escape(key)}</span>'
+                f'<span>{html_escape(val)}</span></li>'
+            )
+        return '<ul class="recap-kv">' + "".join(items) + "</ul>"
+
+    # Otherwise: split into blocks separated by blank lines and classify each.
+    blocks = []
+    current = []
+    for l in lines:
+        if not l.strip():
+            if current:
+                blocks.append(current)
+                current = []
         else:
-            _flush_ul()
-            parts.append(f"<p>{html_escape(line.strip())}</p>")
-    _flush_ul()
+            current.append(l)
+    if current:
+        blocks.append(current)
+
+    parts = []
+    for block in blocks:
+        first = block[0].strip()
+        m_num = _RECAP_NUM_RE.match(first)
+        if m_num:
+            num, title = m_num.group(1), m_num.group(2)
+            if len(block) == 1:
+                # Single-line numbered item (Takeaway-style).
+                parts.append(
+                    '<div class="recap-numitem">'
+                    f'<span class="recap-num-badge">{num}</span>'
+                    f'<span class="recap-numitem-text">{html_escape(title)}</span>'
+                    '</div>'
+                )
+            else:
+                # Numbered heading with body block.
+                parts.append(
+                    '<div class="recap-h4">'
+                    f'<span class="recap-num-badge">{num}</span>'
+                    f'<span>{html_escape(title)}</span>'
+                    '</div>'
+                )
+                parts.append(_recap_render_prose(block[1:]))
+            continue
+        parts.append(_recap_render_prose(block))
     return "".join(parts)
 
 # ---------------------------------------------------------------------------
@@ -2469,10 +2551,10 @@ SESSION_TEMPLATE = """<!DOCTYPE html>
   body{{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}}
   header{{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}}
   .header-left{{flex:1;}}
-  .breadcrumb{{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}}
+  .breadcrumb{{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.12em;color:var(--ink-accent);margin-bottom:14px;text-transform:uppercase;}}
   .breadcrumb a{{color:var(--ink-accent);text-decoration:none;}}
-  .breadcrumb a:hover{{text-decoration:underline;}}
-  .breadcrumb-sep{{color:rgba(155,184,230,0.4);}}
+  .breadcrumb a:hover{{color:#fff;}}
+  .breadcrumb-sep{{margin:0 8px;opacity:0.55;}}
   .header-eyebrow{{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}}
   .dot-live{{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}}
   @keyframes blink{{0%,100%{{opacity:1}}50%{{opacity:0.3}}}}
@@ -2543,14 +2625,26 @@ SESSION_TEMPLATE = """<!DOCTYPE html>
   .completion-callout-text strong{{color:var(--green);}}
   .completion-callout-btn{{flex-shrink:0;display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#fff;padding:10px 18px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;}}
   .completion-callout-btn:hover{{background:#155e37;}}
-  /* Session recap */
-  .recap-grid{{display:grid;gap:14px;}}
-  .recap-section{{background:var(--surface);border:1px solid var(--border-dim);border-radius:10px;padding:16px 20px;}}
-  .recap-section h3{{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:var(--blue);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px;}}
-  .recap-section p{{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);margin-bottom:8px;}}
+  /* Session recap — single column, editorial layout, no cards */
+  .recap-grid{{display:block;}}
+  .recap-section{{background:transparent;border:none;border-radius:0;padding:0;margin:0 0 44px;}}
+  .recap-section:last-child{{margin-bottom:0;}}
+  .recap-section h3{{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--text);letter-spacing:-0.01em;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--border);font-style:italic;text-transform:none;}}
+  .recap-section p{{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.75;color:var(--text-soft);margin-bottom:12px;}}
   .recap-section p:last-child{{margin-bottom:0;}}
-  .recap-section ul{{padding-left:20px;margin-bottom:6px;}}
-  .recap-section li{{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.6;color:var(--text-soft);margin-bottom:4px;}}
+  .recap-section ul{{padding-left:24px;margin:6px 0 14px;}}
+  .recap-section li{{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:6px;}}
+  .recap-h4{{display:flex;align-items:baseline;gap:12px;margin:22px 0 10px;font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--text);line-height:1.35;letter-spacing:-0.005em;}}
+  .recap-h4:first-child{{margin-top:0;}}
+  .recap-h4 > span:last-child{{flex:1;}}
+  .recap-num-badge{{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;min-width:26px;height:26px;padding:0 8px;border-radius:6px;background:var(--blue-light);color:var(--blue);font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;border:1px solid var(--blue-border);}}
+  .recap-numitem{{display:flex;gap:14px;align-items:baseline;padding:6px 0;margin:10px 0;background:transparent;border:none;border-radius:0;}}
+  .recap-numitem-text{{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);flex:1;}}
+  .recap-sublabel{{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.16em;color:var(--blue);text-transform:uppercase;margin:22px 0 8px;display:block;}}
+  .recap-sublabel:first-child{{margin-top:0;}}
+  .recap-kv{{list-style:none;padding:0;margin:0 0 6px;display:grid;gap:8px;}}
+  .recap-kv li{{display:grid;grid-template-columns:150px 1fr;gap:18px;padding:0;border:none;font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--text-soft);margin:0;line-height:1.55;}}
+  .recap-kv-key{{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding-top:3px;}}
   /* Extras list on session page */
   .extras-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:8px;}}
   .extras-card{{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;text-decoration:none;}}
@@ -2748,7 +2842,7 @@ def build_completion_callout_html(s: dict, has_complete: bool) -> str:
         'The polished study guide captures the full Socratic investigation, '
         'exam-critical notes, and the workplace applications you discovered.'
         '</div>'
-        '<a class="completion-callout-btn" href="complete.html">'
+        '<a class="completion-callout-btn" href="completed-session/index.html">'
         'Open completed study guide →'
         '</a>'
         '</div>'
@@ -3183,7 +3277,7 @@ def render_study_plan_index(extras=None, completions=None):
             slug_dir = f"session-{s['num']:02d}-{s['slug']}"
             title = html_escape(s["title"])
             cards.append(
-                f'<a class="hub-card" href="../sessions/{slug_dir}/complete.html">'
+                f'<a class="hub-card" href="../sessions/{slug_dir}/completed-session/index.html">'
                 f'<span class="hub-card-chip chip-complete">Completed</span>'
                 f'<span class="hub-card-sub">Session {s["num"]:02d}</span>'
                 f'<span class="hub-card-title">{title}</span>'
@@ -3754,7 +3848,7 @@ renderProgress();
     out_path.write_text(hub_html, encoding="utf-8")
 
 # ---------------------------------------------------------------------------
-# STANDALONE HUB PAGES: completed-sessions.html, extras.html
+# STANDALONE HUB PAGES: completed-sessions.html
 # ---------------------------------------------------------------------------
 
 _STANDALONE_HUB_STYLES = """
@@ -3763,7 +3857,7 @@ _STANDALONE_HUB_STYLES = """
     --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
     --border:#d4c89a; --border-dim:#ebe1c2;
     --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
-    --blue:#1e40af; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-light:#eff4fc; --blue-border:#b8cce8;
     --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
     --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
     --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
@@ -3811,25 +3905,56 @@ _STANDALONE_FONTS = (
     '&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">'
 )
 
-def _standalone_page(title, header_h1, header_sub, body_html, crumb=None):
+def _standalone_page(title, header_h1, header_sub, body_html, crumb=None,
+                     crumb_trail=None, eyebrow_label=None, footer_label=None):
+    """Shared shell for the standalone hub pages.
+
+    `crumb_trail` (optional): explicit list of (label, href_or_None) tuples for
+    the breadcrumb. If None, defaults to the legacy trail:
+      [(Home, index.html), (Curriculum, study-plan/index.html), (crumb_label, None)]
+    Pass an explicit list when the page doesn't belong under the Curriculum
+    branch (e.g. all-resources.html is a project-root catalog, not a
+    post-session artifact).
+
+    `eyebrow_label` (optional): replaces the default eyebrow text.
+    `footer_label` (optional): replaces the default footer's right-hand label.
+    """
     crumb_label = crumb or title
+    if crumb_trail is None:
+        crumb_trail = [
+            ("Home", "index.html"),
+            ("Curriculum", "study-plan/index.html"),
+            (crumb_label, None),
+        ]
+
+    def _render_crumb(pair, is_last):
+        label, href = pair
+        if href and not is_last:
+            return f'<a href="{href}">{label}</a>'
+        return label
+
+    trail_html = ""
+    for i, pair in enumerate(crumb_trail):
+        if i > 0:
+            trail_html += '<span class="breadcrumb-sep">›</span>'
+        trail_html += _render_crumb(pair, i == len(crumb_trail) - 1)
+
+    if eyebrow_label is None:
+        eyebrow_label = "Post-session artifacts · NSE7 Enterprise Firewall 7.6"
+    if footer_label is None:
+        footer_label = "Post-session artifacts"
+
     return (
         f'<!DOCTYPE html>\n<html lang="en">\n<head>\n'
         f'<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
         f'<title>{title}</title>\n{_STANDALONE_FONTS}\n{_STANDALONE_HUB_STYLES}\n</head>\n<body>\n'
         f'<header>\n'
-        f'<div class="breadcrumb">'
-        f'<a href="index.html">Home</a>'
-        f'<span class="breadcrumb-sep">›</span>'
-        f'<a href="study-plan/index.html">Curriculum</a>'
-        f'<span class="breadcrumb-sep">›</span>'
-        f'{crumb_label}'
-        f'</div>\n'
-        f'<div class="header-eyebrow">Post-session artifacts · NSE7 Enterprise Firewall 7.6</div>\n'
+        f'<div class="breadcrumb">{trail_html}</div>\n'
+        f'<div class="header-eyebrow">{eyebrow_label}</div>\n'
         f'<h1>{header_h1}</h1>\n'
         f'<p>{header_sub}</p>\n'
         f'</header>\n<main>\n{body_html}\n</main>\n'
-        f'<footer>NSE7 EF 7.6<span>.</span> Post-session artifacts</footer>\n'
+        f'<footer>NSE7 EF 7.6<span>.</span> {footer_label}</footer>\n'
         f'</body>\n</html>\n'
     )
 
@@ -3862,7 +3987,7 @@ def render_completed_hub(completions):
             slug = f"session-{s['num']:02d}-{s['slug']}"
             title = html_escape(s["title"])
             cards.append(
-                f'<a class="hub-card" href="sessions/{slug}/complete.html">'
+                f'<a class="hub-card" href="sessions/{slug}/completed-session/index.html">'
                 f'<span class="hub-card-chip chip-complete">Completed</span>'
                 f'<span class="hub-card-sub">Session {s["num"]:02d}</span>'
                 f'<span class="hub-card-title">{title}</span>'
@@ -3988,7 +4113,7 @@ def render_all_resources_hub(extras, completions):
         )
         completed_cards.append(
             f'<a class="hub-card" data-kind="completed" data-search="{haystack}" '
-            f'href="sessions/{session_dir}/complete.html">'
+            f'href="sessions/{session_dir}/completed-session/index.html">'
             f'<span class="hub-card-chip chip-complete">Completed</span>'
             f'<span class="hub-card-sub">Session {s["num"]:02d}</span>'
             f'<span class="hub-card-title">{html_escape(s["title"])}</span>'
@@ -4233,564 +4358,17 @@ def render_all_resources_hub(extras, completions):
         header_sub=('Search across every session, guide, bite, nibble, completed study '
                     'guide, and hands-on lab. Type a topic — the page filters in place.'),
         body_html=body_html,
-        crumb="All Study Resources",
+        # This page is a project-root catalog, not a post-session artifact.
+        # Skip the "Curriculum" hop and use a plain Home → All Study Resources trail.
+        crumb_trail=[
+            ("Home", "index.html"),
+            ("All Study Resources", None),
+        ],
+        eyebrow_label="All Study Resources · NSE7 Enterprise Firewall 7.6",
+        footer_label="All Study Resources",
     )
     (ROOT / "all-resources.html").write_text(html, encoding="utf-8")
 
-
-# ---------------------------------------------------------------------------
-# MIND MAP (mind-map.html) — radial SVG map of Phase → Session → Concepts + Extras
-# ---------------------------------------------------------------------------
-
-def render_mind_map(extras, completions):
-    """Emit mind-map.html — a radial SVG mind map, progressively expanded:
-
-    Initial state:  root + 8 phase pills only.
-    Click a phase:  its sessions fan out.
-    Click a session: its concepts AND its study-resource titles (guides / bites /
-                     nibbles / completed guide) fan out as clickable leaves.
-    Extra leaves navigate to their target HTML on click; a small link icon on
-    each session box navigates to that session's page.
-
-    Layout math: each phase gets a 360°/N wedge. Its sessions fan across the
-    phase's wedge; each session's leaves (concepts + extras) fan across that
-    session's mini-wedge. Node coords are pre-computed in Python so the SVG
-    is a static browser-simple document — no runtime layout engine.
-
-    Z-order: connectors first, then session/leaf groups, then phase pills,
-    then the root node last — so lines vanish behind the root circle and
-    behind pill nodes. Read the SVG bottom-up in DOM terms."""
-    import math
-
-    n_phases = len(PHASES)
-    # Canvas: 1600x1600 with center (800, 800). Radii chosen so concepts sit
-    # comfortably inside the viewbox without overflowing the SVG.
-    CX, CY = 800, 800
-    R_PHASE = 220
-    R_SESSION = 460
-    R_CONCEPT = 720
-
-    # Distinct color per phase — pull from the amber/blue/green/plum/teal
-    # palette so no two adjacent phases collide.
-    PHASE_COLORS = [
-        ("#1e40af", "#eff4fc"),   # blue
-        ("#1a7c4a", "#dff0e1"),   # green
-        ("#b45309", "#fcf2c3"),   # amber
-        ("#7c1a5f", "#f7e5f0"),   # plum
-        ("#0f766e", "#ccfbf1"),   # teal
-        ("#2563eb", "#eff4fc"),   # blue-vivid
-        ("#c2410c", "#fed7aa"),   # orange
-        ("#4c1d95", "#ede9fe"),   # violet
-    ]
-
-    def polar(r, angle_deg):
-        rad = math.radians(angle_deg - 90)  # -90 puts 0° at the top
-        return CX + r * math.cos(rad), CY + r * math.sin(rad)
-
-    def curve_path(x1, y1, x2, y2):
-        """Curved connector from parent (x1,y1) to child (x2,y2). Control
-        point sits partway along the line toward the center — gives a soft
-        S-shape typical of mind maps."""
-        mx = (x1 + x2) / 2 + (CX - (x1 + x2) / 2) * 0.35
-        my = (y1 + y2) / 2 + (CY - (y1 + y2) / 2) * 0.35
-        return f"M{x1:.1f},{y1:.1f} Q{mx:.1f},{my:.1f} {x2:.1f},{y2:.1f}"
-
-    # Precompute each phase's angular wedge.
-    per_phase_wedge = 360.0 / n_phases
-
-    # SVG stack ordering — critical for z-order:
-    #   1. root→phase connectors (always visible; underneath everything else)
-    #   2. per-phase groups (subtree first, phase pill on top within each group)
-    #   3. root node LAST so it sits on top of every connector line
-    root_connectors_html = []
-    phase_groups_html = []
-
-    for phase_i, phase in enumerate(PHASES):
-        phase_color, phase_bg = PHASE_COLORS[phase_i % len(PHASE_COLORS)]
-        phase_center_angle = phase_i * per_phase_wedge + per_phase_wedge / 2
-        px, py = polar(R_PHASE, phase_center_angle)
-
-        # Root→phase connector — rendered outside the phase group so it
-        # stays visible even when the phase subtree is collapsed.
-        root_connectors_html.append(
-            f'<path class="mm-link mm-link-phase" '
-            f'd="{curve_path(CX, CY, px, py)}" stroke="{phase_color}"/>'
-        )
-
-        sessions_in_phase = [s for s in SESSIONS if s["phase"] == phase["num"]]
-        n_sess = len(sessions_in_phase)
-        wedge_start = phase_i * per_phase_wedge + per_phase_wedge * 0.08
-        wedge_end = (phase_i + 1) * per_phase_wedge - per_phase_wedge * 0.08
-        wedge_span = wedge_end - wedge_start
-
-        # Phase-level searchable haystack — includes every session inside so
-        # the phase can "match" even when its subtree is collapsed.
-        phase_haystack_bits = [phase.get("title", ""), phase.get("tagline", "")]
-        for s in sessions_in_phase:
-            phase_haystack_bits.extend([
-                s.get("title", ""), s.get("why", ""),
-                " ".join(s.get("concepts") or []),
-                " ".join(s.get("objectives") or []),
-            ])
-        phase_haystack = " ".join(phase_haystack_bits).lower().replace('"', "&quot;")
-
-        phase_id = f"phase-{phase['num']:02d}"
-        phase_html = [
-            f'<g class="mm-phase-group" data-phase="{phase["num"]}" '
-            f'id="mm-{phase_id}" data-color="{phase_color}" '
-            f'data-search="{html_escape(phase_haystack)}">',
-            # Phase subtree — HIDDEN until the phase pill is clicked.
-            f'<g class="mm-phase-subtree">',
-        ]
-
-        for si, s in enumerate(sessions_in_phase):
-            if n_sess == 1:
-                sess_angle = wedge_start + wedge_span / 2
-            else:
-                sess_angle = wedge_start + (si / (n_sess - 1)) * wedge_span
-            sx, sy = polar(R_SESSION, sess_angle)
-            haystack = (
-                (s.get("title") or "") + " " + (s.get("why") or "") + " " +
-                " ".join(s.get("concepts") or []) + " " +
-                " ".join(s.get("objectives") or []) + " " +
-                (s.get("story") or "") + " " + (s.get("goal") or "")
-            ).lower().replace('"', "&quot;")
-
-            session_href = f"sessions/{session_filename(s)}"
-            session_dir = f"session-{s['num']:02d}-{s['slug']}"
-
-            # Leaves = concepts + extras (guides/bites/nibbles) + completed guide.
-            leaves = []
-            for concept in [c for c in (s.get("concepts") or []) if c]:
-                leaves.append({
-                    "kind": "concept", "text": concept, "href": None,
-                    "hay": concept.lower().replace('"', "&quot;"),
-                })
-            session_extras_map = extras.get(s["num"], {}) or {}
-            for kind_key, kind_label in [("guides", "Guide"), ("bites", "Bite"), ("nibbles", "Nibble")]:
-                for slug, extra_title, rel_href in (session_extras_map.get(kind_key) or []):
-                    leaves.append({
-                        "kind": kind_label.lower(),
-                        "text": extra_title,
-                        "href": f"sessions/{session_dir}/{rel_href}",
-                        "hay": (kind_label + " " + extra_title).lower().replace('"', "&quot;"),
-                    })
-            if completions.get(s["num"], {}).get("has_complete"):
-                leaves.append({
-                    "kind": "complete",
-                    "text": "Completed Study Guide",
-                    "href": f"sessions/{session_dir}/complete.html",
-                    "hay": "completed study guide",
-                })
-
-            phase_html.append(
-                f'<g class="mm-session-group" data-session="{s["num"]}" '
-                f'data-search="{html_escape(haystack)}">'
-                f'<path class="mm-link mm-link-session" '
-                f'd="{curve_path(px, py, sx, sy)}" stroke="{phase_color}"/>'
-                # Session box: click body to expand leaves; click ↗ to navigate.
-                f'<rect class="mm-session-box" data-session-toggle="{s["num"]}" '
-                f'x="{sx - 82:.1f}" y="{sy - 18:.1f}" '
-                f'width="164" height="36" rx="8" fill="{phase_bg}" stroke="{phase_color}"/>'
-                f'<text class="mm-session-num" x="{sx - 72:.1f}" y="{sy + 4:.1f}" '
-                f'fill="{phase_color}" pointer-events="none">{s["num"]:02d}</text>'
-                f'<text class="mm-session-title" x="{sx - 54:.1f}" y="{sy + 4:.1f}" '
-                f'pointer-events="none">{html_escape(_truncate(s["title"], 20))}</text>'
-                f'<a href="{session_href}" class="mm-session-link">'
-                f'<circle class="mm-session-link-bg" cx="{sx + 68:.1f}" cy="{sy:.1f}" '
-                f'r="9" fill="{phase_color}"/>'
-                f'<text class="mm-session-link-glyph" x="{sx + 68:.1f}" y="{sy + 4:.1f}" '
-                f'text-anchor="middle" pointer-events="none">↗</text>'
-                f'</a>'
-            )
-
-            if leaves:
-                n_leaves = len(leaves)
-                # Sibling sessions in the same phase auto-close when a session
-                # is opened (see JS), so a single opened session gets the WHOLE
-                # phase wedge for its leaves. Size the fan by leaf count so a
-                # session with 3 leaves doesn't spread across 45° needlessly.
-                #   ~4.5° per leaf, capped at 92% of the phase wedge.
-                per_leaf_deg = 4.5
-                needed_span = per_leaf_deg * max(n_leaves - 1, 1)
-                mini_span = min(needed_span, wedge_span * 0.92)
-                mini_start = sess_angle - mini_span / 2
-                phase_html.append(
-                    f'<g class="mm-session-leaves" data-session="{s["num"]}">'
-                )
-                for li, leaf in enumerate(leaves):
-                    if n_leaves == 1:
-                        cangle = sess_angle
-                    else:
-                        cangle = mini_start + (li / (n_leaves - 1)) * mini_span
-                    ccx, ccy = polar(R_CONCEPT, cangle)
-                    normalized_angle = cangle % 360
-                    if 90 <= normalized_angle <= 270:
-                        anchor = "end"
-                        tx_offset = -12
-                    else:
-                        anchor = "start"
-                        tx_offset = 12
-                    kind = leaf["kind"]
-                    if kind == "concept":
-                        leaf_inner = (
-                            f'<circle class="mm-concept-dot" cx="{ccx:.1f}" cy="{ccy:.1f}" '
-                            f'r="3" fill="{phase_color}"/>'
-                            f'<text class="mm-concept-text" x="{ccx + tx_offset:.1f}" '
-                            f'y="{ccy + 4:.1f}" text-anchor="{anchor}">'
-                            f'{html_escape(_truncate(leaf["text"], 44))}</text>'
-                        )
-                    else:
-                        chip_prefix = {
-                            "bite": "BITE · ",
-                            "nibble": "NIBBLE · ",
-                            "guide": "GUIDE · ",
-                            "complete": "✓ ",
-                        }.get(kind, "")
-                        label_text = f"{chip_prefix}{leaf['text']}"
-                        leaf_inner = (
-                            f'<a href="{leaf["href"]}" class="mm-leaf-link">'
-                            f'<circle class="mm-leaf-dot mm-leaf-dot-{kind}" '
-                            f'cx="{ccx:.1f}" cy="{ccy:.1f}" r="4"/>'
-                            f'<text class="mm-leaf-text mm-leaf-text-{kind}" '
-                            f'x="{ccx + tx_offset:.1f}" y="{ccy + 4:.1f}" '
-                            f'text-anchor="{anchor}">'
-                            f'{html_escape(_truncate(label_text, 44))}</text>'
-                            f'</a>'
-                        )
-                    phase_html.append(
-                        f'<g class="mm-leaf mm-leaf-{kind}" '
-                        f'data-search="{html_escape(leaf["hay"])}">'
-                        f'<path class="mm-link mm-link-leaf" '
-                        f'd="{curve_path(sx, sy, ccx, ccy)}" '
-                        f'stroke="{phase_color}" stroke-opacity="0.45"/>'
-                        f'{leaf_inner}'
-                        f'</g>'
-                    )
-                phase_html.append('</g>')  # end .mm-session-leaves
-
-            phase_html.append('</g>')  # end .mm-session-group
-
-        phase_html.append('</g>')  # end .mm-phase-subtree
-
-        # Phase pill — outside the subtree, so it stays visible even when collapsed.
-        phase_html.append(
-            f'<g class="mm-phase-pill" data-phase-toggle="{phase["num"]}">'
-            f'<circle class="mm-phase-circle" cx="{px:.1f}" cy="{py:.1f}" r="46" '
-            f'fill="{phase_color}"/>'
-            f'<text class="mm-phase-num" x="{px:.1f}" y="{py - 4:.1f}" text-anchor="middle" '
-            f'pointer-events="none">P{phase["num"]:02d}</text>'
-            f'<text class="mm-phase-label" x="{px:.1f}" y="{py + 14:.1f}" text-anchor="middle" '
-            f'pointer-events="none">{html_escape(_phase_short(phase["title"]))}</text>'
-            f'</g>'
-        )
-        phase_html.append('</g>')  # end .mm-phase-group
-        phase_groups_html.append("\n".join(phase_html))
-
-    # Final SVG stack: root→phase connectors, then phase groups (subtrees +
-    # pills), then the root node LAST so it sits on top of every line.
-    root_node_html = (
-        f'<g class="mm-root-node">'
-        f'<circle class="mm-root" cx="{CX}" cy="{CY}" r="60"/>'
-        f'<text class="mm-root-label" x="{CX}" y="{CY - 6}" text-anchor="middle">NSE7</text>'
-        f'<text class="mm-root-sub" x="{CX}" y="{CY + 14}" text-anchor="middle">EF 7.6</text>'
-        f'</g>'
-    )
-    svg = (
-        f'<svg id="mm-svg" viewBox="0 0 1600 1600" xmlns="http://www.w3.org/2000/svg" '
-        f'preserveAspectRatio="xMidYMid meet">'
-        + "\n".join(root_connectors_html) +
-        "\n" + "\n".join(phase_groups_html) +
-        "\n" + root_node_html +
-        '</svg>'
-    )
-
-    search_html = (
-        '<div class="mm-search-bar">'
-        '<label for="mm-search" class="mm-search-label">Search</label>'
-        '<input type="search" id="mm-search" placeholder="Type a topic — matching nodes glow, everything else dims" autocomplete="off" spellcheck="false">'
-        '<span class="mm-search-summary" id="mm-search-summary"></span>'
-        '<button type="button" class="mm-btn" id="mm-expand-all">Expand all</button>'
-        '<button type="button" class="mm-btn" id="mm-collapse-all">Collapse all</button>'
-        '</div>'
-        '<div class="mm-legend">'
-        '<span class="mm-legend-item"><span class="mm-legend-dot" style="background:#0d1a3a;"></span>Click a phase pill to fan out its sessions</span>'
-        '<span class="mm-legend-item"><span class="mm-legend-dot" style="background:#eff4fc;border:1.5px solid #1e40af;"></span>Click a session box to reveal its concepts + study resources</span>'
-        '<span class="mm-legend-item"><span class="mm-legend-arrow">↗</span>Click the arrow in a session box (or any leaf title) to open its page</span>'
-        '</div>'
-    )
-
-    css = """
-<style>
-  :root { --map-bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
-    --border:#d4c89a; --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
-    --blue:#1e40af; --ink-dark:#0d1a3a; --ink-accent:#9bb8e6; }
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Cormorant Garamond',serif;background:var(--map-bg);color:var(--text);min-height:100vh;}
-  header{padding:32px 40px 20px;background:var(--ink-dark);}
-  .breadcrumb{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.12em;color:var(--ink-accent);margin-bottom:12px;text-transform:uppercase;}
-  .breadcrumb a{color:var(--ink-accent);text-decoration:none;} .breadcrumb a:hover{color:#fff;} .breadcrumb-sep{margin:0 6px;opacity:0.6;}
-  header h1{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;color:#fbf7ec;letter-spacing:-0.01em;margin-bottom:6px;}
-  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
-  header p{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.65);}
-  main{padding:24px 32px 40px;}
-  .mm-search-bar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 16px;margin-bottom:14px;position:sticky;top:8px;z-index:20;box-shadow:0 8px 20px -18px rgba(10,24,56,0.24);}
-  .mm-search-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);}
-  #mm-search{flex:1;min-width:220px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;font-family:'Outfit',sans-serif;font-size:14px;color:var(--text);outline:none;}
-  #mm-search:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(30,64,175,0.16);}
-  .mm-search-summary{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.06em;color:var(--text-muted);}
-  .mm-btn{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;transition:all .15s;}
-  .mm-btn:hover{color:var(--text);border-color:var(--text);}
-  .mm-legend{display:flex;flex-wrap:wrap;gap:22px;padding:10px 16px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.04em;margin-bottom:14px;}
-  .mm-legend-item{display:inline-flex;align-items:center;gap:8px;}
-  .mm-legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;}
-  .mm-legend-toggle{border:1.5px solid #1e40af;background:#eff4fc;}
-  .mm-canvas{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;padding:0;position:relative;box-shadow:inset 0 0 60px rgba(212,200,154,0.24);}
-  #mm-svg{display:block;width:100%;height:auto;max-height:calc(100vh - 220px);cursor:grab;}
-  #mm-svg:active{cursor:grabbing;}
-  /* Root (rendered LAST in SVG → sits on top of every connector) */
-  .mm-root{fill:var(--ink-dark);stroke:#c9b26e;stroke-width:2;}
-  .mm-root-label{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;fill:#fbf7ec;pointer-events:none;}
-  .mm-root-sub{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.16em;fill:rgba(251,247,236,0.7);pointer-events:none;}
-  /* Phase pill (always visible) */
-  .mm-phase-circle{stroke:#0d1a3a;stroke-width:2;transition:filter .2s,transform .2s;cursor:pointer;transform-box:fill-box;transform-origin:center;}
-  .mm-phase-pill{cursor:pointer;}
-  .mm-phase-pill:hover .mm-phase-circle{filter:brightness(1.08);transform:scale(1.06);}
-  .mm-phase-num{font-family:'Playfair Display',serif;font-size:20px;font-weight:800;fill:#fbf7ec;pointer-events:none;}
-  .mm-phase-label{font-family:'Outfit',sans-serif;font-size:9.5px;font-weight:600;letter-spacing:0.1em;fill:rgba(255,255,255,0.85);pointer-events:none;text-transform:uppercase;}
-  /* Phase subtree — HIDDEN until phase pill is clicked */
-  .mm-phase-subtree{opacity:0;pointer-events:none;transition:opacity .35s ease;}
-  .mm-phase-group.expanded > .mm-phase-subtree{opacity:1;pointer-events:auto;}
-  /* Session box */
-  .mm-session-box{stroke-width:1.5;transition:filter .15s,transform .15s;transform-box:fill-box;transform-origin:center;cursor:pointer;}
-  .mm-session-group:hover .mm-session-box{filter:brightness(0.98) drop-shadow(0 6px 12px rgba(10,24,56,0.14));transform:scale(1.03);}
-  .mm-session-num{font-family:'Outfit',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.06em;dominant-baseline:middle;}
-  .mm-session-title{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;fill:var(--text);dominant-baseline:middle;}
-  /* Session ↗ link icon */
-  .mm-session-link{cursor:pointer;}
-  .mm-session-link-bg{transition:filter .15s,transform .15s;transform-box:fill-box;transform-origin:center;stroke:rgba(255,255,255,0.4);stroke-width:1;}
-  .mm-session-link:hover .mm-session-link-bg{filter:brightness(1.15);transform:scale(1.15);}
-  .mm-session-link-glyph{font-family:'Outfit',sans-serif;font-size:11px;font-weight:800;fill:#fff;dominant-baseline:middle;}
-  /* Session leaves — HIDDEN until session box is clicked */
-  .mm-session-leaves{opacity:0;pointer-events:none;transition:opacity .35s ease;}
-  .mm-session-group.leaves-open > .mm-session-leaves{opacity:1;pointer-events:auto;}
-  /* Concept + extras leaves */
-  .mm-concept-dot{transition:transform .15s;transform-box:fill-box;transform-origin:center;}
-  .mm-concept-text{font-family:'Outfit',sans-serif;font-size:10px;fill:var(--text-soft);pointer-events:none;}
-  .mm-leaf-link{text-decoration:none;cursor:pointer;}
-  .mm-leaf-dot{transition:transform .15s;transform-box:fill-box;transform-origin:center;stroke:#fbf7ec;stroke-width:1;}
-  .mm-leaf-link:hover .mm-leaf-dot{transform:scale(1.4);}
-  .mm-leaf-text{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;transition:fill .15s;}
-  .mm-leaf-link:hover .mm-leaf-text{text-decoration:underline;}
-  .mm-leaf-dot-bite{fill:var(--blue);}
-  .mm-leaf-dot-nibble{fill:#b45309;}
-  .mm-leaf-dot-guide{fill:var(--green,#1a7c4a);}
-  .mm-leaf-dot-complete{fill:#7c1a5f;}
-  .mm-leaf-text-bite{fill:var(--blue);}
-  .mm-leaf-text-nibble{fill:#7a4f0c;}
-  .mm-leaf-text-guide{fill:#0f5233;}
-  .mm-leaf-text-complete{fill:#5c0f47;}
-  /* Links */
-  .mm-link{fill:none;stroke-width:1.4;transition:opacity .2s;}
-  .mm-link-phase{stroke-width:2.2;}
-  .mm-link-session{stroke-opacity:0.7;}
-  .mm-link-leaf{stroke-width:1;}
-  /* Search dimming */
-  .mm-svg-searching .mm-phase-group:not(.mm-match),
-  .mm-svg-searching .mm-session-group:not(.mm-match),
-  .mm-svg-searching .mm-leaf:not(.mm-match){opacity:0.14;transition:opacity .2s;}
-  .mm-svg-searching .mm-phase-group.mm-match,
-  .mm-svg-searching .mm-session-group.mm-match,
-  .mm-svg-searching .mm-leaf.mm-match{opacity:1;}
-  .mm-session-group.mm-match .mm-session-box{filter:drop-shadow(0 0 8px rgba(30,64,175,0.55));}
-  .mm-leaf.mm-match .mm-concept-dot,
-  .mm-leaf.mm-match .mm-leaf-dot{r:6;}
-  /* Legend arrow chip */
-  .mm-legend-arrow{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#1e40af;color:#fff;font-size:9px;font-weight:800;}
-  @media (max-width: 720px) {
-    header{padding:24px 20px;}
-    header h1{font-size:26px;}
-    .mm-legend{font-size:10px;gap:14px;}
-    main{padding:16px;}
-  }
-</style>
-""".strip()
-
-    js = """
-<script>
-(function() {
-  const svg = document.getElementById('mm-svg');
-  const input = document.getElementById('mm-search');
-  const summary = document.getElementById('mm-search-summary');
-  const expandAll = document.getElementById('mm-expand-all');
-  const collapseAll = document.getElementById('mm-collapse-all');
-  const phases = Array.from(svg.querySelectorAll('.mm-phase-group'));
-  const sessions = Array.from(svg.querySelectorAll('.mm-session-group'));
-  const leaves = Array.from(svg.querySelectorAll('.mm-leaf'));
-
-  // Phase pill toggles its subtree open (revealing session boxes).
-  phases.forEach(function(phase) {
-    const pill = phase.querySelector('.mm-phase-pill');
-    if (pill) pill.addEventListener('click', function() { phase.classList.toggle('expanded'); });
-  });
-
-  // Session box toggles its own leaves (concepts + extras). Only ONE session
-  // per phase can have its leaves open at a time — opening another auto-
-  // closes the previously-opened sibling so their leaf-fans don't collide.
-  sessions.forEach(function(sess) {
-    const box = sess.querySelector('.mm-session-box');
-    if (box) box.addEventListener('click', function(e) {
-      // Ignore clicks that bubbled up from the ↗ link icon or a leaf link.
-      if (e.target.closest('a')) return;
-      const wasOpen = sess.classList.contains('leaves-open');
-      // Close every sibling in the same phase.
-      const parentPhase = sess.closest('.mm-phase-group');
-      if (parentPhase) {
-        parentPhase.querySelectorAll('.mm-session-group.leaves-open')
-          .forEach(function(other) { other.classList.remove('leaves-open'); });
-      }
-      // Toggle this one (if it was already open, we've just closed it above).
-      if (!wasOpen) sess.classList.add('leaves-open');
-    });
-  });
-
-  expandAll.addEventListener('click', function() {
-    // Only expand phases — opening every session's leaves would collide,
-    // since sibling sessions inside the same phase share the phase wedge.
-    phases.forEach(function(p) { p.classList.add('expanded'); });
-  });
-  collapseAll.addEventListener('click', function() {
-    phases.forEach(function(p) { p.classList.remove('expanded'); });
-    sessions.forEach(function(s) { s.classList.remove('leaves-open'); });
-  });
-
-  function tokenize(q) { return q.toLowerCase().trim().split(/\\s+/).filter(Boolean); }
-  function matches(hay, terms) {
-    for (let i = 0; i < terms.length; i++) if (hay.indexOf(terms[i]) === -1) return false;
-    return true;
-  }
-  function search(q) {
-    const terms = tokenize(q);
-    if (!terms.length) {
-      svg.classList.remove('mm-svg-searching');
-      phases.forEach(p => p.classList.remove('mm-match'));
-      sessions.forEach(s => s.classList.remove('mm-match'));
-      leaves.forEach(l => l.classList.remove('mm-match'));
-      summary.textContent = '';
-      return;
-    }
-    svg.classList.add('mm-svg-searching');
-    let hitCount = 0;
-    const phasesWithHits = new Set();
-    sessions.forEach(function(sess) {
-      const hay = sess.dataset.search || '';
-      const ok = matches(hay, terms);
-      sess.classList.toggle('mm-match', ok);
-      if (ok) {
-        hitCount++;
-        const parent = sess.closest('.mm-phase-group');
-        if (parent) { parent.classList.add('mm-match'); parent.classList.add('expanded'); phasesWithHits.add(parent); }
-      }
-    });
-    leaves.forEach(function(lf) {
-      const hay = lf.dataset.search || '';
-      const ok = matches(hay, terms);
-      lf.classList.toggle('mm-match', ok);
-      if (ok) {
-        hitCount++;
-        const sess = lf.closest('.mm-session-group');
-        if (sess) { sess.classList.add('mm-match'); sess.classList.add('leaves-open'); }
-        const phase = lf.closest('.mm-phase-group');
-        if (phase) { phase.classList.add('mm-match'); phase.classList.add('expanded'); phasesWithHits.add(phase); }
-      }
-    });
-    // Also match phases directly (their own titles/taglines) so a phase with
-    // no session/leaf hit can still light up when a phase-level term matches.
-    phases.forEach(function(p) {
-      if (phasesWithHits.has(p)) return;
-      const hay = p.dataset.search || '';
-      if (matches(hay, terms)) {
-        p.classList.add('mm-match');
-        p.classList.add('expanded');
-        phasesWithHits.add(p);
-        hitCount++;
-      } else {
-        p.classList.remove('mm-match');
-      }
-    });
-    summary.textContent = hitCount + ' match' + (hitCount === 1 ? '' : 'es');
-  }
-  input.addEventListener('input', function() { search(input.value); });
-
-  // Pan + zoom: shift-drag pans, wheel zooms into cursor.
-  let vb = svg.viewBox.baseVal;
-  const origVB = { x: vb.x, y: vb.y, width: vb.width, height: vb.height };
-  let panning = false, panStart = null;
-  svg.addEventListener('mousedown', function(e) {
-    if (e.target.tagName === 'a' || e.target.closest('a')) return; // let anchor clicks through
-    panning = true; panStart = { x: e.clientX, y: e.clientY, vbx: vb.x, vby: vb.y };
-  });
-  svg.addEventListener('mouseup', function() { panning = false; });
-  svg.addEventListener('mouseleave', function() { panning = false; });
-  svg.addEventListener('mousemove', function(e) {
-    if (!panning) return;
-    const rect = svg.getBoundingClientRect();
-    const scale = vb.width / rect.width;
-    vb.x = panStart.vbx - (e.clientX - panStart.x) * scale;
-    vb.y = panStart.vby - (e.clientY - panStart.y) * scale;
-  });
-  svg.addEventListener('wheel', function(e) {
-    e.preventDefault();
-    const rect = svg.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) / rect.width * vb.width + vb.x;
-    const my = (e.clientY - rect.top) / rect.height * vb.height + vb.y;
-    const factor = e.deltaY < 0 ? 0.88 : 1.14;
-    const newW = Math.max(400, Math.min(3200, vb.width * factor));
-    const newH = newW;
-    vb.x = mx - (mx - vb.x) * (newW / vb.width);
-    vb.y = my - (my - vb.y) * (newH / vb.height);
-    vb.width = newW; vb.height = newH;
-  }, { passive: false });
-})();
-</script>
-""".strip()
-
-    html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mind Map · NSE7 EF 7.6</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-{css}
-</head>
-<body>
-<header>
-<div class="breadcrumb"><a href="index.html">Home</a><span class="breadcrumb-sep">›</span>Mind Map</div>
-<h1>Mind <em>Map</em></h1>
-<p>Phases branch into sessions; sessions branch into the concept spine. Click a session to open its page — click a phase pill or the small colored dot beside a session to reveal concepts.</p>
-</header>
-<main>
-{search_html}
-<div class="mm-canvas">{svg}</div>
-</main>
-{js}
-</body>
-</html>
-"""
-    (ROOT / "mind-map.html").write_text(html, encoding="utf-8")
-
-
-def _truncate(text, n):
-    text = text or ""
-    if len(text) <= n:
-        return text
-    return text[: n - 1].rstrip() + "…"
-
-
-def _phase_short(title):
-    # "Foundations: <Long Title>" → "Foundations"
-    return (title or "").split(":")[0].strip()[:16].upper()
 
 
 # ---------------------------------------------------------------------------
@@ -4874,7 +4452,7 @@ def normalize_page_transitions():
         session_dir = SESSIONS_DIR / f"session-{s['num']:02d}-{s['slug']}"
         if not session_dir.is_dir():
             continue
-        for p in [session_dir / "complete.html"]:
+        for p in [session_dir / "completed-session" / "index.html"]:
             if p.is_file():
                 _normalize_pt_transition_in_file(p)
         for kind in EXTRA_KINDS:
@@ -4882,31 +4460,22 @@ def normalize_page_transitions():
             if kind_dir.is_dir():
                 for f in kind_dir.glob("*.html"):
                     _normalize_pt_transition_in_file(f)
-    for e in EXTRAS:
-        topic_dir = EXTRAS_DIR / f"extras-{e['num']:02d}-{e['slug']}"
-        if not topic_dir.is_dir():
-            continue
-        if (topic_dir / "index.html").is_file():
-            _normalize_pt_transition_in_file(topic_dir / "index.html")
-        for kind in EXTRA_KINDS:
-            kind_dir = topic_dir / kind
-            if kind_dir.is_dir():
-                for f in kind_dir.glob("*.html"):
-                    _normalize_pt_transition_in_file(f)
 
 def normalize_sorted_breadcrumbs():
-    """Rewrite/inject breadcrumbs on every sorted file (complete/bite/nibble/guide + standalone extras)."""
+    """Rewrite/inject breadcrumbs on every sorted file (complete/bite/nibble/guide)."""
     # Session sorted files
     for s in SESSIONS:
         session_dir = SESSIONS_DIR / f"session-{s['num']:02d}-{s['slug']}"
         if not session_dir.is_dir():
             continue
-        complete_path = session_dir / "complete.html"
+        complete_path = session_dir / "completed-session" / "index.html"
         if complete_path.is_file():
+            # complete.html moved into completed-session/, so it sits one level
+            # deeper than before — every relative path needs an extra "../".
             _normalize_crumb_in_file(complete_path, _build_crumb([
-                ("Home", "../../index.html"),
-                ("Curriculum", "../../study-plan/index.html"),
-                (f"Session {s['num']:02d}", "index.html"),
+                ("Home", "../../../index.html"),
+                ("Curriculum", "../../../study-plan/index.html"),
+                (f"Session {s['num']:02d}", "../index.html"),
                 ("Completed Study Guide", None),
             ]))
         for kind in EXTRA_KINDS:
@@ -4919,30 +4488,6 @@ def normalize_sorted_breadcrumbs():
                     ("Home", "../../../index.html"),
                     ("Curriculum", "../../../study-plan/index.html"),
                     (f"Session {s['num']:02d}", "../index.html"),
-                    (singular, None),
-                ]))
-    # Standalone extras sorted files
-    for e in EXTRAS:
-        topic_dir = EXTRAS_DIR / f"extras-{e['num']:02d}-{e['slug']}"
-        if not topic_dir.is_dir():
-            continue
-        index_path = topic_dir / "index.html"
-        if index_path.is_file():
-            _normalize_crumb_in_file(index_path, _build_crumb([
-                ("Home", "../../index.html"),
-                ("Extras", "../../extras.html"),
-                (e["title"], None),
-            ]))
-        for kind in EXTRA_KINDS:
-            kind_dir = topic_dir / kind
-            if not kind_dir.is_dir():
-                continue
-            singular = kind[:-1].capitalize()
-            for html_file in kind_dir.glob("*.html"):
-                _normalize_crumb_in_file(html_file, _build_crumb([
-                    ("Home", "../../../index.html"),
-                    ("Extras", "../../../extras.html"),
-                    (e["title"], "../index.html"),
                     (singular, None),
                 ]))
 
@@ -5418,11 +4963,12 @@ def render_lab_page(l):
 # SESSIONS INDEX (sessions/index.html) — flat listing of all 40 sessions
 # ---------------------------------------------------------------------------
 
-def render_sessions_index(completions=None):
+def render_sessions_index(completions=None, extras=None):
     """Emit sessions/index.html — a flat scrollable listing of every session.
     Sits alongside the per-session directories, so links are relative to
     session-NN-slug/index.html (no ../sessions/ prefix)."""
     completions = completions or {}
+    extras = extras or {}
 
     # Group sessions by phase. Each phase becomes its own titled section with
     # its session cards nested inside.
@@ -5452,8 +4998,34 @@ def render_sessions_index(completions=None):
             )
             preview = s["why"].split(".")[0].strip() + "."
             slug_dir = f"session-{s['num']:02d}-{s['slug']}"
+            sess_extras = extras.get(s["num"], {})
+            supp_parts = []
+            for kind, kind_class, kind_label in (
+                ("bites", "sess-supp-bite", "Bite"),
+                ("nibbles", "sess-supp-nibble", "Nibble"),
+            ):
+                for slug, title, href in sess_extras.get(kind, []):
+                    supp_parts.append(
+                        f'<a class="sess-supp {kind_class}" '
+                        f'href="{slug_dir}/{html_escape(href)}" '
+                        f'title="{kind_label} · {html_escape(title)}">'
+                        f'<span class="sess-supp-kind">{kind_label}</span>'
+                        f'<span class="sess-supp-title">{html_escape(title)}</span>'
+                        f'</a>'
+                    )
+            if supp_parts:
+                supplements_html = (
+                    f'<aside class="sess-supplements">{"".join(supp_parts)}</aside>'
+                )
+            else:
+                supplements_html = (
+                    '<aside class="sess-supplements sess-supplements--empty">'
+                    '<span class="sess-supp-empty">No supplements</span>'
+                    '</aside>'
+                )
             cards_for_phase.append(
-                f'<a class="sess-card" href="{slug_dir}/index.html">'
+                f'<article class="sess-card">'
+                f'<a class="sess-card-main" href="{slug_dir}/index.html">'
                 f'<div class="sess-card-head">'
                 f'<span class="sess-num">SESSION {s["num"]:02d}</span>'
                 f'{completed_chip}'
@@ -5462,6 +5034,8 @@ def render_sessions_index(completions=None):
                 f'<div class="sess-preview">{html_escape(preview)}</div>'
                 f'<div class="sess-meta">{html_escape(s["duration"])}</div>'
                 f'</a>'
+                f'{supplements_html}'
+                f'</article>'
             )
 
         phase_sections.append(
@@ -5520,8 +5094,9 @@ def render_sessions_index(completions=None):
   .phase-tagline{{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.72);line-height:1.5;max-width:820px;}}
   .phase-count{{position:absolute;top:16px;right:20px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#fbf7ec;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.28);border-radius:20px;padding:5px 12px;}}
   .sess-grid{{display:flex;flex-direction:column;gap:14px;}}
-  .sess-card{{display:block;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;text-decoration:none;color:var(--text);transition:border-color .15s, transform .15s;}}
+  .sess-card{{display:flex;align-items:stretch;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .15s, transform .15s;}}
   .sess-card:hover{{border-color:var(--blue);transform:translateY(-2px);}}
+  .sess-card-main{{flex:1 1 auto;min-width:0;display:block;padding:20px 24px;text-decoration:none;color:var(--text);}}
   .sess-card-head{{display:flex;align-items:center;gap:14px;margin-bottom:8px;flex-wrap:wrap;}}
   .sess-num{{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.2em;color:var(--blue);background:var(--blue-light);border:1px solid var(--blue-border);padding:3px 10px;border-radius:10px;text-transform:uppercase;}}
   .sess-phase{{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;}}
@@ -5531,14 +5106,30 @@ def render_sessions_index(completions=None):
   .sess-card:hover .sess-title{{color:var(--blue);}}
   .sess-preview{{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:var(--text-soft);line-height:1.55;margin-bottom:8px;}}
   .sess-meta{{font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.06em;}}
+  .sess-supplements{{flex:0 0 240px;display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--surface-2);border-left:1px solid var(--border-dim);}}
+  .sess-supp{{display:flex;flex-direction:column;gap:3px;width:100%;padding:8px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--border);text-decoration:none;color:var(--text);transition:border-color .15s,background .15s;}}
+  .sess-supp:hover{{border-color:var(--blue);background:#fff;}}
+  .sess-supp-kind{{font-family:'Outfit',sans-serif;font-size:8.5px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;}}
+  .sess-supp-title{{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:600;line-height:1.3;color:var(--text);word-wrap:break-word;overflow-wrap:break-word;white-space:normal;}}
+  .sess-supp-bite .sess-supp-kind{{color:var(--blue);}}
+  .sess-supp-nibble .sess-supp-kind{{color:var(--amber);}}
+  .sess-supp:hover .sess-supp-title{{color:var(--blue);}}
+  .sess-supplements--empty{{align-items:center;justify-content:center;}}
+  .sess-supp-empty{{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);text-transform:uppercase;opacity:0.7;text-align:center;}}
   footer{{padding:18px 60px;border-top:1px solid var(--border);background:var(--surface);font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;text-align:center;}}
   footer span{{color:var(--blue);}}
+  @media(max-width:720px){{
+    .sess-card{{flex-direction:column;}}
+    .sess-supplements{{flex:0 0 auto;border-left:0;border-top:1px solid var(--border-dim);flex-direction:row;flex-wrap:wrap;}}
+    .sess-supp{{flex:1 1 calc(50% - 6px);}}
+  }}
   @media(max-width:640px){{
     header{{padding:32px 24px 24px;}}
     header h1{{font-size:32px;}}
     .count-strip{{padding:12px 24px;}}
     main{{padding:24px 20px 40px;}}
-    .sess-card{{padding:16px 18px;}}
+    .sess-card-main{{padding:16px 18px;}}
+    .sess-supplements{{padding:12px 14px;}}
   }}
 </style>
 </head>
@@ -5574,7 +5165,7 @@ def discover_audio_prompts():
     out = {}
     for s in SESSIONS:
         session_dir = SESSIONS_DIR / f"session-{s['num']:02d}-{s['slug']}"
-        summary_path = session_dir / "summary.txt"
+        summary_path = session_dir / "completed-session" / "summary.txt"
         if not summary_path.is_file():
             continue
         for heading, body in parse_summary_txt(summary_path):
@@ -5634,7 +5225,7 @@ def render_audio_podcasts_hub():
                     f'  </div>'
                     f'  <div class="p-actions">'
                     f'    <button type="button" class="p-copy" data-target="{prompt_id}">Copy prompt</button>'
-                    f'    <a class="p-source" href="../sessions/{slug}/summary.txt" target="_blank" rel="noopener">Open summary.txt</a>'
+                    f'    <a class="p-source" href="../sessions/{slug}/completed-session/summary.txt" target="_blank" rel="noopener">Open summary.txt</a>'
                     f'  </div>'
                     f'  <pre class="p-prompt" id="{prompt_id}">{prompt_esc}</pre>'
                     f'</div>'
@@ -5908,15 +5499,13 @@ def render_audio_podcasts_hub():
 # LANDING PAGE (index.html) — one-stop front door to every hub
 # ---------------------------------------------------------------------------
 
-def render_landing(extras, completions, standalone_extras, n_audio_podcasts=0):
+def render_landing(extras, completions, n_audio_podcasts=0):
     n_sessions = len(SESSIONS)
     n_phases = len(PHASES)
     n_completed = sum(1 for v in completions.values() if v.get("has_complete"))
 
     def _count_kind(kind):
-        session_count = sum(len(extras.get(s["num"], {}).get(kind, [])) for s in SESSIONS)
-        standalone_count = sum(len(e[kind]) for e in standalone_extras)
-        return session_count + standalone_count
+        return sum(len(extras.get(s["num"], {}).get(kind, [])) for s in SESSIONS)
 
     n_guides = _count_kind("guides")
     n_bites = _count_kind("bites")
@@ -5926,13 +5515,10 @@ def render_landing(extras, completions, standalone_extras, n_audio_podcasts=0):
     tiles = [
         ("study-plan/index.html", "PLAN",      "chip-plan",     "Study Plan",              f"{n_sessions} sessions across {n_phases} phases — the full curriculum hub."),
         ("sessions/index.html",   "SESSIONS",  "chip-sessions", "Socratic Sessions",       f"Flat listing of all {n_sessions} sessions in order — one card each."),
-        ("extras.html#bites",     "BITE",      "chip-bite",     "Bites",                   f"{n_bites} focused single-concept explainers."),
-        ("extras.html#nibbles",   "NIBBLE",    "chip-nibble",   "Nibbles",                 f"{n_nibbles} short reference cards / cheat sheets."),
         ("completed-sessions.html", "COMPLETED", "chip-complete", "Completed Study Guides", f"{n_completed} of {n_sessions} sessions finished — polished HTML study guides."),
         ("labs/index.html",       "LABS",      "chip-labs",     "Hands-On Labs",           (f"{sum(1 for l in LABS if not l.get('concept_only') and not l.get('is_orientation'))} hands-on labs + orientation across the shared topology — Socratic predict → run → verify." if LABS else "Empty — feed a lab guide PDF and run /build-lab-plan.")),
         ("audio-podcasts/index.html", "AUDIO", "chip-audio",    "Audio Podcasts",          (f"{n_audio_podcasts} audio-podcast generation prompt{'' if n_audio_podcasts == 1 else 's'} — expand to view and track workflow." if n_audio_podcasts else "No audio-podcast prompts yet — add an AUDIO PODCAST PROMPT section to a session summary.")),
         ("all-resources.html",    "SEARCH",    "chip-all",      "All Study Resources",     f"Search across every session, guide, bite, nibble, completed guide, and lab — {n_sessions + n_extras_total + n_completed + len(LABS)} items."),
-        ("mind-map.html",         "MAP",       "chip-map",      "Mind Map",                f"Radial mind map — {n_phases} phases branching into {n_sessions} sessions and their concept spine. Click to explore."),
     ]
 
     tiles_html = "".join(
@@ -5988,7 +5574,6 @@ def render_landing(extras, completions, standalone_extras, n_audio_podcasts=0):
   .chip-all{{background:var(--plum-light);color:var(--plum);border:1px solid var(--plum-border);}}
   .chip-labs{{background:var(--teal-light);color:var(--teal);border:1px solid var(--teal-border);}}
   .chip-audio{{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border);}}
-  .chip-map{{background:var(--plum-light);color:var(--plum);border:1px solid var(--plum-border);}}
   .tile-title{{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.15;}}
   .tile-desc{{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.55;}}
   .tile-arrow{{position:absolute;right:22px;bottom:20px;font-family:'Outfit',sans-serif;font-size:22px;color:var(--blue);transition:transform .18s ease;}}
@@ -6018,7 +5603,7 @@ def render_landing(extras, completions, standalone_extras, n_audio_podcasts=0):
     {tiles_html}
   </div>
 </main>
-<footer>NSE7 EF 7.6 <span>·</span> Socratic Curriculum <span>·</span> {n_sessions} sessions <span>·</span> {n_completed}/{n_sessions} completed <span>·</span> {n_extras_total} extras</footer>
+<footer>NSE7 EF 7.6 <span>·</span> Socratic Curriculum <span>·</span> {n_sessions} sessions <span>·</span> {n_completed}/{n_sessions} completed <span>·</span> {n_extras_total} supplements</footer>
 </body>
 </html>
 """
@@ -6081,19 +5666,16 @@ def main():
     # Discover post-completion artifacts once
     extras = discover_extras()
     completions = discover_completions()
-    standalone_extras = discover_standalone_extras()
 
     for s in SESSIONS:
         render_session(s, extras=extras, completions=completions)
 
-    render_study_plan_index(extras=extras, completions=completions, standalone_extras=standalone_extras)
-    render_sessions_index(completions=completions)
+    render_study_plan_index(extras=extras, completions=completions)
+    render_sessions_index(completions=completions, extras=extras)
     render_completed_hub(completions)
-    render_extras_hub(extras, standalone_extras=standalone_extras)
-    render_all_resources_hub(extras, completions, standalone_extras)
-    render_mind_map(extras, completions)
+    render_all_resources_hub(extras, completions)
     n_audio_podcasts = render_audio_podcasts_hub()
-    render_landing(extras, completions, standalone_extras, n_audio_podcasts=n_audio_podcasts)
+    render_landing(extras, completions, n_audio_podcasts=n_audio_podcasts)
     render_labs_hub()
 
     # Old root-level study-plan.html is superseded by study-plan/index.html.
@@ -6107,7 +5689,6 @@ def main():
     write_prompts_file()
 
     n_extras = sum(len(items) for kinds in extras.values() for items in kinds.values())
-    n_standalone = sum(len(e[k]) for e in standalone_extras for k in ("guides", "bites", "nibbles"))
     n_completed = sum(1 for v in completions.values() if v.get("has_complete"))
     n_summaries = sum(1 for v in completions.values() if v.get("has_summary"))
 
@@ -6117,9 +5698,7 @@ def main():
     print(f"Wrote images/prompts.txt with {len(PHASES) + len(SESSIONS)} prompts")
     print(f"Ensured images/hub/ and {len(SESSIONS)} per-session sessions/session-NN-slug/images/ folders")
     print(f"Wrote completed-sessions.html ({n_completed} completed, {n_summaries} summaries)")
-    print(f"Wrote extras.html ({n_extras} session-linked + {n_standalone} standalone)")
-    print(f"Wrote all-resources.html (searchable catalog)")
-    print(f"Wrote mind-map.html (radial mind map)")
+    print(f"Wrote all-resources.html ({n_extras} session-linked supplements indexed)")
     print(f"Wrote audio-podcasts/index.html ({n_audio_podcasts} podcast prompt{'' if n_audio_podcasts == 1 else 's'})")
     print(f"Wrote index.html (landing page)")
     report_completion_validation(completions)

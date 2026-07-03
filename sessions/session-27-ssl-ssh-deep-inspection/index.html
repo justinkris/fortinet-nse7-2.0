@@ -23,10 +23,10 @@
   body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
   header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
   .header-left{flex:1;}
-  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.12em;color:var(--ink-accent);margin-bottom:14px;text-transform:uppercase;}
   .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
-  .breadcrumb a:hover{text-decoration:underline;}
-  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .breadcrumb a:hover{color:#fff;}
+  .breadcrumb-sep{margin:0 8px;opacity:0.55;}
   .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
   .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
@@ -97,14 +97,26 @@
   .completion-callout-text strong{color:var(--green);}
   .completion-callout-btn{flex-shrink:0;display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#fff;padding:10px 18px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;}
   .completion-callout-btn:hover{background:#155e37;}
-  /* Session recap */
-  .recap-grid{display:grid;gap:14px;}
-  .recap-section{background:var(--surface);border:1px solid var(--border-dim);border-radius:10px;padding:16px 20px;}
-  .recap-section h3{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:var(--blue);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px;}
-  .recap-section p{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);margin-bottom:8px;}
+  /* Session recap — single column, editorial layout, no cards */
+  .recap-grid{display:block;}
+  .recap-section{background:transparent;border:none;border-radius:0;padding:0;margin:0 0 44px;}
+  .recap-section:last-child{margin-bottom:0;}
+  .recap-section h3{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--text);letter-spacing:-0.01em;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--border);font-style:italic;text-transform:none;}
+  .recap-section p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.75;color:var(--text-soft);margin-bottom:12px;}
   .recap-section p:last-child{margin-bottom:0;}
-  .recap-section ul{padding-left:20px;margin-bottom:6px;}
-  .recap-section li{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.6;color:var(--text-soft);margin-bottom:4px;}
+  .recap-section ul{padding-left:24px;margin:6px 0 14px;}
+  .recap-section li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:6px;}
+  .recap-h4{display:flex;align-items:baseline;gap:12px;margin:22px 0 10px;font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--text);line-height:1.35;letter-spacing:-0.005em;}
+  .recap-h4:first-child{margin-top:0;}
+  .recap-h4 > span:last-child{flex:1;}
+  .recap-num-badge{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;min-width:26px;height:26px;padding:0 8px;border-radius:6px;background:var(--blue-light);color:var(--blue);font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;border:1px solid var(--blue-border);}
+  .recap-numitem{display:flex;gap:14px;align-items:baseline;padding:6px 0;margin:10px 0;background:transparent;border:none;border-radius:0;}
+  .recap-numitem-text{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);flex:1;}
+  .recap-sublabel{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.16em;color:var(--blue);text-transform:uppercase;margin:22px 0 8px;display:block;}
+  .recap-sublabel:first-child{margin-top:0;}
+  .recap-kv{list-style:none;padding:0;margin:0 0 6px;display:grid;gap:8px;}
+  .recap-kv li{display:grid;grid-template-columns:150px 1fr;gap:18px;padding:0;border:none;font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--text-soft);margin:0;line-height:1.55;}
+  .recap-kv-key{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding-top:3px;}
   /* Extras list on session page */
   .extras-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:8px;}
   .extras-card{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;text-decoration:none;}
@@ -149,64 +161,17 @@
 
 
 <nav class="section-nav" id="section-nav">
-  <a class="nav-tab active" href="#section-story">Story</a>
+  <a class="nav-tab active" href="#section-prompt">Objectives &amp; Prompt</a>
+  <a class="nav-tab" href="#section-story">Story</a>
   <a class="nav-tab" href="#section-why">Why &amp; Key Concepts</a>
-  <a class="nav-tab" href="#section-prompt">Objectives &amp; Prompt</a>
 </nav>
 
 <main>
   <div class="main-content">
 
-    <!-- SECTION 1: STORY -->
-    <div class="section-block" id="section-story">
-      <div class="section-label">SECTION 01 · STORY PROGRESSION</div>
-      <h2>Where We Are in the <em>NSE7 Journey</em></h2>
-      <div class="section-img-wrap">
-        <img src="images/hero.png" class="section-img"
-             alt="Illustration for Session 27 — SSL/SSH Deep Inspection"
-             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');this.parentElement.querySelector('.img-caption').style.display='none';">
-        <p class="img-caption">A user laptop connecting to https://gmail.</p>
-        <div class="si-placeholder">
-          <span class="si-filename">sessions/session-27-ssl-ssh-deep-inspection/images/hero.png</span>
-          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>A user laptop connecting to https://gmail.com via a FortiGate. The TLS connection is 'opened' at the FortiGate into two legs — one to the user (signed by enterprise CA) and one to gmail (original cert chain). A 'CA cert' badge sits on the laptop. A small exemption list on the side lists 'banking.com → bypass'.
-
-Detailed hand-drawn storybook illustration with a warm picture-book sensibility — soft painterly shading, gentle watercolor washes layered over confident pencil or ink outlines, a subtle paper-grain texture. Friendly inviting palette: soft cream background, muted blues, Fortinet red accents, sage green, mustard yellow. Not flat vector, not photorealism, not 3D rendering, not anime — think a tender, slightly whimsical children's-book illustration that still reads as professional and educational. Render FortiGate, FortiManager and FortiAnalyzer as friendly, lightly anthropomorphised 1U rackmount appliances (personality shown through posture or small expressive details rather than cartoon faces), placed inside richly drawn scenes — server rooms with cabling and ceiling tiles, branch offices with desks and windows, campuses with people walking by, data centres with cool blue lighting. The setting should feel like a real place: props, background characters, lighting, depth. Keep the concept readable at a glance through composition and colour hierarchy. Hand-drawn flow lines and arrows show direction of traffic or policy. Add small sparing labels in a hand-lettered style only where they truly aid understanding (interface names, VDOM names, IP ranges, route flags, IPsec phase numbers, VLAN IDs, ADOM names, session counts). Beautiful and detailed, but never busy — every element earns its place.</div>
-        </div>
-      </div>
-      <p>More than 90% of internet traffic is encrypted. A firewall that can't look inside SSL is a firewall that can't filter web, scan antivirus, or detect data leaks.</p>
-      <div class="mental-note-block">
-        <div class="mental-note-block-icon">🧠</div>
-        <div class="mental-note-block-inner">
-          <div class="mental-note-block-label">Mental Note</div>
-          <div class="mental-note-block-text">Builds on Session 26. Sets up Session 28. Every session is one link in a single continuous story.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SECTION 2: WHY & KEY CONCEPTS -->
-    <div class="section-block" id="section-why">
-      <div class="section-label">SECTION 02 · WHY THIS SESSION EXISTS</div>
-      <h2>The Problem We're <em>Solving Today</em></h2>
-      <p>SSL inspection is the most operationally painful Fortinet feature. The exam expects you to know the certificate chain, the exemptions, and the failure modes.</p>
-
-      <div class="callout">
-        <strong>Session goal:</strong> Configure deep inspection on a FortiGate, deploy the CA cert to a test endpoint, and exempt traffic to financial sites.
-      </div>
-
-      <h2 style="margin-top:32px;">Key <em>Concepts</em></h2>
-      <ul>
-      <li>Inspection modes: no-inspection, certificate-inspection, deep-inspection</li>
-      <li>Deploying the FortiGate CA cert to endpoints</li>
-      <li>SSL exemptions (banking, healthcare, pinned-cert apps)</li>
-      <li>SSH inspection capabilities and limits</li>
-      <li>Assigning the profile to a firewall policy</li>
-      </ul>
-    </div>
-
-    <!-- SECTION 3: PROMPT & OBJECTIVES -->
+    <!-- SECTION 1: PROMPT & OBJECTIVES -->
     <div class="section-block" id="section-prompt">
-      <div class="section-label">SECTION 03 · OBJECTIVES &amp; CLAUDE SESSION PROMPT</div>
+      <div class="section-label">SECTION 01 · OBJECTIVES &amp; CLAUDE SESSION PROMPT</div>
       <h2>Ready to <em>Begin the Session</em></h2>
 
       <table class="meta-table">
@@ -242,6 +207,46 @@ Key concepts:
   • Assigning the profile to a firewall policy
 </pre>
       </div>
+    </div>
+
+    <!-- SECTION 2: STORY -->
+    <div class="section-block" id="section-story">
+      <div class="section-label">SECTION 02 · STORY PROGRESSION</div>
+      <h2>Where We Are in the <em>NSE7 Journey</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/hero.png" class="section-img"
+             alt="Illustration for Session 27 — SSL/SSH Deep Inspection"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');this.parentElement.querySelector('.img-caption').style.display='none';">
+        <p class="img-caption">A user laptop connecting to https://gmail.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">sessions/session-27-ssl-ssh-deep-inspection/images/hero.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>A user laptop connecting to https://gmail.com via a FortiGate. The TLS connection is 'opened' at the FortiGate into two legs — one to the user (signed by enterprise CA) and one to gmail (original cert chain). A 'CA cert' badge sits on the laptop. A small exemption list on the side lists 'banking.com → bypass'.
+
+Detailed hand-drawn storybook illustration with a warm picture-book sensibility — soft painterly shading, gentle watercolor washes layered over confident pencil or ink outlines, a subtle paper-grain texture. Friendly inviting palette: soft cream background, muted blues, Fortinet red accents, sage green, mustard yellow. Not flat vector, not photorealism, not 3D rendering, not anime — think a tender, slightly whimsical children's-book illustration that still reads as professional and educational. Render FortiGate, FortiManager and FortiAnalyzer as friendly, lightly anthropomorphised 1U rackmount appliances (personality shown through posture or small expressive details rather than cartoon faces), placed inside richly drawn scenes — server rooms with cabling and ceiling tiles, branch offices with desks and windows, campuses with people walking by, data centres with cool blue lighting. The setting should feel like a real place: props, background characters, lighting, depth. Keep the concept readable at a glance through composition and colour hierarchy. Hand-drawn flow lines and arrows show direction of traffic or policy. Add small sparing labels in a hand-lettered style only where they truly aid understanding (interface names, VDOM names, IP ranges, route flags, IPsec phase numbers, VLAN IDs, ADOM names, session counts). Beautiful and detailed, but never busy — every element earns its place.</div>
+        </div>
+      </div>
+      <p>More than 90% of internet traffic is encrypted. A firewall that can't look inside SSL is a firewall that can't filter web, scan antivirus, or detect data leaks.</p>
+    </div>
+
+    <!-- SECTION 3: WHY & KEY CONCEPTS -->
+    <div class="section-block" id="section-why">
+      <div class="section-label">SECTION 03 · WHY THIS SESSION EXISTS</div>
+      <h2>The Problem We're <em>Solving Today</em></h2>
+      <p>SSL inspection is the most operationally painful Fortinet feature. The exam expects you to know the certificate chain, the exemptions, and the failure modes.</p>
+
+      <div class="callout">
+        <strong>Session goal:</strong> Configure deep inspection on a FortiGate, deploy the CA cert to a test endpoint, and exempt traffic to financial sites.
+      </div>
+
+      <h2 style="margin-top:32px;">Key <em>Concepts</em></h2>
+      <ul>
+      <li>Inspection modes: no-inspection, certificate-inspection, deep-inspection</li>
+      <li>Deploying the FortiGate CA cert to endpoints</li>
+      <li>SSL exemptions (banking, healthcare, pinned-cert apps)</li>
+      <li>SSH inspection capabilities and limits</li>
+      <li>Assigning the profile to a firewall policy</li>
+      </ul>
     </div>
 
     

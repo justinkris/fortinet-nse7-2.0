@@ -1,10 +1,10 @@
 ==============================================================================
-SECTION-IMAGE PROMPTS — session-40-spu-offload-troubleshooting/complete.html
+SECTION-IMAGE PROMPTS — session-40-spu-offload-troubleshooting/completed-session/index.html
 Prompts: 1
 ==============================================================================
 
 ------------------------------------------------------------------------------
-SOURCE: complete.html
+SOURCE: index.html
 ------------------------------------------------------------------------------
 
 [1] filename (as declared in HTML): images/analogy-rfid-toll-lane.png
