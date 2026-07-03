@@ -5698,7 +5698,7 @@ def render_audio_podcasts_hub():
     Audio Podcasts
   </div>
   <h1>Audio <em>Podcasts</em></h1>
-  <p>Audio-podcast generation prompts extracted from each session's <code>summary.txt</code>. Click a card to view the prompt and track workflow status.</p>
+  <p>Audio-podcast generation prompts extracted from each session's <code>summary.txt</code>, organised by phase. Click a card to view the prompt and track workflow status — sessions still waiting on a prompt are marked <em>coming soon</em>.</p>
 </header>
 <main>
   {main_body}
