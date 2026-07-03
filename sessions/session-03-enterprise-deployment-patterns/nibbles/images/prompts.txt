@@ -1,5 +1,5 @@
 ==============================================================================
-SECTION-IMAGE PROMPTS — session-39-hardware-acceleration/nibbles
+SECTION-IMAGE PROMPTS — session-03-enterprise-deployment-patterns/nibbles
 Prompts: 0
 ==============================================================================
 

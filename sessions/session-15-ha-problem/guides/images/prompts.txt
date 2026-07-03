@@ -1,5 +1,5 @@
 ==============================================================================
-SECTION-IMAGE PROMPTS — session-39-hardware-acceleration/nibbles
+SECTION-IMAGE PROMPTS — session-15-ha-problem/guides
 Prompts: 0
 ==============================================================================
 

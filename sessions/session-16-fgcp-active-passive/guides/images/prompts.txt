@@ -1,5 +1,5 @@
 ==============================================================================
-SECTION-IMAGE PROMPTS — session-39-hardware-acceleration/nibbles
+SECTION-IMAGE PROMPTS — session-16-fgcp-active-passive/guides
 Prompts: 0
 ==============================================================================
 

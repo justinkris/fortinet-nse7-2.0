@@ -6,7 +6,7 @@
 <title>Audio Podcasts · NSE7 EF 7.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#faf5e9;--surface:#fffdf5;--border:#d4c89a;--text:#0a1838;--text-muted:#6b7794;--blue:#1e40af;--ink-dark:#0d1a3a;--ink-accent:#9bb8e6;}
+  :root{--bg:#faf5e9;--surface:#fffdf5;--surface-2:#f5eed9;--border:#d4c89a;--border-dim:#ebe1c2;--text:#0a1838;--text-soft:#1e2f5a;--text-muted:#6b7794;--blue:#1e40af;--blue-light:#eff4fc;--blue-border:#b8cce8;--ink-dark:#0d1a3a;--ink-accent:#9bb8e6;--green:#1a7c4a;--green-light:#dff0e1;--green-border:#a7d8b0;}
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Cormorant Garamond',serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
   header{padding:48px 60px 36px;background:var(--ink-dark);color:#fbf7ec;}
@@ -15,14 +15,35 @@
   .breadcrumb-sep{color:rgba(155,184,230,0.4);margin:0 6px;}
   header h1{font-family:'Playfair Display',serif;font-size:44px;font-weight:700;line-height:1.05;}
   header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
-  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:8px;}
-  main{flex:1;padding:60px 60px;display:flex;align-items:center;justify-content:center;}
-  .placeholder{max-width:520px;text-align:center;border:2px dashed var(--border);border-radius:12px;background:var(--surface);padding:40px 32px;color:var(--text-muted);}
-  .placeholder .eyebrow{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:10px;}
-  .placeholder h2{font-family:'Playfair Display',serif;font-size:22px;color:var(--text);font-weight:600;margin-bottom:8px;}
-  .placeholder p{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;line-height:1.6;}
-  footer{padding:16px 60px;border-top:1px solid var(--border);background:var(--surface);font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;text-align:center;}
-  @media(max-width:640px){header{padding:32px 24px 24px;}header h1{font-size:30px;}main{padding:32px 24px;}}
+  header p{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:rgba(251,247,236,0.65);margin-top:8px;max-width:720px;line-height:1.6;}
+  main{flex:1;padding:44px 60px 60px;max-width:1100px;width:100%;margin:0 auto;}
+  .podcast-list{display:flex;flex-direction:column;gap:14px;}
+  .podcast-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .15s;}
+  .podcast-card:hover{border-color:var(--blue-border);}
+  .podcast-card.is-open{border-color:var(--blue);}
+  .podcast-toggle{display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto;column-gap:16px;row-gap:2px;align-items:center;width:100%;background:transparent;border:0;padding:18px 22px;cursor:pointer;text-align:left;font-family:inherit;color:inherit;}
+  .podcast-sub{grid-column:1;grid-row:1;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--blue);text-transform:uppercase;background:var(--blue-light);border:1px solid var(--blue-border);border-radius:20px;padding:3px 10px;justify-self:start;align-self:center;}
+  .podcast-title{grid-column:2;grid-row:1;font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);line-height:1.25;}
+  .podcast-heading{grid-column:2;grid-row:2;font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--text-muted);line-height:1.4;}
+  .podcast-caret{grid-column:3;grid-row:1 / span 2;font-family:'Outfit',sans-serif;font-size:20px;color:var(--blue);transition:transform .18s ease;justify-self:end;align-self:center;}
+  .podcast-card.is-open .podcast-caret{transform:rotate(180deg);}
+  .podcast-panel{border-top:1px solid var(--border-dim);padding:18px 22px 22px;background:var(--surface-2);display:flex;flex-direction:column;gap:14px;}
+  .podcast-checkboxes{display:flex;flex-wrap:wrap;gap:16px;}
+  .podcast-check{display:inline-flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--text-soft);text-transform:uppercase;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 12px;cursor:pointer;transition:border-color .15s,background .15s,color .15s;}
+  .podcast-check input{accent-color:var(--blue);width:14px;height:14px;cursor:pointer;}
+  .podcast-check:has(input:checked){background:var(--green-light);border-color:var(--green-border);color:var(--green);}
+  .podcast-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
+  .podcast-copy{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;background:var(--blue);color:#fff;border:0;border-radius:20px;padding:7px 14px;cursor:pointer;transition:background .15s;}
+  .podcast-copy:hover{background:#173196;}
+  .podcast-copy.is-copied{background:var(--green);}
+  .podcast-source{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);text-decoration:none;border-bottom:1px dotted var(--blue-border);padding-bottom:1px;}
+  .podcast-source:hover{color:#173196;border-bottom-color:var(--blue);}
+  .podcast-prompt{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:13px;line-height:1.55;color:var(--text);background:var(--surface);border:1px solid var(--border-dim);border-radius:8px;padding:16px 18px;white-space:pre-wrap;word-wrap:break-word;max-height:520px;overflow-y:auto;}
+  .empty-state{background:var(--surface);border:1px dashed var(--border);border-radius:12px;padding:28px;color:var(--text-muted);font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.6;font-style:italic;text-align:center;}
+  .empty-state code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--text);font-style:normal;}
+  footer{padding:18px 60px;border-top:1px solid var(--border);background:var(--surface);font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;text-align:center;}
+  footer span{color:var(--blue);}
+  @media(max-width:640px){header{padding:32px 24px 24px;}header h1{font-size:30px;}main{padding:28px 20px 44px;}.podcast-toggle{padding:16px 18px;column-gap:12px;}.podcast-panel{padding:16px 18px 20px;}.podcast-title{font-size:18px;}}
 </style>
 </head>
 <body>
@@ -33,15 +54,112 @@
     Audio Podcasts
   </div>
   <h1>Audio <em>Podcasts</em></h1>
-  <p>Placeholder — content coming soon.</p>
+  <p>Audio-podcast generation prompts extracted from each session's <code>summary.txt</code>. Click a card to view the prompt and track workflow status.</p>
 </header>
 <main>
-  <div class="placeholder">
-    <div class="eyebrow">Empty</div>
-    <h2>Nothing here yet</h2>
-    <p>This is a placeholder page for audio podcasts. Add content when ready.</p>
-  </div>
+  <section class="podcast-list"><article class="podcast-card" data-session="3">  <button class="podcast-toggle" type="button" aria-expanded="false" aria-controls="podcast-03-panel">    <span class="podcast-sub">Session 03</span>    <span class="podcast-title">Enterprise Deployment Patterns</span>    <span class="podcast-heading">AUDIO PODCAST PROMPT (The Packet Path)</span>    <span class="podcast-caret" aria-hidden="true">▾</span>  </button>  <div class="podcast-panel" id="podcast-03-panel" hidden>    <div class="podcast-checkboxes">      <label class="podcast-check"><input type="checkbox" data-session="3" data-state="generated"> <span>Generated</span></label>      <label class="podcast-check"><input type="checkbox" data-session="3" data-state="renamed"> <span>Renamed</span></label>      <label class="podcast-check"><input type="checkbox" data-session="3" data-state="completed"> <span>Completed</span></label>    </div>    <div class="podcast-actions">      <button type="button" class="podcast-copy" data-target="podcast-03-prompt">Copy prompt</button>      <a class="podcast-source" href="../sessions/session-03-enterprise-deployment-patterns/summary.txt" target="_blank" rel="noopener">Open summary.txt</a>    </div>    <pre class="podcast-prompt" id="podcast-03-prompt">Generate an audio podcast episode of "The Packet Path" — an intelligent, conversational, true-crime-documentary-style podcast for network engineers.
+
+Hosts: Alex (experienced network security consultant) and Sam (smart, curious co-host asking clarifying questions).
+
+Episode title: "The Fifteen-of-One Quote"
+
+Story: A mid-sized financial services firm called Vaultline Financial is acquiring a smaller advisory firm. The head of network security is handed a reseller's quote proposing to standardise the entire estate on fifteen units of the same mid-range FortiGate — HQ edge, datacenter refresh, twelve regional branches, plus a spare. The reseller's argument is standardisation for support and sparing. On paper, tidy. In practice, catastrophic in both directions.
+
+Alex walks Sam through the investigation. What does a small branch office in a regional town actually need its firewall to do all day? What does a datacenter box carrying 60 Gbps of market data feeds actually need? Are those two problems the same problem sized differently, or are they architecturally different problems?
+
+Cover in the episode:
+- The five canonical deployment roles: branch, datacenter, edge, cloud VM, ISFW
+- Why branches are defined by SD-WAN, not throughput
+- Why datacenters cannot tolerate proxy mode (referencing Session 02's trading floor incident)
+- Why the edge is really about outbound user inspection, not inbound protection — and why that makes the CP9 the star chip
+- Why a FortiGate-VM in Azure has no silicon at all, and how BYOL vs PAYG solves the cloud-scaling problem
+- Why SDN Connectors exist and what they do
+- Why an ISFW is not just a segmentation VDOM in a bigger box — it's about performance isolation, failure isolation, and administrative boundary
+
+Tone: intelligent, curious, structured. Sam should ask the questions listeners would ask. Alex should reason out loud rather than lecture. Include one clear "aha" moment where Sam realises the reseller's quote fails in BOTH directions (waste AND inadequacy) — not just one. End with the consultant's final message to the head of security: fifteen locations are not fifteen instances of one problem.
+
+Duration target: 22-28 minutes.</pre>  </div></article>
+<article class="podcast-card" data-session="15">  <button class="podcast-toggle" type="button" aria-expanded="false" aria-controls="podcast-15-panel">    <span class="podcast-sub">Session 15</span>    <span class="podcast-title">The HA Problem — Why One FortiGate Isn't Enough</span>    <span class="podcast-heading">AUDIO PODCAST PROMPT (for "The Packet Path")</span>    <span class="podcast-caret" aria-hidden="true">▾</span>  </button>  <div class="podcast-panel" id="podcast-15-panel" hidden>    <div class="podcast-checkboxes">      <label class="podcast-check"><input type="checkbox" data-session="15" data-state="generated"> <span>Generated</span></label>      <label class="podcast-check"><input type="checkbox" data-session="15" data-state="renamed"> <span>Renamed</span></label>      <label class="podcast-check"><input type="checkbox" data-session="15" data-state="completed"> <span>Completed</span></label>    </div>    <div class="podcast-actions">      <button type="button" class="podcast-copy" data-target="podcast-15-prompt">Copy prompt</button>      <a class="podcast-source" href="../sessions/session-15-ha-problem/summary.txt" target="_blank" rel="noopener">Open summary.txt</a>    </div>    <pre class="podcast-prompt" id="podcast-15-prompt">Generate a two-host audio podcast script for "The Packet Path," a storytelling podcast for network engineers. Host: Alex, an experienced network security consultant. Co-host: Sam, smart and curious, asks clarifying questions. Tone: intelligent, conversational, true-crime documentary style for network engineers. Episode title: "The 45 Seconds Nobody Saw Coming." Structure the episode around two incidents at Vaultline Financial, a fictional financial services firm, separated by three weeks — same failure (a dead power supply on the HQ edge firewall), two completely different outcomes.
+
+Act 1 — The Sunday Incident: 02:47, the HQ edge FortiGate dies. Marcus, the overnight NOC engineer, performs a flawless cold-spare recovery in four hours — locate hardware, restore config backup, cable, validate. Textbook. Yet Monday morning the board is furious: overnight batch settlement VPNs to two clearing partners dropped and an SLA penalty was invoked. Alex uses this to unpack the difference between configuration (what a box was told — restorable) and state (what a box knows — sessions, VPN security associations — gone at power loss). Sam should press: "but they HAD a spare?" leading to MTTR, and then to the two missing mechanisms: a heartbeat (liveness) and session synchronization (live state), and the vocabulary of stateful vs stateless failover.
+
+Act 2 — Three Answers: Alex walks Sam through Fortinet's three HA technologies as answers to three different problems. FGCP: one logical cluster, two bodies — synced config, heartbeat, stateful session sync including IPsec SAs. FGSP: two independent firewalls that share only session-table data while an external load balancer decides where traffic goes — the answer when config has drifted and boxes are separately managed. VRRP: the open-standard answer — a virtual IP plus virtual MAC floating between multi-vendor gateways so endpoint ARP caches never change; moves identity, never state. Include the trap: active/active does not mean FGSP — FGCP does active/active too; the real divide is config coupling and shared identity.
+
+Act 3 — The Thursday Incident: three weeks after the FGCP pair goes live, the same failure hits. Failover in one second, tunnels never blink — but the surviving box's CPU pins at 95% for 45 seconds and users see the portal hang. The mystery: why does a perfect failover hurt? Reveal: kernel session entries cross the sync link, but NP7 hardware offload entries are local silicon — every inherited session's first packet must be CPU-processed to reprogram the fast path, worst case 100% of offloaded sessions at once. Discuss the sizing principle (size for the worst second, not the average day), the drops→retransmits→overload feedback loop, and the closing discipline: recovery is necessary evidence, never sufficient — verdict requires correlating against peak throughput, checking drop/retransmit counters, tunnel status, and CPU trend. End on the recommendation of a controlled peak-load failover test. Close with Alex's one-liner: "The failover moved the address book, not the muscle memory."</pre>  </div></article>
+<article class="podcast-card" data-session="16">  <button class="podcast-toggle" type="button" aria-expanded="false" aria-controls="podcast-16-panel">    <span class="podcast-sub">Session 16</span>    <span class="podcast-title">FGCP Fundamentals — Active-Passive</span>    <span class="podcast-heading">AUDIO PODCAST PROMPT (for "The Packet Path")</span>    <span class="podcast-caret" aria-hidden="true">▾</span>  </button>  <div class="podcast-panel" id="podcast-16-panel" hidden>    <div class="podcast-checkboxes">      <label class="podcast-check"><input type="checkbox" data-session="16" data-state="generated"> <span>Generated</span></label>      <label class="podcast-check"><input type="checkbox" data-session="16" data-state="renamed"> <span>Renamed</span></label>      <label class="podcast-check"><input type="checkbox" data-session="16" data-state="completed"> <span>Completed</span></label>    </div>    <div class="podcast-actions">      <button type="button" class="podcast-copy" data-target="podcast-16-prompt">Copy prompt</button>      <a class="podcast-source" href="../sessions/session-16-fgcp-active-passive/summary.txt" target="_blank" rel="noopener">Open summary.txt</a>    </div>    <pre class="podcast-prompt" id="podcast-16-prompt">Generate a two-host audio podcast script for "The Packet Path," a storytelling podcast for network engineers. Host: Alex, an experienced network security consultant. Co-host: Sam, smart and curious, asks clarifying questions. Tone: intelligent, conversational, true-crime documentary style. Episode title: "The Circuit Nobody Was Watching." Setting: Vaultline Financial, one week after their HA cluster passed a controlled peak-load failover test with flying colours.
+
+Act 1 — The Silent Failure: Tuesday morning, a WAN circuit to a clearing partner goes dark. The firewall is healthy, heartbeat is perfect, the cluster does nothing. Marcus the NOC engineer asks the question of the episode: "is this a silent single point of failure?" Reveal: FGCP monitors NOTHING by default — interface health is opt-in, and this circuit was never on the list. Sam should press on why Fortinet made monitoring opt-in, leading Alex to the flapping argument: watch everything and every transient blip triggers a failover, each with a real resync cost.
+
+Act 2 — The Reboot That Shouldn't Have Failed Back: Marcus adds monitoring, then reboot-tests the primary with override disabled. It returns in 40 seconds and takes primary back. Priya objects: "override off means no preemption!" Alex unpacks the election waterfall — monitored interfaces, then HA uptime (only decisive with a 5-minute-plus lead), then priority, then serial — stopping at the first clear winner. The twist Sam must voice: a SHORT outage lets the higher-priority box walk back in (uptime tie falls through to priority), while a LONG outage lets the survivor bank an unbeatable uptime lead. Backwards from everyone's intuition. Cover override honestly: it swaps uptime and priority, guaranteeing a second failover — and a second hardware-resync tax — on every recovery. The pro move: leave it off, alert, and use reset-uptime deliberately.
+
+Act 3 — The Identity Handoff: the first seconds after a primary dies. Hello packets on a proprietary EtherType stop; twenty missed beats at 200 milliseconds ≈ 4 seconds; the survivor doesn't win an election — with no rival left, it self-checks and declares. Then the elegant part: virtual MAC addresses belong to the cluster, not the box, so client ARP caches never change; the gratuitous ARP exists purely to teach switches which PORT the identity now lives behind. Close with the horror story: two independent clusters on one L2 segment sharing a group-id compute identical virtual MACs — no alarm, just inexplicable flaky switching — because group-id is both a membership credential and an ingredient baked into the MAC itself. Alex's one-liner: "The cluster only protects what you told it to watch."</pre>  </div></article>
+<article class="podcast-card" data-session="17">  <button class="podcast-toggle" type="button" aria-expanded="false" aria-controls="podcast-17-panel">    <span class="podcast-sub">Session 17</span>    <span class="podcast-title">FGCP Active-Active &amp; Load Balancing</span>    <span class="podcast-heading">AUDIO PODCAST PROMPT (for "The Packet Path")</span>    <span class="podcast-caret" aria-hidden="true">▾</span>  </button>  <div class="podcast-panel" id="podcast-17-panel" hidden>    <div class="podcast-checkboxes">      <label class="podcast-check"><input type="checkbox" data-session="17" data-state="generated"> <span>Generated</span></label>      <label class="podcast-check"><input type="checkbox" data-session="17" data-state="renamed"> <span>Renamed</span></label>      <label class="podcast-check"><input type="checkbox" data-session="17" data-state="completed"> <span>Completed</span></label>    </div>    <div class="podcast-actions">      <button type="button" class="podcast-copy" data-target="podcast-17-prompt">Copy prompt</button>      <a class="podcast-source" href="../sessions/session-17-fgcp-active-active/summary.txt" target="_blank" rel="noopener">Open summary.txt</a>    </div>    <pre class="podcast-prompt" id="podcast-17-prompt">Generate a two-host audio podcast script for "The Packet Path," a storytelling podcast for network engineers. Host: Alex, an experienced network security consultant. Co-host: Sam, smart and curious, asks clarifying questions. Tone: intelligent, conversational, true-crime documentary style. Episode title: "The Reply That Came From Nowhere." Setting: Vaultline Financial, shortly after considering a switch to FGCP Active-Active.
+
+Act 1 — The Proposal: Priya notices FGT-B sitting nearly idle while FGT-A runs hot, and proposes flipping to Active-Active to "use both boxes." Alex and Sam walk through why that instinct is reasonable but incomplete — introduce the idea that not all traffic is created equal in cost.
+
+Act 2 — The Discovery: only proxy-based UTM sessions are eligible for offload; the forwarding rides a distinct Ethernet type (0x8891) over the heartbeat link, not session-sync-dev. Sam should ask the obvious follow-up: "so the secondary just does the work and hands it back?" — setting up the twist.
+
+Act 3 — The Twist: reveal that for proxy-based sessions, the secondary replies to the client directly, using its own physical MAC — the primary never sees the rest of the conversation. Frame this as "the reply that came from nowhere" from the perspective of an engineer capturing traffic only on the primary and finding an incomplete handshake for a session the user insists is working fine. Resolve with the real troubleshooting lesson: check both boxes before declaring anything broken.
+
+Act 4 — The Verdict: Alex and Sam land on the senior-engineer answer for Priya — it depends on Vaultline's traffic mix, and the operational cost (troubleshooting complexity, asymmetric-path risk) has to be weighed against the CPU gain, because A-A's real purpose is using idle capacity, not balancing load.</pre>  </div></article></section>
 </main>
-<footer>NSE7 EF 7.6 · Audio Podcasts</footer>
+<footer>NSE7 EF 7.6 <span>·</span> Audio Podcasts <span>·</span> 4 prompts</footer>
+<script>
+(function(){
+  var STORAGE_KEY = 'nse7_audio_podcast_state_v1';
+  function loadState(){ try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e) { return {}; } }
+  function saveState(s){ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch(e) {} }
+  var state = loadState();
+
+  // Restore checkbox state
+  document.querySelectorAll('.podcast-check input[type="checkbox"]').forEach(function(cb){
+    var sess = cb.dataset.session;
+    var st = cb.dataset.state;
+    if (state[sess] && state[sess][st]) cb.checked = true;
+    cb.addEventListener('change', function(){
+      state[sess] = state[sess] || {};
+      state[sess][st] = cb.checked;
+      saveState(state);
+    });
+  });
+
+  // Expand/collapse
+  document.querySelectorAll('.podcast-toggle').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var card = btn.closest('.podcast-card');
+      var panel = card.querySelector('.podcast-panel');
+      var open = card.classList.toggle('is-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) panel.removeAttribute('hidden'); else panel.setAttribute('hidden', '');
+    });
+  });
+
+  // Copy prompt
+  document.querySelectorAll('.podcast-copy').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var target = document.getElementById(btn.dataset.target);
+      if (!target) return;
+      var text = target.textContent;
+      var done = function(){
+        var original = btn.textContent;
+        btn.textContent = 'Copied';
+        btn.classList.add('is-copied');
+        setTimeout(function(){ btn.textContent = original; btn.classList.remove('is-copied'); }, 1400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function(){ fallbackCopy(text); done(); });
+      } else {
+        fallbackCopy(text); done();
+      }
+    });
+  });
+  function fallbackCopy(text){
+    var ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+})();
+</script>
 </body>
 </html>

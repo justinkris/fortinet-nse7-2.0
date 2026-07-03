@@ -4371,6 +4371,435 @@ def render_all_resources_hub(extras, completions, standalone_extras):
 
 
 # ---------------------------------------------------------------------------
+# MIND MAP (mind-map.html) — radial SVG map of Phase → Session → Concepts + Extras
+# ---------------------------------------------------------------------------
+
+def render_mind_map(extras, completions):
+    """Emit mind-map.html — a radial SVG mind map, progressively expanded:
+
+    Initial state:  root + 8 phase pills only.
+    Click a phase:  its sessions fan out.
+    Click a session: its concepts AND its study-resource titles (guides / bites /
+                     nibbles / completed guide) fan out as clickable leaves.
+    Extra leaves navigate to their target HTML on click; a small link icon on
+    each session box navigates to that session's page.
+
+    Layout math: each phase gets a 360°/N wedge. Its sessions fan across the
+    phase's wedge; each session's leaves (concepts + extras) fan across that
+    session's mini-wedge. Node coords are pre-computed in Python so the SVG
+    is a static browser-simple document — no runtime layout engine.
+
+    Z-order: connectors first, then session/leaf groups, then phase pills,
+    then the root node last — so lines vanish behind the root circle and
+    behind pill nodes. Read the SVG bottom-up in DOM terms."""
+    import math
+
+    n_phases = len(PHASES)
+    # Canvas: 1600x1600 with center (800, 800). Radii chosen so concepts sit
+    # comfortably inside the viewbox without overflowing the SVG.
+    CX, CY = 800, 800
+    R_PHASE = 220
+    R_SESSION = 460
+    R_CONCEPT = 640
+
+    # Distinct color per phase — pull from the amber/blue/green/plum/teal
+    # palette so no two adjacent phases collide.
+    PHASE_COLORS = [
+        ("#1e40af", "#eff4fc"),   # blue
+        ("#1a7c4a", "#dff0e1"),   # green
+        ("#b45309", "#fcf2c3"),   # amber
+        ("#7c1a5f", "#f7e5f0"),   # plum
+        ("#0f766e", "#ccfbf1"),   # teal
+        ("#2563eb", "#eff4fc"),   # blue-vivid
+        ("#c2410c", "#fed7aa"),   # orange
+        ("#4c1d95", "#ede9fe"),   # violet
+    ]
+
+    def polar(r, angle_deg):
+        rad = math.radians(angle_deg - 90)  # -90 puts 0° at the top
+        return CX + r * math.cos(rad), CY + r * math.sin(rad)
+
+    def curve_path(x1, y1, x2, y2):
+        """Curved connector from parent (x1,y1) to child (x2,y2). Control
+        point sits partway along the line toward the center — gives a soft
+        S-shape typical of mind maps."""
+        mx = (x1 + x2) / 2 + (CX - (x1 + x2) / 2) * 0.35
+        my = (y1 + y2) / 2 + (CY - (y1 + y2) / 2) * 0.35
+        return f"M{x1:.1f},{y1:.1f} Q{mx:.1f},{my:.1f} {x2:.1f},{y2:.1f}"
+
+    # Precompute each phase's angular wedge.
+    per_phase_wedge = 360.0 / n_phases
+
+    # Group data structure we'll emit as SVG groups.
+    svg_bits = []
+    # Root node dot
+    svg_bits.append(
+        f'<circle class="mm-root" cx="{CX}" cy="{CY}" r="52"/>'
+        f'<text class="mm-root-label" x="{CX}" y="{CY - 6}" text-anchor="middle">NSE7</text>'
+        f'<text class="mm-root-sub" x="{CX}" y="{CY + 14}" text-anchor="middle">EF 7.6</text>'
+    )
+
+    for phase_i, phase in enumerate(PHASES):
+        phase_color, phase_bg = PHASE_COLORS[phase_i % len(PHASE_COLORS)]
+        phase_center_angle = phase_i * per_phase_wedge + per_phase_wedge / 2
+        px, py = polar(R_PHASE, phase_center_angle)
+
+        # Sessions in this phase — spread across the phase's wedge but with
+        # a small padding on each side so adjacent phases don't collide.
+        sessions_in_phase = [s for s in SESSIONS if s["phase"] == phase["num"]]
+        n_sess = len(sessions_in_phase)
+        # Pad the wedge by 10% on each side.
+        wedge_start = phase_i * per_phase_wedge + per_phase_wedge * 0.08
+        wedge_end = (phase_i + 1) * per_phase_wedge - per_phase_wedge * 0.08
+        wedge_span = wedge_end - wedge_start
+
+        # Phase group wraps its own sessions + their concepts.
+        phase_id = f"phase-{phase['num']:02d}"
+        phase_html = [
+            f'<g class="mm-phase-group" data-phase="{phase["num"]}" id="mm-{phase_id}" data-color="{phase_color}">',
+            # Connector from root to phase
+            f'<path class="mm-link mm-link-phase" d="{curve_path(CX, CY, px, py)}" stroke="{phase_color}"/>',
+        ]
+
+        for si, s in enumerate(sessions_in_phase):
+            if n_sess == 1:
+                sess_angle = wedge_start + wedge_span / 2
+            else:
+                sess_angle = wedge_start + (si / (n_sess - 1)) * wedge_span
+            sx, sy = polar(R_SESSION, sess_angle)
+            # Session searchable haystack
+            haystack = (
+                (s.get("title") or "") + " " + (s.get("why") or "") + " " +
+                " ".join(s.get("concepts") or []) + " " +
+                " ".join(s.get("objectives") or []) + " " +
+                (s.get("story") or "") + " " + (s.get("goal") or "")
+            ).lower().replace('"', "&quot;")
+
+            session_href = f"sessions/{session_filename(s)}"
+            phase_html.append(
+                f'<g class="mm-session-group" data-session="{s["num"]}" '
+                f'data-search="{html_escape(haystack)}">'
+                f'<path class="mm-link mm-link-session" d="{curve_path(px, py, sx, sy)}" '
+                f'stroke="{phase_color}"/>'
+                f'<a href="{session_href}">'
+                f'<rect class="mm-session-box" x="{sx - 78:.1f}" y="{sy - 18:.1f}" '
+                f'width="156" height="36" rx="8" fill="{phase_bg}" stroke="{phase_color}"/>'
+                f'<text class="mm-session-num" x="{sx - 70:.1f}" y="{sy + 4:.1f}" fill="{phase_color}">'
+                f'{s["num"]:02d}</text>'
+                f'<text class="mm-session-title" x="{sx - 52:.1f}" y="{sy + 4:.1f}">'
+                f'{html_escape(_truncate(s["title"], 22))}</text>'
+                f'</a>'
+                # Concept-expand toggle dot (small, right of the session box)
+                f'<circle class="mm-concept-toggle" cx="{sx + 84:.1f}" cy="{sy:.1f}" '
+                f'r="6" fill="{phase_color}" data-session-toggle="{s["num"]}"/>'
+            )
+
+            # Concepts fan within a mini-wedge around the session's angle.
+            concepts = [c for c in (s.get("concepts") or []) if c]
+            n_conc = len(concepts)
+            if n_conc:
+                # Give concepts a wedge equal to what this session occupies
+                # (wedge_span / n_sess), padded inward slightly.
+                mini_span = (wedge_span / max(n_sess, 1)) * 0.75
+                if n_sess == 1:
+                    mini_span = wedge_span * 0.5
+                mini_start = sess_angle - mini_span / 2
+                phase_html.append(f'<g class="mm-concepts" data-session="{s["num"]}">')
+                for ci, concept in enumerate(concepts):
+                    if n_conc == 1:
+                        cangle = sess_angle
+                    else:
+                        cangle = mini_start + (ci / (n_conc - 1)) * mini_span
+                    ccx, ccy = polar(R_CONCEPT, cangle)
+                    # Concept text anchored based on angle: right-side of map
+                    # gets left-anchored text, left side gets right-anchored.
+                    normalized_angle = cangle % 360
+                    if 90 <= normalized_angle <= 270:
+                        anchor = "end"
+                        tx_offset = -12
+                    else:
+                        anchor = "start"
+                        tx_offset = 12
+                    haystack_c = concept.lower().replace('"', "&quot;")
+                    phase_html.append(
+                        f'<g class="mm-concept" data-search="{html_escape(haystack_c)}">'
+                        f'<path class="mm-link mm-link-concept" d="{curve_path(sx, sy, ccx, ccy)}" '
+                        f'stroke="{phase_color}" stroke-opacity="0.45"/>'
+                        f'<circle class="mm-concept-dot" cx="{ccx:.1f}" cy="{ccy:.1f}" r="3" '
+                        f'fill="{phase_color}"/>'
+                        f'<text class="mm-concept-text" x="{ccx + tx_offset:.1f}" '
+                        f'y="{ccy + 4:.1f}" text-anchor="{anchor}">'
+                        f'{html_escape(_truncate(concept, 46))}'
+                        f'</text>'
+                        f'</g>'
+                    )
+                phase_html.append('</g>')  # end .mm-concepts
+
+            phase_html.append('</g>')  # end .mm-session-group
+
+        # Phase pill (drawn last so it's on top of connectors)
+        phase_html.append(
+            f'<g class="mm-phase-pill">'
+            f'<circle class="mm-phase-circle" cx="{px:.1f}" cy="{py:.1f}" r="46" '
+            f'fill="{phase_color}"/>'
+            f'<text class="mm-phase-num" x="{px:.1f}" y="{py - 4:.1f}" text-anchor="middle">'
+            f'P{phase["num"]:02d}</text>'
+            f'<text class="mm-phase-label" x="{px:.1f}" y="{py + 14:.1f}" text-anchor="middle">'
+            f'{html_escape(_phase_short(phase["title"]))}'
+            f'</text>'
+            f'</g>'
+        )
+        phase_html.append('</g>')  # end .mm-phase-group
+        svg_bits.append("\n".join(phase_html))
+
+    svg = (
+        f'<svg id="mm-svg" viewBox="0 0 1600 1600" xmlns="http://www.w3.org/2000/svg" '
+        f'preserveAspectRatio="xMidYMid meet">'
+        + "\n".join(svg_bits) +
+        '</svg>'
+    )
+
+    search_html = (
+        '<div class="mm-search-bar">'
+        '<label for="mm-search" class="mm-search-label">Search</label>'
+        '<input type="search" id="mm-search" placeholder="Type a topic — matching nodes glow, everything else dims" autocomplete="off" spellcheck="false">'
+        '<span class="mm-search-summary" id="mm-search-summary"></span>'
+        '<button type="button" class="mm-btn" id="mm-expand-all">Expand all</button>'
+        '<button type="button" class="mm-btn" id="mm-collapse-all">Collapse all</button>'
+        '</div>'
+        '<div class="mm-legend">'
+        '<span class="mm-legend-item"><span class="mm-legend-dot" style="background:#1e40af;"></span>Click a session name to open it</span>'
+        '<span class="mm-legend-item"><span class="mm-legend-dot mm-legend-toggle"></span>Click the small dot beside a session to toggle its concepts</span>'
+        '<span class="mm-legend-item"><span class="mm-legend-dot" style="background:#0d1a3a;"></span>Click a phase pill to toggle every session\'s concepts inside it</span>'
+        '</div>'
+    )
+
+    css = """
+<style>
+  :root { --map-bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --ink-dark:#0d1a3a; --ink-accent:#9bb8e6; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond',serif;background:var(--map-bg);color:var(--text);min-height:100vh;}
+  header{padding:32px 40px 20px;background:var(--ink-dark);}
+  .breadcrumb{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.12em;color:var(--ink-accent);margin-bottom:12px;text-transform:uppercase;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;} .breadcrumb a:hover{color:#fff;} .breadcrumb-sep{margin:0 6px;opacity:0.6;}
+  header h1{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;color:#fbf7ec;letter-spacing:-0.01em;margin-bottom:6px;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.65);}
+  main{padding:24px 32px 40px;}
+  .mm-search-bar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 16px;margin-bottom:14px;position:sticky;top:8px;z-index:20;box-shadow:0 8px 20px -18px rgba(10,24,56,0.24);}
+  .mm-search-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);}
+  #mm-search{flex:1;min-width:220px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;font-family:'Outfit',sans-serif;font-size:14px;color:var(--text);outline:none;}
+  #mm-search:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(30,64,175,0.16);}
+  .mm-search-summary{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.06em;color:var(--text-muted);}
+  .mm-btn{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;transition:all .15s;}
+  .mm-btn:hover{color:var(--text);border-color:var(--text);}
+  .mm-legend{display:flex;flex-wrap:wrap;gap:22px;padding:10px 16px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.04em;margin-bottom:14px;}
+  .mm-legend-item{display:inline-flex;align-items:center;gap:8px;}
+  .mm-legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;}
+  .mm-legend-toggle{border:1.5px solid #1e40af;background:#eff4fc;}
+  .mm-canvas{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;padding:0;position:relative;box-shadow:inset 0 0 60px rgba(212,200,154,0.24);}
+  #mm-svg{display:block;width:100%;height:auto;max-height:calc(100vh - 220px);cursor:grab;}
+  #mm-svg:active{cursor:grabbing;}
+  /* Root */
+  .mm-root{fill:var(--ink-dark);stroke:#c9b26e;stroke-width:2;}
+  .mm-root-label{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;fill:#fbf7ec;pointer-events:none;}
+  .mm-root-sub{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.16em;fill:rgba(251,247,236,0.7);pointer-events:none;}
+  /* Phase */
+  .mm-phase-circle{stroke:#0d1a3a;stroke-width:2;transition:filter .2s,transform .2s;cursor:pointer;transform-box:fill-box;transform-origin:center;}
+  .mm-phase-circle:hover{filter:brightness(1.08);transform:scale(1.06);}
+  .mm-phase-num{font-family:'Playfair Display',serif;font-size:20px;font-weight:800;fill:#fbf7ec;pointer-events:none;}
+  .mm-phase-label{font-family:'Outfit',sans-serif;font-size:9.5px;font-weight:600;letter-spacing:0.1em;fill:rgba(255,255,255,0.85);pointer-events:none;text-transform:uppercase;}
+  /* Session */
+  .mm-session-box{stroke-width:1.5;transition:filter .15s,transform .15s;transform-box:fill-box;transform-origin:center;}
+  .mm-session-group a{text-decoration:none;}
+  .mm-session-group:hover .mm-session-box{filter:brightness(0.98) drop-shadow(0 6px 12px rgba(10,24,56,0.14));transform:scale(1.03);}
+  .mm-session-num{font-family:'Outfit',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.06em;pointer-events:none;dominant-baseline:middle;}
+  .mm-session-title{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;fill:var(--text);pointer-events:none;dominant-baseline:middle;}
+  .mm-concept-toggle{cursor:pointer;transition:transform .15s,opacity .15s;transform-box:fill-box;transform-origin:center;}
+  .mm-concept-toggle:hover{transform:scale(1.4);}
+  /* Links */
+  .mm-link{fill:none;stroke-width:1.4;transition:opacity .2s;}
+  .mm-link-phase{stroke-width:2.2;}
+  .mm-link-session{stroke-opacity:0.7;}
+  .mm-link-concept{stroke-width:1;}
+  /* Concept leaves */
+  .mm-concepts{opacity:0;pointer-events:none;transition:opacity .3s;}
+  .mm-phase-group.expanded .mm-concepts,
+  .mm-session-group.concepts-open .mm-concepts{opacity:1;pointer-events:auto;}
+  .mm-concept-text{font-family:'Outfit',sans-serif;font-size:10px;fill:var(--text-soft);pointer-events:none;}
+  .mm-concept-dot{transition:transform .15s;transform-box:fill-box;transform-origin:center;}
+  /* Search dimming */
+  .mm-svg-searching .mm-phase-group:not(.mm-match),
+  .mm-svg-searching .mm-session-group:not(.mm-match),
+  .mm-svg-searching .mm-concept:not(.mm-match){opacity:0.14;transition:opacity .2s;}
+  .mm-svg-searching .mm-phase-group.mm-match,
+  .mm-svg-searching .mm-session-group.mm-match,
+  .mm-svg-searching .mm-concept.mm-match{opacity:1;}
+  .mm-session-group.mm-match .mm-session-box{filter:drop-shadow(0 0 8px rgba(30,64,175,0.55));}
+  .mm-concept.mm-match .mm-concept-dot{r:5;}
+  @media (max-width: 720px) {
+    header{padding:24px 20px;}
+    header h1{font-size:26px;}
+    .mm-legend{font-size:10px;gap:14px;}
+    main{padding:16px;}
+  }
+</style>
+""".strip()
+
+    js = """
+<script>
+(function() {
+  const svg = document.getElementById('mm-svg');
+  const input = document.getElementById('mm-search');
+  const summary = document.getElementById('mm-search-summary');
+  const expandAll = document.getElementById('mm-expand-all');
+  const collapseAll = document.getElementById('mm-collapse-all');
+  const phases = Array.from(svg.querySelectorAll('.mm-phase-group'));
+  const sessions = Array.from(svg.querySelectorAll('.mm-session-group'));
+  const concepts = Array.from(svg.querySelectorAll('.mm-concept'));
+
+  // Phase pill toggles the .expanded state on the whole phase group.
+  phases.forEach(function(phase) {
+    const pill = phase.querySelector('.mm-phase-circle');
+    if (pill) pill.addEventListener('click', function() { phase.classList.toggle('expanded'); });
+  });
+
+  // Session toggle-dot expands just that session's concepts.
+  sessions.forEach(function(sess) {
+    const toggle = sess.querySelector('.mm-concept-toggle');
+    if (toggle) toggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      sess.classList.toggle('concepts-open');
+    });
+  });
+
+  expandAll.addEventListener('click', function() {
+    phases.forEach(function(p) { p.classList.add('expanded'); });
+  });
+  collapseAll.addEventListener('click', function() {
+    phases.forEach(function(p) { p.classList.remove('expanded'); });
+    sessions.forEach(function(s) { s.classList.remove('concepts-open'); });
+  });
+
+  function tokenize(q) { return q.toLowerCase().trim().split(/\\s+/).filter(Boolean); }
+  function matches(hay, terms) {
+    for (let i = 0; i < terms.length; i++) if (hay.indexOf(terms[i]) === -1) return false;
+    return true;
+  }
+  function search(q) {
+    const terms = tokenize(q);
+    if (!terms.length) {
+      svg.classList.remove('mm-svg-searching');
+      phases.forEach(p => p.classList.remove('mm-match'));
+      sessions.forEach(s => s.classList.remove('mm-match'));
+      concepts.forEach(c => c.classList.remove('mm-match'));
+      summary.textContent = '';
+      return;
+    }
+    svg.classList.add('mm-svg-searching');
+    let hitCount = 0;
+    const phasesWithHits = new Set();
+    sessions.forEach(function(sess) {
+      const hay = sess.dataset.search || '';
+      const ok = matches(hay, terms);
+      sess.classList.toggle('mm-match', ok);
+      if (ok) {
+        hitCount++;
+        const parent = sess.closest('.mm-phase-group');
+        if (parent) { parent.classList.add('mm-match'); parent.classList.add('expanded'); phasesWithHits.add(parent); }
+      }
+    });
+    concepts.forEach(function(cn) {
+      const hay = cn.dataset.search || '';
+      const ok = matches(hay, terms);
+      cn.classList.toggle('mm-match', ok);
+      if (ok) {
+        hitCount++;
+        const sess = cn.closest('.mm-session-group');
+        if (sess) { sess.classList.add('mm-match'); sess.classList.add('concepts-open'); }
+        const phase = cn.closest('.mm-phase-group');
+        if (phase) { phase.classList.add('mm-match'); phase.classList.add('expanded'); phasesWithHits.add(phase); }
+      }
+    });
+    phases.forEach(function(p) { if (!phasesWithHits.has(p)) p.classList.remove('mm-match'); });
+    summary.textContent = hitCount + ' match' + (hitCount === 1 ? '' : 'es');
+  }
+  input.addEventListener('input', function() { search(input.value); });
+
+  // Pan + zoom: shift-drag pans, wheel zooms into cursor.
+  let vb = svg.viewBox.baseVal;
+  const origVB = { x: vb.x, y: vb.y, width: vb.width, height: vb.height };
+  let panning = false, panStart = null;
+  svg.addEventListener('mousedown', function(e) {
+    if (e.target.tagName === 'a' || e.target.closest('a')) return; // let anchor clicks through
+    panning = true; panStart = { x: e.clientX, y: e.clientY, vbx: vb.x, vby: vb.y };
+  });
+  svg.addEventListener('mouseup', function() { panning = false; });
+  svg.addEventListener('mouseleave', function() { panning = false; });
+  svg.addEventListener('mousemove', function(e) {
+    if (!panning) return;
+    const rect = svg.getBoundingClientRect();
+    const scale = vb.width / rect.width;
+    vb.x = panStart.vbx - (e.clientX - panStart.x) * scale;
+    vb.y = panStart.vby - (e.clientY - panStart.y) * scale;
+  });
+  svg.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    const rect = svg.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) / rect.width * vb.width + vb.x;
+    const my = (e.clientY - rect.top) / rect.height * vb.height + vb.y;
+    const factor = e.deltaY < 0 ? 0.88 : 1.14;
+    const newW = Math.max(400, Math.min(3200, vb.width * factor));
+    const newH = newW;
+    vb.x = mx - (mx - vb.x) * (newW / vb.width);
+    vb.y = my - (my - vb.y) * (newH / vb.height);
+    vb.width = newW; vb.height = newH;
+  }, { passive: false });
+})();
+</script>
+""".strip()
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind Map · NSE7 EF 7.6</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+{css}
+</head>
+<body>
+<header>
+<div class="breadcrumb"><a href="index.html">Home</a><span class="breadcrumb-sep">›</span>Mind Map</div>
+<h1>Mind <em>Map</em></h1>
+<p>Phases branch into sessions; sessions branch into the concept spine. Click a session to open its page — click a phase pill or the small colored dot beside a session to reveal concepts.</p>
+</header>
+<main>
+{search_html}
+<div class="mm-canvas">{svg}</div>
+</main>
+{js}
+</body>
+</html>
+"""
+    (ROOT / "mind-map.html").write_text(html, encoding="utf-8")
+
+
+def _truncate(text, n):
+    text = text or ""
+    if len(text) <= n:
+        return text
+    return text[: n - 1].rstrip() + "…"
+
+
+def _phase_short(title):
+    # "Foundations: <Long Title>" → "Foundations"
+    return (title or "").split(":")[0].strip()[:16].upper()
+
+
+# ---------------------------------------------------------------------------
 # BREADCRUMB NORMALIZER
 # ---------------------------------------------------------------------------
 # Sorted files (complete.html, bites/nibbles/guides, standalone Extras topic
@@ -5108,10 +5537,243 @@ def render_sessions_index(completions=None):
     out_path.write_text(html, encoding="utf-8")
 
 # ---------------------------------------------------------------------------
+# AUDIO PODCASTS HUB (audio-podcasts/index.html)
+# ---------------------------------------------------------------------------
+
+def discover_audio_prompts():
+    """Return {session_num: (heading, body)} for sessions whose summary.txt
+    contains an "AUDIO PODCAST PROMPT..." section."""
+    out = {}
+    for s in SESSIONS:
+        session_dir = SESSIONS_DIR / f"session-{s['num']:02d}-{s['slug']}"
+        summary_path = session_dir / "summary.txt"
+        if not summary_path.is_file():
+            continue
+        for heading, body in parse_summary_txt(summary_path):
+            if heading.upper().startswith("AUDIO PODCAST PROMPT"):
+                out[s["num"]] = (heading, body.strip())
+                break
+    return out
+
+def render_audio_podcasts_hub():
+    prompts = discover_audio_prompts()
+    n = len(prompts)
+    sessions_by_num = {s["num"]: s for s in SESSIONS}
+
+    phase_sections = []
+    for phase in PHASES:
+        phase_num = phase["num"]
+        phase_title = html_escape(phase["title"])
+        phase_tagline = html_escape(phase.get("tagline", ""))
+        phase_session_nums = [n for n in phase["sessions"] if n in sessions_by_num]
+        phase_with_prompts = sum(1 for n in phase_session_nums if n in prompts)
+
+        cards_html_parts = []
+        for sess_num in phase_session_nums:
+            s = sessions_by_num[sess_num]
+            slug = f"session-{s['num']:02d}-{s['slug']}"
+            title = html_escape(s["title"])
+            card_id = f"podcast-{sess_num:02d}"
+            has_prompt = sess_num in prompts
+
+            if has_prompt:
+                heading, body = prompts[sess_num]
+                heading_esc = html_escape(heading)
+                prompt_esc = html_escape(body)
+                cards_html_parts.append(
+                    f'<article class="podcast-card" data-session="{sess_num}">'
+                    f'  <button class="podcast-toggle" type="button" aria-expanded="false" aria-controls="{card_id}-panel">'
+                    f'    <span class="podcast-sub">Session {sess_num:02d}</span>'
+                    f'    <span class="podcast-title">{title}</span>'
+                    f'    <span class="podcast-heading">{heading_esc}</span>'
+                    f'    <span class="podcast-caret" aria-hidden="true">▾</span>'
+                    f'  </button>'
+                    f'  <div class="podcast-panel" id="{card_id}-panel" hidden>'
+                    f'    <div class="podcast-checkboxes">'
+                    f'      <label class="podcast-check"><input type="checkbox" data-session="{sess_num}" data-state="generated"> <span>Generated</span></label>'
+                    f'      <label class="podcast-check"><input type="checkbox" data-session="{sess_num}" data-state="renamed"> <span>Renamed</span></label>'
+                    f'      <label class="podcast-check"><input type="checkbox" data-session="{sess_num}" data-state="completed"> <span>Completed</span></label>'
+                    f'    </div>'
+                    f'    <div class="podcast-actions">'
+                    f'      <button type="button" class="podcast-copy" data-target="{card_id}-prompt">Copy prompt</button>'
+                    f'      <a class="podcast-source" href="../sessions/{slug}/summary.txt" target="_blank" rel="noopener">Open summary.txt</a>'
+                    f'    </div>'
+                    f'    <pre class="podcast-prompt" id="{card_id}-prompt">{prompt_esc}</pre>'
+                    f'  </div>'
+                    f'</article>'
+                )
+            else:
+                cards_html_parts.append(
+                    f'<article class="podcast-card is-placeholder" data-session="{sess_num}">'
+                    f'  <div class="podcast-toggle podcast-toggle--static">'
+                    f'    <span class="podcast-sub">Session {sess_num:02d}</span>'
+                    f'    <span class="podcast-title">{title}</span>'
+                    f'    <span class="podcast-heading">Coming soon</span>'
+                    f'    <span class="podcast-badge">Pending</span>'
+                    f'  </div>'
+                    f'</article>'
+                )
+
+        cards_html = "\n".join(cards_html_parts)
+        phase_sections.append(
+            f'<section class="phase-section" id="phase-{phase_num}">'
+            f'  <header class="phase-header">'
+            f'    <span class="phase-eyebrow">Phase {phase_num}</span>'
+            f'    <h2 class="phase-title">{phase_title}</h2>'
+            f'    <p class="phase-tagline">{phase_tagline}</p>'
+            f'    <span class="phase-count">{phase_with_prompts} of {len(phase_session_nums)} with prompts</span>'
+            f'  </header>'
+            f'  <div class="podcast-list">{cards_html}</div>'
+            f'</section>'
+        )
+
+    main_body = "\n".join(phase_sections)
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio Podcasts · NSE7 EF 7.6</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{{--bg:#faf5e9;--surface:#fffdf5;--surface-2:#f5eed9;--border:#d4c89a;--border-dim:#ebe1c2;--text:#0a1838;--text-soft:#1e2f5a;--text-muted:#6b7794;--blue:#1e40af;--blue-light:#eff4fc;--blue-border:#b8cce8;--ink-dark:#0d1a3a;--ink-accent:#9bb8e6;--green:#1a7c4a;--green-light:#dff0e1;--green-border:#a7d8b0;}}
+  *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0;}}
+  body{{font-family:'Cormorant Garamond',serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}}
+  header{{padding:48px 60px 36px;background:var(--ink-dark);color:#fbf7ec;}}
+  .breadcrumb{{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;}}
+  .breadcrumb a{{color:var(--ink-accent);text-decoration:none;}}
+  .breadcrumb-sep{{color:rgba(155,184,230,0.4);margin:0 6px;}}
+  header h1{{font-family:'Playfair Display',serif;font-size:44px;font-weight:700;line-height:1.05;}}
+  header h1 em{{font-style:italic;font-weight:500;color:var(--ink-accent);}}
+  header p{{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:rgba(251,247,236,0.65);margin-top:8px;max-width:720px;line-height:1.6;}}
+  main{{flex:1;padding:44px 60px 60px;max-width:1100px;width:100%;margin:0 auto;}}
+  .phase-section{{margin-bottom:44px;}}
+  .phase-section:last-child{{margin-bottom:0;}}
+  .phase-header{{margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);position:relative;}}
+  .phase-eyebrow{{display:inline-block;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--blue);text-transform:uppercase;background:var(--blue-light);border:1px solid var(--blue-border);border-radius:20px;padding:3px 10px;margin-bottom:8px;}}
+  .phase-title{{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:4px;}}
+  .phase-tagline{{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--text-soft);line-height:1.5;max-width:720px;}}
+  .phase-count{{position:absolute;top:0;right:0;font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:4px 10px;}}
+  .podcast-list{{display:flex;flex-direction:column;gap:12px;}}
+  .podcast-card{{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .15s;}}
+  .podcast-card:hover{{border-color:var(--blue-border);}}
+  .podcast-card.is-open{{border-color:var(--blue);}}
+  .podcast-card.is-placeholder{{background:transparent;border:1px dashed var(--border);}}
+  .podcast-card.is-placeholder:hover{{border-color:var(--border);}}
+  .podcast-toggle--static{{cursor:default;}}
+  .podcast-badge{{grid-column:3;grid-row:1 / span 2;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:4px 10px;justify-self:end;align-self:center;}}
+  .is-placeholder .podcast-title,.is-placeholder .podcast-heading{{color:var(--text-muted);}}
+  .is-placeholder .podcast-sub{{opacity:0.75;}}
+  .podcast-toggle{{display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto;column-gap:16px;row-gap:2px;align-items:center;width:100%;background:transparent;border:0;padding:18px 22px;cursor:pointer;text-align:left;font-family:inherit;color:inherit;}}
+  .podcast-sub{{grid-column:1;grid-row:1;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--blue);text-transform:uppercase;background:var(--blue-light);border:1px solid var(--blue-border);border-radius:20px;padding:3px 10px;justify-self:start;align-self:center;}}
+  .podcast-title{{grid-column:2;grid-row:1;font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);line-height:1.25;}}
+  .podcast-heading{{grid-column:2;grid-row:2;font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--text-muted);line-height:1.4;}}
+  .podcast-caret{{grid-column:3;grid-row:1 / span 2;font-family:'Outfit',sans-serif;font-size:20px;color:var(--blue);transition:transform .18s ease;justify-self:end;align-self:center;}}
+  .podcast-card.is-open .podcast-caret{{transform:rotate(180deg);}}
+  .podcast-panel{{border-top:1px solid var(--border-dim);padding:18px 22px 22px;background:var(--surface-2);display:flex;flex-direction:column;gap:14px;}}
+  .podcast-checkboxes{{display:flex;flex-wrap:wrap;gap:16px;}}
+  .podcast-check{{display:inline-flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--text-soft);text-transform:uppercase;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 12px;cursor:pointer;transition:border-color .15s,background .15s,color .15s;}}
+  .podcast-check input{{accent-color:var(--blue);width:14px;height:14px;cursor:pointer;}}
+  .podcast-check:has(input:checked){{background:var(--green-light);border-color:var(--green-border);color:var(--green);}}
+  .podcast-actions{{display:flex;flex-wrap:wrap;gap:12px;align-items:center;}}
+  .podcast-copy{{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;background:var(--blue);color:#fff;border:0;border-radius:20px;padding:7px 14px;cursor:pointer;transition:background .15s;}}
+  .podcast-copy:hover{{background:#173196;}}
+  .podcast-copy.is-copied{{background:var(--green);}}
+  .podcast-source{{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);text-decoration:none;border-bottom:1px dotted var(--blue-border);padding-bottom:1px;}}
+  .podcast-source:hover{{color:#173196;border-bottom-color:var(--blue);}}
+  .podcast-prompt{{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:13px;line-height:1.55;color:var(--text);background:var(--surface);border:1px solid var(--border-dim);border-radius:8px;padding:16px 18px;white-space:pre-wrap;word-wrap:break-word;max-height:520px;overflow-y:auto;}}
+  .empty-state{{background:var(--surface);border:1px dashed var(--border);border-radius:12px;padding:28px;color:var(--text-muted);font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.6;font-style:italic;text-align:center;}}
+  .empty-state code{{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--text);font-style:normal;}}
+  footer{{padding:18px 60px;border-top:1px solid var(--border);background:var(--surface);font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;text-align:center;}}
+  footer span{{color:var(--blue);}}
+  @media(max-width:640px){{header{{padding:32px 24px 24px;}}header h1{{font-size:30px;}}main{{padding:28px 20px 44px;}}.podcast-toggle{{padding:16px 18px;column-gap:12px;}}.podcast-panel{{padding:16px 18px 20px;}}.podcast-title{{font-size:18px;}}}}
+</style>
+</head>
+<body>
+<header>
+  <div class="breadcrumb">
+    <a href="../index.html">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    Audio Podcasts
+  </div>
+  <h1>Audio <em>Podcasts</em></h1>
+  <p>Audio-podcast generation prompts extracted from each session's <code>summary.txt</code>. Click a card to view the prompt and track workflow status.</p>
+</header>
+<main>
+  {main_body}
+</main>
+<footer>NSE7 EF 7.6 <span>·</span> Audio Podcasts <span>·</span> {n} prompt{"" if n == 1 else "s"}</footer>
+<script>
+(function(){{
+  var STORAGE_KEY = 'nse7_audio_podcast_state_v1';
+  function loadState(){{ try {{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {{}}; }} catch(e) {{ return {{}}; }} }}
+  function saveState(s){{ try {{ localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }} catch(e) {{}} }}
+  var state = loadState();
+
+  // Restore checkbox state
+  document.querySelectorAll('.podcast-check input[type="checkbox"]').forEach(function(cb){{
+    var sess = cb.dataset.session;
+    var st = cb.dataset.state;
+    if (state[sess] && state[sess][st]) cb.checked = true;
+    cb.addEventListener('change', function(){{
+      state[sess] = state[sess] || {{}};
+      state[sess][st] = cb.checked;
+      saveState(state);
+    }});
+  }});
+
+  // Expand/collapse
+  document.querySelectorAll('.podcast-toggle').forEach(function(btn){{
+    btn.addEventListener('click', function(){{
+      var card = btn.closest('.podcast-card');
+      var panel = card.querySelector('.podcast-panel');
+      var open = card.classList.toggle('is-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) panel.removeAttribute('hidden'); else panel.setAttribute('hidden', '');
+    }});
+  }});
+
+  // Copy prompt
+  document.querySelectorAll('.podcast-copy').forEach(function(btn){{
+    btn.addEventListener('click', function(){{
+      var target = document.getElementById(btn.dataset.target);
+      if (!target) return;
+      var text = target.textContent;
+      var done = function(){{
+        var original = btn.textContent;
+        btn.textContent = 'Copied';
+        btn.classList.add('is-copied');
+        setTimeout(function(){{ btn.textContent = original; btn.classList.remove('is-copied'); }}, 1400);
+      }};
+      if (navigator.clipboard && navigator.clipboard.writeText) {{
+        navigator.clipboard.writeText(text).then(done).catch(function(){{ fallbackCopy(text); done(); }});
+      }} else {{
+        fallbackCopy(text); done();
+      }}
+    }});
+  }});
+  function fallbackCopy(text){{
+    var ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try {{ document.execCommand('copy'); }} catch(e) {{}}
+    document.body.removeChild(ta);
+  }}
+}})();
+</script>
+</body>
+</html>
+"""
+    out_dir = ROOT / "audio-podcasts"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "index.html").write_text(html, encoding="utf-8")
+    return n
+
+# ---------------------------------------------------------------------------
 # LANDING PAGE (index.html) — one-stop front door to every hub
 # ---------------------------------------------------------------------------
 
-def render_landing(extras, completions, standalone_extras):
+def render_landing(extras, completions, standalone_extras, n_audio_podcasts=0):
     n_sessions = len(SESSIONS)
     n_phases = len(PHASES)
     n_completed = sum(1 for v in completions.values() if v.get("has_complete"))
@@ -5133,7 +5795,9 @@ def render_landing(extras, completions, standalone_extras):
         ("extras.html#nibbles",   "NIBBLE",    "chip-nibble",   "Nibbles",                 f"{n_nibbles} short reference cards / cheat sheets."),
         ("completed-sessions.html", "COMPLETED", "chip-complete", "Completed Study Guides", f"{n_completed} of {n_sessions} sessions finished — polished HTML study guides."),
         ("labs/index.html",       "LABS",      "chip-labs",     "Hands-On Labs",           (f"{sum(1 for l in LABS if not l.get('concept_only') and not l.get('is_orientation'))} hands-on labs + orientation across the shared topology — Socratic predict → run → verify." if LABS else "Empty — feed a lab guide PDF and run /build-lab-plan.")),
+        ("audio-podcasts/index.html", "AUDIO", "chip-audio",    "Audio Podcasts",          (f"{n_audio_podcasts} audio-podcast generation prompt{'' if n_audio_podcasts == 1 else 's'} — expand to view and track workflow." if n_audio_podcasts else "No audio-podcast prompts yet — add an AUDIO PODCAST PROMPT section to a session summary.")),
         ("all-resources.html",    "SEARCH",    "chip-all",      "All Study Resources",     f"Search across every session, guide, bite, nibble, completed guide, and lab — {n_sessions + n_extras_total + n_completed + len(LABS)} items."),
+        ("mind-map.html",         "MAP",       "chip-map",      "Mind Map",                f"Radial mind map — {n_phases} phases branching into {n_sessions} sessions and their concept spine. Click to explore."),
     ]
 
     tiles_html = "".join(
@@ -5188,6 +5852,8 @@ def render_landing(extras, completions, standalone_extras):
   .chip-nibble{{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border);}}
   .chip-all{{background:var(--plum-light);color:var(--plum);border:1px solid var(--plum-border);}}
   .chip-labs{{background:var(--teal-light);color:var(--teal);border:1px solid var(--teal-border);}}
+  .chip-audio{{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border);}}
+  .chip-map{{background:var(--plum-light);color:var(--plum);border:1px solid var(--plum-border);}}
   .tile-title{{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.15;}}
   .tile-desc{{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.55;}}
   .tile-arrow{{position:absolute;right:22px;bottom:20px;font-family:'Outfit',sans-serif;font-size:22px;color:var(--blue);transition:transform .18s ease;}}
@@ -5290,7 +5956,9 @@ def main():
     render_completed_hub(completions)
     render_extras_hub(extras, standalone_extras=standalone_extras)
     render_all_resources_hub(extras, completions, standalone_extras)
-    render_landing(extras, completions, standalone_extras)
+    render_mind_map()
+    n_audio_podcasts = render_audio_podcasts_hub()
+    render_landing(extras, completions, standalone_extras, n_audio_podcasts=n_audio_podcasts)
     render_labs_hub()
 
     # Old root-level study-plan.html is superseded by study-plan/index.html.
@@ -5316,6 +5984,8 @@ def main():
     print(f"Wrote completed-sessions.html ({n_completed} completed, {n_summaries} summaries)")
     print(f"Wrote extras.html ({n_extras} session-linked + {n_standalone} standalone)")
     print(f"Wrote all-resources.html (searchable catalog)")
+    print(f"Wrote mind-map.html (radial mind map)")
+    print(f"Wrote audio-podcasts/index.html ({n_audio_podcasts} podcast prompt{'' if n_audio_podcasts == 1 else 's'})")
     print(f"Wrote index.html (landing page)")
     report_completion_validation(completions)
 

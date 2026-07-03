@@ -1,0 +1,18 @@
+==============================================================================
+SECTION-IMAGE PROMPTS — session-16-fgcp-active-passive/nibbles
+Prompts: 2
+==============================================================================
+
+------------------------------------------------------------------------------
+SOURCE: election-memory-palace.html
+------------------------------------------------------------------------------
+
+[1] filename (as declared in HTML): images/mp-courthouse-overview.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm modern colour palette with cream background, coral accents, muted gold highlights, sage greens, and soft brown outlines. Clean bold line work, no gradients, no photorealism, no 3D. A tall four-storey courthouse shown in friendly cutaway cross-section, centred, generous spacing around it. Two cartoon FortiGate firewall appliances drawn as suited election candidates with little legs and briefcases — Candidate A wearing a coral rosette, Candidate B a sage rosette — standing at the entrance at the bottom, about to climb an external golden staircase connecting all four floors. FLOOR 1 (ground): a judge inspecting a wall of glowing green and one red network cable sockets, sign reading "MONITORED INTERFACES — most lamps lit wins". FLOOR 2: a judge beside an enormous hourglass with a brass plaque engraved "5 MINUTES MINIMUM", sign reading "HA UPTIME". FLOOR 3: a judge holding up two numbered paddles (200 vs 100), sign reading "PRIORITY". FLOOR 4 (top): a judge with a magnifying glass reading tiny serial-number labels on the candidates' backs, sign reading "SERIAL NUMBER — always decides". A large red STOP sign hangs on each landing with the words "WINNER? TRIAL ENDS HERE." On the outside wall between floors 2 and 3, a big coral lever labelled "OVERRIDE" connected by dotted lines to both floors, with curved swap-arrows showing the two floors exchanging places. Composition: front-on elevation view, each floor clearly labelled, characters expressive and slightly comedic, every object reinforcing one election criterion.
+
+
+[2] filename (as declared in HTML): images/mp-override-lever-swap.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm palette: cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, clean bold line work, no gradients, no photorealism, no 3D. Side-by-side comparison of the same four-storey cartoon courthouse. LEFT building labelled "OVERRIDE DISABLED (default)": floors from bottom to top read 1 LAMPS (wall of green interface lamps), 2 HOURGLASS (giant hourglass, plaque "≥5 MIN"), 3 PADDLES (judge with numbered paddles 200 and 100), 4 MAGNIFYING GLASS (serial numbers). RIGHT building labelled "OVERRIDE ENABLED": identical, except floors 2 and 3 have visibly swapped — the Paddle room now sits on floor 2 and the Hourglass room on floor 3, with crane hooks and dust clouds comically mid-swap, curved gold swap arrows between them. Between the two buildings, a large coral lever on a pedestal labelled "OVERRIDE — CLI ONLY", with a small ladder leaning against it. At the exit door of the right-hand building, a tiny tollbooth with a sign "TOLL: ONE EXTRA FAILOVER + NP7 RESYNC, EVERY RETURN". Floors 1 and 4 in both buildings connected by dotted lines labelled "never move". Clear readable labels, expressive cartoon judges, generous spacing, structured educational composition.
+
