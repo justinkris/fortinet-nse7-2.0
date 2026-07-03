@@ -152,6 +152,19 @@
   .analogy-label{display:flex;align-items:center;gap:6px;user-select:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px;text-transform:uppercase;}
   .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
   .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
+  .section-img-wrap{margin:14px 0 4px;display:flex;flex-direction:column;align-items:center;}
+  .section-img{max-width:100%;border-radius:8px;display:block;}
+  .img-caption{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}
+  .si-placeholder{display:none;width:260px;max-width:100%;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}
+  .si-placeholder.si-show{display:flex;}
+  .si-filename{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;color:var(--text);word-break:break-all;}
+  .prompt-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}
+  .prompt-toggle:hover{color:var(--text);border-color:var(--text);}
+  .prompt-content{margin-top:10px;padding:10px 14px;background:rgba(0,0,0,0.04);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.65;text-align:left;}
+  .prompt-content[hidden]{display:none;}
+  .analogy-img{margin-top:16px;}
+  .analogy-img .section-img{width:260px;}
+  .analogy-img .img-caption{color:#7a4f0c;}
 
   .lesson-tools{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:40px;}
   .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
@@ -368,6 +381,17 @@
             <li>Customs: slower, full inspection possible, but you were a different "connection" before and after the checkpoint</li>
             <li>The NP7 can manage the toll gate automatically. It cannot perform customs inspections.</li>
           </ul>
+        </div>
+        <div class="section-img-wrap analogy-img">
+          <img src="images/analogy-toll-vs-customs.png" class="section-img"
+               alt="Flow mode as a highway toll gate vs proxy mode as a customs checkpoint"
+               onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+          <p class="img-caption">Toll gate scans and lets you pass. Customs pulls you out, inspects, and reassembles.</p>
+          <div class="si-placeholder">
+            <span class="si-filename">images/analogy-toll-vs-customs.png</span>
+            <button class="prompt-toggle" onclick="togglePrompt(this)" type="button">▾ Show image prompt</button>
+            <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. Split scene divided by a soft vertical dashed line. LEFT half labeled 'FLOW MODE — Toll Gate': a straight highway with a gold overhead gantry, a car passing beneath with a small camera icon scanning its number plate, motion lines behind the car, tiny badge 'NP7 offload capable' beside the gantry, and a stopwatch icon showing 'fast, minimal interruption'. RIGHT half labeled 'PROXY MODE — Customs Checkpoint': a coral customs booth where a car has stopped, the driver is out and an inspector with a magnifying glass opens the trunk showing luggage icons, a second identical car waits on the far side with an arrow labeled 'reassembled + continues', small badge 'CPU only · deeper inspection'. Between them a small caption card 'Same road. Different depth of check.' Clean structured composition, generous spacing, educational and visually engaging.</div>
+          </div>
         </div>
       </div>
 
@@ -783,6 +807,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch(e) {}
   });
 });
+function togglePrompt(btn){const c=btn.nextElementSibling;const isHidden=c.hasAttribute('hidden');if(isHidden){c.removeAttribute('hidden');btn.textContent='▴ Hide prompt';}else{c.setAttribute('hidden','');btn.textContent='▾ Show image prompt';}}
 </script>
 </body>
 </html>

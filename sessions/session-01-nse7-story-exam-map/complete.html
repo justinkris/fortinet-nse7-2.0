@@ -152,6 +152,19 @@
   .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
   .analogy-box>.analogy-body{display:none;}
   .analogy-box.expanded>.analogy-body{display:block;}
+  .section-img-wrap{margin:14px 0 4px;display:flex;flex-direction:column;align-items:center;}
+  .section-img{max-width:100%;border-radius:8px;display:block;}
+  .img-caption{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}
+  .si-placeholder{display:none;width:260px;max-width:100%;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}
+  .si-placeholder.si-show{display:flex;}
+  .si-filename{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;color:var(--text);word-break:break-all;}
+  .prompt-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}
+  .prompt-toggle:hover{color:var(--text);border-color:var(--text);}
+  .prompt-content{margin-top:10px;padding:10px 14px;background:rgba(0,0,0,0.04);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.65;text-align:left;}
+  .prompt-content[hidden]{display:none;}
+  .analogy-img{margin-top:16px;}
+  .analogy-img .section-img{width:260px;}
+  .analogy-img .img-caption{color:#7a4f0c;}
 
   .lesson-tools{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:40px;}
   .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
@@ -290,6 +303,17 @@
         <div class="analogy-text">
           <div class="analogy-summary">Think of a bank branch network.</div>
           Each branch has a vault (FortiGate) that enforces who gets in and out. Head office (FortiManager) sets the security policy for every vault simultaneously — no branch manager invents their own rules. The compliance team (FortiAnalyzer) receives the access logs from all branches, searches them for suspicious patterns, and produces the quarterly audit report. Three roles. One security system.
+        </div>
+        <div class="section-img-wrap analogy-img">
+          <img src="images/analogy-bank-branches.png" class="section-img"
+               alt="Three roles of a bank network mapped to FortiGate, FortiManager, and FortiAnalyzer"
+               onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+          <p class="img-caption">Vaults enforce, head office sets policy, compliance audits the logs.</p>
+          <div class="si-placeholder">
+            <span class="si-filename">images/analogy-bank-branches.png</span>
+            <button class="prompt-toggle" onclick="togglePrompt(this)" type="button">▾ Show image prompt</button>
+            <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A cream horizontal scene with three grouped elements. LEFT: three small identical bank-branch buildings in a row, each with a sturdy coral vault door in the middle, small icons of a customer being allowed and a masked figure being denied at each door; a single label sweeps under all three: 'FortiGate · enforces at the door'. CENTER: a taller gold head-office building above the branches with a large scroll/rulebook icon on its roof, three dashed gold arrows fanning downward to each vault labeled 'policy pushed once'; underneath it 'FortiManager · one policy, every vault'. RIGHT: a sage-green compliance office with a stylised magnifying glass over a stack of ledgers and a small chart icon; three dashed sage arrows curve from each branch upward into the ledgers labeled 'logs in'; below it 'FortiAnalyzer · search, correlate, report'. Bottom caption bar spanning the whole scene: 'Three roles. One security system.' Clean structured composition, generous spacing, educational and visually engaging.</div>
+          </div>
         </div>
       </div>
     </div>
@@ -625,6 +649,7 @@ document.addEventListener('DOMContentLoaded',function(){
   const observer=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const id=e.target.id;navTabs.forEach(t=>{t.classList.toggle('active',t.getAttribute('href')==='#'+id);});}});},{threshold:0.3});
   document.querySelectorAll('.section-block').forEach(s=>observer.observe(s));
 });
+function togglePrompt(btn){const c=btn.nextElementSibling;const isHidden=c.hasAttribute('hidden');if(isHidden){c.removeAttribute('hidden');btn.textContent='▴ Hide prompt';}else{c.setAttribute('hidden','');btn.textContent='▾ Show image prompt';}}
 </script>
 <script>document.documentElement.classList.remove('pt-init');sessionStorage.removeItem('pt');</script>
 </body>
