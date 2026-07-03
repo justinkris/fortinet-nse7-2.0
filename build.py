@@ -4400,7 +4400,7 @@ def render_mind_map(extras, completions):
     CX, CY = 800, 800
     R_PHASE = 220
     R_SESSION = 460
-    R_CONCEPT = 640
+    R_CONCEPT = 720
 
     # Distinct color per phase — pull from the amber/blue/green/plum/teal
     # palette so no two adjacent phases collide.
@@ -4442,21 +4442,37 @@ def render_mind_map(extras, completions):
         phase_center_angle = phase_i * per_phase_wedge + per_phase_wedge / 2
         px, py = polar(R_PHASE, phase_center_angle)
 
-        # Sessions in this phase — spread across the phase's wedge but with
-        # a small padding on each side so adjacent phases don't collide.
+        # Root→phase connector — rendered outside the phase group so it
+        # stays visible even when the phase subtree is collapsed.
+        root_connectors_html.append(
+            f'<path class="mm-link mm-link-phase" '
+            f'd="{curve_path(CX, CY, px, py)}" stroke="{phase_color}"/>'
+        )
+
         sessions_in_phase = [s for s in SESSIONS if s["phase"] == phase["num"]]
         n_sess = len(sessions_in_phase)
-        # Pad the wedge by 10% on each side.
         wedge_start = phase_i * per_phase_wedge + per_phase_wedge * 0.08
         wedge_end = (phase_i + 1) * per_phase_wedge - per_phase_wedge * 0.08
         wedge_span = wedge_end - wedge_start
 
-        # Phase group wraps its own sessions + their concepts.
+        # Phase-level searchable haystack — includes every session inside so
+        # the phase can "match" even when its subtree is collapsed.
+        phase_haystack_bits = [phase.get("title", ""), phase.get("tagline", "")]
+        for s in sessions_in_phase:
+            phase_haystack_bits.extend([
+                s.get("title", ""), s.get("why", ""),
+                " ".join(s.get("concepts") or []),
+                " ".join(s.get("objectives") or []),
+            ])
+        phase_haystack = " ".join(phase_haystack_bits).lower().replace('"', "&quot;")
+
         phase_id = f"phase-{phase['num']:02d}"
         phase_html = [
-            f'<g class="mm-phase-group" data-phase="{phase["num"]}" id="mm-{phase_id}" data-color="{phase_color}">',
-            # Connector from root to phase
-            f'<path class="mm-link mm-link-phase" d="{curve_path(CX, CY, px, py)}" stroke="{phase_color}"/>',
+            f'<g class="mm-phase-group" data-phase="{phase["num"]}" '
+            f'id="mm-{phase_id}" data-color="{phase_color}" '
+            f'data-search="{html_escape(phase_haystack)}">',
+            # Phase subtree — HIDDEN until the phase pill is clicked.
+            f'<g class="mm-phase-subtree">',
         ]
 
         for si, s in enumerate(sessions_in_phase):
@@ -4465,7 +4481,6 @@ def render_mind_map(extras, completions):
             else:
                 sess_angle = wedge_start + (si / (n_sess - 1)) * wedge_span
             sx, sy = polar(R_SESSION, sess_angle)
-            # Session searchable haystack
             haystack = (
                 (s.get("title") or "") + " " + (s.get("why") or "") + " " +
                 " ".join(s.get("concepts") or []) + " " +
@@ -4474,43 +4489,73 @@ def render_mind_map(extras, completions):
             ).lower().replace('"', "&quot;")
 
             session_href = f"sessions/{session_filename(s)}"
+            session_dir = f"session-{s['num']:02d}-{s['slug']}"
+
+            # Leaves = concepts + extras (guides/bites/nibbles) + completed guide.
+            leaves = []
+            for concept in [c for c in (s.get("concepts") or []) if c]:
+                leaves.append({
+                    "kind": "concept", "text": concept, "href": None,
+                    "hay": concept.lower().replace('"', "&quot;"),
+                })
+            session_extras_map = extras.get(s["num"], {}) or {}
+            for kind_key, kind_label in [("guides", "Guide"), ("bites", "Bite"), ("nibbles", "Nibble")]:
+                for slug, extra_title, rel_href in (session_extras_map.get(kind_key) or []):
+                    leaves.append({
+                        "kind": kind_label.lower(),
+                        "text": extra_title,
+                        "href": f"sessions/{session_dir}/{rel_href}",
+                        "hay": (kind_label + " " + extra_title).lower().replace('"', "&quot;"),
+                    })
+            if completions.get(s["num"], {}).get("has_complete"):
+                leaves.append({
+                    "kind": "complete",
+                    "text": "Completed Study Guide",
+                    "href": f"sessions/{session_dir}/complete.html",
+                    "hay": "completed study guide",
+                })
+
             phase_html.append(
                 f'<g class="mm-session-group" data-session="{s["num"]}" '
                 f'data-search="{html_escape(haystack)}">'
-                f'<path class="mm-link mm-link-session" d="{curve_path(px, py, sx, sy)}" '
-                f'stroke="{phase_color}"/>'
-                f'<a href="{session_href}">'
-                f'<rect class="mm-session-box" x="{sx - 78:.1f}" y="{sy - 18:.1f}" '
-                f'width="156" height="36" rx="8" fill="{phase_bg}" stroke="{phase_color}"/>'
-                f'<text class="mm-session-num" x="{sx - 70:.1f}" y="{sy + 4:.1f}" fill="{phase_color}">'
-                f'{s["num"]:02d}</text>'
-                f'<text class="mm-session-title" x="{sx - 52:.1f}" y="{sy + 4:.1f}">'
-                f'{html_escape(_truncate(s["title"], 22))}</text>'
+                f'<path class="mm-link mm-link-session" '
+                f'd="{curve_path(px, py, sx, sy)}" stroke="{phase_color}"/>'
+                # Session box: click body to expand leaves; click ↗ to navigate.
+                f'<rect class="mm-session-box" data-session-toggle="{s["num"]}" '
+                f'x="{sx - 82:.1f}" y="{sy - 18:.1f}" '
+                f'width="164" height="36" rx="8" fill="{phase_bg}" stroke="{phase_color}"/>'
+                f'<text class="mm-session-num" x="{sx - 72:.1f}" y="{sy + 4:.1f}" '
+                f'fill="{phase_color}" pointer-events="none">{s["num"]:02d}</text>'
+                f'<text class="mm-session-title" x="{sx - 54:.1f}" y="{sy + 4:.1f}" '
+                f'pointer-events="none">{html_escape(_truncate(s["title"], 20))}</text>'
+                f'<a href="{session_href}" class="mm-session-link">'
+                f'<circle class="mm-session-link-bg" cx="{sx + 68:.1f}" cy="{sy:.1f}" '
+                f'r="9" fill="{phase_color}"/>'
+                f'<text class="mm-session-link-glyph" x="{sx + 68:.1f}" y="{sy + 4:.1f}" '
+                f'text-anchor="middle" pointer-events="none">↗</text>'
                 f'</a>'
-                # Concept-expand toggle dot (small, right of the session box)
-                f'<circle class="mm-concept-toggle" cx="{sx + 84:.1f}" cy="{sy:.1f}" '
-                f'r="6" fill="{phase_color}" data-session-toggle="{s["num"]}"/>'
             )
 
-            # Concepts fan within a mini-wedge around the session's angle.
-            concepts = [c for c in (s.get("concepts") or []) if c]
-            n_conc = len(concepts)
-            if n_conc:
-                # Give concepts a wedge equal to what this session occupies
-                # (wedge_span / n_sess), padded inward slightly.
-                mini_span = (wedge_span / max(n_sess, 1)) * 0.75
-                if n_sess == 1:
-                    mini_span = wedge_span * 0.5
+            if leaves:
+                n_leaves = len(leaves)
+                # Sibling sessions in the same phase auto-close when a session
+                # is opened (see JS), so a single opened session gets the WHOLE
+                # phase wedge for its leaves. Size the fan by leaf count so a
+                # session with 3 leaves doesn't spread across 45° needlessly.
+                #   ~4.5° per leaf, capped at 92% of the phase wedge.
+                per_leaf_deg = 4.5
+                needed_span = per_leaf_deg * max(n_leaves - 1, 1)
+                mini_span = min(needed_span, wedge_span * 0.92)
                 mini_start = sess_angle - mini_span / 2
-                phase_html.append(f'<g class="mm-concepts" data-session="{s["num"]}">')
-                for ci, concept in enumerate(concepts):
-                    if n_conc == 1:
+                phase_html.append(
+                    f'<g class="mm-session-leaves" data-session="{s["num"]}">'
+                )
+                for li, leaf in enumerate(leaves):
+                    if n_leaves == 1:
                         cangle = sess_angle
                     else:
-                        cangle = mini_start + (ci / (n_conc - 1)) * mini_span
+                        cangle = mini_start + (li / (n_leaves - 1)) * mini_span
                     ccx, ccy = polar(R_CONCEPT, cangle)
-                    # Concept text anchored based on angle: right-side of map
-                    # gets left-anchored text, left side gets right-anchored.
                     normalized_angle = cangle % 360
                     if 90 <= normalized_angle <= 270:
                         anchor = "end"
@@ -4518,42 +4563,77 @@ def render_mind_map(extras, completions):
                     else:
                         anchor = "start"
                         tx_offset = 12
-                    haystack_c = concept.lower().replace('"', "&quot;")
+                    kind = leaf["kind"]
+                    if kind == "concept":
+                        leaf_inner = (
+                            f'<circle class="mm-concept-dot" cx="{ccx:.1f}" cy="{ccy:.1f}" '
+                            f'r="3" fill="{phase_color}"/>'
+                            f'<text class="mm-concept-text" x="{ccx + tx_offset:.1f}" '
+                            f'y="{ccy + 4:.1f}" text-anchor="{anchor}">'
+                            f'{html_escape(_truncate(leaf["text"], 44))}</text>'
+                        )
+                    else:
+                        chip_prefix = {
+                            "bite": "BITE · ",
+                            "nibble": "NIBBLE · ",
+                            "guide": "GUIDE · ",
+                            "complete": "✓ ",
+                        }.get(kind, "")
+                        label_text = f"{chip_prefix}{leaf['text']}"
+                        leaf_inner = (
+                            f'<a href="{leaf["href"]}" class="mm-leaf-link">'
+                            f'<circle class="mm-leaf-dot mm-leaf-dot-{kind}" '
+                            f'cx="{ccx:.1f}" cy="{ccy:.1f}" r="4"/>'
+                            f'<text class="mm-leaf-text mm-leaf-text-{kind}" '
+                            f'x="{ccx + tx_offset:.1f}" y="{ccy + 4:.1f}" '
+                            f'text-anchor="{anchor}">'
+                            f'{html_escape(_truncate(label_text, 44))}</text>'
+                            f'</a>'
+                        )
                     phase_html.append(
-                        f'<g class="mm-concept" data-search="{html_escape(haystack_c)}">'
-                        f'<path class="mm-link mm-link-concept" d="{curve_path(sx, sy, ccx, ccy)}" '
+                        f'<g class="mm-leaf mm-leaf-{kind}" '
+                        f'data-search="{html_escape(leaf["hay"])}">'
+                        f'<path class="mm-link mm-link-leaf" '
+                        f'd="{curve_path(sx, sy, ccx, ccy)}" '
                         f'stroke="{phase_color}" stroke-opacity="0.45"/>'
-                        f'<circle class="mm-concept-dot" cx="{ccx:.1f}" cy="{ccy:.1f}" r="3" '
-                        f'fill="{phase_color}"/>'
-                        f'<text class="mm-concept-text" x="{ccx + tx_offset:.1f}" '
-                        f'y="{ccy + 4:.1f}" text-anchor="{anchor}">'
-                        f'{html_escape(_truncate(concept, 46))}'
-                        f'</text>'
+                        f'{leaf_inner}'
                         f'</g>'
                     )
-                phase_html.append('</g>')  # end .mm-concepts
+                phase_html.append('</g>')  # end .mm-session-leaves
 
             phase_html.append('</g>')  # end .mm-session-group
 
-        # Phase pill (drawn last so it's on top of connectors)
+        phase_html.append('</g>')  # end .mm-phase-subtree
+
+        # Phase pill — outside the subtree, so it stays visible even when collapsed.
         phase_html.append(
-            f'<g class="mm-phase-pill">'
+            f'<g class="mm-phase-pill" data-phase-toggle="{phase["num"]}">'
             f'<circle class="mm-phase-circle" cx="{px:.1f}" cy="{py:.1f}" r="46" '
             f'fill="{phase_color}"/>'
-            f'<text class="mm-phase-num" x="{px:.1f}" y="{py - 4:.1f}" text-anchor="middle">'
-            f'P{phase["num"]:02d}</text>'
-            f'<text class="mm-phase-label" x="{px:.1f}" y="{py + 14:.1f}" text-anchor="middle">'
-            f'{html_escape(_phase_short(phase["title"]))}'
-            f'</text>'
+            f'<text class="mm-phase-num" x="{px:.1f}" y="{py - 4:.1f}" text-anchor="middle" '
+            f'pointer-events="none">P{phase["num"]:02d}</text>'
+            f'<text class="mm-phase-label" x="{px:.1f}" y="{py + 14:.1f}" text-anchor="middle" '
+            f'pointer-events="none">{html_escape(_phase_short(phase["title"]))}</text>'
             f'</g>'
         )
         phase_html.append('</g>')  # end .mm-phase-group
-        svg_bits.append("\n".join(phase_html))
+        phase_groups_html.append("\n".join(phase_html))
 
+    # Final SVG stack: root→phase connectors, then phase groups (subtrees +
+    # pills), then the root node LAST so it sits on top of every line.
+    root_node_html = (
+        f'<g class="mm-root-node">'
+        f'<circle class="mm-root" cx="{CX}" cy="{CY}" r="60"/>'
+        f'<text class="mm-root-label" x="{CX}" y="{CY - 6}" text-anchor="middle">NSE7</text>'
+        f'<text class="mm-root-sub" x="{CX}" y="{CY + 14}" text-anchor="middle">EF 7.6</text>'
+        f'</g>'
+    )
     svg = (
         f'<svg id="mm-svg" viewBox="0 0 1600 1600" xmlns="http://www.w3.org/2000/svg" '
         f'preserveAspectRatio="xMidYMid meet">'
-        + "\n".join(svg_bits) +
+        + "\n".join(root_connectors_html) +
+        "\n" + "\n".join(phase_groups_html) +
+        "\n" + root_node_html +
         '</svg>'
     )
 
@@ -4566,9 +4646,9 @@ def render_mind_map(extras, completions):
         '<button type="button" class="mm-btn" id="mm-collapse-all">Collapse all</button>'
         '</div>'
         '<div class="mm-legend">'
-        '<span class="mm-legend-item"><span class="mm-legend-dot" style="background:#1e40af;"></span>Click a session name to open it</span>'
-        '<span class="mm-legend-item"><span class="mm-legend-dot mm-legend-toggle"></span>Click the small dot beside a session to toggle its concepts</span>'
-        '<span class="mm-legend-item"><span class="mm-legend-dot" style="background:#0d1a3a;"></span>Click a phase pill to toggle every session\'s concepts inside it</span>'
+        '<span class="mm-legend-item"><span class="mm-legend-dot" style="background:#0d1a3a;"></span>Click a phase pill to fan out its sessions</span>'
+        '<span class="mm-legend-item"><span class="mm-legend-dot" style="background:#eff4fc;border:1.5px solid #1e40af;"></span>Click a session box to reveal its concepts + study resources</span>'
+        '<span class="mm-legend-item"><span class="mm-legend-arrow">↗</span>Click the arrow in a session box (or any leaf title) to open its page</span>'
         '</div>'
     )
 
@@ -4600,43 +4680,65 @@ def render_mind_map(extras, completions):
   .mm-canvas{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;padding:0;position:relative;box-shadow:inset 0 0 60px rgba(212,200,154,0.24);}
   #mm-svg{display:block;width:100%;height:auto;max-height:calc(100vh - 220px);cursor:grab;}
   #mm-svg:active{cursor:grabbing;}
-  /* Root */
+  /* Root (rendered LAST in SVG → sits on top of every connector) */
   .mm-root{fill:var(--ink-dark);stroke:#c9b26e;stroke-width:2;}
-  .mm-root-label{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;fill:#fbf7ec;pointer-events:none;}
+  .mm-root-label{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;fill:#fbf7ec;pointer-events:none;}
   .mm-root-sub{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.16em;fill:rgba(251,247,236,0.7);pointer-events:none;}
-  /* Phase */
+  /* Phase pill (always visible) */
   .mm-phase-circle{stroke:#0d1a3a;stroke-width:2;transition:filter .2s,transform .2s;cursor:pointer;transform-box:fill-box;transform-origin:center;}
-  .mm-phase-circle:hover{filter:brightness(1.08);transform:scale(1.06);}
+  .mm-phase-pill{cursor:pointer;}
+  .mm-phase-pill:hover .mm-phase-circle{filter:brightness(1.08);transform:scale(1.06);}
   .mm-phase-num{font-family:'Playfair Display',serif;font-size:20px;font-weight:800;fill:#fbf7ec;pointer-events:none;}
   .mm-phase-label{font-family:'Outfit',sans-serif;font-size:9.5px;font-weight:600;letter-spacing:0.1em;fill:rgba(255,255,255,0.85);pointer-events:none;text-transform:uppercase;}
-  /* Session */
-  .mm-session-box{stroke-width:1.5;transition:filter .15s,transform .15s;transform-box:fill-box;transform-origin:center;}
-  .mm-session-group a{text-decoration:none;}
+  /* Phase subtree — HIDDEN until phase pill is clicked */
+  .mm-phase-subtree{opacity:0;pointer-events:none;transition:opacity .35s ease;}
+  .mm-phase-group.expanded > .mm-phase-subtree{opacity:1;pointer-events:auto;}
+  /* Session box */
+  .mm-session-box{stroke-width:1.5;transition:filter .15s,transform .15s;transform-box:fill-box;transform-origin:center;cursor:pointer;}
   .mm-session-group:hover .mm-session-box{filter:brightness(0.98) drop-shadow(0 6px 12px rgba(10,24,56,0.14));transform:scale(1.03);}
-  .mm-session-num{font-family:'Outfit',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.06em;pointer-events:none;dominant-baseline:middle;}
-  .mm-session-title{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;fill:var(--text);pointer-events:none;dominant-baseline:middle;}
-  .mm-concept-toggle{cursor:pointer;transition:transform .15s,opacity .15s;transform-box:fill-box;transform-origin:center;}
-  .mm-concept-toggle:hover{transform:scale(1.4);}
+  .mm-session-num{font-family:'Outfit',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.06em;dominant-baseline:middle;}
+  .mm-session-title{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;fill:var(--text);dominant-baseline:middle;}
+  /* Session ↗ link icon */
+  .mm-session-link{cursor:pointer;}
+  .mm-session-link-bg{transition:filter .15s,transform .15s;transform-box:fill-box;transform-origin:center;stroke:rgba(255,255,255,0.4);stroke-width:1;}
+  .mm-session-link:hover .mm-session-link-bg{filter:brightness(1.15);transform:scale(1.15);}
+  .mm-session-link-glyph{font-family:'Outfit',sans-serif;font-size:11px;font-weight:800;fill:#fff;dominant-baseline:middle;}
+  /* Session leaves — HIDDEN until session box is clicked */
+  .mm-session-leaves{opacity:0;pointer-events:none;transition:opacity .35s ease;}
+  .mm-session-group.leaves-open > .mm-session-leaves{opacity:1;pointer-events:auto;}
+  /* Concept + extras leaves */
+  .mm-concept-dot{transition:transform .15s;transform-box:fill-box;transform-origin:center;}
+  .mm-concept-text{font-family:'Outfit',sans-serif;font-size:10px;fill:var(--text-soft);pointer-events:none;}
+  .mm-leaf-link{text-decoration:none;cursor:pointer;}
+  .mm-leaf-dot{transition:transform .15s;transform-box:fill-box;transform-origin:center;stroke:#fbf7ec;stroke-width:1;}
+  .mm-leaf-link:hover .mm-leaf-dot{transform:scale(1.4);}
+  .mm-leaf-text{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;transition:fill .15s;}
+  .mm-leaf-link:hover .mm-leaf-text{text-decoration:underline;}
+  .mm-leaf-dot-bite{fill:var(--blue);}
+  .mm-leaf-dot-nibble{fill:#b45309;}
+  .mm-leaf-dot-guide{fill:var(--green,#1a7c4a);}
+  .mm-leaf-dot-complete{fill:#7c1a5f;}
+  .mm-leaf-text-bite{fill:var(--blue);}
+  .mm-leaf-text-nibble{fill:#7a4f0c;}
+  .mm-leaf-text-guide{fill:#0f5233;}
+  .mm-leaf-text-complete{fill:#5c0f47;}
   /* Links */
   .mm-link{fill:none;stroke-width:1.4;transition:opacity .2s;}
   .mm-link-phase{stroke-width:2.2;}
   .mm-link-session{stroke-opacity:0.7;}
-  .mm-link-concept{stroke-width:1;}
-  /* Concept leaves */
-  .mm-concepts{opacity:0;pointer-events:none;transition:opacity .3s;}
-  .mm-phase-group.expanded .mm-concepts,
-  .mm-session-group.concepts-open .mm-concepts{opacity:1;pointer-events:auto;}
-  .mm-concept-text{font-family:'Outfit',sans-serif;font-size:10px;fill:var(--text-soft);pointer-events:none;}
-  .mm-concept-dot{transition:transform .15s;transform-box:fill-box;transform-origin:center;}
+  .mm-link-leaf{stroke-width:1;}
   /* Search dimming */
   .mm-svg-searching .mm-phase-group:not(.mm-match),
   .mm-svg-searching .mm-session-group:not(.mm-match),
-  .mm-svg-searching .mm-concept:not(.mm-match){opacity:0.14;transition:opacity .2s;}
+  .mm-svg-searching .mm-leaf:not(.mm-match){opacity:0.14;transition:opacity .2s;}
   .mm-svg-searching .mm-phase-group.mm-match,
   .mm-svg-searching .mm-session-group.mm-match,
-  .mm-svg-searching .mm-concept.mm-match{opacity:1;}
+  .mm-svg-searching .mm-leaf.mm-match{opacity:1;}
   .mm-session-group.mm-match .mm-session-box{filter:drop-shadow(0 0 8px rgba(30,64,175,0.55));}
-  .mm-concept.mm-match .mm-concept-dot{r:5;}
+  .mm-leaf.mm-match .mm-concept-dot,
+  .mm-leaf.mm-match .mm-leaf-dot{r:6;}
+  /* Legend arrow chip */
+  .mm-legend-arrow{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#1e40af;color:#fff;font-size:9px;font-weight:800;}
   @media (max-width: 720px) {
     header{padding:24px 20px;}
     header h1{font-size:26px;}
@@ -4656,29 +4758,42 @@ def render_mind_map(extras, completions):
   const collapseAll = document.getElementById('mm-collapse-all');
   const phases = Array.from(svg.querySelectorAll('.mm-phase-group'));
   const sessions = Array.from(svg.querySelectorAll('.mm-session-group'));
-  const concepts = Array.from(svg.querySelectorAll('.mm-concept'));
+  const leaves = Array.from(svg.querySelectorAll('.mm-leaf'));
 
-  // Phase pill toggles the .expanded state on the whole phase group.
+  // Phase pill toggles its subtree open (revealing session boxes).
   phases.forEach(function(phase) {
-    const pill = phase.querySelector('.mm-phase-circle');
+    const pill = phase.querySelector('.mm-phase-pill');
     if (pill) pill.addEventListener('click', function() { phase.classList.toggle('expanded'); });
   });
 
-  // Session toggle-dot expands just that session's concepts.
+  // Session box toggles its own leaves (concepts + extras). Only ONE session
+  // per phase can have its leaves open at a time — opening another auto-
+  // closes the previously-opened sibling so their leaf-fans don't collide.
   sessions.forEach(function(sess) {
-    const toggle = sess.querySelector('.mm-concept-toggle');
-    if (toggle) toggle.addEventListener('click', function(e) {
-      e.stopPropagation();
-      sess.classList.toggle('concepts-open');
+    const box = sess.querySelector('.mm-session-box');
+    if (box) box.addEventListener('click', function(e) {
+      // Ignore clicks that bubbled up from the ↗ link icon or a leaf link.
+      if (e.target.closest('a')) return;
+      const wasOpen = sess.classList.contains('leaves-open');
+      // Close every sibling in the same phase.
+      const parentPhase = sess.closest('.mm-phase-group');
+      if (parentPhase) {
+        parentPhase.querySelectorAll('.mm-session-group.leaves-open')
+          .forEach(function(other) { other.classList.remove('leaves-open'); });
+      }
+      // Toggle this one (if it was already open, we've just closed it above).
+      if (!wasOpen) sess.classList.add('leaves-open');
     });
   });
 
   expandAll.addEventListener('click', function() {
+    // Only expand phases — opening every session's leaves would collide,
+    // since sibling sessions inside the same phase share the phase wedge.
     phases.forEach(function(p) { p.classList.add('expanded'); });
   });
   collapseAll.addEventListener('click', function() {
     phases.forEach(function(p) { p.classList.remove('expanded'); });
-    sessions.forEach(function(s) { s.classList.remove('concepts-open'); });
+    sessions.forEach(function(s) { s.classList.remove('leaves-open'); });
   });
 
   function tokenize(q) { return q.toLowerCase().trim().split(/\\s+/).filter(Boolean); }
@@ -4692,7 +4807,7 @@ def render_mind_map(extras, completions):
       svg.classList.remove('mm-svg-searching');
       phases.forEach(p => p.classList.remove('mm-match'));
       sessions.forEach(s => s.classList.remove('mm-match'));
-      concepts.forEach(c => c.classList.remove('mm-match'));
+      leaves.forEach(l => l.classList.remove('mm-match'));
       summary.textContent = '';
       return;
     }
@@ -4709,19 +4824,32 @@ def render_mind_map(extras, completions):
         if (parent) { parent.classList.add('mm-match'); parent.classList.add('expanded'); phasesWithHits.add(parent); }
       }
     });
-    concepts.forEach(function(cn) {
-      const hay = cn.dataset.search || '';
+    leaves.forEach(function(lf) {
+      const hay = lf.dataset.search || '';
       const ok = matches(hay, terms);
-      cn.classList.toggle('mm-match', ok);
+      lf.classList.toggle('mm-match', ok);
       if (ok) {
         hitCount++;
-        const sess = cn.closest('.mm-session-group');
-        if (sess) { sess.classList.add('mm-match'); sess.classList.add('concepts-open'); }
-        const phase = cn.closest('.mm-phase-group');
+        const sess = lf.closest('.mm-session-group');
+        if (sess) { sess.classList.add('mm-match'); sess.classList.add('leaves-open'); }
+        const phase = lf.closest('.mm-phase-group');
         if (phase) { phase.classList.add('mm-match'); phase.classList.add('expanded'); phasesWithHits.add(phase); }
       }
     });
-    phases.forEach(function(p) { if (!phasesWithHits.has(p)) p.classList.remove('mm-match'); });
+    // Also match phases directly (their own titles/taglines) so a phase with
+    // no session/leaf hit can still light up when a phase-level term matches.
+    phases.forEach(function(p) {
+      if (phasesWithHits.has(p)) return;
+      const hay = p.dataset.search || '';
+      if (matches(hay, terms)) {
+        p.classList.add('mm-match');
+        p.classList.add('expanded');
+        phasesWithHits.add(p);
+        hitCount++;
+      } else {
+        p.classList.remove('mm-match');
+      }
+    });
     summary.textContent = hitCount + ' match' + (hitCount === 1 ? '' : 'es');
   }
   input.addEventListener('input', function() { search(input.value); });
@@ -5566,62 +5694,70 @@ def render_audio_podcasts_hub():
         phase_session_nums = [n for n in phase["sessions"] if n in sessions_by_num]
         phase_with_prompts = sum(1 for n in phase_session_nums if n in prompts)
 
-        cards_html_parts = []
+        tiles_parts = []
+        panels_parts = []
         for sess_num in phase_session_nums:
             s = sessions_by_num[sess_num]
             slug = f"session-{s['num']:02d}-{s['slug']}"
             title = html_escape(s["title"])
-            card_id = f"podcast-{sess_num:02d}"
+            panel_id = f"panel-{sess_num:02d}"
+            prompt_id = f"prompt-{sess_num:02d}"
             has_prompt = sess_num in prompts
 
             if has_prompt:
                 heading, body = prompts[sess_num]
                 heading_esc = html_escape(heading)
                 prompt_esc = html_escape(body)
-                cards_html_parts.append(
-                    f'<article class="podcast-card" data-session="{sess_num}">'
-                    f'  <button class="podcast-toggle" type="button" aria-expanded="false" aria-controls="{card_id}-panel">'
-                    f'    <span class="podcast-sub">Session {sess_num:02d}</span>'
-                    f'    <span class="podcast-title">{title}</span>'
-                    f'    <span class="podcast-heading">{heading_esc}</span>'
-                    f'    <span class="podcast-caret" aria-hidden="true">▾</span>'
-                    f'  </button>'
-                    f'  <div class="podcast-panel" id="{card_id}-panel" hidden>'
-                    f'    <div class="podcast-checkboxes">'
-                    f'      <label class="podcast-check"><input type="checkbox" data-session="{sess_num}" data-state="generated"> <span>Generated</span></label>'
-                    f'      <label class="podcast-check"><input type="checkbox" data-session="{sess_num}" data-state="renamed"> <span>Renamed</span></label>'
-                    f'      <label class="podcast-check"><input type="checkbox" data-session="{sess_num}" data-state="completed"> <span>Completed</span></label>'
-                    f'    </div>'
-                    f'    <div class="podcast-actions">'
-                    f'      <button type="button" class="podcast-copy" data-target="{card_id}-prompt">Copy prompt</button>'
-                    f'      <a class="podcast-source" href="../sessions/{slug}/summary.txt" target="_blank" rel="noopener">Open summary.txt</a>'
-                    f'    </div>'
-                    f'    <pre class="podcast-prompt" id="{card_id}-prompt">{prompt_esc}</pre>'
+                tiles_parts.append(
+                    f'<button class="p-tile p-tile--has" type="button" '
+                    f'data-session="{sess_num}" data-phase="{phase_num}" '
+                    f'aria-controls="{panel_id}" aria-expanded="false">'
+                    f'<span class="p-tile-num">{sess_num:02d}</span>'
+                    f'<span class="p-tile-title">{title}</span>'
+                    f'<span class="p-tile-status">View prompt</span>'
+                    f'</button>'
+                )
+                panels_parts.append(
+                    f'<div class="p-panel" id="{panel_id}" data-session="{sess_num}" data-phase="{phase_num}" hidden>'
+                    f'  <div class="p-panel-head">'
+                    f'    <span class="p-panel-sub">Session {sess_num:02d}</span>'
+                    f'    <span class="p-panel-title">{title}</span>'
+                    f'    <span class="p-panel-heading">{heading_esc}</span>'
+                    f'    <button class="p-panel-close" type="button" data-phase="{phase_num}" aria-label="Close">×</button>'
                     f'  </div>'
-                    f'</article>'
+                    f'  <div class="p-checkboxes">'
+                    f'    <label class="p-check"><input type="checkbox" data-session="{sess_num}" data-state="generated"> <span>Generated</span></label>'
+                    f'    <label class="p-check"><input type="checkbox" data-session="{sess_num}" data-state="renamed"> <span>Renamed</span></label>'
+                    f'    <label class="p-check"><input type="checkbox" data-session="{sess_num}" data-state="completed"> <span>Completed</span></label>'
+                    f'  </div>'
+                    f'  <div class="p-actions">'
+                    f'    <button type="button" class="p-copy" data-target="{prompt_id}">Copy prompt</button>'
+                    f'    <a class="p-source" href="../sessions/{slug}/summary.txt" target="_blank" rel="noopener">Open summary.txt</a>'
+                    f'  </div>'
+                    f'  <pre class="p-prompt" id="{prompt_id}">{prompt_esc}</pre>'
+                    f'</div>'
                 )
             else:
-                cards_html_parts.append(
-                    f'<article class="podcast-card is-placeholder" data-session="{sess_num}">'
-                    f'  <div class="podcast-toggle podcast-toggle--static">'
-                    f'    <span class="podcast-sub">Session {sess_num:02d}</span>'
-                    f'    <span class="podcast-title">{title}</span>'
-                    f'    <span class="podcast-heading">Coming soon</span>'
-                    f'    <span class="podcast-badge">Pending</span>'
-                    f'  </div>'
-                    f'</article>'
+                tiles_parts.append(
+                    f'<div class="p-tile p-tile--placeholder" data-session="{sess_num}" aria-disabled="true">'
+                    f'<span class="p-tile-num">{sess_num:02d}</span>'
+                    f'<span class="p-tile-title">{title}</span>'
+                    f'<span class="p-tile-status">Coming soon</span>'
+                    f'</div>'
                 )
 
-        cards_html = "\n".join(cards_html_parts)
+        tiles_html = "".join(tiles_parts)
+        panels_html = "".join(panels_parts)
         phase_sections.append(
             f'<section class="phase-section" id="phase-{phase_num}">'
             f'  <header class="phase-header">'
             f'    <span class="phase-eyebrow">Phase {phase_num}</span>'
             f'    <h2 class="phase-title">{phase_title}</h2>'
             f'    <p class="phase-tagline">{phase_tagline}</p>'
-            f'    <span class="phase-count">{phase_with_prompts} of {len(phase_session_nums)} with prompts</span>'
+            f'    <span class="phase-count">{phase_with_prompts} / {len(phase_session_nums)} ready</span>'
             f'  </header>'
-            f'  <div class="podcast-list">{cards_html}</div>'
+            f'  <div class="phase-tiles" data-phase="{phase_num}">{tiles_html}</div>'
+            f'  <div class="phase-panels" data-phase="{phase_num}">{panels_html}</div>'
             f'</section>'
         )
 
@@ -5645,47 +5781,54 @@ def render_audio_podcasts_hub():
   header h1{{font-family:'Playfair Display',serif;font-size:44px;font-weight:700;line-height:1.05;}}
   header h1 em{{font-style:italic;font-weight:500;color:var(--ink-accent);}}
   header p{{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:rgba(251,247,236,0.65);margin-top:8px;max-width:720px;line-height:1.6;}}
-  main{{flex:1;padding:44px 60px 60px;max-width:1100px;width:100%;margin:0 auto;}}
+  main{{flex:1;padding:44px 60px 60px;max-width:1200px;width:100%;margin:0 auto;}}
   .phase-section{{margin-bottom:44px;}}
   .phase-section:last-child{{margin-bottom:0;}}
-  .phase-header{{margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);position:relative;}}
-  .phase-eyebrow{{display:inline-block;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--blue);text-transform:uppercase;background:var(--blue-light);border:1px solid var(--blue-border);border-radius:20px;padding:3px 10px;margin-bottom:8px;}}
+  .phase-header{{margin-bottom:18px;padding-left:16px;border-left:3px solid var(--blue);position:relative;padding-right:150px;}}
+  .phase-eyebrow{{display:inline-block;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:#fff;text-transform:uppercase;background:var(--blue);border:1px solid var(--blue);border-radius:20px;padding:4px 12px;margin-bottom:10px;}}
   .phase-title{{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:4px;}}
   .phase-tagline{{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--text-soft);line-height:1.5;max-width:720px;}}
-  .phase-count{{position:absolute;top:0;right:0;font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:4px 10px;}}
-  .podcast-list{{display:flex;flex-direction:column;gap:12px;}}
-  .podcast-card{{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .15s;}}
-  .podcast-card:hover{{border-color:var(--blue-border);}}
-  .podcast-card.is-open{{border-color:var(--blue);}}
-  .podcast-card.is-placeholder{{background:transparent;border:1px dashed var(--border);}}
-  .podcast-card.is-placeholder:hover{{border-color:var(--border);}}
-  .podcast-toggle--static{{cursor:default;}}
-  .podcast-badge{{grid-column:3;grid-row:1 / span 2;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:4px 10px;justify-self:end;align-self:center;}}
-  .is-placeholder .podcast-title,.is-placeholder .podcast-heading{{color:var(--text-muted);}}
-  .is-placeholder .podcast-sub{{opacity:0.75;}}
-  .podcast-toggle{{display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto;column-gap:16px;row-gap:2px;align-items:center;width:100%;background:transparent;border:0;padding:18px 22px;cursor:pointer;text-align:left;font-family:inherit;color:inherit;}}
-  .podcast-sub{{grid-column:1;grid-row:1;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--blue);text-transform:uppercase;background:var(--blue-light);border:1px solid var(--blue-border);border-radius:20px;padding:3px 10px;justify-self:start;align-self:center;}}
-  .podcast-title{{grid-column:2;grid-row:1;font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);line-height:1.25;}}
-  .podcast-heading{{grid-column:2;grid-row:2;font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--text-muted);line-height:1.4;}}
-  .podcast-caret{{grid-column:3;grid-row:1 / span 2;font-family:'Outfit',sans-serif;font-size:20px;color:var(--blue);transition:transform .18s ease;justify-self:end;align-self:center;}}
-  .podcast-card.is-open .podcast-caret{{transform:rotate(180deg);}}
-  .podcast-panel{{border-top:1px solid var(--border-dim);padding:18px 22px 22px;background:var(--surface-2);display:flex;flex-direction:column;gap:14px;}}
-  .podcast-checkboxes{{display:flex;flex-wrap:wrap;gap:16px;}}
-  .podcast-check{{display:inline-flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--text-soft);text-transform:uppercase;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 12px;cursor:pointer;transition:border-color .15s,background .15s,color .15s;}}
-  .podcast-check input{{accent-color:var(--blue);width:14px;height:14px;cursor:pointer;}}
-  .podcast-check:has(input:checked){{background:var(--green-light);border-color:var(--green-border);color:var(--green);}}
-  .podcast-actions{{display:flex;flex-wrap:wrap;gap:12px;align-items:center;}}
-  .podcast-copy{{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;background:var(--blue);color:#fff;border:0;border-radius:20px;padding:7px 14px;cursor:pointer;transition:background .15s;}}
-  .podcast-copy:hover{{background:#173196;}}
-  .podcast-copy.is-copied{{background:var(--green);}}
-  .podcast-source{{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);text-decoration:none;border-bottom:1px dotted var(--blue-border);padding-bottom:1px;}}
-  .podcast-source:hover{{color:#173196;border-bottom-color:var(--blue);}}
-  .podcast-prompt{{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:13px;line-height:1.55;color:var(--text);background:var(--surface);border:1px solid var(--border-dim);border-radius:8px;padding:16px 18px;white-space:pre-wrap;word-wrap:break-word;max-height:520px;overflow-y:auto;}}
+  .phase-count{{position:absolute;top:0;right:0;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--blue);background:var(--surface);border:1px solid var(--blue-border);border-radius:20px;padding:5px 12px;}}
+  .phase-tiles{{display:flex;flex-wrap:nowrap;gap:12px;align-items:stretch;}}
+  .p-tile{{flex:1 1 0;min-width:0;aspect-ratio:1 / 1;display:flex;flex-direction:column;justify-content:space-between;padding:14px 12px;border-radius:12px;text-align:left;font-family:inherit;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;position:relative;}}
+  .p-tile--has{{background:var(--blue);color:#fff;border:1px solid var(--blue);}}
+  .p-tile--has:hover{{transform:translateY(-3px);box-shadow:0 10px 20px -12px rgba(30,64,175,0.55);background:#173196;}}
+  .p-tile--has.is-active{{background:var(--ink-dark);border-color:var(--ink-dark);box-shadow:0 12px 24px -14px rgba(13,26,58,0.7);}}
+  .p-tile--placeholder{{background:var(--surface);color:var(--text-muted);border:1.5px dashed var(--border);cursor:default;}}
+  .p-tile-num{{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;line-height:1;letter-spacing:-0.01em;}}
+  .p-tile--has .p-tile-num{{color:#fff;}}
+  .p-tile--placeholder .p-tile-num{{color:var(--text-soft);}}
+  .p-tile-title{{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:600;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;margin-top:6px;}}
+  .p-tile--has .p-tile-title{{color:#fff;}}
+  .p-tile--placeholder .p-tile-title{{color:var(--text-soft);}}
+  .p-tile-status{{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;margin-top:8px;}}
+  .p-tile--has .p-tile-status{{color:rgba(255,255,255,0.85);}}
+  .p-tile--placeholder .p-tile-status{{color:var(--text-muted);}}
+  .phase-panels{{margin-top:14px;}}
+  .p-panel{{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 24px 24px;display:flex;flex-direction:column;gap:16px;box-shadow:0 12px 28px -18px rgba(13,26,58,0.35);}}
+  .p-panel-head{{display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto;column-gap:14px;row-gap:4px;align-items:center;}}
+  .p-panel-sub{{grid-column:1;grid-row:1 / span 2;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;color:#fff;background:var(--blue);border-radius:20px;padding:5px 12px;text-transform:uppercase;align-self:center;}}
+  .p-panel-title{{grid-column:2;grid-row:1;font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--text);line-height:1.2;}}
+  .p-panel-heading{{grid-column:2;grid-row:2;font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--text-soft);line-height:1.4;}}
+  .p-panel-close{{grid-column:3;grid-row:1 / span 2;background:transparent;border:1px solid var(--border);color:var(--text-muted);width:32px;height:32px;border-radius:50%;font-family:'Outfit',sans-serif;font-size:18px;line-height:1;cursor:pointer;transition:background .15s,color .15s,border-color .15s;align-self:center;justify-self:end;}}
+  .p-panel-close:hover{{background:var(--blue);border-color:var(--blue);color:#fff;}}
+  .p-checkboxes{{display:flex;flex-wrap:wrap;gap:12px;}}
+  .p-check{{display:inline-flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--text-soft);text-transform:uppercase;background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:6px 12px;cursor:pointer;transition:border-color .15s,background .15s,color .15s;}}
+  .p-check input{{accent-color:var(--blue);width:14px;height:14px;cursor:pointer;}}
+  .p-check:has(input:checked){{background:var(--green-light);border-color:var(--green-border);color:var(--green);}}
+  .p-actions{{display:flex;flex-wrap:wrap;gap:12px;align-items:center;}}
+  .p-copy{{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;background:var(--blue);color:#fff;border:0;border-radius:20px;padding:7px 14px;cursor:pointer;transition:background .15s;}}
+  .p-copy:hover{{background:#173196;}}
+  .p-copy.is-copied{{background:var(--green);}}
+  .p-source{{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);text-decoration:none;border-bottom:1px dotted var(--blue-border);padding-bottom:1px;}}
+  .p-source:hover{{color:#173196;border-bottom-color:var(--blue);}}
+  .p-prompt{{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:13px;line-height:1.55;color:var(--text);background:var(--bg);border:1px solid var(--border-dim);border-radius:8px;padding:16px 18px;white-space:pre-wrap;word-wrap:break-word;max-height:520px;overflow-y:auto;}}
   .empty-state{{background:var(--surface);border:1px dashed var(--border);border-radius:12px;padding:28px;color:var(--text-muted);font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.6;font-style:italic;text-align:center;}}
   .empty-state code{{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--text);font-style:normal;}}
   footer{{padding:18px 60px;border-top:1px solid var(--border);background:var(--surface);font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;text-align:center;}}
   footer span{{color:var(--blue);}}
-  @media(max-width:640px){{header{{padding:32px 24px 24px;}}header h1{{font-size:30px;}}main{{padding:28px 20px 44px;}}.podcast-toggle{{padding:16px 18px;column-gap:12px;}}.podcast-panel{{padding:16px 18px 20px;}}.podcast-title{{font-size:18px;}}}}
+  @media(max-width:900px){{main{{padding:32px 24px 48px;}}.phase-tiles{{flex-wrap:wrap;}}.p-tile{{flex:1 1 calc(25% - 12px);}}}}
+  @media(max-width:640px){{header{{padding:32px 24px 24px;}}header h1{{font-size:30px;}}.phase-header{{padding-right:0;}}.phase-count{{position:static;display:inline-block;margin-top:8px;}}.p-tile{{flex:1 1 calc(33.333% - 12px);padding:12px 10px;}}.p-tile-num{{font-size:22px;}}.p-tile-title{{font-size:12px;-webkit-line-clamp:2;}}.p-panel{{padding:18px 18px 20px;}}.p-panel-title{{font-size:19px;}}}}
 </style>
 </head>
 <body>
@@ -5710,7 +5853,7 @@ def render_audio_podcasts_hub():
   var state = loadState();
 
   // Restore checkbox state
-  document.querySelectorAll('.podcast-check input[type="checkbox"]').forEach(function(cb){{
+  document.querySelectorAll('.p-check input[type="checkbox"]').forEach(function(cb){{
     var sess = cb.dataset.session;
     var st = cb.dataset.state;
     if (state[sess] && state[sess][st]) cb.checked = true;
@@ -5721,19 +5864,52 @@ def render_audio_podcasts_hub():
     }});
   }});
 
-  // Expand/collapse
-  document.querySelectorAll('.podcast-toggle').forEach(function(btn){{
+  function closePhase(phase, exceptSession){{
+    document.querySelectorAll('.p-tile--has[data-phase="' + phase + '"]').forEach(function(t){{
+      if (String(t.dataset.session) !== String(exceptSession)) {{
+        t.classList.remove('is-active');
+        t.setAttribute('aria-expanded', 'false');
+      }}
+    }});
+    document.querySelectorAll('.p-panel[data-phase="' + phase + '"]').forEach(function(p){{
+      if (String(p.dataset.session) !== String(exceptSession)) {{
+        p.setAttribute('hidden', '');
+      }}
+    }});
+  }}
+
+  // Tile click: toggle its panel, close siblings in same phase
+  document.querySelectorAll('.p-tile--has').forEach(function(tile){{
+    tile.addEventListener('click', function(){{
+      var phase = tile.dataset.phase;
+      var sess = tile.dataset.session;
+      var panel = document.querySelector('.p-panel[data-phase="' + phase + '"][data-session="' + sess + '"]');
+      if (!panel) return;
+      var wasOpen = tile.classList.contains('is-active');
+      closePhase(phase, wasOpen ? null : sess);
+      if (wasOpen) {{
+        tile.classList.remove('is-active');
+        tile.setAttribute('aria-expanded', 'false');
+        panel.setAttribute('hidden', '');
+      }} else {{
+        tile.classList.add('is-active');
+        tile.setAttribute('aria-expanded', 'true');
+        panel.removeAttribute('hidden');
+        panel.scrollIntoView({{ behavior: 'smooth', block: 'nearest' }});
+      }}
+    }});
+  }});
+
+  // Close button inside panel
+  document.querySelectorAll('.p-panel-close').forEach(function(btn){{
     btn.addEventListener('click', function(){{
-      var card = btn.closest('.podcast-card');
-      var panel = card.querySelector('.podcast-panel');
-      var open = card.classList.toggle('is-open');
-      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if (open) panel.removeAttribute('hidden'); else panel.setAttribute('hidden', '');
+      var phase = btn.dataset.phase;
+      closePhase(phase, null);
     }});
   }});
 
   // Copy prompt
-  document.querySelectorAll('.podcast-copy').forEach(function(btn){{
+  document.querySelectorAll('.p-copy').forEach(function(btn){{
     btn.addEventListener('click', function(){{
       var target = document.getElementById(btn.dataset.target);
       if (!target) return;
