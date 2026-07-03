@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<!--
+  ╔══════════════════════════════════════════════════════════════════════╗
+  ║  CCNA STUDY GUIDE — PAGE TEMPLATE (CREAM / BLUE EDITION)            ║
+  ║                                                                      ║
+  ║  Fill every {{PLACEHOLDER}} with content from the Socratic session.  ║
+  ║  Comments marked ← tell you exactly what each field needs.          ║
+  ║  Save to: study-guides/Chapter NN - Title/subtopic-NN-slug.html     ║
+  ╚══════════════════════════════════════════════════════════════════════╝
+
+  MINIMUM REQUIRED PER PAGE:
+  · PAGE_KEY (unique, kebab-case, e.g. ccna-ch04-sub02-vlans)
+  · 3–5 section blocks
+  · 2 Socratic questions per section (model answers included)
+  · 1 mental note per section
+  · 5–8 quick-ref cards in the sidebar
+  · Prev / next navigation
+-->
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subtopic 17 · BITE — FGCP Active-Active — Study Bite</title><!-- ← e.g. "Subtopic 02 — Configure VLANs" -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ── DESIGN TOKENS ── */
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* HEADER */
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb a:hover{text-decoration:underline;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+
+  /* MOTIVATION BANNER */
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.005em;}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+
+  /* TOP PANELS */
+  .top-panels{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+  .top-panels .qpanel{border-bottom:none;border-right:1px solid var(--border);}
+  .top-panels .qpanel-header{padding-left:32px;padding-right:32px;}
+  .top-panels .qpanel-body{padding-left:32px;padding-right:32px;}
+  .qpanel{background:var(--surface);}
+  .qpanel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .qpanel-header:hover,.qpanel-header.open{background:var(--surface-2);}
+  .qpanel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .qpanel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .qpanel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .qpanel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .qpanel-body{display:none;padding:0 20px 22px;}
+  .qpanel-body.open{display:block;}
+  .notes-panel{background:var(--surface);}
+  .notes-panel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 32px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .notes-panel-header:hover,.notes-panel-header.open{background:var(--surface-2);}
+  .notes-panel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .notes-panel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .notes-panel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .notes-panel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .notes-panel-body{display:none;padding:0 32px 22px;}
+  .notes-panel-body.open{display:block;}
+  .q-group{margin-bottom:16px;}
+  .q-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+  .q-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-dim);}
+  .q-item:last-child{border-bottom:none;}
+  .q-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;color:var(--blue);min-width:16px;margin-top:2px;}
+  .q-text{font-size:14px;color:var(--text-soft);line-height:1.5;flex:1;}
+  .q-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:0 4px;margin-top:1px;}
+  .q-del:hover{color:var(--blue);}
+  .no-questions{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);padding:8px 0;}
+  .btn-add-q{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-q:hover{opacity:0.85;}
+
+  /* STICKY SECTION NAV */
+  .section-nav{position:sticky;top:0;z-index:90;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px;overflow-x:auto;}
+  .nav-tab{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:12px 18px;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s,border-color 0.15s;}
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+  /* MAIN GRID */
+  main{max-width:1200px;margin:0 auto;padding:0;}
+  .main-content{padding:36px 60px 60px 60px;}
+
+  /* SECTION BLOCK */
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:4px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+
+  /* CALLOUTS */
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+
+  /* DATA TABLE */
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+
+  /* CODE BLOCK */
+  .code-block{background:var(--ink-dark);border-radius:10px;padding:0;margin:16px 0;overflow:hidden;border:1px solid var(--border);}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:8px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:16px;overflow-x:auto;}
+  .code-block code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12.5px;line-height:1.65;color:#e8efff;}
+
+  /* SECTION IMAGE */
+  .img-caption{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}
+  .section-img-wrap{margin:0 0 20px;display:flex;flex-direction:column;align-items:center;}
+  .section-img{width:260px;max-width:100%;border-radius:12px;cursor:zoom-in;transition:width 0.3s ease;border:1px solid var(--border);display:block;}
+  .section-img.si-expanded{width:100%;cursor:zoom-out;border-radius:16px;}
+  .si-placeholder{display:none;width:260px;max-width:100%;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}
+  .si-placeholder.si-show{display:flex;}
+  .si-filename{font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--text-muted);font-family:'SF Mono','Fira Code',monospace;}
+
+  /* SOCRATIC */
+  .socratic-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:16px;border-top:3px solid var(--blue);}
+  .socratic-header{display:flex;align-items:center;gap:8px;margin-bottom:0;cursor:pointer;user-select:none;}
+  .socratic-header::after{content:'▸ Expand';margin-left:auto;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-block.soc-open .socratic-header{margin-bottom:10px;}
+  .socratic-block.soc-open .socratic-header::after{content:'▾ Collapse';}
+  .socratic-block:not(.soc-open) .socratic-insight,
+  .socratic-block:not(.soc-open) .socratic-questions,
+  .socratic-block:not(.soc-open) .answer-area{display:none;}
+  .socratic-icon{font-size:17px;flex-shrink:0;}
+  .socratic-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-insight{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;margin-bottom:12px;border-left:3px solid var(--border);padding-left:14px;font-style:italic;}
+  .socratic-questions{list-style:none;padding:0;margin:0;}
+  .socratic-questions li{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--border-dim);line-height:1.6;}
+  .socratic-questions li:last-child{border-bottom:none;}
+  .socratic-questions li::before{content:'?';position:absolute;left:0;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:16px;top:7px;color:var(--blue);}
+  .answer-area{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .answer-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .answer-textarea:focus{border-color:var(--blue);}
+  .answer-textarea:disabled{opacity:0.75;background:var(--surface-2);cursor:default;}
+  .answer-buttons{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .btn-add-answer{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-answer:hover:not(:disabled){opacity:0.85;}
+  .btn-add-answer:disabled{opacity:0.5;cursor:default;}
+  .btn-see-answer{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-see-answer:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-see-answer:not(:disabled){color:var(--blue);border-color:var(--blue);}
+  .btn-see-answer:hover:not(:disabled){background:var(--blue-glow);}
+  .model-answers{margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .model-answer-item{padding:10px 0;border-bottom:1px solid var(--border-dim);}
+  .model-answer-item:first-child{padding-top:0;}
+  .model-answer-item:last-child{border-bottom:none;padding-bottom:0;}
+  .model-answer-q{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;}
+  .model-answer-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;}
+
+  /* MENTAL NOTE */
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+
+  /* ANALOGY BOX */
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+  .analogy-label{display:flex;align-items:center;gap:6px;user-select:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px;text-transform:uppercase;}
+  .analogy-label::after{content:'▾  Reveal illustration';margin-left:auto;font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:none;opacity:0.75;}
+  .analogy-label:hover::after{opacity:1;}
+  .analogy-box.expanded>.analogy-label::after{content:'▴  Hide illustration';}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
+  .analogy-text ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;}
+  .analogy-text li{padding-left:18px;position:relative;}
+  .analogy-text li::before{content:'•';position:absolute;left:0;font-weight:700;color:var(--amber);}
+  .analogy-box>.analogy-img{display:none;}
+  .analogy-box.expanded>.analogy-img{display:block;}
+  .analogy-img img{max-width:360px;width:100%;cursor:zoom-in;transition:max-width 0.25s ease;border-radius:8px;margin-top:10px;}
+  .analogy-img img.zoomed{max-width:100%;cursor:zoom-out;}
+  .analogy-img .img-missing-msg{display:none!important;}
+  .prompt-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}
+  .prompt-toggle:hover{color:var(--text);border-color:var(--text);}
+  .prompt-content{margin-top:10px;padding:10px 14px;background:rgba(0,0,0,0.04);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.65;text-align:left;}
+  .prompt-content[hidden]{display:none;}
+
+  /* LESSON TOOLS */
+  .lesson-tools{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:40px;}
+  .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .tool-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .tool-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .tool-textarea:focus{border-color:var(--blue);}
+  .tool-row{margin-top:8px;display:flex;gap:8px;}
+
+  /* PAGE NAV */
+  .page-nav{display:flex;border-top:2px solid var(--border);background:var(--surface);}
+  .page-nav-btn{flex:1;display:flex;flex-direction:column;gap:4px;padding:16px 28px;text-decoration:none;transition:background 0.15s;cursor:pointer;}
+  .page-nav-btn:hover:not(.page-nav-disabled){background:var(--surface-2);}
+  .page-nav-prev{border-right:1px solid var(--border);}
+  .page-nav-next{text-align:right;}
+  .page-nav-disabled{opacity:0.3;pointer-events:none;}
+  .page-nav-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);display:block;text-transform:uppercase;}
+  .page-nav-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;font-style:italic;color:var(--blue);display:block;}
+
+  /* FOOTER */
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+
+  /* RESPONSIVE */
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:34px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}.section-nav{padding:0 16px;}.top-panels{grid-template-columns:1fr;}.top-panels .qpanel{border-right:none;border-bottom:1px solid var(--border);}.lesson-tools-grid{grid-template-columns:1fr;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     HEADER
+     ══════════════════════════════════════════════════════════ -->
+<header>
+  <div class="header-left">
+    <div class="breadcrumb">
+      <a href="../ccna-study-guide-hub.html">CCNA 200-301</a><!-- ← keep as-is; goes up one level to hub -->
+      <span class="breadcrumb-sep">›</span>
+      <a href="index.html">Chapter 04 — High Availability</a><!-- ← e.g. "Chapter 04 — VLANs and Trunking" -->
+      <span class="breadcrumb-sep">›</span>
+      Subtopic 17 · BITE<!-- ← e.g. "Subtopic 02" -->
+    </div>
+    <div class="header-eyebrow"><span class="dot-live"></span> Study Guide · CCNA 200-301</div>
+    <h1>Active-Active <em>Study Bite</em></h1>
+    <!--
+      ← H1 pattern: plain words first, key noun/phrase in <em>.
+         e.g. "Configure <em>VLANs</em>" or "Understand <em>OSPF</em> Neighbor States"
+    -->
+    <p>5-minute reactivation: what gets balanced, how the handoff works, and the asymmetric-path twist.</p>
+    <!--
+      ← One sentence (≤20 words) capturing the core insight of the subtopic.
+         e.g. "How switches use 802.1Q tagging to carry multiple broadcast domains over a single trunk link."
+    -->
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════
+     MOTIVATION BANNER
+     ══════════════════════════════════════════════════════════ -->
+<div class="motivation-banner">
+  <div class="motivation-text">One rule carries the whole topic: only <em>proxy-based UTM sessions</em> get offloaded, and once offloaded, they may never come back through the primary.</div>
+  <!--
+    ← Bold Playfair statement. Wrap the key phrase in <em>. 1–2 sentences.
+       e.g. "VLANs don't just split a switch — they create <em>independent broadcast domains</em> that share the same physical hardware."
+  -->
+  <p class="motivation-sub">You already built this from first principles in Session 17 — this page is for fast recall, not re-teaching.</p>
+  <!--
+    ← Smaller supporting sentence. Why this subtopic matters in the bigger picture.
+       e.g. "Every inter-VLAN routing, trunking, and STP topic later in the blueprint assumes you can predict exactly which port belongs to which broadcast domain."
+  -->
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MY QUESTIONS + MY NOTES PANELS (no changes needed here)
+     ══════════════════════════════════════════════════════════ -->
+<div class="top-panels">
+  <div class="qpanel" id="qpanel">
+    <button class="qpanel-header" onclick="toggleQPanel()" id="qpanel-header">
+      <span class="qpanel-title">MY QUESTIONS</span>
+      <span class="qpanel-count" id="qpanel-count">0</span>
+      <span class="qpanel-hint">— click to expand</span>
+      <span class="qpanel-chevron" id="qpanel-chevron">▾</span>
+    </button>
+    <div class="qpanel-body" id="qpanel-body"></div>
+  </div>
+  <div class="notes-panel" id="notes-panel">
+    <button class="notes-panel-header" onclick="toggleNotesPanel()" id="notes-panel-header">
+      <span class="notes-panel-title">MY NOTES</span>
+      <span class="notes-panel-count" id="notes-panel-count">0</span>
+      <span class="notes-panel-hint">— click to expand</span>
+      <span class="notes-panel-chevron" id="notes-panel-chevron">▾</span>
+    </button>
+    <div class="notes-panel-body" id="notes-panel-body"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     STICKY SECTION NAV — one tab per section
+     ══════════════════════════════════════════════════════════ -->
+<nav class="section-nav" id="section-nav">
+  <a class="nav-tab active" href="#section-overview">Overview</a><!-- ← e.g. href="#section-vlan-basics" >VLAN Basics -->
+  <a class="nav-tab" href="#section-topology">Topology</a>
+  <a class="nav-tab" href="#section-exam-and-checklist">Exam & Checklist</a>
+  <!-- Add more tabs if there are 4 or 5 sections -->
+</nav>
+
+<main>
+  <div class="main-content">
+
+    <!-- ══════════════════════════════════════════
+         SECTION 1  (repeat this block per section)
+         ══════════════════════════════════════════ -->
+
+    <!-- THINK FIRST — collapsed by default, user must expand -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · OVERVIEW</span>
+        <!-- ← e.g. "THINK FIRST · VLAN BASICS" -->
+      </div>
+      <p class="socratic-insight">Quick recall before reading on.</p>
+      <!--
+        ← 2–3 sentence framing of WHY these questions matter. Reveal the tension
+           or the gotcha before asking the question.
+      -->
+      <ul class="socratic-questions">
+        <li>What category of session gets distributed to the secondary by default?</li><!-- ← Specific, scenario-driven. Ends with a '?' -->
+        <li>Does A-A equalize traffic across both boxes?</li><!-- ← Second question. Use a third only if genuinely complex. -->
+      </ul>
+      <div class="answer-area" data-section="overview">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Only proxy-based UTM inspection sessions (proxy AV, DLP, explicit proxy). Flow-based and no-inspection sessions stay on the primary unless load-balance-all is enabled.</div>
+            <!-- ← Precise. No hedging. 2–4 sentences. Lead with the core fact. -->
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">No. The primary always sees every packet of every session (all ingress, and for flow-based traffic, all egress too). A-A spends the secondary's idle CPU on the expensive slice of traffic — it does not split total load evenly.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION CONTENT BLOCK -->
+    <div class="section-block" id="section-overview">
+      <div class="section-label">SECTION 01</div>
+      <h2>Overview and <em>Mental Model</em></h2>
+      <!-- ← Same em-noun pattern as H1. e.g. "How a Switch Builds Its <em>MAC Address Table</em>" -->
+
+      <!-- Section image — starts compact (260px), click to expand full-width -->
+      <div class="section-img-wrap">
+        <img src="images/s1-overview.png" class="section-img"
+             alt=""
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption"></p>
+        <!-- Shown only when image is missing: -->
+        <div class="si-placeholder">
+          <span class="si-filename">images/s1-overview.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden></div>
+        </div>
+      </div>
+
+      <!-- Body content: paragraphs, lists, callouts, tables, code blocks -->
+      <p><strong>Overview:</strong> Active-Active is not traffic load balancing — it's CPU offloading. The primary is the only box with a virtual MAC, so it remains the sole ingress point for every packet in every mode. What A-A adds is a per-session decision, made once at the SYN, to hand proxy-based UTM sessions to a secondary that would otherwise sit idle.</p>
+      <!-- ← First paragraph: what the concept is, why it exists, how it fits the architecture -->
+      <p><strong>Problem it solves:</strong> in A-P, one box's CPU and memory sit almost entirely unused. A-A lets that hardware do something — specifically, the one category of work that's actually expensive (proxy-based content inspection) — without requiring the secondary to ever become a true ingress/egress point for the cluster.</p>
+      <!-- ← Second paragraph: mechanism / how it works in practice -->
+
+      <!-- Optional: use a list for multi-item comparisons or enumerations -->
+      <!--
+      <ul>
+        <li><strong>Item A:</strong> {{ITEM_A_TEXT}}</li>
+        <li><strong>Item B:</strong> {{ITEM_B_TEXT}}</li>
+      </ul>
+      -->
+
+      <!-- Optional callout — use for exam flags, gotchas, or common misconceptions -->
+      <!--
+      <div class="callout">
+        <strong>Exam tip:</strong> {{CALLOUT_TEXT}}
+      </div>
+      -->
+      <!--
+      <div class="callout callout-amber">
+        <strong>Common misconception:</strong> {{CALLOUT_TEXT}}
+      </div>
+      -->
+      <!--
+      <div class="callout callout-green">
+        <strong>Remember:</strong> {{CALLOUT_TEXT}}
+      </div>
+      -->
+
+      <!-- Optional CLI code block -->
+      <!--
+      <div class="code-block">
+        <div class="code-label">Cisco IOS CLI</div>
+        <pre><code>Switch> enable
+Switch# configure terminal
+Switch(config)# {{CMD_1}}
+Switch(config-if)# {{CMD_2}}
+Switch(config-if)# end
+Switch# write memory</code></pre>
+      </div>
+      -->
+
+      <!-- Optional data table -->
+      <!--
+      <table class="data-table">
+        <thead><tr><th>{{COL1}}</th><th>{{COL2}}</th><th>{{COL3}}</th></tr></thead>
+        <tbody>
+          <tr><td>{{VAL}}</td><td>{{VAL}}</td><td>{{VAL}}</td></tr>
+        </tbody>
+      </table>
+      -->
+
+      <!-- Optional analogy — only for abstract/counterintuitive concepts -->
+      <!--
+      <div class="analogy-box">
+        <div class="analogy-label">Analogy</div>
+        <div class="analogy-text">
+          <p class="analogy-summary">{{ANALOGY_ONE_LINER}}</p>
+          <ul>
+            <li>{{ANALOGY_BULLET_1}}</li>
+            <li>{{ANALOGY_BULLET_2}}</li>
+            <li>{{ANALOGY_BULLET_3}}</li>
+          </ul>
+        </div>
+        <div class="analogy-img" style="margin-top:14px;background:rgba(255,255,255,0.5);border-radius:10px;padding:14px;text-align:center;">
+          <img src="images/a1-{{ANALOGY_SLUG}}.png" alt="{{ANALOGY_IMG_ALT}}"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='block';"
+               style="max-width:100%;border-radius:8px;display:block;margin:0 auto 4px;">
+          <p class="img-caption" style="margin-bottom:8px;">{{ANALOGY_CAPTION}}</p>
+          <div class="img-missing-msg" style="display:none;padding:24px 12px;background:rgba(0,0,0,0.03);border:1px dashed #f3d68a;border-radius:8px;color:#5c3d09;font-size:14px;margin-bottom:10px;font-family:'Cormorant Garamond',serif;">📷 <strong>images/a1-{{ANALOGY_SLUG}}.png</strong> — add this image</div>
+          <button class="prompt-toggle" onclick="togglePrompt(this)" type="button">▾ Show analogy image prompt</button>
+          <div class="prompt-content" hidden>{{ANALOGY_IMG_PROMPT}}</div>
+        </div>
+      </div>
+      -->
+
+      <!-- Mental note — required, one per section -->
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text"><strong>Primary mental model:</strong> think of Box A as the front-desk clerk who takes every request. Simple requests (flow-based traffic), the clerk handles personally. Complex requests requiring a specialist (proxy-based UTM), the clerk hands to a colleague in the back office (Box B) — who then deals with the customer directly from that point on, never routing the answer back through the front desk.</div>
+          <!--
+            ← 2–3 sentences. Lead with a concrete number, ordered list, or key relationship.
+               e.g. "An access port belongs to exactly one VLAN and strips/adds no 802.1Q tag.
+               A trunk carries many VLANs and tags every frame except those in the native VLAN —
+               mismatched native VLANs on either end cause CDP/STP errors but traffic may still pass."
+          -->
+        </div>
+      </div>
+    </div>
+
+    <!-- LESSON TOOLS — required after every section block -->
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-overview" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-overview','Overview')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-overview" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-overview')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 2  (duplicate and rename S1→S2)
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · TOPOLOGY</span>
+      </div>
+      <p class="socratic-insight">Two TCP streams, same cluster, two completely different paths.</p>
+      <ul class="socratic-questions">
+        <li>For Stream 1 (flow-based), which box does the client's return traffic pass through?</li>
+        <li>For Stream 2 (proxy-based), what MAC address does the client see in the SYN/ACK it receives?</li>
+      </ul>
+      <div class="answer-area" data-section="topology">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Box A, in both directions — ingress and egress. It never touches Box B.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Box B's own physical MAC — not the cluster's virtual MAC. This is the asymmetric-path behavior: the SYN went to the vMAC on Box A, but the SYN/ACK arrives from a completely different physical MAC belonging to Box B.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-topology">
+      <div class="section-label">SECTION 02</div>
+      <h2>Packet Flow — <em>Two Streams</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/s2-topology.png" class="section-img" alt=""
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption"></p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/s2-topology.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden></div>
+        </div>
+      </div>
+      <strong>Device reference — one cluster, four endpoints of interest:</strong></p>
+
+<table class="data-table">
+<thead><tr><th>Device</th><th>Interface</th><th>IP Address</th><th>MAC Address</th></tr></thead>
+<tbody>
+<tr><td rowspan="1">Client</td><td>eth0</td><td>10.10.10.50/24</td><td>aa:bb:cc:00:00:10</td></tr>
+<tr><td rowspan="2">Box A (primary)</td><td>port1 (LAN)</td><td>10.10.10.1/24</td><td>vMAC 00:09:0f:09:00:01 &nbsp;·&nbsp; phys 00:09:0f:12:34:01</td></tr>
+<tr><td>port2 (WAN)</td><td>10.10.20.1/24</td><td>vMAC 00:09:0f:09:00:02 &nbsp;·&nbsp; phys 00:09:0f:12:34:02</td></tr>
+<tr><td rowspan="2">Box B (secondary)</td><td>port1 (LAN)</td><td>—</td><td>phys 00:09:0f:12:34:11 (no vMAC)</td></tr>
+<tr><td>port2 (WAN)</td><td>—</td><td>phys 00:09:0f:12:34:12 (no vMAC)</td></tr>
+<tr><td rowspan="1">Server</td><td>eth0</td><td>10.10.20.80/24</td><td>dd:ee:ff:00:00:20</td></tr>
+</tbody>
+</table>
+<p style="font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:#6b7794;">Box A and Box B also share a dedicated heartbeat link (port3 ↔ port3) carrying 0x8890 hellos and 0x8891 forwarded sessions.</p>
+<p><strong>Stream 1: a plain flow-based session. Both directions are a closed loop through Box A — Box B is not involved at any point.</strong></p>
+<div style="margin:16px 0;">
+<svg viewBox="0 0 960 340" xmlns="http://www.w3.org/2000/svg" style="width:100%;background:#fffdf5;border:1px solid #d4c89a;border-radius:12px;">
+<defs>
+<marker id="ar1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#1e40af" stroke-width="1.6"/></marker>
+</defs>
+<text x="480" y="34" text-anchor="middle" font-family="Playfair Display,serif" font-size="19" font-weight="700" fill="#0a1838">Stream 1 — flow-based HTTPS · never leaves Box A</text>
+<text x="480" y="54" text-anchor="middle" font-family="monospace" font-size="12" fill="#6b7794">10.10.10.50:51000 → 10.10.20.80:443 · no proxy inspection</text>
+
+<rect x="40" y="120" width="160" height="70" rx="10" fill="#eff4fc" stroke="#b8cce8" stroke-width="1.5"/>
+<text x="120" y="150" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="700" fill="#0c1f5c">Client</text>
+<text x="120" y="170" text-anchor="middle" font-family="monospace" font-size="11" fill="#1e2f5a">10.10.10.50</text>
+
+<rect x="390" y="105" width="190" height="100" rx="12" fill="#eff4fc" stroke="#1e40af" stroke-width="2"/>
+<text x="485" y="135" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="700" fill="#0c1f5c">Box A — primary</text>
+<text x="485" y="155" text-anchor="middle" font-family="monospace" font-size="11" fill="#1e2f5a">port1 in · port2 out</text>
+<text x="485" y="175" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#6b7794">policy + NAT + forward</text>
+
+<rect x="760" y="120" width="160" height="70" rx="10" fill="#eff4fc" stroke="#b8cce8" stroke-width="1.5"/>
+<text x="840" y="150" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="700" fill="#0c1f5c">Server</text>
+<text x="840" y="170" text-anchor="middle" font-family="monospace" font-size="11" fill="#1e2f5a">10.10.20.80</text>
+
+<rect x="390" y="250" width="190" height="56" rx="12" fill="#f5eed9" stroke="#d4c89a" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="485" y="274" text-anchor="middle" font-family="Outfit,sans-serif" font-size="13" font-weight="700" fill="#8a7a4a">Box B — secondary</text>
+<text x="485" y="293" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#8a7a4a">completely uninvolved</text>
+
+<line x1="200" y1="140" x2="388" y2="140" stroke="#1e40af" stroke-width="2.5" marker-end="url(#ar1)"/>
+<text x="294" y="128" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#1e40af">1  SYN →</text>
+
+<line x1="580" y1="140" x2="758" y2="140" stroke="#1e40af" stroke-width="2.5" marker-end="url(#ar1)"/>
+<text x="669" y="128" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#1e40af">2  SYN →</text>
+
+<line x1="758" y1="172" x2="580" y2="172" stroke="#1e40af" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#ar1)"/>
+<text x="669" y="194" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#1e40af">3  ← SYN/ACK</text>
+
+<line x1="388" y1="172" x2="200" y2="172" stroke="#1e40af" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#ar1)"/>
+<text x="294" y="194" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#1e40af">4  ← SYN/ACK</text>
+</svg>
+</div>
+
+<table class="data-table">
+<thead><tr><th>Hop</th><th>Path</th><th>Source MAC</th><th>Destination MAC</th></tr></thead>
+<tbody>
+<tr><td>1 — SYN</td><td>Client → Box A port1</td><td>aa:bb:cc:00:00:10 (client)</td><td>00:09:0f:09:00:01 (port1 vMAC)</td></tr>
+<tr><td>2 — SYN</td><td>Box A port2 → Server</td><td>00:09:0f:09:00:02 (port2 vMAC)</td><td>dd:ee:ff:00:00:20 (server)</td></tr>
+<tr><td>3 — SYN/ACK</td><td>Server → Box A port2</td><td>dd:ee:ff:00:00:20 (server)</td><td>00:09:0f:09:00:02 (port2 vMAC)</td></tr>
+<tr><td>4 — SYN/ACK</td><td>Box A port1 → Client</td><td>00:09:0f:09:00:01 (port1 vMAC)</td><td>aa:bb:cc:00:00:10 (client)</td></tr>
+</tbody>
+</table>
+<p><strong>Stream 2: a proxy-inspected session. Box A touches it exactly once — after the 0x8891 handoff, Box B owns both sides of the conversation directly.</strong></p>
+<div style="margin:16px 0;">
+<svg viewBox="0 0 960 430" xmlns="http://www.w3.org/2000/svg" style="width:100%;background:#fffdf5;border:1px solid #d4c89a;border-radius:12px;">
+<defs>
+<marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#b45309" stroke-width="1.6"/></marker>
+<marker id="ar2g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#1a7c4a" stroke-width="1.6"/></marker>
+</defs>
+<text x="480" y="34" text-anchor="middle" font-family="Playfair Display,serif" font-size="19" font-weight="700" fill="#0a1838">Stream 2 — proxy-inspected HTTP · handed off to Box B</text>
+<text x="480" y="54" text-anchor="middle" font-family="monospace" font-size="12" fill="#6b7794">10.10.10.50:51050 → 10.10.20.80:80 · proxy AV profile on policy</text>
+
+<rect x="40" y="120" width="160" height="70" rx="10" fill="#eff4fc" stroke="#b8cce8" stroke-width="1.5"/>
+<text x="120" y="150" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="700" fill="#0c1f5c">Client</text>
+<text x="120" y="170" text-anchor="middle" font-family="monospace" font-size="11" fill="#1e2f5a">10.10.10.50</text>
+
+<rect x="390" y="105" width="190" height="90" rx="12" fill="#eff4fc" stroke="#1e40af" stroke-width="2"/>
+<text x="485" y="135" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="700" fill="#0c1f5c">Box A — primary</text>
+<text x="485" y="157" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#6b7794">receives SYN, forwards it,</text>
+<text x="485" y="175" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#6b7794">then never sees this session again</text>
+
+<rect x="760" y="120" width="160" height="70" rx="10" fill="#eff4fc" stroke="#b8cce8" stroke-width="1.5"/>
+<text x="840" y="150" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="700" fill="#0c1f5c">Server</text>
+<text x="840" y="170" text-anchor="middle" font-family="monospace" font-size="11" fill="#1e2f5a">10.10.20.80</text>
+
+<rect x="390" y="290" width="190" height="90" rx="12" fill="#dff0e1" stroke="#1a7c4a" stroke-width="2"/>
+<text x="485" y="320" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="700" fill="#12532f">Box B — secondary</text>
+<text x="485" y="342" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#3a6a4a">proxy-inspects, then replies to</text>
+<text x="485" y="360" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#3a6a4a">client AND server directly</text>
+
+<line x1="200" y1="140" x2="388" y2="140" stroke="#b45309" stroke-width="2.5" marker-end="url(#ar2)"/>
+<text x="294" y="128" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#b45309">1  SYN →</text>
+
+<line x1="485" y1="195" x2="485" y2="288" stroke="#b45309" stroke-width="3" marker-end="url(#ar2)"/>
+<text x="500" y="245" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#b45309">2  forward in 0x8891 frame</text>
+
+<line x1="390" y1="320" x2="120" y2="192" stroke="#1a7c4a" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#ar2g)"/>
+<text x="215" y="278" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#1a7c4a">3  ← SYN/ACK direct</text>
+
+<line x1="580" y1="320" x2="840" y2="192" stroke="#1a7c4a" stroke-width="2.5" marker-end="url(#ar2g)"/>
+<text x="748" y="278" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#1a7c4a">4  SYN to server, direct →</text>
+</svg>
+</div>
+
+<table class="data-table">
+<thead><tr><th>Hop</th><th>Path</th><th>Source MAC</th><th>Destination MAC</th></tr></thead>
+<tbody>
+<tr><td>1 — SYN</td><td>Client → Box A port1</td><td>aa:bb:cc:00:00:10 (client)</td><td>00:09:0f:09:00:01 (port1 vMAC)</td></tr>
+<tr><td>2 — SYN forwarded</td><td>Box A → Box B, 0x8891 over heartbeat</td><td>00:09:0f:12:34:01 (Box A physical)</td><td>00:09:0f:12:34:11 (Box B physical)</td></tr>
+<tr><td>3 — SYN/ACK</td><td>Box B port1 → Client, direct</td><td>00:09:0f:12:34:11 (Box B physical)</td><td>aa:bb:cc:00:00:10 (client)</td></tr>
+<tr><td>4 — SYN</td><td>Box B port2 → Server, direct</td><td>00:09:0f:12:34:12 (Box B physical)</td><td>dd:ee:ff:00:00:20 (server)</td></tr>
+</tbody>
+</table>
+<div class="callout callout-amber"><strong>The tell:</strong> compare hop 1 and hop 3. The client sent its SYN to a <em>vMAC</em> on Box A, but the SYN/ACK arrives from a <em>physical MAC</em> on Box B. That mismatch is the asymmetric-path signature — and it's why a capture on Box A shows only hop 1.</div>
+<p></p>
+      <p><strong>Key terminology:</strong> <strong>vMAC</strong> — virtual MAC, owned only by the primary. <strong>0x8891</strong> — Ethernet type carrying forwarded session traffic between cluster members (distinct from 0x8890 hello). <strong>session-sync-dev</strong> — unrelated link used only to mirror the session table for failover, not for A-A forwarding. <strong>schedule</strong> — the config system ha parameter controlling how sessions are distributed among secondaries (irrelevant with only one secondary).</p>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Stream 1 (flow-based) is a closed loop through Box A. Stream 2 (proxy-based) is a one-way handoff: Box A forwards the SYN once, then Box B owns both directions of that session directly — client and server both see Box B's physical MAC, never the cluster's vMAC, for the rest of that session.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-topology" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-topology','Topology')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-topology" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-topology')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 3  (duplicate S1 block, rename to S3)
+         Add more sections if needed (up to 5)
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · EXAM AND CHECKLIST</span>
+      </div>
+      <p class="socratic-insight">Self-test — answer these cold before checking.</p>
+      <ul class="socratic-questions">
+        <li>In a two-node A-A cluster, does changing config system ha schedule from round-robin to ipport change anything observable?</li>
+        <li>Your capture on the primary shows a SYN with no SYN/ACK for a proxy-inspected session, and the user says the connection works fine. What's your first move?</li>
+      </ul>
+      <div class="answer-area" data-section="exam-and-checklist">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">No. schedule only matters when choosing between multiple secondaries. With exactly one secondary, every algorithm resolves to the same box.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Capture on the secondary too — the SYN/ACK and rest of the handshake likely completed there, using Box B's own physical MAC. Don't assume a session failed based on a single-box capture in A-A.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-exam-and-checklist">
+      <div class="section-label">SECTION 03</div>
+      <h2>Exam Notes and <em>Troubleshooting Checklist</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/s3-exam-and-checklist.png" class="section-img" alt=""
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption"></p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/s3-exam-and-checklist.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden></div>
+        </div>
+      </div>
+      <p><strong>Exam-critical points:</strong> (1) Only proxy-based UTM sessions are distributed by default — load-balance-all is required to force flow-based/no-inspection sessions to distribute too. (2) The forwarding traffic uses Ethernet type 0x8891, riding the heartbeat interconnect — not session-sync-dev. (3) For proxy-based sessions, the secondary replies to the client directly using its own physical MAC — this is the asymmetric-path behavior. (4) schedule is functionally meaningless in a 2-node cluster. (5) A-A's stated goal is using idle secondary capacity, not equalizing traffic — the primary always sees more total traffic.</p>
+      <p><strong>Common mistakes:</strong> confusing session-sync-dev with the A-A forwarding mechanism; assuming A-A halves the primary's load; assuming a single-box capture tells the full story of a session; assuming schedule matters regardless of cluster size; forgetting that flow-based traffic is excluded by default.</p>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text"><strong>Troubleshooting checklist for A-A:</strong> ① Confirm which inspection type the session uses (proxy vs flow-based) — that alone tells you whether offload is even possible. ② If proxy-based and 'stuck', capture on <em>both</em> boxes before concluding anything is broken. ③ Check config system ha schedule and member count — don't chase a schedule change that can't do anything with one secondary. ④ If upstream devices show odd behavior on A-A sessions, suspect asymmetric-path rather than a policy issue first.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-exam-and-checklist" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-exam-and-checklist','Exam & Checklist')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-exam-and-checklist" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-exam-and-checklist')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</main>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE NAV — links to prev/next subtopic or chapter hub
+     If at the start: prev href="index.html", label "← BACK TO HUB", title "Chapter NN Hub"
+     If at the end:   next href="index.html", label "CHAPTER HUB →", title "Chapter NN Hub"
+     ══════════════════════════════════════════════════════════ -->
+<div class="page-nav">
+  <a class="page-nav-btn page-nav-prev" href="session-17-complete-fgcp-active-active.html">
+    <span class="page-nav-label">← FULL GUIDE</span>
+    <span class="page-nav-title">Session 17 — Complete Guide</span>
+  </a>
+  <a class="page-nav-btn page-nav-next" href="session-17-nibble-fgcp-active-active.html">
+    <span class="page-nav-label">NEXT →</span>
+    <span class="page-nav-title">Session 17 — Nibble</span>
+  </a>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     FOOTER
+     ══════════════════════════════════════════════════════════ -->
+<footer>
+  CCNA 200-301<span>.</span> Chapter 04<span>.</span> Subtopic 17 · BITE<span>.</span> FGCP Active-Active — Study Bite
+</footer>
+
+<!-- ══════════════════════════════════════════════════════════
+     SCRIPT — update PAGE_KEY and SECTIONS only; rest is fixed
+     ══════════════════════════════════════════════════════════ -->
+<script>
+// ← PAGE_KEY must be unique across all pages. Format: ccna-chNN-subNN-slug
+const PAGE_KEY = 'nse7-ef76-s17-bite-fgcp-aa';
+// e.g. 'ccna-ch04-sub02-vlans'
+
+// ← One entry per section. Key = the id on the .section-block div (without #).
+const SECTIONS = {
+  'section-overview': 'Overview',
+  'section-topology': 'Topology',
+  'section-exam-and-checklist': 'Exam & Checklist',
+  // add more if needed
+};
+
+/* ── Everything below is fixed — do not modify ── */
+document.querySelectorAll('.socratic-header').forEach(function(h) {
+  h.addEventListener('click', function() { h.closest('.socratic-block').classList.toggle('soc-open'); });
+});
+function getQArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-qs') || '[]'); }
+function saveQArr(qs) { localStorage.setItem(PAGE_KEY+'-qs', JSON.stringify(qs)); }
+function addQuestion(key, name) {
+  const ta = document.getElementById('q-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const qs = getQArr(); qs.push({id: Date.now(), section: key, sectionName: name, text});
+  saveQArr(qs); ta.value = ''; renderQPanel();
+  if (!document.getElementById('qpanel-body').classList.contains('open')) toggleQPanel();
+}
+function deleteQ(id) { saveQArr(getQArr().filter(q => q.id !== id)); renderQPanel(); }
+function toggleQPanel() {
+  const body = document.getElementById('qpanel-body');
+  const header = document.getElementById('qpanel-header');
+  const chevron = document.getElementById('qpanel-chevron');
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-qpanel-open', open);
+}
+function renderQPanel() {
+  const qs = getQArr();
+  const count = document.getElementById('qpanel-count');
+  if (count) { count.textContent = qs.length; count.style.display = qs.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.qpanel-hint');
+  if (hint) hint.textContent = qs.length ? `— ${qs.length} question${qs.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('qpanel-body'); if (!body) return;
+  if (!qs.length) { body.innerHTML = '<p class="no-questions">No questions yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  qs.forEach(q => { if (groups[q.section]) groups[q.section].push(q); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(q => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${q.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteQ(${q.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function getNotesArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-notes') || '[]'); }
+function saveNotesArr(ns) { localStorage.setItem(PAGE_KEY+'-notes', JSON.stringify(ns)); }
+function addNote(key) {
+  const ta = document.getElementById('note-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const ns = getNotesArr(); ns.push({id: Date.now(), section: key, sectionName: SECTIONS[key]||key, text});
+  saveNotesArr(ns); ta.value = ''; renderNotesPanel();
+  if (!document.getElementById('notes-panel-body').classList.contains('open')) toggleNotesPanel();
+}
+function deleteNote(id) { saveNotesArr(getNotesArr().filter(n => n.id !== id)); renderNotesPanel(); }
+function toggleNotesPanel() {
+  const body = document.getElementById('notes-panel-body');
+  const header = document.getElementById('notes-panel-header');
+  const chevron = document.getElementById('notes-panel-chevron');
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-notes-panel-open', open);
+}
+function renderNotesPanel() {
+  const ns = getNotesArr();
+  const count = document.getElementById('notes-panel-count');
+  if (count) { count.textContent = ns.length; count.style.display = ns.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.notes-panel-hint');
+  if (hint) hint.textContent = ns.length ? `— ${ns.length} note${ns.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('notes-panel-body'); if (!body) return;
+  if (!ns.length) { body.innerHTML = '<p class="no-questions">No notes yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  ns.forEach(n => { if (groups[n.section]) groups[n.section].push(n); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(n => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteNote(${n.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function saveSocAnswer(btn) {
+  const area = btn.closest('.answer-area');
+  const ta = area.querySelector('.answer-textarea');
+  if (!ta.value.trim()) { ta.focus(); return; }
+  const key = PAGE_KEY+'-socans-'+area.dataset.section;
+  try { localStorage.setItem(key, ta.value); } catch(e) {}
+  ta.disabled = true; btn.textContent = '✓ Answer saved'; btn.disabled = true;
+  const seeBtn = area.querySelector('.btn-see-answer');
+  seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+}
+function revealSocAnswer(btn) {
+  if (btn.disabled) return;
+  const answers = btn.closest('.answer-area').querySelector('.model-answers');
+  const isHidden = answers.style.display === 'none' || !answers.style.display;
+  answers.style.display = isHidden ? 'block' : 'none';
+  btn.textContent = isHidden ? '▲ Hide Model Answer' : '💡 See Model Answer';
+}
+function togglePrompt(btn) {
+  const c = btn.nextElementSibling;
+  const isHidden = c.hasAttribute('hidden');
+  if (isHidden) { c.removeAttribute('hidden'); btn.textContent = '▴ Hide prompt'; }
+  else { c.setAttribute('hidden', ''); btn.textContent = '▾ Show image prompt'; }
+}
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+document.addEventListener('DOMContentLoaded', function() {
+  renderQPanel(); renderNotesPanel();
+  if (localStorage.getItem(PAGE_KEY+'-qpanel-open') === 'true') toggleQPanel();
+  if (localStorage.getItem(PAGE_KEY+'-notes-panel-open') === 'true') toggleNotesPanel();
+  document.querySelectorAll('.answer-area').forEach(function(area) {
+    const key = PAGE_KEY+'-socans-'+area.dataset.section;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const ta = area.querySelector('.answer-textarea'); ta.value = saved; ta.disabled = true;
+        const addBtn = area.querySelector('.btn-add-answer'); addBtn.textContent = '✓ Answer saved'; addBtn.disabled = true;
+        const seeBtn = area.querySelector('.btn-see-answer'); seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+      }
+    } catch(e) {}
+  });
+  document.querySelectorAll('.analogy-box').forEach(function(box) {
+    if (box.dataset.collapsibleInit) return;
+    box.dataset.collapsibleInit = '1';
+    box.classList.add('expanded');
+    const label = box.querySelector(':scope > .analogy-label');
+    if (label) label.addEventListener('click', () => box.classList.toggle('expanded'));
+  });
+  document.querySelectorAll('.analogy-img img').forEach(function(img) {
+    if (img.dataset.zoomInit) return;
+    img.dataset.zoomInit = '1';
+    img.addEventListener('click', () => img.classList.toggle('zoomed'));
+  });
+  document.querySelectorAll('.section-img').forEach(function(img) {
+    img.addEventListener('click', () => img.classList.toggle('si-expanded'));
+  });
+});
+</script>
+</body>
+</html>
