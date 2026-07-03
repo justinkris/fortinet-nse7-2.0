@@ -241,13 +241,7 @@
      ══════════════════════════════════════════════════════════ -->
 <header>
   <div class="header-left">
-    <div class="breadcrumb">
-      <a href="../ccna-study-guide-hub.html">CCNA 200-301</a><!-- ← keep as-is; goes up one level to hub -->
-      <span class="breadcrumb-sep">›</span>
-      <a href="index.html">Chapter 04 — High Availability</a><!-- ← e.g. "Chapter 04 — VLANs and Trunking" -->
-      <span class="breadcrumb-sep">›</span>
-      Subtopic 17 · BITE<!-- ← e.g. "Subtopic 02" -->
-    </div>
+    <div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 17</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Bite</span></div>
     <div class="header-eyebrow"><span class="dot-live"></span> Study Guide · CCNA 200-301</div>
     <h1>Active-Active <em>Study Bite</em></h1>
     <!--
@@ -594,7 +588,7 @@ Switch# write memory</code></pre>
 <tr><td>4 — SYN/ACK</td><td>Box A port1 → Client</td><td>00:09:0f:09:00:01 (port1 vMAC)</td><td>aa:bb:cc:00:00:10 (client)</td></tr>
 </tbody>
 </table>
-<p><strong>Stream 2: a proxy-inspected session. Box A touches it exactly once — after the 0x8891 handoff, Box B owns both sides of the conversation directly.</strong></p>
+<p><strong>Stream 2: a proxy-inspected session. Every INBOUND packet — from client or server — lands on Box A's vMAC and is relayed to Box B in an 0x8891 frame. Every OUTBOUND packet is sent by Box B directly. This repeats for the entire session, not just the handshake.</strong></p>
 <div style="margin:16px 0;">
 <svg viewBox="0 0 960 430" xmlns="http://www.w3.org/2000/svg" style="width:100%;background:#fffdf5;border:1px solid #d4c89a;border-radius:12px;">
 <defs>
@@ -612,8 +606,8 @@ Switch# write memory</code></pre>
 
 <rect x="390" y="105" width="190" height="90" rx="12" fill="#eff4fc" stroke="#1e40af" stroke-width="2"/>
 <text x="485" y="135" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="700" fill="#0c1f5c">Box A — primary</text>
-<text x="485" y="157" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#6b7794">receives SYN, forwards it,</text>
-<text x="485" y="175" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#6b7794">then never sees this session again</text>
+<text x="485" y="157" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#6b7794">relays EVERY inbound packet to B,</text>
+<text x="485" y="175" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#6b7794">never sees any outbound reply</text>
 
 <rect x="760" y="120" width="160" height="70" rx="10" fill="#eff4fc" stroke="#b8cce8" stroke-width="1.5"/>
 <text x="840" y="150" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="700" fill="#0c1f5c">Server</text>
@@ -645,16 +639,20 @@ Switch# write memory</code></pre>
 <tr><td>2 — SYN forwarded</td><td>Box A → Box B, 0x8891 over heartbeat</td><td>00:09:0f:12:34:01 (Box A physical)</td><td>00:09:0f:12:34:11 (Box B physical)</td></tr>
 <tr><td>3 — SYN/ACK</td><td>Box B port1 → Client, direct</td><td>00:09:0f:12:34:11 (Box B physical)</td><td>aa:bb:cc:00:00:10 (client)</td></tr>
 <tr><td>4 — SYN</td><td>Box B port2 → Server, direct</td><td>00:09:0f:12:34:12 (Box B physical)</td><td>dd:ee:ff:00:00:20 (server)</td></tr>
+<tr><td>5 — server reply</td><td>Server → Box A port2 (vMAC)</td><td>dd:ee:ff:00:00:20 (server)</td><td>00:09:0f:09:00:02 (port2 vMAC)</td></tr>
+<tr><td>6 — relayed</td><td>Box A → Box B, 0x8891</td><td>00:09:0f:12:34:01 (Box A physical)</td><td>00:09:0f:12:34:11 (Box B physical)</td></tr>
+<tr><td>7 — delivered</td><td>Box B port1 → Client, direct</td><td>00:09:0f:12:34:11 (Box B physical)</td><td>aa:bb:cc:00:00:10 (client)</td></tr>
+<tr><td>…</td><td colspan="3">Hops 5–7 repeat for every subsequent packet exchange, in both directions, for the life of the session.</td></tr>
 </tbody>
 </table>
-<div class="callout callout-amber"><strong>The tell:</strong> compare hop 1 and hop 3. The client sent its SYN to a <em>vMAC</em> on Box A, but the SYN/ACK arrives from a <em>physical MAC</em> on Box B. That mismatch is the asymmetric-path signature — and it's why a capture on Box A shows only hop 1.</div>
+<div class="callout callout-amber"><strong>The tell:</strong> compare hop 1 and hop 3. The client sends to a <em>vMAC</em> on Box A, but replies always arrive from a <em>physical MAC</em> on Box B — and this asymmetry persists per-packet for the whole session, because the endpoints' ARP caches still resolve the cluster IP to the vMAC. A capture on Box A shows every <em>inbound</em> half of the conversation and none of the replies.</div>
 <p></p>
       <p><strong>Key terminology:</strong> <strong>vMAC</strong> — virtual MAC, owned only by the primary. <strong>0x8891</strong> — Ethernet type carrying forwarded session traffic between cluster members (distinct from 0x8890 hello). <strong>session-sync-dev</strong> — unrelated link used only to mirror the session table for failover, not for A-A forwarding. <strong>schedule</strong> — the config system ha parameter controlling how sessions are distributed among secondaries (irrelevant with only one secondary).</p>
       <div class="mental-note-block">
         <div class="mental-note-block-icon">🧠</div>
         <div class="mental-note-block-inner">
           <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">Stream 1 (flow-based) is a closed loop through Box A. Stream 2 (proxy-based) is a one-way handoff: Box A forwards the SYN once, then Box B owns both directions of that session directly — client and server both see Box B's physical MAC, never the cluster's vMAC, for the rest of that session.</div>
+          <div class="mental-note-block-text">Stream 1 (flow-based) is a closed loop through Box A. Stream 2 (proxy-based) splits the directions permanently: the door IN is always Box A (every inbound packet hits the vMAC and is relayed to B over 0x8891), and the door OUT is always Box B (every reply comes from B's physical MAC). This repeats per-packet for the life of the session.</div>
         </div>
       </div>
     </div>
@@ -720,7 +718,7 @@ Switch# write memory</code></pre>
           <div class="prompt-content" hidden></div>
         </div>
       </div>
-      <p><strong>Exam-critical points:</strong> (1) Only proxy-based UTM sessions are distributed by default — load-balance-all is required to force flow-based/no-inspection sessions to distribute too. (2) The forwarding traffic uses Ethernet type 0x8891, riding the heartbeat interconnect — not session-sync-dev. (3) For proxy-based sessions, the secondary replies to the client directly using its own physical MAC — this is the asymmetric-path behavior. (4) schedule is functionally meaningless in a 2-node cluster. (5) A-A's stated goal is using idle secondary capacity, not equalizing traffic — the primary always sees more total traffic.</p>
+      <p><strong>Exam-critical points:</strong> (1) Only proxy-based UTM sessions are distributed by default — load-balance-all is required to force flow-based/no-inspection sessions to distribute too. (2) The forwarding traffic uses Ethernet type 0x8891, riding the heartbeat interconnect — not session-sync-dev. (3) For proxy-based sessions, every inbound packet still lands on the primary's vMAC and is relayed to the secondary via 0x8891, while the secondary sends every outbound packet directly from its own physical MAC — the asymmetry repeats per-packet, not just at the handshake. (4) schedule is functionally meaningless in a 2-node cluster. (5) A-A's stated goal is using idle secondary capacity, not equalizing traffic — the primary always sees more total traffic.</p>
       <p><strong>Common mistakes:</strong> confusing session-sync-dev with the A-A forwarding mechanism; assuming A-A halves the primary's load; assuming a single-box capture tells the full story of a session; assuming schedule matters regardless of cluster size; forgetting that flow-based traffic is excluded by default.</p>
       <div class="mental-note-block">
         <div class="mental-note-block-icon">🧠</div>

@@ -573,7 +573,7 @@ Switch# write memory</code></pre>
         <div class="model-answers" style="display:none;">
           <div class="model-answer-item">
             <div class="model-answer-q">Q1 — MODEL ANSWER</div>
-            <div class="model-answer-text">Only the initial SYN, with no reply. Once Box A forwards the SYN to Box B via the 0x8891 frame, Box B replies to the client <strong>directly</strong>, using its own physical MAC — and talks to the server directly too. Box A never sees the SYN/ACK, the rest of the handshake, or any subsequent packet in that session.</div>
+            <div class="model-answer-text">Every <strong>inbound</strong> packet of the session (client→cluster and server→cluster) with no replies visible. Endpoints keep addressing the cluster's vMAC — their ARP caches are unchanged — so Box A receives and relays every inbound packet to Box B via 0x8891. But every outbound packet is sent by Box B directly from its own physical MAC, so Box A never sees a single reply.</div>
           </div>
           <div class="model-answer-item">
             <div class="model-answer-q">Q2 — MODEL ANSWER</div>
@@ -596,13 +596,13 @@ Switch# write memory</code></pre>
           <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, warm modern colour palette, cream background, coral accents, sage greens, soft brown outlines, no gradients, no 3D. A network engineer stands in front of a monitor showing a packet capture window with a single lonely SYN packet and a large question mark, captured from 'Box A'. Behind them, a second smaller inset screen shows Box B calmly completing a full green checkmarked TCP handshake with a client icon and a server icon, with dashed direct-connection lines bypassing Box A entirely. Engineer has a puzzled but curious expression, one eyebrow raised. Clean bold line work, generous spacing, educational composition.</div>
         </div>
       </div>
-      <p>For proxy-based inspection sessions, Box A's involvement ends after the initial forward. Box B effectively terminates the proxy session on both sides — replying to the client's SYN directly with its own physical MAC, and initiating its own connection to the server. The client's return traffic never routes back through Box A.</p>
+      <p>For proxy-based inspection sessions, the two directions split permanently. Inbound: every packet from the client or the server still arrives at Box A's vMAC (endpoint ARP caches are unchanged) and Box A relays each one to Box B in an 0x8891 frame — this repeats per-packet for the life of the session. Outbound: Box B effectively terminates the proxy session on both sides, replying to the client and talking to the server directly from its own physical MAC. Box A relays every inbound leg and never sees a single outbound leg.</p>
       <p>This is a genuine operational cost, not just an exam trivia point: it makes single-box packet captures unreliable, and it creates real asymmetric-path risk for anything upstream that expects symmetric flows (some stateful devices, WAN optimizers, certain routing/security appliances). This is precisely why the session outline flagged 'harder troubleshooting' and 'asymmetric path risk' as A-A's core drawbacks.</p>
       <div class="mental-note-block">
         <div class="mental-note-block-icon">🧠</div>
         <div class="mental-note-block-inner">
           <div class="mental-note-block-label">MENTAL NOTE</div>
-          <div class="mental-note-block-text">For proxy-inspected sessions, the secondary replies to <strong>both</strong> the client and the server directly, using its own physical MAC — Box A's job ends after the initial 0x8891 forward. A single-box capture in A-A is not reliable evidence of failure; always assume you may need to check the other cluster member too.</div>
+          <div class="mental-note-block-text">For proxy-inspected sessions: door IN is always Box A (every inbound packet hits the vMAC and is relayed via 0x8891), door OUT is always Box B (every reply sent directly from B's physical MAC) — repeating per-packet for the whole session. A single-box capture in A-A is not reliable evidence of failure; Box A shows only inbound halves, Box B shows the complete picture.</div>
         </div>
       </div>
     </div>

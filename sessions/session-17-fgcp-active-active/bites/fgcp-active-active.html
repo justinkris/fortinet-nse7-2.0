@@ -524,83 +524,124 @@ Switch# write memory</code></pre>
           <div class="prompt-content" hidden></div>
         </div>
       </div>
-      <p><strong>Topology below — Stream 1 stays on Box A, Stream 2 hands off to Box B after the SYN.</strong></p>
-<div style="margin:16px 0;"><svg viewBox="0 0 1000 640" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:100%;background:#fffdf5;border:1px solid #d4c89a;border-radius:12px;">
+      <strong>Device reference — one cluster, four endpoints of interest:</strong></p>
+
+<table class="data-table">
+<thead><tr><th>Device</th><th>Interface</th><th>IP Address</th><th>MAC Address</th></tr></thead>
+<tbody>
+<tr><td rowspan="1">Client</td><td>eth0</td><td>10.10.10.50/24</td><td>aa:bb:cc:00:00:10</td></tr>
+<tr><td rowspan="2">Box A (primary)</td><td>port1 (LAN)</td><td>10.10.10.1/24</td><td>vMAC 00:09:0f:09:00:01 &nbsp;·&nbsp; phys 00:09:0f:12:34:01</td></tr>
+<tr><td>port2 (WAN)</td><td>10.10.20.1/24</td><td>vMAC 00:09:0f:09:00:02 &nbsp;·&nbsp; phys 00:09:0f:12:34:02</td></tr>
+<tr><td rowspan="2">Box B (secondary)</td><td>port1 (LAN)</td><td>—</td><td>phys 00:09:0f:12:34:11 (no vMAC)</td></tr>
+<tr><td>port2 (WAN)</td><td>—</td><td>phys 00:09:0f:12:34:12 (no vMAC)</td></tr>
+<tr><td rowspan="1">Server</td><td>eth0</td><td>10.10.20.80/24</td><td>dd:ee:ff:00:00:20</td></tr>
+</tbody>
+</table>
+<p style="font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:#6b7794;">Box A and Box B also share a dedicated heartbeat link (port3 ↔ port3) carrying 0x8890 hellos and 0x8891 forwarded sessions.</p>
+<p><strong>Stream 1: a plain flow-based session. Both directions are a closed loop through Box A — Box B is not involved at any point.</strong></p>
+<div style="margin:16px 0;">
+<svg viewBox="0 0 960 340" xmlns="http://www.w3.org/2000/svg" style="width:100%;background:#fffdf5;border:1px solid #d4c89a;border-radius:12px;">
 <defs>
-  <marker id="arrA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-    <path d="M2 1L8 5L2 9" fill="none" stroke="#1e40af" stroke-width="1.6"/>
-  </marker>
-  <marker id="arrC" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-    <path d="M2 1L8 5L2 9" fill="none" stroke="#b45309" stroke-width="1.6"/>
-  </marker>
+<marker id="ar1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#1e40af" stroke-width="1.6"/></marker>
 </defs>
+<text x="480" y="34" text-anchor="middle" font-family="Playfair Display,serif" font-size="19" font-weight="700" fill="#0a1838">Stream 1 — flow-based HTTPS · never leaves Box A</text>
+<text x="480" y="54" text-anchor="middle" font-family="monospace" font-size="12" fill="#6b7794">10.10.10.50:51000 → 10.10.20.80:443 · no proxy inspection</text>
 
-<text x="500" y="30" text-anchor="middle" font-family="Playfair Display, serif" font-size="20" font-weight="700" fill="#0a1838">FGCP Active-Active — two TCP streams, two outcomes</text>
+<rect x="40" y="120" width="160" height="70" rx="10" fill="#eff4fc" stroke="#b8cce8" stroke-width="1.5"/>
+<text x="120" y="150" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="700" fill="#0c1f5c">Client</text>
+<text x="120" y="170" text-anchor="middle" font-family="monospace" font-size="11" fill="#1e2f5a">10.10.10.50</text>
 
-<!-- Client -->
-<rect x="20" y="120" width="150" height="90" rx="10" fill="#eff4fc" stroke="#b8cce8"/>
-<text x="95" y="148" text-anchor="middle" font-family="Outfit,sans-serif" font-size="13" font-weight="700" fill="#0c1f5c">Client</text>
-<text x="95" y="168" text-anchor="middle" font-family="monospace" font-size="11" fill="#1e2f5a">203.0.113.10</text>
-<text x="95" y="184" text-anchor="middle" font-family="monospace" font-size="10" fill="#6b7794">MAC aa:bb:cc:00:00:10</text>
+<rect x="390" y="105" width="190" height="100" rx="12" fill="#eff4fc" stroke="#1e40af" stroke-width="2"/>
+<text x="485" y="135" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="700" fill="#0c1f5c">Box A — primary</text>
+<text x="485" y="155" text-anchor="middle" font-family="monospace" font-size="11" fill="#1e2f5a">port1 in · port2 out</text>
+<text x="485" y="175" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#6b7794">policy + NAT + forward</text>
 
-<!-- Box A -->
-<rect x="280" y="60" width="220" height="210" rx="12" fill="#eff4fc" stroke="#1e40af" stroke-width="1.5"/>
-<text x="390" y="86" text-anchor="middle" font-family="Outfit,sans-serif" font-size="13" font-weight="700" fill="#0c1f5c">Box A — primary</text>
-<text x="390" y="106" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#1e2f5a">port1 (LAN) 10.10.10.1/24</text>
-<text x="390" y="120" text-anchor="middle" font-family="monospace" font-size="10" fill="#6b7794">vMAC 00:09:0f:09:00:01</text>
-<text x="390" y="140" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#1e2f5a">port2 (WAN) 10.10.20.1/24</text>
-<text x="390" y="154" text-anchor="middle" font-family="monospace" font-size="10" fill="#6b7794">vMAC 00:09:0f:09:00:02</text>
-<text x="390" y="176" text-anchor="middle" font-family="monospace" font-size="10" fill="#6b7794">physical MAC 00:09:0f:12:34:01</text>
-<text x="390" y="196" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="12" font-style="italic" fill="#6b7794">owns vMAC · session table</text>
-<text x="390" y="212" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="12" font-style="italic" fill="#6b7794">all ingress lands here</text>
+<rect x="760" y="120" width="160" height="70" rx="10" fill="#eff4fc" stroke="#b8cce8" stroke-width="1.5"/>
+<text x="840" y="150" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="700" fill="#0c1f5c">Server</text>
+<text x="840" y="170" text-anchor="middle" font-family="monospace" font-size="11" fill="#1e2f5a">10.10.20.80</text>
 
-<!-- Box B -->
-<rect x="280" y="380" width="220" height="180" rx="12" fill="#dff0e1" stroke="#1a7c4a" stroke-width="1.5"/>
-<text x="390" y="406" text-anchor="middle" font-family="Outfit,sans-serif" font-size="13" font-weight="700" fill="#12532f">Box B — secondary</text>
-<text x="390" y="426" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#1e2f5a">port1 10.10.10.2/24</text>
-<text x="390" y="440" text-anchor="middle" font-family="monospace" font-size="10" fill="#6b7794">physical MAC 00:09:0f:12:34:11</text>
-<text x="390" y="460" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#1e2f5a">port2 10.10.20.2/24</text>
-<text x="390" y="474" text-anchor="middle" font-family="monospace" font-size="10" fill="#6b7794">physical MAC 00:09:0f:12:34:12</text>
-<text x="390" y="496" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="12" font-style="italic" fill="#3a6a4a">no vMAC — never receives ingress</text>
-<text x="390" y="512" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="12" font-style="italic" fill="#3a6a4a">proxy inspection only</text>
+<rect x="390" y="250" width="190" height="56" rx="12" fill="#f5eed9" stroke="#d4c89a" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="485" y="274" text-anchor="middle" font-family="Outfit,sans-serif" font-size="13" font-weight="700" fill="#8a7a4a">Box B — secondary</text>
+<text x="485" y="293" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#8a7a4a">completely uninvolved</text>
 
-<!-- Server -->
-<rect x="820" y="120" width="150" height="90" rx="10" fill="#eff4fc" stroke="#b8cce8"/>
-<text x="895" y="148" text-anchor="middle" font-family="Outfit,sans-serif" font-size="13" font-weight="700" fill="#0c1f5c">Server</text>
-<text x="895" y="168" text-anchor="middle" font-family="monospace" font-size="11" fill="#1e2f5a">198.51.100.20</text>
-<text x="895" y="184" text-anchor="middle" font-family="monospace" font-size="10" fill="#6b7794">MAC dd:ee:ff:00:00:20</text>
+<line x1="200" y1="140" x2="388" y2="140" stroke="#1e40af" stroke-width="2.5" marker-end="url(#ar1)"/>
+<text x="294" y="128" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#1e40af">1  SYN →</text>
 
-<!-- FGCP interconnect -->
-<line x1="390" y1="270" x2="390" y2="380" stroke="#b45309" stroke-width="1.5" stroke-dasharray="4 3"/>
-<text x="405" y="330" font-family="Outfit,sans-serif" font-size="10" font-weight="700" fill="#b45309">FGCP link</text>
-<text x="405" y="343" font-family="monospace" font-size="9.5" fill="#7a4f0c">0x8891 frames</text>
+<line x1="580" y1="140" x2="758" y2="140" stroke="#1e40af" stroke-width="2.5" marker-end="url(#ar1)"/>
+<text x="669" y="128" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#1e40af">2  SYN →</text>
 
-<!-- STREAM 1 legend + path (flow-based, stays on Box A) -->
-<text x="20" y="248" font-family="Outfit,sans-serif" font-size="11" font-weight="700" fill="#1e40af">■ STREAM 1 — flow-based, 203.0.113.10:51000 → 198.51.100.20:443</text>
-<path d="M170 170 L280 130" fill="none" stroke="#1e40af" stroke-width="2" marker-end="url(#arrA)"/>
-<text x="200" y="145" font-family="monospace" font-size="9.5" fill="#1e40af">1 SYN</text>
-<path d="M500 130 L820 170" fill="none" stroke="#1e40af" stroke-width="2" marker-end="url(#arrA)"/>
-<text x="640" y="140" font-family="monospace" font-size="9.5" fill="#1e40af">2 SYN (Box A → server)</text>
-<path d="M820 190 L500 150" fill="none" stroke="#1e40af" stroke-width="2" stroke-dasharray="2 3" marker-end="url(#arrA)"/>
-<text x="640" y="205" font-family="monospace" font-size="9.5" fill="#1e40af">3 SYN/ACK (server → Box A)</text>
-<path d="M280 150 L170 190" fill="none" stroke="#1e40af" stroke-width="2" stroke-dasharray="2 3" marker-end="url(#arrA)"/>
-<text x="190" y="220" font-family="monospace" font-size="9.5" fill="#1e40af">4 SYN/ACK → client</text>
-<text x="280" y="290" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#1e2f5a">Stream 1 never touches Box B. Cheap enough that FortiOS keeps it local.</text>
+<line x1="758" y1="172" x2="580" y2="172" stroke="#1e40af" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#ar1)"/>
+<text x="669" y="194" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#1e40af">3  ← SYN/ACK</text>
 
-<!-- STREAM 2 legend + path (proxy-based, offloaded to Box B) -->
-<text x="20" y="600" font-family="Outfit,sans-serif" font-size="11" font-weight="700" fill="#b45309">■ STREAM 2 — proxy-inspected, 203.0.113.10:51050 → 198.51.100.20:80</text>
-<path d="M170 195 L280 220" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrC)"/>
-<text x="185" y="245" font-family="monospace" font-size="9.5" fill="#b45309">1 SYN → Box A</text>
-<path d="M390 270 L390 380" fill="none" stroke="#b45309" stroke-width="2.5" marker-end="url(#arrC)"/>
-<text x="405" y="360" font-family="monospace" font-size="9.5" fill="#b45309">2 forwarded (0x8891)</text>
-<path d="M500 430 L820 195" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrC)"/>
-<text x="640" y="330" font-family="monospace" font-size="9.5" fill="#b45309">3 Box B → server directly</text>
-<path d="M280 440 L170 205" fill="none" stroke="#b45309" stroke-width="2" stroke-dasharray="2 3" marker-end="url(#arrC)"/>
-<text x="130" y="330" font-family="monospace" font-size="9.5" fill="#b45309" text-anchor="end">4 Box B → client directly (SYN/ACK)</text>
-<text x="280" y="580" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#3a6a4a">Box A never sees steps 3–4. A capture on Box A alone shows only step 1.</text>
-
+<line x1="388" y1="172" x2="200" y2="172" stroke="#1e40af" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#ar1)"/>
+<text x="294" y="194" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#1e40af">4  ← SYN/ACK</text>
 </svg>
 </div>
+
+<table class="data-table">
+<thead><tr><th>Hop</th><th>Path</th><th>Source MAC</th><th>Destination MAC</th></tr></thead>
+<tbody>
+<tr><td>1 — SYN</td><td>Client → Box A port1</td><td>aa:bb:cc:00:00:10 (client)</td><td>00:09:0f:09:00:01 (port1 vMAC)</td></tr>
+<tr><td>2 — SYN</td><td>Box A port2 → Server</td><td>00:09:0f:09:00:02 (port2 vMAC)</td><td>dd:ee:ff:00:00:20 (server)</td></tr>
+<tr><td>3 — SYN/ACK</td><td>Server → Box A port2</td><td>dd:ee:ff:00:00:20 (server)</td><td>00:09:0f:09:00:02 (port2 vMAC)</td></tr>
+<tr><td>4 — SYN/ACK</td><td>Box A port1 → Client</td><td>00:09:0f:09:00:01 (port1 vMAC)</td><td>aa:bb:cc:00:00:10 (client)</td></tr>
+</tbody>
+</table>
+<p><strong>Stream 2: a proxy-inspected session. Box A touches it exactly once — after the 0x8891 handoff, Box B owns both sides of the conversation directly.</strong></p>
+<div style="margin:16px 0;">
+<svg viewBox="0 0 960 430" xmlns="http://www.w3.org/2000/svg" style="width:100%;background:#fffdf5;border:1px solid #d4c89a;border-radius:12px;">
+<defs>
+<marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#b45309" stroke-width="1.6"/></marker>
+<marker id="ar2g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#1a7c4a" stroke-width="1.6"/></marker>
+</defs>
+<text x="480" y="34" text-anchor="middle" font-family="Playfair Display,serif" font-size="19" font-weight="700" fill="#0a1838">Stream 2 — proxy-inspected HTTP · handed off to Box B</text>
+<text x="480" y="54" text-anchor="middle" font-family="monospace" font-size="12" fill="#6b7794">10.10.10.50:51050 → 10.10.20.80:80 · proxy AV profile on policy</text>
+
+<rect x="40" y="120" width="160" height="70" rx="10" fill="#eff4fc" stroke="#b8cce8" stroke-width="1.5"/>
+<text x="120" y="150" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="700" fill="#0c1f5c">Client</text>
+<text x="120" y="170" text-anchor="middle" font-family="monospace" font-size="11" fill="#1e2f5a">10.10.10.50</text>
+
+<rect x="390" y="105" width="190" height="90" rx="12" fill="#eff4fc" stroke="#1e40af" stroke-width="2"/>
+<text x="485" y="135" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="700" fill="#0c1f5c">Box A — primary</text>
+<text x="485" y="157" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#6b7794">receives SYN, forwards it,</text>
+<text x="485" y="175" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#6b7794">then never sees this session again</text>
+
+<rect x="760" y="120" width="160" height="70" rx="10" fill="#eff4fc" stroke="#b8cce8" stroke-width="1.5"/>
+<text x="840" y="150" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="700" fill="#0c1f5c">Server</text>
+<text x="840" y="170" text-anchor="middle" font-family="monospace" font-size="11" fill="#1e2f5a">10.10.20.80</text>
+
+<rect x="390" y="290" width="190" height="90" rx="12" fill="#dff0e1" stroke="#1a7c4a" stroke-width="2"/>
+<text x="485" y="320" text-anchor="middle" font-family="Outfit,sans-serif" font-size="14" font-weight="700" fill="#12532f">Box B — secondary</text>
+<text x="485" y="342" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#3a6a4a">proxy-inspects, then replies to</text>
+<text x="485" y="360" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-style="italic" fill="#3a6a4a">client AND server directly</text>
+
+<line x1="200" y1="140" x2="388" y2="140" stroke="#b45309" stroke-width="2.5" marker-end="url(#ar2)"/>
+<text x="294" y="128" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#b45309">1  SYN →</text>
+
+<line x1="485" y1="195" x2="485" y2="288" stroke="#b45309" stroke-width="3" marker-end="url(#ar2)"/>
+<text x="500" y="245" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#b45309">2  forward in 0x8891 frame</text>
+
+<line x1="390" y1="320" x2="120" y2="192" stroke="#1a7c4a" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#ar2g)"/>
+<text x="215" y="278" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#1a7c4a">3  ← SYN/ACK direct</text>
+
+<line x1="580" y1="320" x2="840" y2="192" stroke="#1a7c4a" stroke-width="2.5" marker-end="url(#ar2g)"/>
+<text x="748" y="278" text-anchor="middle" font-family="Outfit,sans-serif" font-size="12" font-weight="700" fill="#1a7c4a">4  SYN to server, direct →</text>
+</svg>
+</div>
+
+<table class="data-table">
+<thead><tr><th>Hop</th><th>Path</th><th>Source MAC</th><th>Destination MAC</th></tr></thead>
+<tbody>
+<tr><td>1 — SYN</td><td>Client → Box A port1</td><td>aa:bb:cc:00:00:10 (client)</td><td>00:09:0f:09:00:01 (port1 vMAC)</td></tr>
+<tr><td>2 — SYN forwarded</td><td>Box A → Box B, 0x8891 over heartbeat</td><td>00:09:0f:12:34:01 (Box A physical)</td><td>00:09:0f:12:34:11 (Box B physical)</td></tr>
+<tr><td>3 — SYN/ACK</td><td>Box B port1 → Client, direct</td><td>00:09:0f:12:34:11 (Box B physical)</td><td>aa:bb:cc:00:00:10 (client)</td></tr>
+<tr><td>4 — SYN</td><td>Box B port2 → Server, direct</td><td>00:09:0f:12:34:12 (Box B physical)</td><td>dd:ee:ff:00:00:20 (server)</td></tr>
+</tbody>
+</table>
+<div class="callout callout-amber"><strong>The tell:</strong> compare hop 1 and hop 3. The client sent its SYN to a <em>vMAC</em> on Box A, but the SYN/ACK arrives from a <em>physical MAC</em> on Box B. That mismatch is the asymmetric-path signature — and it's why a capture on Box A shows only hop 1.</div>
 <p></p>
       <p><strong>Key terminology:</strong> <strong>vMAC</strong> — virtual MAC, owned only by the primary. <strong>0x8891</strong> — Ethernet type carrying forwarded session traffic between cluster members (distinct from 0x8890 hello). <strong>session-sync-dev</strong> — unrelated link used only to mirror the session table for failover, not for A-A forwarding. <strong>schedule</strong> — the config system ha parameter controlling how sessions are distributed among secondaries (irrelevant with only one secondary).</p>
       <div class="mental-note-block">
