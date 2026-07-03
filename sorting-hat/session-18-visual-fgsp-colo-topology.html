@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visual — FGSP + External LB: The Colo Topology</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-glow:rgba(30,64,175,0.07);
+    --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:44px 60px 32px;background:var(--ink-dark);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  header h1{font-family:'Playfair Display',serif;font-size:42px;font-weight:700;line-height:1.1;color:#fbf7ec;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.6);margin-top:10px;line-height:1.6;max-width:700px;}
+  main{max-width:920px;margin:0 auto;padding:36px 60px 60px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block{margin-bottom:40px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.2;margin-bottom:14px;padding-left:16px;border-left:3px solid var(--blue);}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:12px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block ul{padding-left:22px;margin-bottom:12px;}
+  .section-block li{font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:6px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+  .approach-tag{display:inline-block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:var(--ink-dark);color:var(--ink-accent);padding:5px 14px;border-radius:20px;margin-bottom:10px;}
+  .image-placeholder{border:2px dashed var(--border);border-radius:14px;background:var(--surface-2);padding:26px 28px;margin:18px 0;}
+  .ip-filename{font-family:'SF Mono','Fira Code',monospace;font-size:11px;font-weight:700;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:10px;}
+  .ip-caption{font-size:16px;font-style:italic;color:var(--text-soft);margin-bottom:12px;}
+  .prompt-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:6px 14px;border-radius:6px;cursor:pointer;text-transform:uppercase;}
+  .prompt-toggle:hover{color:var(--text);border-color:var(--text);}
+  .prompt-content{margin-top:12px;padding:14px 16px;background:rgba(0,0,0,0.04);border-radius:8px;font-size:14.5px;color:var(--text-muted);font-style:italic;line-height:1.7;}
+  .prompt-content[hidden]{display:none;}
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:16px 20px;margin:16px 0;}
+  .analogy-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:8px;text-transform:uppercase;}
+  .analogy-text{font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:700px){header,main,footer{padding-left:24px;padding-right:24px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-eyebrow">SESSION 18 · VISUAL · MID-LESSON</div>
+  <h1>Two Independent Boxes, <em>One Shared Notebook</em></h1>
+  <p>Vaultline Financial's second-datacenter colo build — the topology behind the "can we just use FGCP?" question you just answered no to.</p>
+</header>
+
+<main>
+
+  <div class="section-block">
+    <div class="section-label">WHY THIS TOPOLOGY EXISTS</div>
+    <h2>The Colo Team's <em>Three Conditions</em></h2>
+    <p>The colo already runs its own external load balancer in front of everything, and it isn't going away. The colo team manages their own firewall independently — their own credentials, their own change windows — and won't join a shared HA identity with a box they don't fully control. And because of how the LB's return-path routing works, a reply for a flow that entered on one firewall can legitimately exit through the other.</p>
+    <p>You already reasoned through why <strong>FGCP</strong> cannot survive this: config sync erases "separate change windows" before a single packet is even considered, and session ownership is decided internally by the primary — an external box handing a packet to whichever firewall it feels like has no channel into that decision. What's left standing is the thing you derived from first principles: the two boxes share <strong>nothing except the session table.</strong> That's the topology below.</p>
+  </div>
+
+  <div class="mental-note-block">
+    <div class="mental-note-block-icon">🧭</div>
+    <div class="mental-note-block-inner">
+      <div class="mental-note-block-label">Mental Model</div>
+      <div class="mental-note-block-text">No shared identity. No shared config. No shared vMAC. The only wire that matters between FGT-Colo-1 and FGT-Colo-2 carries session <em>state</em> — never a decision, never a policy, never ownership of the box itself. The load balancer owns 100% of the routing call; each firewall owns 100% of its own management.</div>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <span class="approach-tag">Recommended visual type: Architecture Map</span>
+    <p>An Architecture Map fits here because the point isn't a feeling or a trade-off — it's a literal picture of which component owns which decision, and what (if anything) crosses the boundary between two otherwise-unrelated firewalls.</p>
+
+    <div class="image-placeholder">
+      <div class="ip-filename">images/session-18-colo-topology.png</div>
+      <div class="ip-caption">The colo topology: one external LB making every routing decision, two fully independent FortiGates, one thin session-sync channel between them.</div>
+      <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+      <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic. Warm modern color palette: cream background (#faf5e9), coral accents, muted gold highlights, sage greens, soft brown outlines. Clean bold line work, no gradients, no photorealism, no 3D rendering, generous spacing, educational and visually engaging.
+
+Composition: wide horizontal layout, left-to-right flow, three tiers. Top-left: a small stylized cloud icon labeled "CLIENT TRAFFIC" with a tiny envelope/packet icon inside it, one coral arrow flowing right and down into a large sage-green rounded rectangle labeled "COLO LOAD BALANCER," topped with a small dial/switch icon representing the fact that it — and only it — makes forwarding decisions here.
+
+From the load balancer, two solid coral arrows fan downward to two identical-style FortiGate shield icons sitting side by side in the lower half of the frame, each inside its own soft-brown-outlined rounded "zone" to emphasize separation:
+— Left zone labeled "FGT-COLO-1," with a small padlock-and-key icon and a small human admin figure wearing a navy tie, representing independent management and credentials.
+— Right zone labeled "FGT-COLO-2," with its own padlock-and-key icon and a visually distinct second admin figure wearing a muted-gold scarf, reinforcing a separate, unrelated management domain.
+
+Between the two firewall zones, draw a thin dashed line in muted gold — visually much thinner and lighter than the solid coral traffic arrows — labeled beneath it in small uppercase text: "SESSION SYNC ONLY · NO SHARED IDENTITY · NO SHARED CONFIG." Along this dashed line, show two or three tiny "ticket" or index-card icons mid-transit, representing session records passing between the boxes — not commands, not configuration.
+
+Along the very base of the illustration, a thin cream-colored strip with small uppercase labels reading "INDEPENDENT HARDWARE · INDEPENDENT CONFIG · INDEPENDENT MANAGEMENT" spanning beneath both firewall zones.
+
+Mood: calm, clean, whiteboard-turned-polished-illustration. No logos, no real company branding, no readable UI screenshots, minimal text, icon-driven storytelling.</div>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-label">READING THE MAP</div>
+    <h2>What the <em>Topology</em> Is Telling You</h2>
+    <ul>
+      <li><strong>One decision-maker for routing:</strong> the LB is the only component in this picture allowed to decide which firewall a packet goes to — not FGT-Colo-1, not FGT-Colo-2, not a cluster.</li>
+      <li><strong>Two decision-makers for everything else:</strong> each firewall's admin, policy, and change process belongs entirely to that box. Nothing here requires the colo team to coordinate a maintenance window with you.</li>
+      <li><strong>One thin channel, one job:</strong> the dashed line carries session state and nothing else — no vMAC, no heartbeat electing a primary, no config push. It exists purely so a box that didn't see the handshake still has something to work from.</li>
+    </ul>
+    <div class="callout callout-amber">
+      <strong>Exam trap to watch for:</strong> don't reach for "Active-Active" as the signal that a topology is FGSP — FGCP does Active-Active too (Session 17). What actually marks this as FGSP is the total absence of shared identity/config, plus an external device — not the firewalls — making the routing call.
+    </div>
+  </div>
+
+  <div class="analogy-box">
+    <div class="analogy-label">Memory Hook</div>
+    <div class="analogy-text">Two roommates with separate bank accounts, separate leases, separate house rules — but one shared notebook by the door. "Let this person in, they're fine to use either door on the way out too." Neither roommate needs the other's permission to act on what's written in the notebook — they just need the notebook to be up to date.</div>
+  </div>
+
+  <div class="callout">
+    <strong>Deliberately left open:</strong> this map shows the topology, not yet the packet-by-packet mechanics of what FGT-Colo-2 actually does with a stray packet it never saw the handshake for. That's the live question in front of you right now — this diagram is the stage, not the answer.
+  </div>
+
+</main>
+
+<footer>Vaultline Financial · <span>NSE7 Enterprise Firewall 7.6</span> · Session 18 Visual — Not a formal deliverable</footer>
+
+<script>
+function togglePrompt(btn){
+  const c = btn.nextElementSibling;
+  const isHidden = c.hasAttribute('hidden');
+  if (isHidden){ c.removeAttribute('hidden'); btn.textContent = '▴ Hide image prompt'; }
+  else { c.setAttribute('hidden',''); btn.textContent = '▾ Show image prompt'; }
+}
+</script>
+</body>
+</html>
