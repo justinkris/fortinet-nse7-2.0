@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<!--
+  ╔══════════════════════════════════════════════════════════════════════╗
+  ║  CCNA STUDY GUIDE — PAGE TEMPLATE (CREAM / BLUE EDITION)            ║
+  ║                                                                      ║
+  ║  Fill every {{PLACEHOLDER}} with content from the Socratic session.  ║
+  ║  Comments marked ← tell you exactly what each field needs.          ║
+  ║  Save to: study-guides/Chapter NN - Title/subtopic-NN-slug.html     ║
+  ╚══════════════════════════════════════════════════════════════════════╝
+
+  MINIMUM REQUIRED PER PAGE:
+  · PAGE_KEY (unique, kebab-case, e.g. ccna-ch04-sub02-vlans)
+  · 3–5 section blocks
+  · 2 Socratic questions per section (model answers included)
+  · 1 mental note per section
+  · 5–8 quick-ref cards in the sidebar
+  · Prev / next navigation
+-->
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subtopic 17 — FGCP Active-Active and Load Balancing</title><!-- ← e.g. "Subtopic 02 — Configure VLANs" -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ── DESIGN TOKENS ── */
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* HEADER */
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb a:hover{text-decoration:underline;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+
+  /* MOTIVATION BANNER */
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.005em;}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+
+  /* TOP PANELS */
+  .top-panels{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+  .top-panels .qpanel{border-bottom:none;border-right:1px solid var(--border);}
+  .top-panels .qpanel-header{padding-left:32px;padding-right:32px;}
+  .top-panels .qpanel-body{padding-left:32px;padding-right:32px;}
+  .qpanel{background:var(--surface);}
+  .qpanel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .qpanel-header:hover,.qpanel-header.open{background:var(--surface-2);}
+  .qpanel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .qpanel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .qpanel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .qpanel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .qpanel-body{display:none;padding:0 20px 22px;}
+  .qpanel-body.open{display:block;}
+  .notes-panel{background:var(--surface);}
+  .notes-panel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 32px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .notes-panel-header:hover,.notes-panel-header.open{background:var(--surface-2);}
+  .notes-panel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .notes-panel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .notes-panel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .notes-panel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .notes-panel-body{display:none;padding:0 32px 22px;}
+  .notes-panel-body.open{display:block;}
+  .q-group{margin-bottom:16px;}
+  .q-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+  .q-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-dim);}
+  .q-item:last-child{border-bottom:none;}
+  .q-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;color:var(--blue);min-width:16px;margin-top:2px;}
+  .q-text{font-size:14px;color:var(--text-soft);line-height:1.5;flex:1;}
+  .q-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:0 4px;margin-top:1px;}
+  .q-del:hover{color:var(--blue);}
+  .no-questions{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);padding:8px 0;}
+  .btn-add-q{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-q:hover{opacity:0.85;}
+
+  /* STICKY SECTION NAV */
+  .section-nav{position:sticky;top:0;z-index:90;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px;overflow-x:auto;}
+  .nav-tab{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:12px 18px;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s,border-color 0.15s;}
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+  /* MAIN GRID */
+  main{max-width:1200px;margin:0 auto;padding:0;}
+  .main-content{padding:36px 60px 60px 60px;}
+
+  /* SECTION BLOCK */
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:4px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+
+  /* CALLOUTS */
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+
+  /* DATA TABLE */
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+
+  /* CODE BLOCK */
+  .code-block{background:var(--ink-dark);border-radius:10px;padding:0;margin:16px 0;overflow:hidden;border:1px solid var(--border);}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:8px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:16px;overflow-x:auto;}
+  .code-block code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12.5px;line-height:1.65;color:#e8efff;}
+
+  /* SECTION IMAGE */
+  .img-caption{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}
+  .section-img-wrap{margin:0 0 20px;display:flex;flex-direction:column;align-items:center;}
+  .section-img{width:260px;max-width:100%;border-radius:12px;cursor:zoom-in;transition:width 0.3s ease;border:1px solid var(--border);display:block;}
+  .section-img.si-expanded{width:100%;cursor:zoom-out;border-radius:16px;}
+  .si-placeholder{display:none;width:260px;max-width:100%;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}
+  .si-placeholder.si-show{display:flex;}
+  .si-filename{font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--text-muted);font-family:'SF Mono','Fira Code',monospace;}
+
+  /* SOCRATIC */
+  .socratic-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:16px;border-top:3px solid var(--blue);}
+  .socratic-header{display:flex;align-items:center;gap:8px;margin-bottom:0;cursor:pointer;user-select:none;}
+  .socratic-header::after{content:'▸ Expand';margin-left:auto;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-block.soc-open .socratic-header{margin-bottom:10px;}
+  .socratic-block.soc-open .socratic-header::after{content:'▾ Collapse';}
+  .socratic-block:not(.soc-open) .socratic-insight,
+  .socratic-block:not(.soc-open) .socratic-questions,
+  .socratic-block:not(.soc-open) .answer-area{display:none;}
+  .socratic-icon{font-size:17px;flex-shrink:0;}
+  .socratic-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-insight{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;margin-bottom:12px;border-left:3px solid var(--border);padding-left:14px;font-style:italic;}
+  .socratic-questions{list-style:none;padding:0;margin:0;}
+  .socratic-questions li{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--border-dim);line-height:1.6;}
+  .socratic-questions li:last-child{border-bottom:none;}
+  .socratic-questions li::before{content:'?';position:absolute;left:0;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:16px;top:7px;color:var(--blue);}
+  .answer-area{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .answer-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .answer-textarea:focus{border-color:var(--blue);}
+  .answer-textarea:disabled{opacity:0.75;background:var(--surface-2);cursor:default;}
+  .answer-buttons{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .btn-add-answer{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-answer:hover:not(:disabled){opacity:0.85;}
+  .btn-add-answer:disabled{opacity:0.5;cursor:default;}
+  .btn-see-answer{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-see-answer:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-see-answer:not(:disabled){color:var(--blue);border-color:var(--blue);}
+  .btn-see-answer:hover:not(:disabled){background:var(--blue-glow);}
+  .model-answers{margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .model-answer-item{padding:10px 0;border-bottom:1px solid var(--border-dim);}
+  .model-answer-item:first-child{padding-top:0;}
+  .model-answer-item:last-child{border-bottom:none;padding-bottom:0;}
+  .model-answer-q{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;}
+  .model-answer-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;}
+
+  /* MENTAL NOTE */
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+
+  /* ANALOGY BOX */
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+  .analogy-label{display:flex;align-items:center;gap:6px;user-select:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px;text-transform:uppercase;}
+  .analogy-label::after{content:'▾  Reveal illustration';margin-left:auto;font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:none;opacity:0.75;}
+  .analogy-label:hover::after{opacity:1;}
+  .analogy-box.expanded>.analogy-label::after{content:'▴  Hide illustration';}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
+  .analogy-text ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;}
+  .analogy-text li{padding-left:18px;position:relative;}
+  .analogy-text li::before{content:'•';position:absolute;left:0;font-weight:700;color:var(--amber);}
+  .analogy-box>.analogy-img{display:none;}
+  .analogy-box.expanded>.analogy-img{display:block;}
+  .analogy-img img{max-width:360px;width:100%;cursor:zoom-in;transition:max-width 0.25s ease;border-radius:8px;margin-top:10px;}
+  .analogy-img img.zoomed{max-width:100%;cursor:zoom-out;}
+  .analogy-img .img-missing-msg{display:none!important;}
+  .prompt-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}
+  .prompt-toggle:hover{color:var(--text);border-color:var(--text);}
+  .prompt-content{margin-top:10px;padding:10px 14px;background:rgba(0,0,0,0.04);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.65;text-align:left;}
+  .prompt-content[hidden]{display:none;}
+
+  /* LESSON TOOLS */
+  .lesson-tools{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:40px;}
+  .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .tool-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .tool-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .tool-textarea:focus{border-color:var(--blue);}
+  .tool-row{margin-top:8px;display:flex;gap:8px;}
+
+  /* PAGE NAV */
+  .page-nav{display:flex;border-top:2px solid var(--border);background:var(--surface);}
+  .page-nav-btn{flex:1;display:flex;flex-direction:column;gap:4px;padding:16px 28px;text-decoration:none;transition:background 0.15s;cursor:pointer;}
+  .page-nav-btn:hover:not(.page-nav-disabled){background:var(--surface-2);}
+  .page-nav-prev{border-right:1px solid var(--border);}
+  .page-nav-next{text-align:right;}
+  .page-nav-disabled{opacity:0.3;pointer-events:none;}
+  .page-nav-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);display:block;text-transform:uppercase;}
+  .page-nav-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;font-style:italic;color:var(--blue);display:block;}
+
+  /* FOOTER */
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+
+  /* RESPONSIVE */
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:34px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}.section-nav{padding:0 16px;}.top-panels{grid-template-columns:1fr;}.top-panels .qpanel{border-right:none;border-bottom:1px solid var(--border);}.lesson-tools-grid{grid-template-columns:1fr;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     HEADER
+     ══════════════════════════════════════════════════════════ -->
+<header>
+  <div class="header-left">
+    <div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="index.html" style="color:#9bb8e6;text-decoration:none;">Session 17</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Completed Study Guide</span></div>
+    <div class="header-eyebrow"><span class="dot-live"></span> Study Guide · CCNA 200-301</div>
+    <h1>Active-Active <em>Load Balancing</em></h1>
+    <!--
+      ← H1 pattern: plain words first, key noun/phrase in <em>.
+         e.g. "Configure <em>VLANs</em>" or "Understand <em>OSPF</em> Neighbor States"
+    -->
+    <p>Why the secondary FortiGate isn't the idle-capacity fix it looks like — and exactly what crosses the wire between the two boxes.</p>
+    <!--
+      ← One sentence (≤20 words) capturing the core insight of the subtopic.
+         e.g. "How switches use 802.1Q tagging to carry multiple broadcast domains over a single trunk link."
+    -->
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════
+     MOTIVATION BANNER
+     ══════════════════════════════════════════════════════════ -->
+<div class="motivation-banner">
+  <div class="motivation-text">A-A does not split traffic across two boxes — it lends <em>Box A's CPU-expensive work</em> to Box B, one session at a time.</div>
+  <!--
+    ← Bold Playfair statement. Wrap the key phrase in <em>. 1–2 sentences.
+       e.g. "VLANs don't just split a switch — they create <em>independent broadcast domains</em> that share the same physical hardware."
+  -->
+  <p class="motivation-sub">Every endpoint still talks to Box A first. What changes in A-A is what happens to a session <em>after</em> it's matched — and that difference is where most NSE7 candidates get tripped up.</p>
+  <!--
+    ← Smaller supporting sentence. Why this subtopic matters in the bigger picture.
+       e.g. "Every inter-VLAN routing, trunking, and STP topic later in the blueprint assumes you can predict exactly which port belongs to which broadcast domain."
+  -->
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MY QUESTIONS + MY NOTES PANELS (no changes needed here)
+     ══════════════════════════════════════════════════════════ -->
+<div class="top-panels">
+  <div class="qpanel" id="qpanel">
+    <button class="qpanel-header" onclick="toggleQPanel()" id="qpanel-header">
+      <span class="qpanel-title">MY QUESTIONS</span>
+      <span class="qpanel-count" id="qpanel-count">0</span>
+      <span class="qpanel-hint">— click to expand</span>
+      <span class="qpanel-chevron" id="qpanel-chevron">▾</span>
+    </button>
+    <div class="qpanel-body" id="qpanel-body"></div>
+  </div>
+  <div class="notes-panel" id="notes-panel">
+    <button class="notes-panel-header" onclick="toggleNotesPanel()" id="notes-panel-header">
+      <span class="notes-panel-title">MY NOTES</span>
+      <span class="notes-panel-count" id="notes-panel-count">0</span>
+      <span class="notes-panel-hint">— click to expand</span>
+      <span class="notes-panel-chevron" id="notes-panel-chevron">▾</span>
+    </button>
+    <div class="notes-panel-body" id="notes-panel-body"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     STICKY SECTION NAV — one tab per section
+     ══════════════════════════════════════════════════════════ -->
+<nav class="section-nav" id="section-nav">
+  <a class="nav-tab active" href="#section-what-gets-balanced">What Gets Balanced</a><!-- ← e.g. href="#section-vlan-basics" >VLAN Basics -->
+  <a class="nav-tab" href="#section-the-relay-mechanism">The Relay</a>
+  <a class="nav-tab" href="#section-asymmetric-path">Asymmetric Path</a>
+  <a class="nav-tab" href="#section-when-it-makes-sense">Worth It?</a>
+</nav>
+
+<main>
+  <div class="main-content">
+
+    <!-- ══════════════════════════════════════════
+         SECTION 1  (repeat this block per section)
+         ══════════════════════════════════════════ -->
+
+    <!-- THINK FIRST — collapsed by default, user must expand -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · WHAT GETS BALANCED</span>
+        <!-- ← e.g. "THINK FIRST · VLAN BASICS" -->
+      </div>
+      <p class="socratic-insight">Box B sits at single-digit CPU while Box A carries the whole load. The obvious fix looks like flipping to Active-Active. Before accepting that, work out what actually happens to a plain HTTPS session — no UTM profile, just a firewall policy doing flow-based forwarding — the instant A-A is enabled.</p>
+      <!--
+        ← 2–3 sentence framing of WHY these questions matter. Reveal the tension
+           or the gotcha before asking the question.
+      -->
+      <ul class="socratic-questions">
+        <li>A plain firewall-policy session (no UTM) arrives at the cluster. In A-A mode, does it get processed by whichever box has spare CPU, or does it stay exactly where it would in A-P?</li><!-- ← Specific, scenario-driven. Ends with a '?' -->
+        <li>Why would FortiGate bother distributing one category of session and not another — what's actually expensive enough to be worth the overhead of handing it to a second box?</li><!-- ← Second question. Use a third only if genuinely complex. -->
+      </ul>
+      <div class="answer-area" data-section="what-gets-balanced">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">It stays on the primary. Only the primary owns the vMAC, so all ingress traffic lands there regardless of mode. By default, only sessions subject to <strong>proxy-based UTM inspection</strong> are distributed to the secondary — flow-based and no-inspection sessions never leave the primary unless <code>load-balance-all</code> is explicitly enabled.</div>
+            <!-- ← Precise. No hedging. 2–4 sentences. Lead with the core fact. -->
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Plain policy matching, NAT, and flow-based inspection are cheap — largely NP-offloaded, microseconds of CPU. Proxy-based inspection (proxy AV, DLP, explicit web proxy) has to buffer and terminate the session, which is genuinely CPU/memory expensive. That's the only work worth the cost of shipping to a second box.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION CONTENT BLOCK -->
+    <div class="section-block" id="section-what-gets-balanced">
+      <div class="section-label">SECTION 01</div>
+      <h2>What Active-Active Actually <em>Distributes</em></h2>
+      <!-- ← Same em-noun pattern as H1. e.g. "How a Switch Builds Its <em>MAC Address Table</em>" -->
+
+      <!-- Section image — starts compact (260px), click to expand full-width -->
+      <div class="section-img-wrap">
+        <img src="images/s1-what-gets-balanced.png" class="section-img"
+             alt="Diagram showing only proxy-based UTM sessions being distributed from primary to secondary"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">Only proxy-inspected sessions leave the primary — everything else stays put.</p>
+        <!-- Shown only when image is missing: -->
+        <div class="si-placeholder">
+          <span class="si-filename">images/s1-what-gets-balanced.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, warm modern colour palette with cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, no gradients, no 3D. Two identical FortiGate appliances labelled 'Box A' and 'Box B' side by side on a rack. A stream of small envelope icons (plain traffic) flows into Box A and stays there, glowing sage green with a small checkmark. A second stream of envelope icons has a small magnifying-glass badge (proxy-inspected traffic) — these turn coral and an arrow shows a subset physically moving from Box A to Box B, where Box B is shown opening and inspecting them. Clean bold line work, generous spacing, educational composition.</div>
+        </div>
+      </div>
+
+      <!-- Body content: paragraphs, lists, callouts, tables, code blocks -->
+      <p>Active-Active does not divide the cluster's total traffic in half. Every packet from every endpoint still arrives at the primary's virtual MAC — that never changes between A-P and A-A. What A-A adds is a distribution step that happens <em>after</em> the firewall policy match, and only for one category of session.</p>
+      <!-- ← First paragraph: what the concept is, why it exists, how it fits the architecture -->
+      <p>By default, FortiOS only distributes sessions that are subject to <strong>proxy-based inspection</strong> — proxy AV, DLP, explicit web proxy, and similar features that require the session to be buffered and effectively terminated for inspection. Flow-based inspection and plain flow-based policies (the bulk of most firewalls' traffic) are cheap enough that FortiOS doesn't bother distributing them — unless you force it with the <code>load-balance-all</code> setting.</p>
+      <!-- ← Second paragraph: mechanism / how it works in practice -->
+
+      <!-- Optional: use a list for multi-item comparisons or enumerations -->
+      <!--
+      <ul>
+        <li><strong>Item A:</strong> {{ITEM_A_TEXT}}</li>
+        <li><strong>Item B:</strong> {{ITEM_B_TEXT}}</li>
+      </ul>
+      -->
+
+      <!-- Optional callout — use for exam flags, gotchas, or common misconceptions -->
+      <!--
+      <div class="callout">
+        <strong>Exam tip:</strong> {{CALLOUT_TEXT}}
+      </div>
+      -->
+      <!--
+      <div class="callout callout-amber">
+        <strong>Common misconception:</strong> {{CALLOUT_TEXT}}
+      </div>
+      -->
+      <!--
+      <div class="callout callout-green">
+        <strong>Remember:</strong> {{CALLOUT_TEXT}}
+      </div>
+      -->
+
+      <!-- Optional CLI code block -->
+      <!--
+      <div class="code-block">
+        <div class="code-label">Cisco IOS CLI</div>
+        <pre><code>Switch> enable
+Switch# configure terminal
+Switch(config)# {{CMD_1}}
+Switch(config-if)# {{CMD_2}}
+Switch(config-if)# end
+Switch# write memory</code></pre>
+      </div>
+      -->
+
+      <!-- Optional data table -->
+      <!--
+      <table class="data-table">
+        <thead><tr><th>{{COL1}}</th><th>{{COL2}}</th><th>{{COL3}}</th></tr></thead>
+        <tbody>
+          <tr><td>{{VAL}}</td><td>{{VAL}}</td><td>{{VAL}}</td></tr>
+        </tbody>
+      </table>
+      -->
+
+      <!-- Optional analogy — only for abstract/counterintuitive concepts -->
+      <!--
+      <div class="analogy-box">
+        <div class="analogy-label">Analogy</div>
+        <div class="analogy-text">
+          <p class="analogy-summary">{{ANALOGY_ONE_LINER}}</p>
+          <ul>
+            <li>{{ANALOGY_BULLET_1}}</li>
+            <li>{{ANALOGY_BULLET_2}}</li>
+            <li>{{ANALOGY_BULLET_3}}</li>
+          </ul>
+        </div>
+        <div class="analogy-img" style="margin-top:14px;background:rgba(255,255,255,0.5);border-radius:10px;padding:14px;text-align:center;">
+          <img src="images/a1-{{ANALOGY_SLUG}}.png" alt="{{ANALOGY_IMG_ALT}}"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='block';"
+               style="max-width:100%;border-radius:8px;display:block;margin:0 auto 4px;">
+          <p class="img-caption" style="margin-bottom:8px;">{{ANALOGY_CAPTION}}</p>
+          <div class="img-missing-msg" style="display:none;padding:24px 12px;background:rgba(0,0,0,0.03);border:1px dashed #f3d68a;border-radius:8px;color:#5c3d09;font-size:14px;margin-bottom:10px;font-family:'Cormorant Garamond',serif;">📷 <strong>images/a1-{{ANALOGY_SLUG}}.png</strong> — add this image</div>
+          <button class="prompt-toggle" onclick="togglePrompt(this)" type="button">▾ Show analogy image prompt</button>
+          <div class="prompt-content" hidden>{{ANALOGY_IMG_PROMPT}}</div>
+        </div>
+      </div>
+      -->
+
+      <!-- Mental note — required, one per section -->
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">A-A load-balances <strong>proxy-based UTM sessions only</strong>, by default. Plain flow-based traffic — the majority of most firewalls' load — never leaves the primary unless <code>load-balance-all</code> is explicitly enabled. If a candidate's traffic mix is mostly flow-based, flipping to A-A buys almost nothing.</div>
+          <!--
+            ← 2–3 sentences. Lead with a concrete number, ordered list, or key relationship.
+               e.g. "An access port belongs to exactly one VLAN and strips/adds no 802.1Q tag.
+               A trunk carries many VLANs and tags every frame except those in the native VLAN —
+               mismatched native VLANs on either end cause CDP/STP errors but traffic may still pass."
+          -->
+        </div>
+      </div>
+    </div>
+
+    <!-- LESSON TOOLS — required after every section block -->
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-what-gets-balanced" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-what-gets-balanced','What Gets Balanced')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-what-gets-balanced" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-what-gets-balanced')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 2  (duplicate and rename S1→S2)
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · THE RELAY</span>
+      </div>
+      <p class="socratic-insight">A session is eligible for offload. The primary has to physically hand a live, in-progress packet to the secondary. That's not the same job as session-sync-dev, which just mirrors the session table for failover continuity — this is active, real-time forwarding of a session the primary is still alive and responsible for.</p>
+      <ul class="socratic-questions">
+        <li>Is the mechanism carrying this forwarded traffic the same session-sync-dev link used for HA session-table mirroring, or something else entirely?</li>
+        <li>If the decision of which box handles a session has to be made once and stay fixed for the life of that session, what can the primary hash on to guarantee a consistent, stable result?</li>
+      </ul>
+      <div class="answer-area" data-section="the-relay-mechanism">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Something else. FGCP traffic — including this forwarding — rides over the HA heartbeat interconnect, but uses <strong>Ethernet type 0x8891</strong>, distinct from the 0x8890 hello frames and completely separate from session-sync-dev, which mirrors the session table for standby failover continuity, not live session forwarding.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">The 4-tuple: source IP, destination IP, source port, destination port. These are the only header fields guaranteed identical on every packet of a TCP session from SYN to FIN. Hashing on anything that varies per-packet (like the IP Identification field) would scatter one session's packets across boxes mid-stream, which is impossible to reconcile.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-the-relay-mechanism">
+      <div class="section-label">SECTION 02</div>
+      <h2>How the Handoff Actually <em>Happens</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/s2-the-relay-mechanism.png" class="section-img" alt="Primary forwarding a session to the secondary using an 0x8891 encapsulated frame over the heartbeat link"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">0x8891 frames ride the heartbeat link but carry real session data, not hello packets.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/s2-the-relay-mechanism.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, warm modern colour palette, cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, no gradients, no 3D. Two FortiGate boxes connected by a single labelled cable marked 'heartbeat link'. Two small parallel lanes travel along the cable: one lane carries tiny heart-shaped icons labelled '0x8890 hello', the other carries small envelope icons labelled '0x8891 forwarded session' moving from Box A toward Box B. A separate, clearly distinct dashed cable below is labelled 'session-sync-dev — table mirror only', visually disconnected from the forwarding lane to show it's a different job. Clean bold line work, generous spacing.</div>
+        </div>
+      </div>
+      <p>The offload decision happens once, at the SYN, because that's the earliest point where a policy match exists and the only guaranteed-stable identifier — the 4-tuple — is available. FortiOS hashes on this 4-tuple (or a variant of it, depending on the configured <code>schedule</code>) to pick a secondary and keeps that mapping fixed for the life of the session. This is per-session distribution, not per-packet load balancing.</p>
+      <p>The actual forwarded packet travels over the same physical interconnect as heartbeat, but as a distinct Ethernet type — 0x8891 — separate from the 0x8890 hello frames and entirely separate from session-sync-dev (which only mirrors session-table state for failover, and is a passive backup copy, not live traffic). Confusing these three is one of the most common exam distractors in this topic.</p>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Three distinct jobs, easy to conflate: <strong>0x8890</strong> = heartbeat hello (alive/dead, election). <strong>0x8891</strong> = FGCP traffic redistribution (the actual A-A session forwarding). <strong>session-sync-dev</strong> = passive session-table mirroring for failover, unrelated to A-A forwarding. The offload decision itself is a one-time 4-tuple hash at the SYN — never re-evaluated mid-session.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-the-relay-mechanism" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-the-relay-mechanism','The Relay')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-the-relay-mechanism" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-the-relay-mechanism')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 3  (duplicate S1 block, rename to S3)
+         Add more sections if needed (up to 5)
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · ASYMMETRIC PATH</span>
+      </div>
+      <p class="socratic-insight">The natural assumption is that once Box B finishes inspecting a session, it hands the result back to Box A, which forwards it out — a clean round trip through the primary. For proxy-based sessions, that assumption is wrong, and the real behaviour is one of the most-tested nuances in this whole topic.</p>
+      <ul class="socratic-questions">
+        <li>If you ran a packet capture on Box A's interface for a proxy-inspected session that completed successfully, what would you actually see?</li>
+        <li>What does this mean for how you troubleshoot a session that looks 'stuck' or 'dropped' on the primary in an A-A cluster?</li>
+      </ul>
+      <div class="answer-area" data-section="asymmetric-path">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Only the initial SYN, with no reply. Once Box A forwards the SYN to Box B via the 0x8891 frame, Box B replies to the client <strong>directly</strong>, using its own physical MAC — and talks to the server directly too. Box A never sees the SYN/ACK, the rest of the handshake, or any subsequent packet in that session.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">A single-box capture is not trustworthy evidence in A-A. A SYN with no visible reply on Box A does not mean the session failed — it may have completed perfectly on Box B. Diagnosing a session in an A-A cluster requires knowing to check <strong>both</strong> boxes, not just the primary where the traffic first arrived.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-asymmetric-path">
+      <div class="section-label">SECTION 03</div>
+      <h2>The Asymmetric <em>Return Path</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/s3-asymmetric-path.png" class="section-img" alt="Secondary replying directly to the client and server, bypassing the primary for the rest of the session"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">After the handoff, Box B owns the rest of the conversation — Box A never sees it again.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/s3-asymmetric-path.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, warm modern colour palette, cream background, coral accents, sage greens, soft brown outlines, no gradients, no 3D. A network engineer stands in front of a monitor showing a packet capture window with a single lonely SYN packet and a large question mark, captured from 'Box A'. Behind them, a second smaller inset screen shows Box B calmly completing a full green checkmarked TCP handshake with a client icon and a server icon, with dashed direct-connection lines bypassing Box A entirely. Engineer has a puzzled but curious expression, one eyebrow raised. Clean bold line work, generous spacing, educational composition.</div>
+        </div>
+      </div>
+      <p>For proxy-based inspection sessions, Box A's involvement ends after the initial forward. Box B effectively terminates the proxy session on both sides — replying to the client's SYN directly with its own physical MAC, and initiating its own connection to the server. The client's return traffic never routes back through Box A.</p>
+      <p>This is a genuine operational cost, not just an exam trivia point: it makes single-box packet captures unreliable, and it creates real asymmetric-path risk for anything upstream that expects symmetric flows (some stateful devices, WAN optimizers, certain routing/security appliances). This is precisely why the session outline flagged 'harder troubleshooting' and 'asymmetric path risk' as A-A's core drawbacks.</p>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">For proxy-inspected sessions, the secondary replies to <strong>both</strong> the client and the server directly, using its own physical MAC — Box A's job ends after the initial 0x8891 forward. A single-box capture in A-A is not reliable evidence of failure; always assume you may need to check the other cluster member too.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-asymmetric-path" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-asymmetric-path','Asymmetric Path')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-asymmetric-path" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-asymmetric-path')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+  <!-- ══════════════════════════════════════════
+         SECTION 3  (duplicate S1 block, rename to S4)
+         Add more sections if needed (up to 5)
+         ══════════════════════════════════════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · WHEN IS IT WORTH IT</span>
+      </div>
+      <p class="socratic-insight">Priya wants Box B doing real work because it's sitting idle. You now know A-A only offloads proxy-based UTM sessions, that the primary always sees every packet regardless, and that A-A adds real troubleshooting cost. Time to give her the actual senior-engineer answer.</p>
+      <ul class="socratic-questions">
+        <li>Does flipping to A-A meaningfully reduce Box A's CPU load — always, sometimes, or rarely? What determines the answer?</li>
+        <li>In a two-node cluster specifically, does the <code>schedule</code> setting (round-robin, ip, ipport, leastconnection...) actually do anything meaningful?</li>
+      </ul>
+      <div class="answer-area" data-section="when-it-makes-sense">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">It depends entirely on the traffic mix. If a meaningful share of sessions are proxy-inspected, A-A genuinely frees real CPU on Box A by handing that expensive work to Box B. If the load is mostly plain flow-based traffic, A-A offloads almost nothing — Fortinet's own guidance is explicit that A-A's goal is spending idle secondary capacity, not equalizing load; the primary will always carry more total traffic than any secondary.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Almost nothing. Every <code>schedule</code> option (round-robin, leastconnection, ip, ipport, weight-round-robin, random) exists to answer 'which of several secondaries gets this session' — with only one possible secondary, the answer is always the same box no matter which algorithm is configured. The setting only becomes meaningful once a cluster has more than two members.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-when-it-makes-sense">
+      <div class="section-label">SECTION 04</div>
+      <h2>When A-A Makes Sense — <em>and When It Doesn't</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/s3-when-it-makes-sense.png" class="section-img" alt="Decision comparison between a proxy-heavy firewall (A-A worth it) and a flow-heavy firewall (A-A adds cost with little benefit)"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">A-A's value is entirely a function of how much of your traffic is proxy-inspected.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/s3-when-it-makes-sense.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, warm modern colour palette, cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, no gradients, no 3D. Split composition: left side shows a firewall with many coral 'proxy inspection' icons flowing to a helpful, busy Box B labelled 'worth it'; right side shows a near-identical firewall with mostly sage-green 'flow-based' icons that all stay stuck at Box A, with Box B shown idle and slightly sleepy, labelled 'limited benefit'. A small scale/balance icon sits between the two halves. Clean bold line work, generous spacing, educational composition.</div>
+        </div>
+      </div>
+      <p>A-A is not a load-balancing feature in the traffic-engineering sense — Fortinet's own material is explicit that its purpose is to spend otherwise-idle CPU and memory on the secondary, not to equalize traffic across the cluster. The primary always sees more total traffic than any secondary, because ingress (and for most session types, egress) never leaves it.</p>
+      <p>That makes the honest answer to 'should we flip to A-A' entirely traffic-mix-dependent: genuinely valuable if a meaningful share of sessions are proxy-inspected, marginal if the load is mostly plain flow-based traffic — and either way, it comes with a real operational cost in troubleshooting complexity and asymmetric-path risk that has to be weighed against the CPU gain.</p>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">A-A's stated goal is <strong>using idle secondary capacity</strong>, not traffic-engineering load balancing — the primary always carries more traffic than any secondary. In a two-node cluster, the <code>schedule</code> algorithm is functionally irrelevant since there's only one possible secondary to send a session to.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-when-it-makes-sense" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-when-it-makes-sense','Worth It?')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-when-it-makes-sense" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-when-it-makes-sense')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</main>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE NAV — links to prev/next subtopic or chapter hub
+     If at the start: prev href="index.html", label "← BACK TO HUB", title "Chapter NN Hub"
+     If at the end:   next href="index.html", label "CHAPTER HUB →", title "Chapter NN Hub"
+     ══════════════════════════════════════════════════════════ -->
+<div class="page-nav">
+  <a class="page-nav-btn page-nav-prev" href="session-16-fgcp-fundamentals-a-p.html">
+    <span class="page-nav-label">← BACK</span>
+    <span class="page-nav-title">Session 16 — FGCP Fundamentals (A-P)</span>
+  </a>
+  <a class="page-nav-btn page-nav-next" href="index.html">
+    <span class="page-nav-label">NEXT →</span>
+    <span class="page-nav-title">Session 18 (TBD)</span>
+  </a>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     FOOTER
+     ══════════════════════════════════════════════════════════ -->
+<footer>
+  CCNA 200-301<span>.</span> Chapter 04<span>.</span> Subtopic 17<span>.</span> FGCP Active-Active and Load Balancing
+</footer>
+
+<!-- ══════════════════════════════════════════════════════════
+     SCRIPT — update PAGE_KEY and SECTIONS only; rest is fixed
+     ══════════════════════════════════════════════════════════ -->
+<script>
+// ← PAGE_KEY must be unique across all pages. Format: ccna-chNN-subNN-slug
+const PAGE_KEY = 'nse7-ef76-s17-fgcp-aa';
+// e.g. 'ccna-ch04-sub02-vlans'
+
+// ← One entry per section. Key = the id on the .section-block div (without #).
+const SECTIONS = {
+  'section-what-gets-balanced': 'What Gets Balanced',
+  'section-the-relay-mechanism': 'The Relay',
+  'section-asymmetric-path': 'Asymmetric Path',
+  'section-when-it-makes-sense': 'Worth It?',
+};
+
+/* ── Everything below is fixed — do not modify ── */
+document.querySelectorAll('.socratic-header').forEach(function(h) {
+  h.addEventListener('click', function() { h.closest('.socratic-block').classList.toggle('soc-open'); });
+});
+function getQArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-qs') || '[]'); }
+function saveQArr(qs) { localStorage.setItem(PAGE_KEY+'-qs', JSON.stringify(qs)); }
+function addQuestion(key, name) {
+  const ta = document.getElementById('q-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const qs = getQArr(); qs.push({id: Date.now(), section: key, sectionName: name, text});
+  saveQArr(qs); ta.value = ''; renderQPanel();
+  if (!document.getElementById('qpanel-body').classList.contains('open')) toggleQPanel();
+}
+function deleteQ(id) { saveQArr(getQArr().filter(q => q.id !== id)); renderQPanel(); }
+function toggleQPanel() {
+  const body = document.getElementById('qpanel-body');
+  const header = document.getElementById('qpanel-header');
+  const chevron = document.getElementById('qpanel-chevron');
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-qpanel-open', open);
+}
+function renderQPanel() {
+  const qs = getQArr();
+  const count = document.getElementById('qpanel-count');
+  if (count) { count.textContent = qs.length; count.style.display = qs.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.qpanel-hint');
+  if (hint) hint.textContent = qs.length ? `— ${qs.length} question${qs.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('qpanel-body'); if (!body) return;
+  if (!qs.length) { body.innerHTML = '<p class="no-questions">No questions yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  qs.forEach(q => { if (groups[q.section]) groups[q.section].push(q); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(q => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${q.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteQ(${q.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function getNotesArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-notes') || '[]'); }
+function saveNotesArr(ns) { localStorage.setItem(PAGE_KEY+'-notes', JSON.stringify(ns)); }
+function addNote(key) {
+  const ta = document.getElementById('note-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const ns = getNotesArr(); ns.push({id: Date.now(), section: key, sectionName: SECTIONS[key]||key, text});
+  saveNotesArr(ns); ta.value = ''; renderNotesPanel();
+  if (!document.getElementById('notes-panel-body').classList.contains('open')) toggleNotesPanel();
+}
+function deleteNote(id) { saveNotesArr(getNotesArr().filter(n => n.id !== id)); renderNotesPanel(); }
+function toggleNotesPanel() {
+  const body = document.getElementById('notes-panel-body');
+  const header = document.getElementById('notes-panel-header');
+  const chevron = document.getElementById('notes-panel-chevron');
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-notes-panel-open', open);
+}
+function renderNotesPanel() {
+  const ns = getNotesArr();
+  const count = document.getElementById('notes-panel-count');
+  if (count) { count.textContent = ns.length; count.style.display = ns.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.notes-panel-hint');
+  if (hint) hint.textContent = ns.length ? `— ${ns.length} note${ns.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('notes-panel-body'); if (!body) return;
+  if (!ns.length) { body.innerHTML = '<p class="no-questions">No notes yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  ns.forEach(n => { if (groups[n.section]) groups[n.section].push(n); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(n => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteNote(${n.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function saveSocAnswer(btn) {
+  const area = btn.closest('.answer-area');
+  const ta = area.querySelector('.answer-textarea');
+  if (!ta.value.trim()) { ta.focus(); return; }
+  const key = PAGE_KEY+'-socans-'+area.dataset.section;
+  try { localStorage.setItem(key, ta.value); } catch(e) {}
+  ta.disabled = true; btn.textContent = '✓ Answer saved'; btn.disabled = true;
+  const seeBtn = area.querySelector('.btn-see-answer');
+  seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+}
+function revealSocAnswer(btn) {
+  if (btn.disabled) return;
+  const answers = btn.closest('.answer-area').querySelector('.model-answers');
+  const isHidden = answers.style.display === 'none' || !answers.style.display;
+  answers.style.display = isHidden ? 'block' : 'none';
+  btn.textContent = isHidden ? '▲ Hide Model Answer' : '💡 See Model Answer';
+}
+function togglePrompt(btn) {
+  const c = btn.nextElementSibling;
+  const isHidden = c.hasAttribute('hidden');
+  if (isHidden) { c.removeAttribute('hidden'); btn.textContent = '▴ Hide prompt'; }
+  else { c.setAttribute('hidden', ''); btn.textContent = '▾ Show image prompt'; }
+}
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+document.addEventListener('DOMContentLoaded', function() {
+  renderQPanel(); renderNotesPanel();
+  if (localStorage.getItem(PAGE_KEY+'-qpanel-open') === 'true') toggleQPanel();
+  if (localStorage.getItem(PAGE_KEY+'-notes-panel-open') === 'true') toggleNotesPanel();
+  document.querySelectorAll('.answer-area').forEach(function(area) {
+    const key = PAGE_KEY+'-socans-'+area.dataset.section;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const ta = area.querySelector('.answer-textarea'); ta.value = saved; ta.disabled = true;
+        const addBtn = area.querySelector('.btn-add-answer'); addBtn.textContent = '✓ Answer saved'; addBtn.disabled = true;
+        const seeBtn = area.querySelector('.btn-see-answer'); seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+      }
+    } catch(e) {}
+  });
+  document.querySelectorAll('.analogy-box').forEach(function(box) {
+    if (box.dataset.collapsibleInit) return;
+    box.dataset.collapsibleInit = '1';
+    box.classList.add('expanded');
+    const label = box.querySelector(':scope > .analogy-label');
+    if (label) label.addEventListener('click', () => box.classList.toggle('expanded'));
+  });
+  document.querySelectorAll('.analogy-img img').forEach(function(img) {
+    if (img.dataset.zoomInit) return;
+    img.dataset.zoomInit = '1';
+    img.addEventListener('click', () => img.classList.toggle('zoomed'));
+  });
+  document.querySelectorAll('.section-img').forEach(function(img) {
+    img.addEventListener('click', () => img.classList.toggle('si-expanded'));
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+==============================================================================
+SECTION-IMAGE PROMPTS — session-17-fgcp-active-active/complete.html
+Prompts: 4
+==============================================================================
+
+------------------------------------------------------------------------------
+SOURCE: complete.html
+------------------------------------------------------------------------------
+
+[1] filename (as declared in HTML): images/s1-what-gets-balanced.png
+
+Flat minimalistic but highly detailed cartoon illustration, warm modern colour palette with cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, no gradients, no 3D. Two identical FortiGate appliances labelled 'Box A' and 'Box B' side by side on a rack. A stream of small envelope icons (plain traffic) flows into Box A and stays there, glowing sage green with a small checkmark. A second stream of envelope icons has a small magnifying-glass badge (proxy-inspected traffic) — these turn coral and an arrow shows a subset physically moving from Box A to Box B, where Box B is shown opening and inspecting them. Clean bold line work, generous spacing, educational composition.
+
+
+[2] filename (as declared in HTML): images/s2-the-relay-mechanism.png
+
+Flat minimalistic but highly detailed cartoon illustration, warm modern colour palette, cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, no gradients, no 3D. Two FortiGate boxes connected by a single labelled cable marked 'heartbeat link'. Two small parallel lanes travel along the cable: one lane carries tiny heart-shaped icons labelled '0x8890 hello', the other carries small envelope icons labelled '0x8891 forwarded session' moving from Box A toward Box B. A separate, clearly distinct dashed cable below is labelled 'session-sync-dev — table mirror only', visually disconnected from the forwarding lane to show it's a different job. Clean bold line work, generous spacing.
+
+
+[3] filename (as declared in HTML): images/s3-asymmetric-path.png
+
+Flat minimalistic but highly detailed cartoon illustration, warm modern colour palette, cream background, coral accents, sage greens, soft brown outlines, no gradients, no 3D. A network engineer stands in front of a monitor showing a packet capture window with a single lonely SYN packet and a large question mark, captured from 'Box A'. Behind them, a second smaller inset screen shows Box B calmly completing a full green checkmarked TCP handshake with a client icon and a server icon, with dashed direct-connection lines bypassing Box A entirely. Engineer has a puzzled but curious expression, one eyebrow raised. Clean bold line work, generous spacing, educational composition.
+
+
+[4] filename (as declared in HTML): images/s3-when-it-makes-sense.png
+
+Flat minimalistic but highly detailed cartoon illustration, warm modern colour palette, cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, no gradients, no 3D. Split composition: left side shows a firewall with many coral 'proxy inspection' icons flowing to a helpful, busy Box B labelled 'worth it'; right side shows a near-identical firewall with mostly sage-green 'flow-based' icons that all stay stuck at Box A, with Box B shown idle and slightly sleepy, labelled 'limited benefit'. A small scale/balance icon sits between the two halves. Clean bold line work, generous spacing, educational composition.
+
