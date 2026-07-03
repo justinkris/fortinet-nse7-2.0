@@ -4765,7 +4765,7 @@ def render_landing(extras, completions, standalone_extras):
         ("extras.html#nibbles",   "NIBBLE",    "chip-nibble",   "Nibbles",                 f"{n_nibbles} short reference cards / cheat sheets."),
         ("completed-sessions.html", "COMPLETED", "chip-complete", "Completed Study Guides", f"{n_completed} of {n_sessions} sessions finished — polished HTML study guides."),
         ("labs/index.html",       "LABS",      "chip-labs",     "Hands-On Labs",           (f"{sum(1 for l in LABS if not l.get('concept_only') and not l.get('is_orientation'))} hands-on labs + orientation across the shared topology — Socratic predict → run → verify." if LABS else "Empty — feed a lab guide PDF and run /build-lab-plan.")),
-        ("extras.html",           "ALL",       "chip-all",      "Extras (all)",            f"{n_extras_total} items — combined guides · bites · nibbles."),
+        ("all-resources.html",    "SEARCH",    "chip-all",      "All Study Resources",     f"Search across every session, guide, bite, nibble, completed guide, and lab — {n_sessions + n_extras_total + n_completed + len(LABS)} items."),
     ]
 
     tiles_html = "".join(
