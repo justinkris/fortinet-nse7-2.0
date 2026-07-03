@@ -1,7 +1,0 @@
-==============================================================================
-SECTION-IMAGE PROMPTS — session-03-enterprise-deployment-patterns/guides
-Prompts: 0
-==============================================================================
-
-No image placeholders found in this folder. Add <div class="si-placeholder"> blocks to any HTML file here and re-run the extractor to populate this file.
-
