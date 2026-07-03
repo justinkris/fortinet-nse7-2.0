@@ -4002,6 +4002,284 @@ def render_extras_hub(extras, standalone_extras=None):
     )
     (ROOT / "extras.html").write_text(html, encoding="utf-8")
 
+
+# ---------------------------------------------------------------------------
+# ALL STUDY RESOURCES HUB (all-resources.html) — searchable across every artifact
+# ---------------------------------------------------------------------------
+
+def render_all_resources_hub(extras, completions, standalone_extras):
+    """Emit all-resources.html — full-text-searchable catalog of every session,
+    guide, bite, nibble, completed study guide, and lab. The user answers
+    'NP7' in the search bar and every matching item across the six sections
+    reveals itself in place; everything else hides."""
+    standalone_extras = standalone_extras or []
+
+    def hay(*parts):
+        """Concatenate + lowercase + html-escape a searchable haystack."""
+        buf = []
+        for p in parts:
+            if p is None:
+                continue
+            if isinstance(p, (list, tuple)):
+                buf.extend(str(x) for x in p if x)
+            else:
+                buf.append(str(p))
+        return html_escape(" ".join(buf).lower(), quote=True) if False else (
+            " ".join(buf).lower().replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
+        )
+
+    singular = lambda label: label[:-1] if label.endswith("s") else label
+    phase_by_num = {p["num"]: p for p in PHASES}
+
+    # 1. SESSIONS
+    session_cards = []
+    for s in SESSIONS:
+        phase = phase_by_num.get(s["phase"], {})
+        phase_label = phase.get("title", "").split(":")[0]
+        preview = (s.get("why") or "").split(".")[0].strip()
+        haystack = hay(
+            s.get("title"), s.get("why"), s.get("story"), s.get("goal"),
+            phase.get("title"), s.get("concepts"), s.get("objectives"),
+        )
+        completion_hint = ""
+        if completions.get(s["num"], {}).get("has_complete"):
+            completion_hint = '<span class="hub-card-hint">Completed</span>'
+        session_cards.append(
+            f'<a class="hub-card" data-kind="session" data-search="{haystack}" '
+            f'href="sessions/{session_filename(s)}">'
+            f'<span class="hub-card-chip chip-session">Session</span>'
+            f'<span class="hub-card-sub">Session {s["num"]:02d} · {html_escape(phase_label)}</span>'
+            f'<span class="hub-card-title">{html_escape(s["title"])}</span>'
+            f'{f"<span class=hub-card-preview>{html_escape(preview)}.</span>" if preview else ""}'
+            f'{completion_hint}'
+            f'</a>'
+        )
+
+    sections = [(
+        "sessions", "Sessions",
+        f"All {len(SESSIONS)} Socratic sessions — search matches titles, why-blocks, concepts, story, and blueprint codes.",
+        "".join(session_cards),
+    )]
+
+    # 2. GUIDES / 3. BITES / 4. NIBBLES — session-linked + standalone
+    kind_meta = [
+        ("guides", "Guides", "chip-guide",
+         "Long-form companion pages that dive deeper than a session can."),
+        ("bites", "Bites", "chip-bite",
+         "Focused single-concept explainers — nail down one thing after a session."),
+        ("nibbles", "Nibbles", "chip-nibble",
+         "Short reference cards / cheat sheets — quick lookup during review or labs."),
+    ]
+    for kind, label, chip_class, lede in kind_meta:
+        cards = []
+        for s in SESSIONS:
+            for slug, title, href in (extras.get(s["num"], {}).get(kind) or []):
+                haystack = hay(
+                    title, singular(label),
+                    s.get("title"), s.get("why"), s.get("concepts"),
+                    s.get("objectives"),
+                )
+                session_dir = f"session-{s['num']:02d}-{s['slug']}"
+                cards.append(
+                    f'<a class="hub-card" data-kind="{singular(label).lower()}" '
+                    f'data-search="{haystack}" '
+                    f'href="sessions/{session_dir}/{html_escape(href)}">'
+                    f'<span class="hub-card-chip {chip_class}">{singular(label)}</span>'
+                    f'<span class="hub-card-sub">Session {s["num"]:02d}</span>'
+                    f'<span class="hub-card-title">{html_escape(title)}</span>'
+                    f'</a>'
+                )
+        for entry in standalone_extras:
+            e = entry["topic"]
+            for slug, title, href in entry.get(kind, []):
+                haystack = hay(title, singular(label), e.get("title"))
+                topic_dir = f"extras-{e['num']:02d}-{e['slug']}"
+                cards.append(
+                    f'<a class="hub-card" data-kind="{singular(label).lower()}" '
+                    f'data-search="{haystack}" '
+                    f'href="extras/{topic_dir}/{html_escape(href)}">'
+                    f'<span class="hub-card-chip {chip_class}">{singular(label)}</span>'
+                    f'<span class="hub-card-sub">Extras {e["num"]:02d} · {html_escape(e["title"])}</span>'
+                    f'<span class="hub-card-title">{html_escape(title)}</span>'
+                    f'</a>'
+                )
+        sections.append((kind, label, lede, "".join(cards)))
+
+    # 5. COMPLETED
+    completed_cards = []
+    for s in SESSIONS:
+        entry = completions.get(s["num"])
+        if not (entry and entry.get("has_complete")):
+            continue
+        haystack = hay(s.get("title"), "completed study guide",
+                       s.get("why"), s.get("concepts"))
+        session_dir = f"session-{s['num']:02d}-{s['slug']}"
+        summary_hint = (
+            '<span class="hub-card-hint">Recap available</span>'
+            if entry.get("has_summary") else ""
+        )
+        completed_cards.append(
+            f'<a class="hub-card" data-kind="completed" data-search="{haystack}" '
+            f'href="sessions/{session_dir}/complete.html">'
+            f'<span class="hub-card-chip chip-complete">Completed</span>'
+            f'<span class="hub-card-sub">Session {s["num"]:02d}</span>'
+            f'<span class="hub-card-title">{html_escape(s["title"])}</span>'
+            f'{summary_hint}'
+            f'</a>'
+        )
+    sections.append((
+        "completed", "Completed Study Guides",
+        "Polished HTML study guides produced at the end of each Socratic session.",
+        "".join(completed_cards),
+    ))
+
+    # 6. LABS
+    lab_cards = []
+    for l in LABS:
+        # Cross-link to any prereq sessions so their concepts feed the lab's haystack.
+        prereq_sessions = [
+            _session_by_num(n) for n in (l.get("prereqs", {}) or {}).get("sessions", [])
+        ]
+        prereq_bits = []
+        for ps in prereq_sessions:
+            if ps:
+                prereq_bits.extend([ps.get("title"), ps.get("concepts")])
+        haystack = hay(
+            l.get("title"), "lab hands-on",
+            l.get("goal"), l.get("learn_targets"),
+            *prereq_bits,
+        )
+        lab_num = ("Orientation" if l.get("is_orientation")
+                   else f"Lab {l['num']:02d}")
+        lab_cards.append(
+            f'<a class="hub-card" data-kind="lab" data-search="{haystack}" '
+            f'href="labs/{lab_filename(l)}">'
+            f'<span class="hub-card-chip chip-lab">Lab</span>'
+            f'<span class="hub-card-sub">{lab_num}</span>'
+            f'<span class="hub-card-title">{html_escape(l["title"])}</span>'
+            f'</a>'
+        )
+    sections.append((
+        "labs", "Hands-On Labs",
+        "Predict → run → verify labs across the shared topology.",
+        "".join(lab_cards),
+    ))
+
+    # Assemble each section block
+    total_cards = 0
+    sections_html = []
+    for sid, label, lede, cards_html in sections:
+        card_count = cards_html.count('<a class="hub-card"')
+        total_cards += card_count
+        if card_count == 0:
+            body = f'<div class="empty-state">No {label.lower()} yet.</div>'
+        else:
+            body = f'<div class="card-grid">{cards_html}</div>'
+        sections_html.append(
+            f'<div class="anchor-section" id="{sid}" data-section="{sid}" data-total="{card_count}">'
+            f'<h2>{html_escape(label)} <span class="section-count" data-count="{card_count}">{card_count}</span></h2>'
+            f'<p class="section-lede">{lede}</p>'
+            f'<div class="section-empty" style="display:none;">'
+            f'<div class="empty-state">No {label.lower()} match your search.</div>'
+            f'</div>'
+            f'{body}'
+            f'</div>'
+        )
+
+    extra_css = """
+<style>
+  .search-bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 18px;margin-bottom:28px;box-shadow:0 8px 20px -18px rgba(10,24,56,0.24);}
+  .search-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);}
+  #resource-search{flex:1;background:var(--surface-2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-family:'Outfit',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .15s, box-shadow .15s;}
+  #resource-search:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(30,64,175,0.16);}
+  .search-summary{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:var(--text-muted);white-space:nowrap;}
+  .search-clear{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:6px 12px;border-radius:8px;cursor:pointer;transition:color .15s, border-color .15s;}
+  .search-clear:hover{color:var(--text);border-color:var(--text);}
+  .search-clear[hidden]{display:none;}
+  .card-hidden{display:none !important;}
+  .section-dim{opacity:0.75;}
+  .anchor-section h2{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .section-count{display:inline-block;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.06em;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:2px 10px;}
+  .hub-card-preview{font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.45;}
+  .chip-session{background:var(--blue-light);color:var(--blue);border-color:var(--blue-border);}
+  .chip-lab{background:#ccfbf1;color:#0f766e;border-color:#5eead4;}
+</style>
+""".strip()
+
+    search_html = (
+        '<div class="search-bar">'
+        '<label for="resource-search" class="search-label">Search</label>'
+        '<input type="search" id="resource-search" '
+        'placeholder="Type a topic like NP7, ADVPN, OSPF, ADOM…" '
+        'autocomplete="off" spellcheck="false">'
+        '<button type="button" class="search-clear" id="search-clear" hidden>Clear</button>'
+        '<span class="search-summary" id="search-summary"></span>'
+        '</div>'
+    )
+
+    search_js = """
+<script>
+(function() {
+  const input = document.getElementById('resource-search');
+  const summary = document.getElementById('search-summary');
+  const clearBtn = document.getElementById('search-clear');
+  const cards = Array.from(document.querySelectorAll('.hub-card[data-search]'));
+  const sections = Array.from(document.querySelectorAll('.anchor-section[data-section]'));
+  const total = cards.length;
+
+  function tokenize(q) { return q.toLowerCase().trim().split(/\\s+/).filter(Boolean); }
+  function matches(haystack, terms) {
+    for (let i = 0; i < terms.length; i++) if (haystack.indexOf(terms[i]) === -1) return false;
+    return true;
+  }
+  function apply(q) {
+    const terms = tokenize(q);
+    let shown = 0;
+    cards.forEach(function(card) {
+      const ok = terms.length === 0 || matches(card.dataset.search || '', terms);
+      card.classList.toggle('card-hidden', !ok);
+      if (ok) shown++;
+    });
+    sections.forEach(function(sec) {
+      const visible = sec.querySelectorAll('.hub-card:not(.card-hidden)').length;
+      const grid = sec.querySelector('.card-grid');
+      const emptyBanner = sec.querySelector('.section-empty');
+      const empty = visible === 0 && terms.length > 0;
+      sec.classList.toggle('section-dim', empty);
+      if (grid) grid.style.display = empty ? 'none' : 'grid';
+      if (emptyBanner) emptyBanner.style.display = empty ? 'block' : 'none';
+      const countEl = sec.querySelector('[data-count]');
+      if (countEl) {
+        countEl.textContent = terms.length ? (visible + ' / ' + sec.dataset.total) : sec.dataset.total;
+      }
+    });
+    clearBtn.hidden = terms.length === 0;
+    if (terms.length === 0) summary.textContent = total + ' items across ' + sections.length + ' categories';
+    else if (shown === 0) summary.textContent = 'No matches for "' + q.trim() + '"';
+    else summary.textContent = shown + ' of ' + total + ' items match';
+  }
+  input.addEventListener('input', function() { apply(input.value); });
+  clearBtn.addEventListener('click', function() { input.value = ''; input.focus(); apply(''); });
+  const m = location.hash.match(/[#&]q=([^&]+)/);
+  if (m) input.value = decodeURIComponent(m[1]).replace(/\\+/g, ' ');
+  apply(input.value);
+})();
+</script>
+""".strip()
+
+    body_html = extra_css + search_html + "".join(sections_html) + search_js
+
+    html = _standalone_page(
+        title="All Study Resources · NSE7 EF 7.6",
+        header_h1='All Study <em>Resources</em>',
+        header_sub=('Search across every session, guide, bite, nibble, completed study '
+                    'guide, and hands-on lab. Type a topic — the page filters in place.'),
+        body_html=body_html,
+        crumb="All Study Resources",
+    )
+    (ROOT / "all-resources.html").write_text(html, encoding="utf-8")
+
+
 # ---------------------------------------------------------------------------
 # BREADCRUMB NORMALIZER
 # ---------------------------------------------------------------------------
@@ -4921,6 +5199,7 @@ def main():
     render_sessions_index(completions=completions)
     render_completed_hub(completions)
     render_extras_hub(extras, standalone_extras=standalone_extras)
+    render_all_resources_hub(extras, completions, standalone_extras)
     render_landing(extras, completions, standalone_extras)
     render_labs_hub()
 
@@ -4946,6 +5225,7 @@ def main():
     print(f"Ensured images/hub/ and {len(SESSIONS)} per-session sessions/session-NN-slug/images/ folders")
     print(f"Wrote completed-sessions.html ({n_completed} completed, {n_summaries} summaries)")
     print(f"Wrote extras.html ({n_extras} session-linked + {n_standalone} standalone)")
+    print(f"Wrote all-resources.html (searchable catalog)")
     print(f"Wrote index.html (landing page)")
     report_completion_validation(completions)
 
