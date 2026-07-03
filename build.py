@@ -1475,40 +1475,6 @@ assert not extra, f"Extra (non-blueprint) objectives: {extra}"
 print(f"OK: 100% coverage of {len(ALL_OBJECTIVES)} blueprint objectives across {len(SESSIONS)} sessions.")
 
 # ---------------------------------------------------------------------------
-# STANDALONE EXTRAS
-# ---------------------------------------------------------------------------
-# Extras are topics NOT tied to a session — Socratic explorations of standalone
-# subjects (CLI reference, protocol deep-dives, etc.). Each topic lives under
-# extras/extras-NN-slug/ with:
-#   index.html          — the main guide (long-form)
-#   bites/*.html        — focused single-concept explainers
-#   nibbles/*.html      — short reference cards
-# Register each topic here; folder + files are discovered from disk.
-
-EXTRAS = [
-    {
-        "num": 1,
-        "slug": "cli-reference",
-        "title": "FortiOS CLI Reference",
-        "tagline": "The five root commands and how to reason about which one to reach for.",
-    },
-    {
-        "num": 2,
-        "slug": "visual-flow-vs-proxy",
-        "title": "Visual — Flow-Based vs Proxy-Based Inspection",
-        "tagline": "Split-panel customs-lanes analogy for how the two inspection modes differ inside the same FortiGate.",
-    },
-    {
-        "num": 3,
-        "slug": "session-entry-anatomy",
-        "title": "Anatomy of a Session Table Entry",
-        "tagline": "Six regions of a FortiOS session entry — and why the npu info verdict line is the one to read first.",
-    },
-]
-
-EXTRAS_DIR = ROOT / "extras"
-
-# ---------------------------------------------------------------------------
 # HANDS-ON LABS (see /build-lab-plan skill for schema + authoring workflow)
 # ---------------------------------------------------------------------------
 # TOPOLOGY = one shared network across every lab (minimum viable pod).
@@ -2347,34 +2313,6 @@ def discover_extras():
                 )
     return out
 
-def discover_standalone_extras():
-    """Return list of dicts for each EXTRAS topic that has content on disk.
-
-    Shape: [{"topic": <EXTRAS entry>, "guides": [(slug,title,href), ...],
-             "bites": [...], "nibbles": [...]}, ...]. `href` is relative to
-    the topic folder (e.g. "index.html", "bites/foo.html").
-    """
-    out = []
-    for e in EXTRAS:
-        topic_dir = EXTRAS_DIR / f"extras-{e['num']:02d}-{e['slug']}"
-        if not topic_dir.is_dir():
-            continue
-        entry = {"topic": e, "guides": [], "bites": [], "nibbles": []}
-        guide_path = topic_dir / "index.html"
-        if guide_path.is_file():
-            title = extract_html_title(guide_path) or e["title"]
-            entry["guides"].append(("index", title, "index.html"))
-        for kind in ("bites", "nibbles"):
-            kind_dir = topic_dir / kind
-            if not kind_dir.is_dir():
-                continue
-            for html_file in sorted(kind_dir.glob("*.html")):
-                title = extract_html_title(html_file) or html_file.stem.replace("-", " ").title()
-                entry[kind].append((html_file.stem, title, f"{kind}/{html_file.name}"))
-        if entry["guides"] or entry["bites"] or entry["nibbles"]:
-            out.append(entry)
-    return out
-
 def parse_summary_txt(path):
     """Return list of (heading, body_text) tuples parsed from the summary."""
     try:
@@ -2657,58 +2595,17 @@ SESSION_TEMPLATE = """<!DOCTYPE html>
 {completion_callout}
 
 <nav class="section-nav" id="section-nav">
-  <a class="nav-tab active" href="#section-story">Story</a>
+  <a class="nav-tab active" href="#section-prompt">Objectives &amp; Prompt</a>
+  <a class="nav-tab" href="#section-story">Story</a>
   <a class="nav-tab" href="#section-why">Why &amp; Key Concepts</a>
-  <a class="nav-tab" href="#section-prompt">Objectives &amp; Prompt</a>
 </nav>
 
 <main>
   <div class="main-content">
 
-    <!-- SECTION 1: STORY -->
-    <div class="section-block" id="section-story">
-      <div class="section-label">SECTION 01 · STORY PROGRESSION</div>
-      <h2>Where We Are in the <em>NSE7 Journey</em></h2>
-      <div class="section-img-wrap">
-        <img src="images/hero.png" class="section-img"
-             alt="{hero_alt_esc}"
-             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');this.parentElement.querySelector('.img-caption').style.display='none';">
-        <p class="img-caption">{hero_caption_esc}</p>
-        <div class="si-placeholder">
-          <span class="si-filename">sessions/session-{num_pad}-{slug}/images/hero.png</span>
-          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-          <div class="prompt-content" hidden>{hero_prompt_esc}</div>
-        </div>
-      </div>
-      <p>{story_esc}</p>
-      <div class="mental-note-block">
-        <div class="mental-note-block-icon">🧠</div>
-        <div class="mental-note-block-inner">
-          <div class="mental-note-block-label">Mental Note</div>
-          <div class="mental-note-block-text">{story_note_esc}</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SECTION 2: WHY & KEY CONCEPTS -->
-    <div class="section-block" id="section-why">
-      <div class="section-label">SECTION 02 · WHY THIS SESSION EXISTS</div>
-      <h2>The Problem We're <em>Solving Today</em></h2>
-      <p>{why_esc}</p>
-
-      <div class="callout">
-        <strong>Session goal:</strong> {goal_esc}
-      </div>
-
-      <h2 style="margin-top:32px;">Key <em>Concepts</em></h2>
-      <ul>
-{concepts_ul}
-      </ul>
-    </div>
-
-    <!-- SECTION 3: PROMPT & OBJECTIVES -->
+    <!-- SECTION 1: PROMPT & OBJECTIVES -->
     <div class="section-block" id="section-prompt">
-      <div class="section-label">SECTION 03 · OBJECTIVES &amp; CLAUDE SESSION PROMPT</div>
+      <div class="section-label">SECTION 01 · OBJECTIVES &amp; CLAUDE SESSION PROMPT</div>
       <h2>Ready to <em>Begin the Session</em></h2>
 
       <table class="meta-table">
@@ -2727,6 +2624,40 @@ SESSION_TEMPLATE = """<!DOCTYPE html>
         </div>
         <pre id="claude-prompt">{claude_prompt_esc}</pre>
       </div>
+    </div>
+
+    <!-- SECTION 2: STORY -->
+    <div class="section-block" id="section-story">
+      <div class="section-label">SECTION 02 · STORY PROGRESSION</div>
+      <h2>Where We Are in the <em>NSE7 Journey</em></h2>
+      <div class="section-img-wrap">
+        <img src="images/hero.png" class="section-img"
+             alt="{hero_alt_esc}"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');this.parentElement.querySelector('.img-caption').style.display='none';">
+        <p class="img-caption">{hero_caption_esc}</p>
+        <div class="si-placeholder">
+          <span class="si-filename">sessions/session-{num_pad}-{slug}/images/hero.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>{hero_prompt_esc}</div>
+        </div>
+      </div>
+      <p>{story_esc}</p>
+    </div>
+
+    <!-- SECTION 3: WHY & KEY CONCEPTS -->
+    <div class="section-block" id="section-why">
+      <div class="section-label">SECTION 03 · WHY THIS SESSION EXISTS</div>
+      <h2>The Problem We're <em>Solving Today</em></h2>
+      <p>{why_esc}</p>
+
+      <div class="callout">
+        <strong>Session goal:</strong> {goal_esc}
+      </div>
+
+      <h2 style="margin-top:32px;">Key <em>Concepts</em></h2>
+      <ul>
+{concepts_ul}
+      </ul>
     </div>
 
     {session_recap_block}
@@ -2988,13 +2919,12 @@ OBJECTIVE_DESCRIPTIONS = {
     "5.2": "Implement ADVPN to enable on-demand VPN tunnels between sites",
 }
 
-def render_study_plan_index(extras=None, completions=None, standalone_extras=None):
+def render_study_plan_index(extras=None, completions=None):
     """Emit study-plan/index.html — the curriculum hub with a top button row
     (no sidebar) that swaps between panels: How to Use (default), Progress,
     Phases (all 8 stacked), Roadmap, Objective Map, The Journey, Completed."""
     extras = extras or {}
     completions = completions or {}
-    standalone_extras = standalone_extras or []
     completed_count = sum(1 for v in completions.values() if v.get("has_complete"))
 
     # Build individual phase blocks (rendered inside the single Phases panel,
@@ -3302,6 +3232,10 @@ def render_study_plan_index(extras=None, completions=None, standalone_extras=Non
   *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0;}}
   body{{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}}
   header{{padding:56px 60px 40px;background:var(--ink-dark);}}
+  .breadcrumb{{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.12em;color:var(--ink-accent);margin-bottom:14px;text-transform:uppercase;}}
+  .breadcrumb a{{color:var(--ink-accent);text-decoration:none;}}
+  .breadcrumb a:hover{{color:#fff;}}
+  .breadcrumb-sep{{margin:0 8px;opacity:0.55;}}
   .header-eyebrow{{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}}
   .dot-live{{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}}
   @keyframes blink{{0%,100%{{opacity:1}}50%{{opacity:0.3}}}}
@@ -3494,6 +3428,11 @@ def render_study_plan_index(extras=None, completions=None, standalone_extras=Non
 <body>
 
 <header>
+  <div class="breadcrumb">
+    <a href="../index.html">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    Study Plan
+  </div>
   <div class="header-eyebrow"><span class="dot-live"></span> Socratic Curriculum · NSE7 Enterprise Firewall 7.6</div>
   <h1>NSE7 Enterprise Firewall 7.6 <em>Socratic Curriculum</em></h1>
   <p>Forty structured 20–30 minute Socratic sessions, organised as one continuous learning story. Every blueprint objective is taught across the curriculum. Every session opens by solving the problem the previous session left unfinished.</p>
@@ -3947,72 +3886,15 @@ def render_completed_hub(completions):
     )
     (ROOT / "completed-sessions.html").write_text(html, encoding="utf-8")
 
-def render_extras_hub(extras, standalone_extras=None):
-    standalone_extras = standalone_extras or []
-    kind_meta = [
-        ("guides", "Guides", "chip-guide", "Long-form companion pages that dive deeper than a session can — includes standalone Extras topics."),
-        ("bites", "Bites", "chip-bite", "Focused single-concept explainers — read after a session to nail down one thing."),
-        ("nibbles", "Nibbles", "chip-nibble", "Short reference cards / cheat sheets — for quick lookup during review or lab work."),
-    ]
-    singular = lambda label: label[:-1] if label.endswith("s") else label
-
-    sections_html = []
-    for kind, label, chip_class, lede in kind_meta:
-        cards = []
-        # Session-linked items
-        for s in SESSIONS:
-            for slug, title, href in (extras.get(s["num"], {}).get(kind) or []):
-                session_dir = f"session-{s['num']:02d}-{s['slug']}"
-                cards.append(
-                    f'<a class="hub-card" href="sessions/{session_dir}/{html_escape(href)}">'
-                    f'<span class="hub-card-chip {chip_class}">{singular(label)}</span>'
-                    f'<span class="hub-card-sub">Session {s["num"]:02d}</span>'
-                    f'<span class="hub-card-title">{html_escape(title)}</span>'
-                    f'</a>'
-                )
-        # Standalone extras items
-        for entry in standalone_extras:
-            e = entry["topic"]
-            topic_dir = f"extras-{e['num']:02d}-{e['slug']}"
-            for slug, title, href in entry.get(kind, []):
-                cards.append(
-                    f'<a class="hub-card" href="extras/{topic_dir}/{html_escape(href)}">'
-                    f'<span class="hub-card-chip {chip_class}">{singular(label)}</span>'
-                    f'<span class="hub-card-sub">Extras {e["num"]:02d} · {html_escape(e["title"])}</span>'
-                    f'<span class="hub-card-title">{html_escape(title)}</span>'
-                    f'</a>'
-                )
-        if cards:
-            body_inner = f'<div class="card-grid">{"".join(cards)}</div>'
-        else:
-            body_inner = f'<div class="empty-state">No {kind} sorted yet.</div>'
-        sections_html.append(
-            f'<div class="anchor-section" id="{kind}">'
-            f'<h2>{label}<em></em></h2>'
-            f'<p class="section-lede">{lede}</p>'
-            f'{body_inner}'
-            f'</div>'
-        )
-    html = _standalone_page(
-        title=f"Extras — Guides · Bites · Nibbles · NSE7 EF 7.6",
-        header_h1='Guides, Bites &amp; <em>Nibbles</em>',
-        header_sub='Supplementary study artifacts — session-linked and standalone Extras topics. Anchors: #guides, #bites, #nibbles.',
-        body_html="".join(sections_html),
-        crumb="Extras",
-    )
-    (ROOT / "extras.html").write_text(html, encoding="utf-8")
-
-
 # ---------------------------------------------------------------------------
 # ALL STUDY RESOURCES HUB (all-resources.html) — searchable across every artifact
 # ---------------------------------------------------------------------------
 
-def render_all_resources_hub(extras, completions, standalone_extras):
+def render_all_resources_hub(extras, completions):
     """Emit all-resources.html — full-text-searchable catalog of every session,
     guide, bite, nibble, completed study guide, and lab. The user answers
     'NP7' in the search bar and every matching item across the six sections
     reveals itself in place; everything else hides."""
-    standalone_extras = standalone_extras or []
 
     def hay(*parts):
         """Concatenate + lowercase + html-escape a searchable haystack."""
@@ -4086,20 +3968,6 @@ def render_all_resources_hub(extras, completions, standalone_extras):
                     f'href="sessions/{session_dir}/{html_escape(href)}">'
                     f'<span class="hub-card-chip {chip_class}">{singular(label)}</span>'
                     f'<span class="hub-card-sub">Session {s["num"]:02d}</span>'
-                    f'<span class="hub-card-title">{html_escape(title)}</span>'
-                    f'</a>'
-                )
-        for entry in standalone_extras:
-            e = entry["topic"]
-            for slug, title, href in entry.get(kind, []):
-                haystack = hay(title, singular(label), e.get("title"))
-                topic_dir = f"extras-{e['num']:02d}-{e['slug']}"
-                cards.append(
-                    f'<a class="hub-card" data-kind="{singular(label).lower()}" '
-                    f'data-search="{haystack}" '
-                    f'href="extras/{topic_dir}/{html_escape(href)}">'
-                    f'<span class="hub-card-chip {chip_class}">{singular(label)}</span>'
-                    f'<span class="hub-card-sub">Extras {e["num"]:02d} · {html_escape(e["title"])}</span>'
                     f'<span class="hub-card-title">{html_escape(title)}</span>'
                     f'</a>'
                 )
@@ -5555,30 +5423,58 @@ def render_sessions_index(completions=None):
     Sits alongside the per-session directories, so links are relative to
     session-NN-slug/index.html (no ../sessions/ prefix)."""
     completions = completions or {}
-    by_phase = {p["num"]: p for p in PHASES}
 
-    cards = []
-    for s in SESSIONS:
-        phase = by_phase[s["phase"]]
-        entry = completions.get(s["num"], {})
-        completed_chip = (
-            '<span class="sess-chip sess-chip-done">Completed</span>'
-            if entry.get("has_complete") else ""
+    # Group sessions by phase. Each phase becomes its own titled section with
+    # its session cards nested inside.
+    phase_sections = []
+    for phase in PHASES:
+        sessions_in_phase = [s for s in SESSIONS if s["phase"] == phase["num"]]
+        if not sessions_in_phase:
+            continue
+        phase_done = sum(
+            1 for s in sessions_in_phase
+            if completions.get(s["num"], {}).get("has_complete")
         )
-        preview = s["why"].split(".")[0].strip() + "."
-        slug_dir = f"session-{s['num']:02d}-{s['slug']}"
-        phase_short = phase["title"].split(": ", 1)[1] if ": " in phase["title"] else phase["title"]
-        cards.append(
-            f'<a class="sess-card" href="{slug_dir}/index.html">'
-            f'<div class="sess-card-head">'
-            f'<span class="sess-num">SESSION {s["num"]:02d}</span>'
-            f'<span class="sess-phase">Phase {phase["num"]:02d} · {html_escape(phase_short)}</span>'
-            f'{completed_chip}'
-            f'</div>'
-            f'<div class="sess-title">{html_escape(s["title"])}</div>'
-            f'<div class="sess-preview">{html_escape(preview)}</div>'
-            f'<div class="sess-meta">{html_escape(s["duration"])}</div>'
-            f'</a>'
+        phase_total = len(sessions_in_phase)
+        phase_title_parts = phase["title"].split(": ", 1)
+        if len(phase_title_parts) == 2:
+            phase_short, phase_long = phase_title_parts
+        else:
+            phase_short = phase["title"]
+            phase_long = ""
+
+        cards_for_phase = []
+        for s in sessions_in_phase:
+            entry = completions.get(s["num"], {})
+            completed_chip = (
+                '<span class="sess-chip sess-chip-done">Completed</span>'
+                if entry.get("has_complete") else ""
+            )
+            preview = s["why"].split(".")[0].strip() + "."
+            slug_dir = f"session-{s['num']:02d}-{s['slug']}"
+            cards_for_phase.append(
+                f'<a class="sess-card" href="{slug_dir}/index.html">'
+                f'<div class="sess-card-head">'
+                f'<span class="sess-num">SESSION {s["num"]:02d}</span>'
+                f'{completed_chip}'
+                f'</div>'
+                f'<div class="sess-title">{html_escape(s["title"])}</div>'
+                f'<div class="sess-preview">{html_escape(preview)}</div>'
+                f'<div class="sess-meta">{html_escape(s["duration"])}</div>'
+                f'</a>'
+            )
+
+        phase_sections.append(
+            f'<section class="phase-section" id="phase-{phase["num"]:02d}">'
+            f'<header class="phase-header">'
+            f'<span class="phase-eyebrow">Phase {phase["num"]:02d}</span>'
+            f'<h2 class="phase-title">{html_escape(phase_short)}'
+            f'{": <em>" + html_escape(phase_long) + "</em>" if phase_long else ""}</h2>'
+            f'<p class="phase-tagline">{html_escape(phase.get("tagline", ""))}</p>'
+            f'<span class="phase-count">{phase_done} / {phase_total} completed</span>'
+            f'</header>'
+            f'<div class="sess-grid">{"".join(cards_for_phase)}</div>'
+            f'</section>'
         )
 
     n_done = sum(1 for v in completions.values() if v.get("has_complete"))
@@ -5615,6 +5511,14 @@ def render_sessions_index(completions=None):
   .count-strip{{padding:16px 60px;background:var(--surface);border-bottom:1px solid var(--border);font-family:'Outfit',sans-serif;font-size:12px;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;}}
   .count-strip strong{{color:var(--blue);}}
   main{{flex:1;padding:40px 60px 60px;max-width:1200px;margin:0 auto;width:100%;}}
+  .phase-section{{margin-bottom:44px;}}
+  .phase-section:last-child{{margin-bottom:0;}}
+  .phase-header{{position:relative;margin-bottom:20px;padding:16px 170px 16px 20px;background:linear-gradient(135deg, var(--ink-dark) 0%, #182a5e 100%);border-left:4px solid var(--blue);border-radius:0 12px 12px 0;box-shadow:0 8px 18px -12px rgba(10,24,56,0.4);}}
+  .phase-eyebrow{{display:inline-block;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--ink-dark);text-transform:uppercase;background:var(--ink-accent);border:1px solid rgba(255,255,255,0.4);border-radius:20px;padding:4px 12px;margin-bottom:10px;}}
+  .phase-title{{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#fbf7ec;line-height:1.15;margin-bottom:6px;}}
+  .phase-title em{{font-style:italic;font-weight:500;color:var(--ink-accent);}}
+  .phase-tagline{{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.72);line-height:1.5;max-width:820px;}}
+  .phase-count{{position:absolute;top:16px;right:20px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#fbf7ec;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.28);border-radius:20px;padding:5px 12px;}}
   .sess-grid{{display:flex;flex-direction:column;gap:14px;}}
   .sess-card{{display:block;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;text-decoration:none;color:var(--text);transition:border-color .15s, transform .15s;}}
   .sess-card:hover{{border-color:var(--blue);transform:translateY(-2px);}}
@@ -5650,9 +5554,7 @@ def render_sessions_index(completions=None):
 </header>
 <div class="count-strip"><strong>{n_total}</strong> sessions · <strong>{n_done}</strong> completed · one continuous learning story</div>
 <main>
-  <div class="sess-grid">
-    {"".join(cards)}
-  </div>
+  {"".join(phase_sections)}
 </main>
 <footer>NSE7 EF 7.6 <span>·</span> Socratic Curriculum <span>·</span> {n_total} sessions</footer>
 </body>

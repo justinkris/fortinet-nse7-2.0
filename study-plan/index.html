@@ -22,6 +22,10 @@
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
   header{padding:56px 60px 40px;background:var(--ink-dark);}
+  .breadcrumb{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.12em;color:var(--ink-accent);margin-bottom:14px;text-transform:uppercase;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb a:hover{color:#fff;}
+  .breadcrumb-sep{margin:0 8px;opacity:0.55;}
   .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
   .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
@@ -214,6 +218,11 @@
 <body>
 
 <header>
+  <div class="breadcrumb">
+    <a href="../index.html">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    Study Plan
+  </div>
   <div class="header-eyebrow"><span class="dot-live"></span> Socratic Curriculum · NSE7 Enterprise Firewall 7.6</div>
   <h1>NSE7 Enterprise Firewall 7.6 <em>Socratic Curriculum</em></h1>
   <p>Forty structured 20–30 minute Socratic sessions, organised as one continuous learning story. Every blueprint objective is taught across the curriculum. Every session opens by solving the problem the previous session left unfinished.</p>
