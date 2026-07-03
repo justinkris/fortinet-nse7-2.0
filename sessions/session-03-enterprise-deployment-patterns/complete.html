@@ -277,6 +277,17 @@
             <li>Building the town a giant sorting facility would be waste; building it a card table and one staff member would be inadequacy. The right building sits between the two.</li>
           </ul>
         </div>
+        <div class="section-img-wrap analogy-img">
+          <img src="images/analogy-branch-post-office.png" class="section-img"
+               alt="Branch FortiGate as a small-town post office choosing between routes"
+               onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+          <p class="img-caption">Not the biggest sorter — the smartest route-picker.</p>
+          <div class="si-placeholder">
+            <span class="si-filename">images/analogy-branch-post-office.png</span>
+            <button class="prompt-toggle" onclick="togglePrompt(this)" type="button">▾ Show image prompt</button>
+            <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A cream small-town street scene. Centre: a cosy sage-green post office with a coral roof, a small 'BRANCH' sign above the door, and one calm postal worker behind a modest counter (no queue, one waiting resident icon) — labeled 'fixed local population · flow-mode inspection'. Above the post office, three route icons fan out to the horizon: a mail van on a solid gold highway labeled 'MPLS · primary', a courier bicycle on a dashed sage path labeled 'broadband · backup', and a small aeroplane on a coral path labeled 'LTE · last resort'. The postal worker holds a parcel and points to a small decision-diamond above the counter labeled 'Which route today?', with three arrows to the three transports. To the left, a shrunken oversized industrial sorting facility icon crossed out in coral labeled 'waste · overprovisioned'; to the right, a tiny card table with one clerk crossed out in coral labeled 'inadequacy · underprovisioned'. Bottom caption bar: 'Right-sized. Route-aware. Not the biggest sorter — the smartest route-picker.' Clean structured composition, generous spacing, educational and visually engaging.</div>
+          </div>
+        </div>
       </div>
 
       <div class="mental-note-block">
@@ -776,6 +787,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (label) label.addEventListener('click', () => box.classList.toggle('expanded'));
   });
 });
+function togglePrompt(btn){const c=btn.nextElementSibling;const isHidden=c.hasAttribute('hidden');if(isHidden){c.removeAttribute('hidden');btn.textContent='▴ Hide prompt';}else{c.setAttribute('hidden','');btn.textContent='▾ Show image prompt';}}
 </script>
 </body>
 </html>

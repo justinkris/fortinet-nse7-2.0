@@ -68,6 +68,19 @@
   .analogy-label{display:flex;align-items:center;gap:6px;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:8px;text-transform:uppercase;}
   .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
   .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
+  .section-img-wrap{margin:14px 0 4px;display:flex;flex-direction:column;align-items:center;}
+  .section-img{max-width:100%;border-radius:8px;display:block;}
+  .img-caption{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}
+  .si-placeholder{display:none;width:260px;max-width:100%;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}
+  .si-placeholder.si-show{display:flex;}
+  .si-filename{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;color:var(--text);word-break:break-all;}
+  .prompt-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}
+  .prompt-toggle:hover{color:var(--text);border-color:var(--text);}
+  .prompt-content{margin-top:10px;padding:10px 14px;background:rgba(0,0,0,0.04);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.65;text-align:left;}
+  .prompt-content[hidden]{display:none;}
+  .analogy-img{margin-top:16px;}
+  .analogy-img .section-img{width:260px;}
+  .analogy-img .img-caption{color:#7a4f0c;}
 
   /* Image placeholder */
   .img-placeholder{border:2px dashed var(--amber-border);border-radius:12px;background:rgba(255,255,255,0.5);padding:24px 20px;margin:16px 0;display:flex;flex-direction:column;align-items:flex-start;gap:10px;}
@@ -171,6 +184,17 @@
         <p><strong>Flow-based = Security guard in a corridor.</strong> Watches each person as they walk through. Makes an instant call — pass or stop — on every individual, in real time. Never pauses the queue.</p>
         <p><strong>Proxy-based = Waiting room inspector.</strong> Stops everyone. Collects all documents. Reads everything in full. Only then decides who may proceed. No one moves until the full picture is assembled.</p>
         <p>Both inspectors read the same information. The guard acts faster. The waiting room inspector catches things that only appear when the full picture is assembled — like a document that seems legitimate page by page but contains a forged signature on the last page.</p>
+      </div>
+      <div class="section-img-wrap analogy-img">
+        <img src="images/analogy-guard-vs-waiting-room.png" class="section-img"
+             alt="Corridor security guard vs waiting-room inspector comparing flow and proxy inspection"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">Same information — different moment of decision.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/analogy-guard-vs-waiting-room.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)" type="button">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A side-by-side split scene. LEFT panel labeled 'FLOW-BASED · Security Guard': a long sage-green corridor with a calm guard beside a badge reader, a continuous line of visitors walking past without stopping while the guard glances at each badge; motion lines behind them, a stopwatch icon labeled 'instant decision · queue never pauses'. RIGHT panel labeled 'PROXY-BASED · Waiting Room': a warm cream waiting room with all visitors seated holding document folders, a coral inspector at a desk reading a large open stack of papers, a dashed gold arrow from a highlighted final page labeled 'forged signature caught only when full stack is assembled'; a small timer icon labeled 'everyone waits until decision'. A shared bottom caption bar: 'Same information. Different moment of decision.' Clean structured composition, generous spacing, educational and visually engaging.</div>
+        </div>
       </div>
     </div>
 
@@ -296,6 +320,7 @@ function reveal(btn) {
   answer.classList.toggle('visible');
   btn.textContent = answer.classList.contains('visible') ? 'Hide Answer' : 'Reveal Answer';
 }
+function togglePrompt(btn){const c=btn.nextElementSibling;const isHidden=c.hasAttribute('hidden');if(isHidden){c.removeAttribute('hidden');btn.textContent='▴ Hide prompt';}else{c.setAttribute('hidden','');btn.textContent='▾ Show image prompt';}}
 </script>
 <script>document.documentElement.classList.remove('pt-init');sessionStorage.removeItem('pt');</script>
 </body>

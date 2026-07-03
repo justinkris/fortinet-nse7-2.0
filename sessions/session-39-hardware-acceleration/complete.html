@@ -74,6 +74,19 @@
   .analogy-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:8px;text-transform:uppercase;}
   .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
   .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:8px;font-size:17px;}
+  .section-img-wrap{margin:14px 0 4px;display:flex;flex-direction:column;align-items:center;}
+  .section-img{max-width:100%;border-radius:8px;display:block;}
+  .img-caption{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}
+  .si-placeholder{display:none;width:260px;max-width:100%;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}
+  .si-placeholder.si-show{display:flex;}
+  .si-filename{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;color:var(--text);word-break:break-all;}
+  .prompt-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}
+  .prompt-toggle:hover{color:var(--text);border-color:var(--text);}
+  .prompt-content{margin-top:10px;padding:10px 14px;background:rgba(0,0,0,0.04);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.65;text-align:left;}
+  .prompt-content[hidden]{display:none;}
+  .analogy-img{margin-top:16px;}
+  .analogy-img .section-img{width:260px;}
+  .analogy-img .img-caption{color:#7a4f0c;}
 
   /* PROCESSOR CARDS */
   .proc-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;}
@@ -261,6 +274,17 @@
       <div class="analogy-text">
         <p class="analogy-summary">One policy change. 3 AM. CPU at 94%.</p>
         <p>Vaultline Financial's trading VLAN ran at sub-millisecond latency because market data sessions were offloaded to the NP7. A single "quick security improvement" — adding a proxy-based profile to the policy — forced every one of those sessions onto the CPU slow path. Latency spiked to 8–12ms. The lesson: hardware acceleration is not a background feature. It is the architecture. Understanding it is mandatory for every enterprise firewall design decision.</p>
+      </div>
+      <div class="section-img-wrap analogy-img">
+        <img src="images/analogy-fast-lane-collapse.png" class="section-img"
+             alt="Trading traffic redirected from an NP7 fast lane to a congested CPU slow path after a policy change"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">One proxy profile diverts the fast lane into a queue.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/analogy-fast-lane-collapse.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)" type="button">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A cream 'before/after' diptych with a soft central divider. LEFT panel labeled 'BEFORE — NP7 fast lane': a wide sage-green highway with a small chip icon labeled 'NP7' along the shoulder, a stream of tiny gold packet icons flowing smoothly, and a stopwatch above reading 'sub-ms · offloaded'. A small building icon labeled 'Vaultline · trading VLAN' feeds into the highway. RIGHT panel labeled 'AFTER — one policy change': the same highway with a coral toll-boot dropped in the middle labeled 'proxy-based profile added', a CPU chip icon behind it labeled 'CPU slow path' turning coral-red with a small thermometer at 94%, and packets piling up in a queue behind the booth; the stopwatch above now reads '8–12 ms'. A small clock icon in the corner shows 3:00 AM. Bottom caption bar spans the whole scene: 'Acceleration isn't a feature — it's the architecture.' Clean structured composition, generous spacing, educational and visually engaging.</div>
+        </div>
       </div>
     </div>
   
@@ -800,6 +824,7 @@ function deleteNote(id){saveNotesArr(getNotesArr().filter(n=>n.id!==id));renderN
 function toggleNotesPanel(){const body=document.getElementById('notes-panel-body');const header=document.getElementById('notes-panel-header');const chevron=document.getElementById('notes-panel-chevron');const open=body.classList.toggle('open');header.classList.toggle('open',open);chevron.textContent=open?'▴':'▾';localStorage.setItem(PAGE_KEY+'-notes-panel-open',open);}
 function renderNotesPanel(){const ns=getNotesArr();const count=document.getElementById('notes-panel-count');if(count){count.textContent=ns.length;count.style.display=ns.length?'inline':'none';}const body=document.getElementById('notes-panel-body');if(!body)return;if(!ns.length){body.innerHTML='<p class="no-questions">No notes yet.</p>';return;}const groups=Object.fromEntries(Object.keys(SECTIONS).map(k=>[k,[]]));ns.forEach(n=>{if(groups[n.section])groups[n.section].push(n);});let html='';let num=0;Object.entries(groups).forEach(([key,items])=>{if(!items.length)return;html+=`<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;items.forEach(n=>{num++;html+=`<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteNote(${n.id})">✕</button></div>`;});html+='</div>';});body.innerHTML=html;}
 document.addEventListener('DOMContentLoaded',function(){renderQPanel();renderNotesPanel();if(localStorage.getItem(PAGE_KEY+'-qpanel-open')==='true')toggleQPanel();if(localStorage.getItem(PAGE_KEY+'-notes-panel-open')==='true')toggleNotesPanel();});
+function togglePrompt(btn){const c=btn.nextElementSibling;const isHidden=c.hasAttribute('hidden');if(isHidden){c.removeAttribute('hidden');btn.textContent='▴ Hide prompt';}else{c.setAttribute('hidden','');btn.textContent='▾ Show image prompt';}}
 </script>
 <script>document.documentElement.classList.remove('pt-init');sessionStorage.removeItem('pt');</script>
 </body>

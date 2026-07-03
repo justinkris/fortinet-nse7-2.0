@@ -143,6 +143,19 @@
   .analogy-text ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;}
   .analogy-text li{padding-left:18px;position:relative;}
   .analogy-text li::before{content:'•';position:absolute;left:0;font-weight:700;color:var(--amber);}
+  .section-img-wrap{margin:14px 0 4px;display:flex;flex-direction:column;align-items:center;}
+  .section-img{max-width:100%;border-radius:8px;display:block;}
+  .img-caption{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}
+  .si-placeholder{display:none;width:260px;max-width:100%;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}
+  .si-placeholder.si-show{display:flex;}
+  .si-filename{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;color:var(--text);word-break:break-all;}
+  .prompt-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}
+  .prompt-toggle:hover{color:var(--text);border-color:var(--text);}
+  .prompt-content{margin-top:10px;padding:10px 14px;background:rgba(0,0,0,0.04);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.65;text-align:left;}
+  .prompt-content[hidden]{display:none;}
+  .analogy-img{margin-top:16px;}
+  .analogy-img .section-img{width:260px;}
+  .analogy-img .img-caption{color:#7a4f0c;}
   .lesson-tools{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:40px;}
   .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
   .tool-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
@@ -459,6 +472,17 @@ end</code></pre>
             <li>When the on-call engineer changes (failover), the switchboard (switch MAC table) must be told which desk (port) the number now rings at — that's the GARP.</li>
             <li>If two companies accidentally register the same number (same group-id, same segment), callers randomly reach the wrong office — and neither company's own systems report a fault.</li>
           </ul>
+        </div>
+        <div class="section-img-wrap analogy-img">
+          <img src="images/analogy-phone-number.png" class="section-img"
+               alt="Virtual MAC as a permanent company phone number handled by a switchboard between two engineer desks"
+               onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+          <p class="img-caption">Clients dial the number; only the switchboard learns who's on call.</p>
+          <div class="si-placeholder">
+            <span class="si-filename">images/analogy-phone-number.png</span>
+            <button class="prompt-toggle" onclick="togglePrompt(this)" type="button">▾ Show image prompt</button>
+            <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. On the left, a large cream office phone with a permanent gold number tag on its side labeled 'virtual MAC · 04:...:01', with a small customer character on a curly cord dialing it — labeled 'client ARP: never changes'. From the phone, a labeled 'switchboard' mini-diagram (a small rounded box with two outgoing lines) connects to two desks: 'Box A · ACTIVE' with a coral highlight and a happy engineer, and 'Box B · STANDBY' with a sage tint and a resting engineer; the active line is solid gold, the standby line is dashed. A tiny burst label above the switchboard reads 'GARP updates switch MAC table only'. On the right, a smaller contrast card labeled 'Same group-id, same segment' shows two identical vMAC phones ringing at once with two competing companies (icons of two office buildings) and a confused customer with a question mark, arrow curving to the wrong office — footnote in coral 'misroute chaos · no phone reports a fault'. Clean structured composition, generous spacing, educational and visually engaging.</div>
+          </div>
         </div>
       </div>
       <div class="mental-note-block">

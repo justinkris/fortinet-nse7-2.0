@@ -52,6 +52,19 @@
   .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:14px 0;}
   .analogy-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:6px;text-transform:uppercase;}
   .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .section-img-wrap{margin:14px 0 4px;display:flex;flex-direction:column;align-items:center;}
+  .section-img{max-width:100%;border-radius:8px;display:block;}
+  .img-caption{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}
+  .si-placeholder{display:none;width:260px;max-width:100%;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}
+  .si-placeholder.si-show{display:flex;}
+  .si-filename{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;color:var(--text);word-break:break-all;}
+  .prompt-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}
+  .prompt-toggle:hover{color:var(--text);border-color:var(--text);}
+  .prompt-content{margin-top:10px;padding:10px 14px;background:rgba(0,0,0,0.04);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.65;text-align:left;}
+  .prompt-content[hidden]{display:none;}
+  .analogy-img{margin-top:16px;}
+  .analogy-img .section-img{width:280px;}
+  .analogy-img .img-caption{color:#7a4f0c;}
   .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:8px;font-size:17px;}
   .quiz-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:14px;border-top:3px solid var(--blue);}
   .quiz-num{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--blue);text-transform:uppercase;margin-bottom:8px;}
@@ -199,6 +212,17 @@
           <li><strong>ISFW</strong> = the internal loading bay checkpoint between the warehouse floor and the dispatch area. Nothing to do with outside traffic; entirely about who moves what internally.</li>
         </ul>
       </div>
+      <div class="section-img-wrap analogy-img">
+        <img src="images/analogy-vehicle-fleet.png" class="section-img"
+             alt="Delivery fleet with five vehicle types mapped to branch, datacenter, edge, cloud, and ISFW"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">Five vehicles, five deployment roles — one fleet.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/analogy-vehicle-fleet.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)" type="button">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm colour palette (cream background, coral accents, muted gold highlights, sage greens, soft brown outlines), clean bold line work, no gradients, no photorealism. A cream road-map backdrop showing five vehicles/facilities in a labeled row-of-cards layout. Card 1 'BRANCH' — a small sage-green delivery van on a winding rural road with weather icons (sun/cloud/rain) above, badge 'flow-mode · SD-WAN route picker'. Card 2 'DATACENTER' — a coral eighteen-wheeler on a wide gold motorway, badge 'NP7 · throughput first, no proxy stops'. Card 3 'EDGE' — a small sage depot at the city gate with a coral inspector opening a parcel at a lit checkpoint, badge 'proxy-mode · deep inspection'. Card 4 'CLOUD VM' — a rented vehicle with a small 'rented' tag and two ticket icons labeled 'BYOL' and 'PAYG', shown parked on a cloud-shaped platform, badge 'no maintenance'. Card 5 'ISFW' — an internal loading-bay checkpoint inside a warehouse with a guard scanning a forklift moving between two rooms labeled 'warehouse floor' and 'dispatch', badge 'east-west only'. Bottom caption bar: 'One company. Five vehicles. Each sized to its job.' Clean structured composition, generous spacing, educational and visually engaging.</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -253,6 +277,7 @@ if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('p
 document.querySelectorAll('a[href]').forEach(function(a) {
   a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
 });
+function togglePrompt(btn){const c=btn.nextElementSibling;const isHidden=c.hasAttribute('hidden');if(isHidden){c.removeAttribute('hidden');btn.textContent='▴ Hide prompt';}else{c.setAttribute('hidden','');btn.textContent='▾ Show image prompt';}}
 </script>
 </body>
 </html>
