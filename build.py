@@ -4430,14 +4430,12 @@ def render_mind_map(extras, completions):
     # Precompute each phase's angular wedge.
     per_phase_wedge = 360.0 / n_phases
 
-    # Group data structure we'll emit as SVG groups.
-    svg_bits = []
-    # Root node dot
-    svg_bits.append(
-        f'<circle class="mm-root" cx="{CX}" cy="{CY}" r="52"/>'
-        f'<text class="mm-root-label" x="{CX}" y="{CY - 6}" text-anchor="middle">NSE7</text>'
-        f'<text class="mm-root-sub" x="{CX}" y="{CY + 14}" text-anchor="middle">EF 7.6</text>'
-    )
+    # SVG stack ordering — critical for z-order:
+    #   1. root→phase connectors (always visible; underneath everything else)
+    #   2. per-phase groups (subtree first, phase pill on top within each group)
+    #   3. root node LAST so it sits on top of every connector line
+    root_connectors_html = []
+    phase_groups_html = []
 
     for phase_i, phase in enumerate(PHASES):
         phase_color, phase_bg = PHASE_COLORS[phase_i % len(PHASE_COLORS)]
@@ -5956,7 +5954,7 @@ def main():
     render_completed_hub(completions)
     render_extras_hub(extras, standalone_extras=standalone_extras)
     render_all_resources_hub(extras, completions, standalone_extras)
-    render_mind_map()
+    render_mind_map(extras, completions)
     n_audio_podcasts = render_audio_podcasts_hub()
     render_landing(extras, completions, standalone_extras, n_audio_podcasts=n_audio_podcasts)
     render_labs_hub()
