@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Palace — The FGCP Election Courthouse</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);}
+  header{padding:44px 60px 34px;background:var(--ink-dark);}
+  .eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:12px;}
+  header h1{font-family:'Playfair Display',serif;font-size:42px;font-weight:700;line-height:1.05;color:#fbf7ec;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-size:15px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;}
+  main{max-width:920px;margin:0 auto;padding:34px 40px 60px;}
+  h2{font-family:'Playfair Display',serif;font-size:25px;font-weight:700;color:var(--text);margin:34px 0 12px;padding-left:14px;border-left:3px solid var(--blue);}
+  h2:first-of-type{margin-top:0;}
+  p{font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:12px;}
+  p strong{color:var(--text);font-weight:600;}
+  p em{color:var(--blue);}
+  ul{padding-left:22px;margin-bottom:14px;}
+  li{font-size:16.5px;line-height:1.65;color:var(--text-soft);margin-bottom:6px;}
+  li strong{color:var(--text);font-weight:600;}
+  .room{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:16px;border-top:4px solid var(--blue);}
+  .room.amber-room{border-top-color:var(--amber);}
+  .room-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--blue);margin-bottom:6px;}
+  .amber-room .room-label{color:var(--amber);}
+  .room h3{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;color:var(--text);margin-bottom:8px;}
+  .room p{font-size:16px;margin-bottom:8px;}
+  .img-placeholder{border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:18px 20px;margin:16px 0;}
+  .img-filename{font-family:'SF Mono','Fira Code',monospace;font-size:11px;font-weight:700;letter-spacing:0.06em;color:var(--text-muted);display:block;margin-bottom:10px;}
+  .img-note{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--amber);margin-bottom:10px;}
+  .img-prompt{font-size:14.5px;font-style:italic;line-height:1.7;color:var(--text-muted);background:rgba(0,0,0,0.035);border-radius:8px;padding:12px 16px;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:13px 18px;margin:14px 0;font-size:16px;line-height:1.6;color:var(--text-soft);}
+  .callout strong{color:var(--text);}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);color:#5c3d09;}
+  .callout-amber strong{color:#7a4f0c;}
+  .hook{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 16px;margin-bottom:10px;}
+  .hook-icon{font-size:20px;min-width:26px;}
+  .hook-text{font-size:15.5px;line-height:1.6;color:var(--text-soft);}
+  .hook-text strong{color:var(--text);}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:18px 40px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:28px 24px;}header h1{font-size:30px;}main{padding:24px 20px 40px;}}
+</style>
+</head>
+<body>
+<header>
+<div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 16</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Nibble</span></div>
+  <div class="eyebrow">🏛️ Memory Palace Visual · Session 16</div>
+  <h1>The FGCP <em>Election Courthouse</em></h1>
+  <p>A building you can walk through in your head — four floors, one strict rule, and a lever that swaps two floors.</p>
+</header>
+<main>
+
+<h2>Why This Palace Exists</h2>
+<p>The FGCP primary election is an <strong>ordered waterfall of four criteria that stops at the first decisive one</strong> — and the <code>override</code> setting swaps the middle two floors. That's precisely the kind of ordered, positional knowledge a memory palace encodes best: rooms have fixed positions, and swapping two rooms is a vivid, memorable event. Walk this courthouse once, and reciting the election order — in either override mode — becomes a stroll, not a recall struggle.</p>
+
+<h2>The Mental Model</h2>
+<p>Two FortiGates — picture them as two suited candidates, <strong>Candidate A and Candidate B</strong> — enter a courthouse to settle who becomes primary. They climb floor by floor. On each floor, a judge applies one test. <strong>The instant a judge can pick a clear winner, the trial ends</strong> — nobody climbs further. Only a tie sends them up the stairs. On the top floor, a tie is impossible.</p>
+
+<div class="img-placeholder">
+  <span class="img-filename">images/mp-courthouse-overview.png</span>
+  <div class="img-note">📷 Image placeholder — generate separately using the prompt below</div>
+  <div class="img-prompt">Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm modern colour palette with cream background, coral accents, muted gold highlights, sage greens, and soft brown outlines. Clean bold line work, no gradients, no photorealism, no 3D. A tall four-storey courthouse shown in friendly cutaway cross-section, centred, generous spacing around it. Two cartoon FortiGate firewall appliances drawn as suited election candidates with little legs and briefcases — Candidate A wearing a coral rosette, Candidate B a sage rosette — standing at the entrance at the bottom, about to climb an external golden staircase connecting all four floors. FLOOR 1 (ground): a judge inspecting a wall of glowing green and one red network cable sockets, sign reading "MONITORED INTERFACES — most lamps lit wins". FLOOR 2: a judge beside an enormous hourglass with a brass plaque engraved "5 MINUTES MINIMUM", sign reading "HA UPTIME". FLOOR 3: a judge holding up two numbered paddles (200 vs 100), sign reading "PRIORITY". FLOOR 4 (top): a judge with a magnifying glass reading tiny serial-number labels on the candidates' backs, sign reading "SERIAL NUMBER — always decides". A large red STOP sign hangs on each landing with the words "WINNER? TRIAL ENDS HERE." On the outside wall between floors 2 and 3, a big coral lever labelled "OVERRIDE" connected by dotted lines to both floors, with curved swap-arrows showing the two floors exchanging places. Composition: front-on elevation view, each floor clearly labelled, characters expressive and slightly comedic, every object reinforcing one election criterion.</div>
+</div>
+
+<h2>Walk the Floors (Override DISABLED — the default)</h2>
+
+<div class="room">
+  <div class="room-label">Floor 1 — Ground Floor</div>
+  <h3>The Wall of Lamps (Monitored Interfaces)</h3>
+  <p>The first judge stands before a wall of network sockets, each with a lamp: green = a monitored interface up, dark = down. <strong>The candidate with more lamps lit wins on the spot.</strong> Crucially, the wall only has lamps for interfaces someone <em>installed</em> — the wall is empty by default. If both candidates' walls match (including matching failures), it's a tie: up the stairs.</p>
+</div>
+
+<div class="room">
+  <div class="room-label">Floor 2</div>
+  <h3>The Hourglass Room (HA Uptime)</h3>
+  <p>The second judge sits beside a giant hourglass engraved <strong>"5 MINUTES MINIMUM."</strong> Each candidate carries a stopwatch counting continuous, healthy cluster membership — it slams back to zero on a reboot <em>or</em> when a lamp on Floor 1 goes dark. The judge only rules if one stopwatch leads by five full minutes or more. A 40-second lead? The judge shrugs — "too close to call" — and points at the stairs. <em>That shrug is the exam trap: it's how a briefly-rebooted, higher-priority box slips upstairs and preempts.</em></p>
+</div>
+
+<div class="room">
+  <div class="room-label">Floor 3</div>
+  <h3>The Paddle Room (Priority)</h3>
+  <p>The third judge asks each candidate to raise a numbered paddle — the priority value an engineer wrote on it (default 128; never photocopied between candidates, since priority is never synced). <strong>Highest paddle wins.</strong> Equal paddles: one last flight of stairs.</p>
+</div>
+
+<div class="room">
+  <div class="room-label">Floor 4 — Top Floor</div>
+  <h3>The Magnifying-Glass Room (Serial Number)</h3>
+  <p>The final judge reads the serial number etched on each candidate's back. <strong>Highest serial wins — always.</strong> No two serials are equal, so the courthouse can never end in a hung jury. This floor exists so the building has a guaranteed exit.</p>
+</div>
+
+<h2>The Override Lever</h2>
+<div class="room amber-room">
+  <div class="room-label">Outside Wall — Between Floors 2 &amp; 3</div>
+  <h3>Pull It, and the Floors Physically Swap</h3>
+  <p>Bolted to the courthouse's outside wall is a big coral lever labelled <strong>OVERRIDE</strong> (reachable only by ladder — CLI only). Pull it, and with a great grinding of stone, <strong>Floor 2 and Floor 3 trade places</strong>: the Paddle Room drops below the Hourglass Room. Now priority is judged before uptime — so the candidate with the biggest paddle reclaims the primary role <em>every single time it walks in the door healthy</em>. The Lamps floor and the Magnifying-Glass floor never move.</p>
+  <p><strong>The lever's price:</strong> a tollbooth at the courthouse exit charges the whole building a second failover — and a second NP7 resync — every time the preferred candidate returns. The lever must be pulled on <em>each candidate's</em> side of the wall separately (never synced).</p>
+</div>
+
+<div class="img-placeholder">
+  <span class="img-filename">images/mp-override-lever-swap.png</span>
+  <div class="img-note">📷 Image placeholder — generate separately using the prompt below</div>
+  <div class="img-prompt">Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm palette: cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, clean bold line work, no gradients, no photorealism, no 3D. Side-by-side comparison of the same four-storey cartoon courthouse. LEFT building labelled "OVERRIDE DISABLED (default)": floors from bottom to top read 1 LAMPS (wall of green interface lamps), 2 HOURGLASS (giant hourglass, plaque "≥5 MIN"), 3 PADDLES (judge with numbered paddles 200 and 100), 4 MAGNIFYING GLASS (serial numbers). RIGHT building labelled "OVERRIDE ENABLED": identical, except floors 2 and 3 have visibly swapped — the Paddle room now sits on floor 2 and the Hourglass room on floor 3, with crane hooks and dust clouds comically mid-swap, curved gold swap arrows between them. Between the two buildings, a large coral lever on a pedestal labelled "OVERRIDE — CLI ONLY", with a small ladder leaning against it. At the exit door of the right-hand building, a tiny tollbooth with a sign "TOLL: ONE EXTRA FAILOVER + NP7 RESYNC, EVERY RETURN". Floors 1 and 4 in both buildings connected by dotted lines labelled "never move". Clear readable labels, expressive cartoon judges, generous spacing, structured educational composition.</div>
+</div>
+
+<h2>Key Takeaways</h2>
+<ul>
+  <li><strong>Climb order (override off):</strong> Lamps → Hourglass (≥5 min) → Paddles → Magnifying glass. <strong>Override on:</strong> swap Hourglass ↔ Paddles. Floors 1 and 4 never move.</li>
+  <li><strong>The trial stops at the first decisive floor.</strong> Whatever is above the stopping floor is never consulted.</li>
+  <li><strong>The Hourglass judge's shrug</strong> (a lead under 5 minutes) is what lets a briefly-absent, higher-priority box preempt even with override off — and a long absence lets the survivor's hourglass lock the door.</li>
+  <li><strong>Stopwatches reset</strong> on reboot or a Floor-1 lamp going dark — uptime and interface monitoring are coupled.</li>
+  <li><strong>A dead-silent opponent means no trial at all:</strong> the surviving candidate checks its own lamps in the lobby and takes the oath unopposed.</li>
+</ul>
+
+<h2>Memory Hooks</h2>
+<div class="hook"><div class="hook-icon">💡</div><div class="hook-text"><strong>"Lamps, Hourglass, Paddles, Glass."</strong> Say it as you climb. Override = grab the middle two and swap them.</div></div>
+<div class="hook"><div class="hook-icon">⏳</div><div class="hook-text">The hourglass only <em>counts</em> if it's five minutes ahead — otherwise the judge shrugs and you climb. The shrug IS the preemption trap.</div></div>
+<div class="hook"><div class="hook-icon">🎚️</div><div class="hook-text">The lever is outside, up a ladder (CLI only), one per candidate (never synced), and the exit tollbooth always charges double (failback = second failover + second resync).</div></div>
+<div class="hook"><div class="hook-icon">🔍</div><div class="hook-text">The top floor can't tie. Serial number is the building's fire escape — the election can never deadlock.</div></div>
+
+<div class="callout-amber callout"><strong>Exam notes:</strong> (1) "Override off, primary reboots, returns in 90 s with higher priority — who wins?" → the rebooted box, via Hourglass-shrug → Paddles. (2) "Returns after 6 min?" → the survivor, Hourglass decides, Paddles never consulted. (3) "Primary crashes, secondary has lower priority — takeover?" → yes, always: no rival, no trial. (4) Override changes criteria <em>order</em>, never criteria <em>membership</em>.</div>
+
+</main>
+<footer>NSE7 EF 7.6<span>.</span> Session 16<span>.</span> Memory Palace — The Election Courthouse</footer>
+</body>
+</html>

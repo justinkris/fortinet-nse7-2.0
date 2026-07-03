@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Bite 2 — FGCP Topology, Config &amp; What Happens When Box A Dies</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:40px 60px 30px;background:var(--ink-dark);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  header h1{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;line-height:1.08;color:#fbf7ec;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;}
+  main{max-width:900px;margin:0 auto;padding:36px 40px 60px;}
+  h2{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--text);margin:34px 0 12px;padding-left:14px;border-left:3px solid var(--blue);}
+  h2:first-of-type{margin-top:0;}
+  p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:12px;}
+  p strong{color:var(--text);font-weight:600;}
+  ul,ol{padding-left:22px;margin-bottom:14px;}
+  li{font-family:'Cormorant Garamond',serif;font-size:16.5px;line-height:1.65;color:var(--text-soft);margin-bottom:5px;}
+  li strong{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:13px 18px;margin:14px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.6;color:var(--text-soft);}
+  .callout strong{color:var(--text);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .code-block{background:var(--ink-dark);border-radius:10px;margin:14px 0;overflow:hidden;border:1px solid var(--border);}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:8px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:16px;overflow-x:auto;}
+  .code-block code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12.5px;line-height:1.65;color:#e8efff;}
+  .topo{background:var(--ink-dark);border-radius:10px;margin:14px 0;overflow:hidden;border:1px solid var(--border);}
+  .topo pre{padding:16px;overflow-x:auto;font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12.5px;line-height:1.5;color:#e8efff;}
+  .data-table{width:100%;border-collapse:collapse;margin:14px 0;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:9px 13px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:9px 13px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.45;}
+  .data-table td:first-child{color:var(--text);font-weight:600;white-space:nowrap;}
+  .step{display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:10px;}
+  .step-num{font-family:'Playfair Display',serif;font-weight:800;font-size:22px;color:var(--blue);min-width:34px;line-height:1;}
+  .step-body{flex:1;}
+  .step-title{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text);margin-bottom:4px;}
+  .step-text{font-family:'Cormorant Garamond',serif;font-size:15.5px;line-height:1.6;color:var(--text-soft);}
+  code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:0.85em;background:var(--surface-2);padding:1px 5px;border-radius:4px;border:1px solid var(--border-dim);}
+  .step-text code, .step-title code{background:rgba(30,64,175,0.08);}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:18px 40px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:28px 24px;}header h1{font-size:28px;}main{padding:24px 20px 40px;}}
+</style>
+</head>
+<body>
+<header>
+<div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 16</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Bite</span></div>
+  <div class="header-eyebrow">⚡ Study Bite · 5–10 min · Session 16 · #2</div>
+  <h1>Build the Cluster, Then <em>Kill Box A</em></h1>
+  <p>Topology, configuration with best practices, and the exact step-by-step sequence after the primary dies.</p>
+</header>
+<main>
+
+<h2>Part 1 — The Topology</h2>
+<div class="topo"><pre>
+                        INTERNET / WAN
+                              |
+                    +---------+---------+
+                    |   Upstream Switch  |
+                    +----+----------+----+
+                 wan1    |          |    wan1
+              +----------+--+    +--+----------+
+              |   BOX A     |    |   BOX B     |
+              |  (primary)  |    | (secondary) |
+              |  priority   |    |  priority   |
+              |    200      |    |    100      |
+              +--+---+---+--+    +--+---+---+--+
+          port1  |   |   |          |   |   |  port1
+                 | port3 port4    port3 port4 |
+                 |   |   |          |   |   |
+                 |   +---|----------+   |   |
+                 |       +--------------+   |
+                 |    HEARTBEAT LINKS       |
+                 |  (direct back-to-back,   |
+                 |   or dedicated switch)   |
+                 |                          |
+            +----+--------------------------+----+
+            |          LAN Switch                |
+            +----------------+-------------------+
+                             |
+                         CLIENTS
+</pre></div>
+<ul>
+  <li><strong>Both boxes identical:</strong> same model, firmware, licensing (cluster runs at the LOWEST license level of any member), disk configuration, and operating mode of the management VDOM.</li>
+  <li><strong>Two heartbeat links (port3, port4):</strong> directly connected back-to-back for a 2-member cluster, or via a dedicated isolated switch — never through the user network (hellos carry sensitive cluster data and real bandwidth).</li>
+  <li><strong>Traffic interfaces (port1/LAN, wan1/WAN)</strong> connect to the same broadcast domains on both boxes, so either box can carry the identical virtual MACs.</li>
+</ul>
+
+<h2>Part 2 — Configuration, Line by Line</h2>
+<div class="code-block">
+  <div class="code-label">Box A (preferred primary) — FortiOS CLI</div>
+  <pre><code>config system ha
+    set mode a-p
+    set group-id 10
+    set group-name "Vaultline-HQ"
+    set password &lt;shared-secret&gt;
+    set hbdev "port3" 50 "port4" 100
+    set session-pickup enable
+    set monitor "port1" "wan1"
+    set override disable
+    set priority 200
+end</code></pre>
+</div>
+<div class="code-block">
+  <div class="code-label">Box B — identical except priority</div>
+  <pre><code>config system ha
+    set mode a-p
+    set group-id 10
+    set group-name "Vaultline-HQ"
+    set password &lt;shared-secret&gt;
+    set hbdev "port3" 50 "port4" 100
+    set session-pickup enable
+    set monitor "port1" "wan1"
+    set override disable
+    set priority 100
+end</code></pre>
+</div>
+<table class="data-table">
+  <thead><tr><th>Setting</th><th>Why it exists</th></tr></thead>
+  <tbody>
+    <tr><td>mode a-p</td><td>One member forwards, one stands by with synced state.</td></tr>
+    <tr><td>group-id 10</td><td>Double duty: membership credential AND virtual-MAC formula input. Must match within the cluster — and must DIFFER from any other cluster on the same L2 segment.</td></tr>
+    <tr><td>group-name / password</td><td>Membership credentials only — must match on both members; never feed any formula.</td></tr>
+    <tr><td>hbdev p3 50 p4 100</td><td>Two heartbeat interfaces = split-brain insurance. Priorities make it an ORDERED list: port4 (100) is active; port3 is the fallback. Never load-balanced.</td></tr>
+    <tr><td>session-pickup</td><td>Enables stateful session sync so inherited connections survive failover (incl. IPsec SAs).</td></tr>
+    <tr><td>monitor</td><td>Opt-in link watching — feeds election criterion #1. Without it, a dead WAN circuit is invisible to the cluster.</td></tr>
+    <tr><td>override disable</td><td>Default. No automatic failback; uptime checked before priority. Avoids the double-failover (and double NP7 resync) tax.</td></tr>
+    <tr><td>priority 200 / 100</td><td>Marks Box A as preferred — consulted only when interfaces tie and the uptime gap is under 5 minutes. Per-member, never synced.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout-green"><strong>Best practices checklist:</strong> two heartbeat interfaces minimum, isolated from user networks · dedicated <code>session-sync-dev</code> links on busy clusters (session sync riding the heartbeat can starve hellos → false failovers) · unique group-id per cluster per broadcast domain · switch DHCP/PPPoE interfaces to static during initial cluster formation · set override/priority on BOTH members (they never sync) · size each member for its partner's full offloaded workload (S15 resync tax).</div>
+<div class="callout callout-amber"><strong>Verification after forming:</strong> <code>diagnose sys ha dump-by vcluster</code> (roles, uptime, reset_cnt) · <code>diagnose hardware deviceinfo nic port1</code> (Hwaddr = virtual MAC vs Permanent Hwaddr) · <code>diagnose sniff packet any "ether proto 0x8890" 4</code> (hellos flowing).</div>
+
+<h2>Part 3 — Box A Dies. Step by Step.</h2>
+<p>Box A loses power at T=0. No warning, no dying gasp. Here is everything that happens, in strict order:</p>
+
+<div class="step"><div class="step-num">1</div><div class="step-body">
+  <div class="step-title">Silence on the heartbeat</div>
+  <div class="step-text">Hello packets — L2 frames on EtherType <strong>0x8890/0x8891</strong>, sent every <code>hb-interval</code> (default 200 ms) — stop arriving on Box B's active heartbeat interface (port4).</div>
+</div></div>
+
+<div class="step"><div class="step-num">2</div><div class="step-body">
+  <div class="step-title">Declaration of failure — T ≈ +4 s</div>
+  <div class="step-text">After <code>hb-lost-threshold</code> consecutive misses (default 20), Box B declares Box A dead. Default math: 20 × 200 ms ≈ <strong>4 seconds</strong>. (Tunable: faster detection ↔ more false-positive risk from a busy-but-alive peer.)</div>
+</div></div>
+
+<div class="step"><div class="step-num">3</div><div class="step-body">
+  <div class="step-title">Self-check — NOT an election race</div>
+  <div class="step-text">With no living rival, there is nothing to compare. Box B checks exactly one thing about itself — its own monitored interfaces (port1, wan1) — confirms health, and declares primary <strong>unopposed</strong>. Its lower priority (100) is irrelevant.</div>
+</div></div>
+
+<div class="step"><div class="step-num">4</div><div class="step-body">
+  <div class="step-title">Identity adoption</div>
+  <div class="step-text">Box B assumes the <strong>identical virtual MAC addresses</strong> on every equivalent interface (all except heartbeat and reserved management). Client ARP caches need no update — the IP→MAC binding never changed, because the identity was always cluster property.</div>
+</div></div>
+
+<div class="step"><div class="step-num">5</div><div class="step-body">
+  <div class="step-title">Gratuitous ARP</div>
+  <div class="step-text">Box B broadcasts GARPs so every switch relearns which <strong>port</strong> each virtual MAC now lives behind (MAC→port table refresh). For stubborn high-end switches, <code>link-failed-signal enable</code> would have the former primary drop its links for 1 s — moot here, since Box A's links are already physically down, which flushes the switches anyway.</div>
+</div></div>
+
+<div class="step"><div class="step-num">6</div><div class="step-body">
+  <div class="step-title">Traffic flows — then the resync tax</div>
+  <div class="step-text">Frames reach Box B. Kernel sessions (and IPsec SAs) were already synced via <code>session-pickup</code> — but NP7 hardware entries never cross the sync link, so <strong>each inherited session's first packet is CPU-punted</strong> to reprogram Box B's fast path. Expect the S15 CPU spike; size for the worst second.</div>
+</div></div>
+
+<div class="step"><div class="step-num">7</div><div class="step-body">
+  <div class="step-title">Later: Box A returns. Who's primary?</div>
+  <div class="step-text">Depends on <strong>when</strong>. Back within ~5 minutes: uptime gap is indecisive → fallthrough → Box A's priority 200 wins → it preempts (even with override off!). Back after Box B has banked a ≥5-minute lead: Box B keeps primary; priority is never consulted. To fail back deliberately later: <code>diagnose sys ha reset-uptime</code> on Box B.</div>
+</div></div>
+
+<div class="callout"><strong>One-line summary:</strong> silence → 4-second verdict → self-check (no race) → same MACs, new box → GARP teaches the switches → traffic flows → silicon relearns. The failover moves the identity; the resync rebuilds the muscle memory.</div>
+
+</main>
+<footer>NSE7 EF 7.6<span>.</span> Session 16<span>.</span> Study Bite 2 — Topology, Config &amp; Failover Steps</footer>
+</body>
+</html>

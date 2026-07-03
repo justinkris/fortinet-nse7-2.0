@@ -4188,7 +4188,7 @@ def render_all_resources_hub(extras, completions, standalone_extras):
 
     extra_css = """
 <style>
-  .search-bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 18px;margin-bottom:28px;box-shadow:0 8px 20px -18px rgba(10,24,56,0.24);}
+  .search-bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 18px;margin-bottom:14px;box-shadow:0 8px 20px -18px rgba(10,24,56,0.24);}
   .search-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);}
   #resource-search{flex:1;background:var(--surface-2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-family:'Outfit',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .15s, box-shadow .15s;}
   #resource-search:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(30,64,175,0.16);}
@@ -4196,6 +4196,28 @@ def render_all_resources_hub(extras, completions, standalone_extras):
   .search-clear{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:6px 12px;border-radius:8px;cursor:pointer;transition:color .15s, border-color .15s;}
   .search-clear:hover{color:var(--text);border-color:var(--text);}
   .search-clear[hidden]{display:none;}
+  .filter-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:28px;padding:2px 4px;}
+  .filter-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-right:6px;}
+  .filter-chip{display:inline-flex;align-items:center;gap:6px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;transition:all 0.15s;user-select:none;}
+  .filter-chip:hover{border-color:var(--text);color:var(--text);}
+  .filter-chip .filter-chip-count{font-size:10px;font-weight:600;letter-spacing:0.02em;background:var(--surface-2);border-radius:10px;padding:1px 7px;color:inherit;opacity:0.8;}
+  .filter-chip.active{color:#fff;}
+  .filter-chip.active .filter-chip-count{background:rgba(255,255,255,0.22);color:#fff;opacity:1;}
+  .filter-chip[data-kind="sessions"].active{background:var(--blue);border-color:var(--blue);}
+  .filter-chip[data-kind="guides"].active{background:var(--green);border-color:var(--green);}
+  .filter-chip[data-kind="bites"].active{background:var(--blue-vivid);border-color:var(--blue-vivid);}
+  .filter-chip[data-kind="nibbles"].active{background:var(--amber);border-color:var(--amber);}
+  .filter-chip[data-kind="completed"].active{background:var(--green);border-color:var(--green);}
+  .filter-chip[data-kind="labs"].active{background:#0f766e;border-color:#0f766e;}
+  .filter-chip[data-kind="sessions"]:not(.active):hover{border-color:var(--blue);color:var(--blue);}
+  .filter-chip[data-kind="guides"]:not(.active):hover{border-color:var(--green);color:var(--green);}
+  .filter-chip[data-kind="bites"]:not(.active):hover{border-color:var(--blue-vivid);color:var(--blue-vivid);}
+  .filter-chip[data-kind="nibbles"]:not(.active):hover{border-color:var(--amber);color:var(--amber);}
+  .filter-chip[data-kind="completed"]:not(.active):hover{border-color:var(--green);color:var(--green);}
+  .filter-chip[data-kind="labs"]:not(.active):hover{border-color:#0f766e;color:#0f766e;}
+  .filter-chip-all{margin-left:auto;background:transparent;border:1px dashed var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:5px 12px;border-radius:8px;cursor:pointer;transition:color 0.15s, border-color 0.15s;}
+  .filter-chip-all:hover{color:var(--text);border-color:var(--text);}
+  .anchor-section.section-filtered-out{display:none;}
   .card-hidden{display:none !important;}
   .section-dim{opacity:0.75;}
   .anchor-section h2{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
@@ -4206,6 +4228,31 @@ def render_all_resources_hub(extras, completions, standalone_extras):
 </style>
 """.strip()
 
+    # Count per kind for the chip labels (mirror the section totals).
+    kind_totals = {sid: cards_html.count('<a class="hub-card"') for sid, _, _, cards_html in sections}
+    filter_kinds = [
+        ("sessions", "Sessions"),
+        ("guides", "Guides"),
+        ("bites", "Bites"),
+        ("nibbles", "Nibbles"),
+        ("completed", "Completed"),
+        ("labs", "Labs"),
+    ]
+    filter_chips_html = "".join(
+        f'<button type="button" class="filter-chip active" data-kind="{sid}" aria-pressed="true">'
+        f'<span>{html_escape(label)}</span>'
+        f'<span class="filter-chip-count">{kind_totals.get(sid, 0)}</span>'
+        f'</button>'
+        for sid, label in filter_kinds
+    )
+    filter_bar_html = (
+        '<div class="filter-bar" role="group" aria-label="Filter resources by category">'
+        '<span class="filter-label">Show</span>'
+        f'{filter_chips_html}'
+        '<button type="button" class="filter-chip-all" id="filter-reset">Reset filters</button>'
+        '</div>'
+    )
+
     search_html = (
         '<div class="search-bar">'
         '<label for="resource-search" class="search-label">Search</label>'
@@ -4215,6 +4262,7 @@ def render_all_resources_hub(extras, completions, standalone_extras):
         '<button type="button" class="search-clear" id="search-clear" hidden>Clear</button>'
         '<span class="search-summary" id="search-summary"></span>'
         '</div>'
+        f'{filter_bar_html}'
     )
 
     search_js = """
@@ -4225,6 +4273,8 @@ def render_all_resources_hub(extras, completions, standalone_extras):
   const clearBtn = document.getElementById('search-clear');
   const cards = Array.from(document.querySelectorAll('.hub-card[data-search]'));
   const sections = Array.from(document.querySelectorAll('.anchor-section[data-section]'));
+  const filterChips = Array.from(document.querySelectorAll('.filter-chip[data-kind]'));
+  const resetBtn = document.getElementById('filter-reset');
   const total = cards.length;
 
   function tokenize(q) { return q.toLowerCase().trim().split(/\\s+/).filter(Boolean); }
@@ -4232,15 +4282,26 @@ def render_all_resources_hub(extras, completions, standalone_extras):
     for (let i = 0; i < terms.length; i++) if (haystack.indexOf(terms[i]) === -1) return false;
     return true;
   }
-  function apply(q) {
+  function activeKinds() {
+    return new Set(filterChips.filter(c => c.classList.contains('active')).map(c => c.dataset.kind));
+  }
+  function apply() {
+    const q = input.value;
     const terms = tokenize(q);
+    const active = activeKinds();
     let shown = 0;
+    let visibleSections = 0;
     cards.forEach(function(card) {
-      const ok = terms.length === 0 || matches(card.dataset.search || '', terms);
-      card.classList.toggle('card-hidden', !ok);
-      if (ok) shown++;
+      const searchOk = terms.length === 0 || matches(card.dataset.search || '', terms);
+      card.classList.toggle('card-hidden', !searchOk);
+      if (searchOk) shown++;
     });
     sections.forEach(function(sec) {
+      const sid = sec.dataset.section;
+      const kindShown = active.has(sid);
+      sec.classList.toggle('section-filtered-out', !kindShown);
+      if (!kindShown) return;
+      visibleSections++;
       const visible = sec.querySelectorAll('.hub-card:not(.card-hidden)').length;
       const grid = sec.querySelector('.card-grid');
       const emptyBanner = sec.querySelector('.section-empty');
@@ -4253,16 +4314,45 @@ def render_all_resources_hub(extras, completions, standalone_extras):
         countEl.textContent = terms.length ? (visible + ' / ' + sec.dataset.total) : sec.dataset.total;
       }
     });
+    /* Only tally cards that live in a still-visible section. */
+    let shownVisible = 0;
+    cards.forEach(function(card) {
+      if (card.classList.contains('card-hidden')) return;
+      const parentSec = card.closest('.anchor-section');
+      if (parentSec && !parentSec.classList.contains('section-filtered-out')) shownVisible++;
+    });
     clearBtn.hidden = terms.length === 0;
-    if (terms.length === 0) summary.textContent = total + ' items across ' + sections.length + ' categories';
-    else if (shown === 0) summary.textContent = 'No matches for "' + q.trim() + '"';
-    else summary.textContent = shown + ' of ' + total + ' items match';
+    if (terms.length === 0 && active.size === filterChips.length) {
+      summary.textContent = total + ' items across ' + sections.length + ' categories';
+    } else if (shownVisible === 0) {
+      summary.textContent = terms.length
+        ? 'No matches for "' + q.trim() + '" in the selected categories'
+        : 'No items in the selected categories';
+    } else {
+      summary.textContent = shownVisible + ' item' + (shownVisible === 1 ? '' : 's') + ' shown';
+    }
   }
-  input.addEventListener('input', function() { apply(input.value); });
-  clearBtn.addEventListener('click', function() { input.value = ''; input.focus(); apply(''); });
+  input.addEventListener('input', apply);
+  clearBtn.addEventListener('click', function() { input.value = ''; input.focus(); apply(); });
+  filterChips.forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      const on = chip.classList.toggle('active');
+      chip.setAttribute('aria-pressed', on ? 'true' : 'false');
+      apply();
+    });
+  });
+  resetBtn.addEventListener('click', function() {
+    filterChips.forEach(function(chip) {
+      chip.classList.add('active');
+      chip.setAttribute('aria-pressed', 'true');
+    });
+    input.value = '';
+    apply();
+    input.focus();
+  });
   const m = location.hash.match(/[#&]q=([^&]+)/);
   if (m) input.value = decodeURIComponent(m[1]).replace(/\\+/g, ' ');
-  apply(input.value);
+  apply();
 })();
 </script>
 """.strip()

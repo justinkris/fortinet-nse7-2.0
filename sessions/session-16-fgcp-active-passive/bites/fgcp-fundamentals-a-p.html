@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Bite — FGCP Fundamentals: Active-Passive</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:40px 60px 30px;background:var(--ink-dark);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  header h1{font-family:'Playfair Display',serif;font-size:40px;font-weight:700;line-height:1.05;color:#fbf7ec;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;}
+  main{max-width:900px;margin:0 auto;padding:36px 40px 60px;}
+  h2{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--text);margin:34px 0 12px;padding-left:14px;border-left:3px solid var(--blue);}
+  h2:first-of-type{margin-top:0;}
+  p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:12px;}
+  p strong{color:var(--text);font-weight:600;}
+  ul,ol{padding-left:22px;margin-bottom:14px;}
+  li{font-family:'Cormorant Garamond',serif;font-size:16.5px;line-height:1.65;color:var(--text-soft);margin-bottom:5px;}
+  li strong{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:13px 18px;margin:14px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.6;color:var(--text-soft);}
+  .callout strong{color:var(--text);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .data-table{width:100%;border-collapse:collapse;margin:14px 0;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:9px 13px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:9px 13px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.45;}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:14px 0;}
+  .analogy-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:6px;text-transform:uppercase;}
+  .analogy-box p{font-style:italic;color:#5c3d09;font-size:16px;margin-bottom:6px;}
+  .selftest{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin:14px 0;border-top:3px solid var(--blue);}
+  .selftest ol{margin-bottom:0;}
+  details{margin:6px 0 12px;font-family:'Cormorant Garamond',serif;}
+  summary{cursor:pointer;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;color:var(--blue);letter-spacing:0.08em;text-transform:uppercase;}
+  details p{margin-top:8px;font-size:15.5px;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:18px 40px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:0.85em;background:var(--surface-2);padding:1px 5px;border-radius:4px;border:1px solid var(--border-dim);}
+  @media(max-width:720px){header{padding:28px 24px;}header h1{font-size:30px;}main{padding:24px 20px 40px;}}
+</style>
+</head>
+<body>
+<header>
+<div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 16</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Bite</span></div>
+  <div class="header-eyebrow">⚡ Study Bite · 5–10 min · Session 16</div>
+  <h1>FGCP <em>Active-Passive</em> — Rapid Recall</h1>
+  <p>Reactivate the mental model: monitoring, election, override, virtual MAC, heartbeat, and the failover sequence.</p>
+</header>
+<main>
+
+<h2>Overview</h2>
+<p>FGCP A-P puts one member (the primary) in charge of all traffic while the secondary listens to the heartbeat, holds synced config and kernel sessions, and stands ready to inherit the cluster's Layer 2 identity. A failover is three stages — <strong>detect</strong> (heartbeat silence or a monitored-interface failure), <strong>decide</strong> (the election waterfall, or a lone self-check if the primary is dead-silent), and <strong>hand off identity</strong> (adopt virtual MACs, GARP the switches). Each stage has its own defaults, its own knobs, and its own exam trap.</p>
+
+<h2>Problem It Solves</h2>
+<p>One box means every failure — power, link, or software — is a full outage plus cold-spare MTTR. FGCP A-P collapses failure recovery from hours of logistics into seconds of automated identity handoff with live state preserved. But the cluster only protects against failures it can <em>see</em>: heartbeat silence by default, individual link failures only if opted in.</p>
+
+<h2>Primary Mental Model</h2>
+<p><strong>The election is a waterfall, not a number.</strong> Criteria are checked in order and the process stops at the first one producing a clear winner:</p>
+<table class="data-table">
+  <thead><tr><th>#</th><th>Override DISABLED (default)</th><th>Override ENABLED</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Most monitored interfaces up</td><td>Most monitored interfaces up</td></tr>
+    <tr><td>2</td><td>HA uptime (needs ≥5-min lead)</td><td><strong>Priority</strong></td></tr>
+    <tr><td>3</td><td>Priority</td><td>HA uptime (≥5 min)</td></tr>
+    <tr><td>4</td><td>Serial number</td><td>Serial number</td></tr>
+  </tbody>
+</table>
+<p>And <strong>the identity belongs to the cluster, not the box</strong>: virtual MACs are adopted unchanged by the new primary; GARP re-teaches switches (MAC→port), never clients (IP→MAC).</p>
+
+<h2>The Failover Sequence (dead primary)</h2>
+<ol>
+  <li>Hello packets (EtherType <strong>0x8890/0x8891</strong>) stop arriving.</li>
+  <li>Default detection: <strong>20 lost × 200 ms ≈ 4 seconds</strong> (<code>hb-lost-threshold</code> × <code>hb-interval</code>).</li>
+  <li><strong>No election race</strong> — the survivor self-checks its own monitored interfaces and declares primary unopposed. Its priority is irrelevant.</li>
+  <li>Adopts the identical virtual MAC set (all interfaces except heartbeat + reserved management).</li>
+  <li>Broadcasts gratuitous ARPs → switches relearn MAC→port.</li>
+  <li>Traffic flows; inherited sessions pay the NP7 resync tax (first packet CPU-punted).</li>
+</ol>
+
+<h2>Key Terminology</h2>
+<ul>
+  <li><strong>Monitored interface</strong> — opt-in (<code>set monitor</code>); feeds criterion #1; failure resets HA uptime to 0.</li>
+  <li><strong>HA uptime</strong> — continuous cluster-membership clock; resets on reboot or monitored-link failure; <code>diagnose sys ha reset-uptime</code> zeroes it deliberately; inspect with <code>diagnose sys ha dump-by vcluster</code>.</li>
+  <li><strong>Override</strong> — CLI-only; swaps uptime↔priority; per-member, never synced (as is priority).</li>
+  <li><strong>Virtual MAC</strong> — default formula inputs: group-id + vcluster ID + physical interface index. group-name is never an input.</li>
+  <li><strong>link-failed-signal</strong> — old primary drops all interfaces 1 s at failover to flush stubborn switch MAC tables.</li>
+  <li><strong>hbdev priorities</strong> — ordered, exclusive heartbeat list (higher number = active). Never load-balanced. <code>session-sync-dev</code> IS load-balanced.</li>
+</ul>
+
+<h2>Exam-Critical Points</h2>
+<ul>
+  <li>Short outage (&lt;5 min uptime gap) → uptime is indecisive → falls through to priority → higher-priority box <strong>preempts even with override off</strong>. Long outage → survivor's uptime lead is decisive → priority never consulted.</li>
+  <li>"Box A crashes, Box B has lower priority — does B take over?" <strong>Yes, always.</strong> No rival = no comparison.</li>
+  <li>Override cost: a <strong>second failover on every recovery</strong> (plus a second NP7 resync).</li>
+  <li>group-id does double duty (credential + vMAC math). Two clusters, one L2 segment, same group-id = <strong>vMAC collision, no alarm</strong> — even with different group-names.</li>
+  <li>Symmetric monitored-link failure on both members = <strong>no failover</strong>.</li>
+</ul>
+
+<h2>Common Mistakes</h2>
+<ul>
+  <li>Assuming FGCP watches links by default — it watches <strong>nothing</strong> but the heartbeat.</li>
+  <li>Confusing 0x8100 (dot1Q VLAN) with 0x8890/0x8891 (HA hellos) — unrelated EtherTypes.</li>
+  <li>Thinking GARP refreshes client ARP caches — it refreshes <strong>switch MAC tables</strong>.</li>
+  <li>Believing "override off = no preemption possible" — the fallthrough window says otherwise.</li>
+  <li>Assuming two heartbeat links load-balance — they're an ordered failover list.</li>
+</ul>
+
+<h2>Troubleshooting Checklist</h2>
+<ol>
+  <li>Link died, no failover? → check the <strong>monitored list</strong> first (<code>show system ha</code> → <code>monitor</code>).</li>
+  <li>Unexpected failback? → check uptime diff with <code>dump-by vcluster</code>, then walk the waterfall.</li>
+  <li>Two clusters, flaky L2? → compare <strong>group-ids</strong> before anything else.</li>
+  <li>Post-failover, old port still receiving? → stubborn switch → <code>link-failed-signal enable</code>.</li>
+  <li>Suspected heartbeat issue? → <code>diagnose sniff packet any "ether proto 0x8890" 4</code>.</li>
+</ol>
+
+<div class="analogy-box">
+  <div class="analogy-label">Memorable Analogy</div>
+  <p>The virtual MAC is a <strong>company phone number</strong>, not a personal one. Customers dial the same number forever (client ARP never changes); when the on-call engineer changes, only the <strong>switchboard</strong> must learn which desk it now rings at (GARP → switch MAC table). Two companies registering the same number (same group-id, same segment) means callers randomly reach the wrong office — and no phone reports a fault.</p>
+</div>
+
+<h2>Self-Test</h2>
+<div class="selftest">
+<ol>
+  <li>Override disabled. The primary reboots and returns after 90 seconds, fully healthy, with higher priority. Who is primary and which criterion decided it?
+    <details><summary>Reveal</summary><p>The rebooted box. Uptime gap &lt;5 min → indecisive → fallthrough to priority → higher priority wins. Override never mattered.</p></details></li>
+  <li>Same scenario, but it returns after 6 minutes. Who is primary?
+    <details><summary>Reveal</summary><p>The survivor. Its ≥5-minute uptime lead is decisive; the waterfall stops before priority is ever consulted.</p></details></li>
+  <li>What exactly does the gratuitous ARP correct after failover — and what does it NOT correct?
+    <details><summary>Reveal</summary><p>It corrects switch MAC→port tables. It does not (and need not) correct client ARP caches — the IP→virtual-MAC binding never changed.</p></details></li>
+  <li>Name group-id's two jobs, and group-name's one job.
+    <details><summary>Reveal</summary><p>group-id: cluster-membership credential AND input to the default virtual MAC formula. group-name: membership credential only — never computed into anything.</p></details></li>
+  <li>Default detection time for a dead primary, and the two settings behind it?
+    <details><summary>Reveal</summary><p>≈4 seconds: hb-lost-threshold (20) × hb-interval (200 ms). Both tunable — faster detection risks false positives from a busy peer.</p></details></li>
+</ol>
+</div>
+
+</main>
+<footer>NSE7 EF 7.6<span>.</span> Session 16<span>.</span> Study Bite — FGCP Fundamentals A-P</footer>
+</body>
+</html>

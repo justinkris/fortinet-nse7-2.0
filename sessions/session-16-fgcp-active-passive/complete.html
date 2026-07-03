@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 16 — FGCP Fundamentals: Active-Passive</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.005em;}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+  .top-panels{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+  .top-panels .qpanel{border-bottom:none;border-right:1px solid var(--border);}
+  .top-panels .qpanel-header{padding-left:32px;padding-right:32px;}
+  .top-panels .qpanel-body{padding-left:32px;padding-right:32px;}
+  .qpanel{background:var(--surface);}
+  .qpanel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .qpanel-header:hover,.qpanel-header.open{background:var(--surface-2);}
+  .qpanel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .qpanel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .qpanel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .qpanel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .qpanel-body{display:none;padding:0 20px 22px;}
+  .qpanel-body.open{display:block;}
+  .notes-panel{background:var(--surface);}
+  .notes-panel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 32px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .notes-panel-header:hover,.notes-panel-header.open{background:var(--surface-2);}
+  .notes-panel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .notes-panel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .notes-panel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .notes-panel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .notes-panel-body{display:none;padding:0 32px 22px;}
+  .notes-panel-body.open{display:block;}
+  .q-group{margin-bottom:16px;}
+  .q-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+  .q-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-dim);}
+  .q-item:last-child{border-bottom:none;}
+  .q-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;color:var(--blue);min-width:16px;margin-top:2px;}
+  .q-text{font-size:14px;color:var(--text-soft);line-height:1.5;flex:1;}
+  .q-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:0 4px;margin-top:1px;}
+  .q-del:hover{color:var(--blue);}
+  .no-questions{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);padding:8px 0;}
+  .btn-add-q{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-q:hover{opacity:0.85;}
+  .section-nav{position:sticky;top:0;z-index:90;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px;overflow-x:auto;}
+  .nav-tab{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:12px 18px;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s,border-color 0.15s;}
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+  main{max-width:1200px;margin:0 auto;padding:0;}
+  .main-content{padding:36px 60px 60px 60px;}
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:4px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .code-block{background:var(--ink-dark);border-radius:10px;padding:0;margin:16px 0;overflow:hidden;border:1px solid var(--border);}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:8px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:16px;overflow-x:auto;}
+  .code-block code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12.5px;line-height:1.65;color:#e8efff;}
+  .socratic-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:16px;border-top:3px solid var(--blue);}
+  .socratic-header{display:flex;align-items:center;gap:8px;margin-bottom:0;cursor:pointer;user-select:none;}
+  .socratic-header::after{content:'▸ Expand';margin-left:auto;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-block.soc-open .socratic-header{margin-bottom:10px;}
+  .socratic-block.soc-open .socratic-header::after{content:'▾ Collapse';}
+  .socratic-block:not(.soc-open) .socratic-insight,
+  .socratic-block:not(.soc-open) .socratic-questions,
+  .socratic-block:not(.soc-open) .answer-area{display:none;}
+  .socratic-icon{font-size:17px;flex-shrink:0;}
+  .socratic-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-insight{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;margin-bottom:12px;border-left:3px solid var(--border);padding-left:14px;font-style:italic;}
+  .socratic-questions{list-style:none;padding:0;margin:0;}
+  .socratic-questions li{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--border-dim);line-height:1.6;}
+  .socratic-questions li:last-child{border-bottom:none;}
+  .socratic-questions li::before{content:'?';position:absolute;left:0;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:16px;top:7px;color:var(--blue);}
+  .answer-area{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .answer-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .answer-textarea:focus{border-color:var(--blue);}
+  .answer-textarea:disabled{opacity:0.75;background:var(--surface-2);cursor:default;}
+  .answer-buttons{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .btn-add-answer{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-answer:hover:not(:disabled){opacity:0.85;}
+  .btn-add-answer:disabled{opacity:0.5;cursor:default;}
+  .btn-see-answer{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-see-answer:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-see-answer:not(:disabled){color:var(--blue);border-color:var(--blue);}
+  .btn-see-answer:hover:not(:disabled){background:var(--blue-glow);}
+  .model-answers{margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .model-answer-item{padding:10px 0;border-bottom:1px solid var(--border-dim);}
+  .model-answer-item:first-child{padding-top:0;}
+  .model-answer-item:last-child{border-bottom:none;padding-bottom:0;}
+  .model-answer-q{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;}
+  .model-answer-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;}
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+  .analogy-label{display:flex;align-items:center;gap:6px;user-select:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px;text-transform:uppercase;}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
+  .analogy-text ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;}
+  .analogy-text li{padding-left:18px;position:relative;}
+  .analogy-text li::before{content:'•';position:absolute;left:0;font-weight:700;color:var(--amber);}
+  .lesson-tools{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:40px;}
+  .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .tool-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .tool-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .tool-textarea:focus{border-color:var(--blue);}
+  .tool-row{margin-top:8px;display:flex;gap:8px;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:34px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}.section-nav{padding:0 16px;}.top-panels{grid-template-columns:1fr;}.top-panels .qpanel{border-right:none;border-bottom:1px solid var(--border);}.lesson-tools-grid{grid-template-columns:1fr;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="index.html" style="color:#9bb8e6;text-decoration:none;">Session 16</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Completed Study Guide</span></div>
+    <div class="header-eyebrow"><span class="dot-live"></span> Complete Study Guide · NSE7 EF 7.6</div>
+    <h1>FGCP Fundamentals — <em>Active-Passive</em></h1>
+    <p>Election, monitored interfaces, virtual MACs, heartbeat mechanics, and every step the secondary takes in the first moments after the primary falls silent.</p>
+  </div>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">A failover isn't one event — it's a <em>detection, an election, and a Layer 2 identity handoff</em>, and the exam tests each stage separately.</div>
+  <p class="motivation-sub">At Vaultline Financial, a dead WAN circuit that nobody noticed, a reboot test that "shouldn't" have failed back, and a stubborn switch each exposed one stage of the machine. This guide reassembles the whole machine.</p>
+</div>
+
+<div class="top-panels">
+  <div class="qpanel" id="qpanel">
+    <button class="qpanel-header" onclick="toggleQPanel()" id="qpanel-header">
+      <span class="qpanel-title">MY QUESTIONS</span>
+      <span class="qpanel-count" id="qpanel-count">0</span>
+      <span class="qpanel-hint">— click to expand</span>
+      <span class="qpanel-chevron" id="qpanel-chevron">▾</span>
+    </button>
+    <div class="qpanel-body" id="qpanel-body"></div>
+  </div>
+  <div class="notes-panel" id="notes-panel">
+    <button class="notes-panel-header" onclick="toggleNotesPanel()" id="notes-panel-header">
+      <span class="notes-panel-title">MY NOTES</span>
+      <span class="notes-panel-count" id="notes-panel-count">0</span>
+      <span class="notes-panel-hint">— click to expand</span>
+      <span class="notes-panel-chevron" id="notes-panel-chevron">▾</span>
+    </button>
+    <div class="notes-panel-body" id="notes-panel-body"></div>
+  </div>
+</div>
+
+<nav class="section-nav" id="section-nav">
+  <a class="nav-tab active" href="#section-monitoring">Interface Monitoring</a>
+  <a class="nav-tab" href="#section-election">Election Waterfall</a>
+  <a class="nav-tab" href="#section-override">Override &amp; Failback</a>
+  <a class="nav-tab" href="#section-vmac">Virtual MAC &amp; GARP</a>
+  <a class="nav-tab" href="#section-heartbeat">Heartbeat &amp; Failover</a>
+</nav>
+
+<main>
+  <div class="main-content">
+
+    <!-- ══════════ SECTION 1 — INTERFACE MONITORING ══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · INTERFACE MONITORING</span>
+      </div>
+      <p class="socratic-insight">Box A's WAN circuit to Clearing Partner 2 goes dark. Box A itself is healthy — CPU normal, heartbeat with Box B intact. The cluster does nothing. Marcus asks: is this now a silent single point of failure? The uncomfortable truth is buried in a default.</p>
+      <ul class="socratic-questions">
+        <li>Before any engineer configures anything, does FGCP watch individual data interfaces at all — or is the heartbeat the only thing keeping the members honest?</li>
+        <li>If monitoring every interface protects against every link failure, why would an experienced engineer deliberately choose NOT to monitor everything?</li>
+      </ul>
+      <div class="answer-area" data-section="monitoring">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">FGCP monitors nothing by default. Interface health is strictly opt-in: an engineer must explicitly add each interface to the monitored list (<code>set monitor</code>) before its up/down state feeds the election. Out of the box, only the heartbeat answers "is my partner alive?" — a dead WAN circuit on an otherwise healthy primary is invisible to the cluster.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Monitoring everything makes the cluster hair-triggered. Every transient flap on any interface would count against the member's election standing, causing unnecessary failovers — each of which carries a real cost (the NP7 resync tax from Session 15). Monitor only the interfaces whose failure genuinely warrants moving the primary role.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-monitoring">
+      <div class="section-label">SECTION 01</div>
+      <h2>Monitored Interfaces Are <em>Opt-In</em></h2>
+      <p>The Vaultline incident that opened this session is the most common real-world FGCP misconfiguration: an HA pair that looks perfectly healthy while a business-critical circuit sits dead. The reason is simple and easy to forget — <strong>FGCP does not monitor any data interface by default</strong>. The only built-in liveness check is the heartbeat between members. Everything else must be declared explicitly:</p>
+      <div class="code-block">
+        <div class="code-label">FortiOS CLI — declaring monitored interfaces</div>
+        <pre><code>config system ha
+    set monitor "wan1" "wan2"
+end</code></pre>
+      </div>
+      <p>Once an interface is on the monitored list, its status feeds directly into the <em>first</em> and most decisive election criterion: the member with the most monitored interfaces in an <strong>up</strong> state wins the primary role. A monitored link failing on the primary therefore triggers a failover to a secondary whose equivalent link is still up — which is exactly the behaviour Marcus expected and didn't get.</p>
+      <p>Two important couplings follow. First, a <strong>symmetric failure changes nothing</strong>: if the same monitored interface is down on both members, both lose equally, the relative standing is unchanged, and no failover occurs — because failing over would fix nothing. Second, a monitored interface failure <strong>resets that member's HA uptime to zero</strong>, exactly as a reboot does. Interface monitoring and the uptime criterion are not independent facts; a box recovering from a link failure looks, to the election, like a box that just restarted.</p>
+      <div class="callout callout-amber">
+        <strong>Common misconception:</strong> "The cluster will notice if an important link dies." It will not — unless someone told it that link was important. Auditing the monitored list against the actual business-critical circuits is a deployment-review item, not an optional extra.
+      </div>
+      <div class="callout callout-green">
+        <strong>Remember:</strong> Don't monitor everything. Monitor the interfaces whose failure should move the primary role — typically the traffic-carrying WAN/LAN paths — and leave the rest out to avoid flap-driven failovers.
+      </div>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">FGCP watches nothing by default. Interface monitoring is opt-in via <code>set monitor</code>; it feeds election criterion #1 (most monitored interfaces up), a monitored-link failure resets HA uptime to 0, and a symmetric failure on both members triggers no failover at all.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-monitoring" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-monitoring','Interface Monitoring')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-monitoring" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-monitoring')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ SECTION 2 — ELECTION WATERFALL ══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · ELECTION WATERFALL</span>
+      </div>
+      <p class="socratic-insight">Marcus reboots Box A (the primary) with override disabled. Box A returns 40 seconds later, fully healthy — and reclaims primary. Priya is confused: "I thought override off meant no preemption?" Her mental model has a hole in it, and the exam knows exactly where.</p>
+      <ul class="socratic-questions">
+        <li>Box B had been primary for several minutes when Box A rejoined. Which election criterion should have kept Box B primary — and why didn't it?</li>
+        <li>If Box A had instead returned after 5 minutes and 1 second, who would be primary, and which criterion would decide it?</li>
+      </ul>
+      <div class="answer-area" data-section="election">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">HA uptime — but uptime only decides the election when the gap is <strong>at least 5 minutes</strong>. At 40 seconds, Box B's lead was under the threshold, so the uptime criterion produced no verdict and the election fell through to priority, where Box A's higher configured value won. Override never entered into it.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Box B stays primary. By 5:01, Box B has banked a ≥5-minute uptime lead, so the uptime criterion resolves decisively in its favour and the waterfall stops — priority is never consulted. The counter-intuitive rule: a short outage lets the higher-priority box preempt via fallthrough; a long outage lets the survivor permanently outrun that preemption.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-election">
+      <div class="section-label">SECTION 02</div>
+      <h2>The Election Is a <em>Waterfall</em>, Not a Number</h2>
+      <p>Primary election is not "highest priority wins." It is an ordered list of criteria, and <strong>the process stops at the first criterion that produces a clear winner</strong>. Everything below the stopping point is ignored entirely. The order depends on the override setting:</p>
+      <table class="data-table">
+        <thead><tr><th>Step</th><th>Override DISABLED (default)</th><th>Override ENABLED</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Most monitored interfaces up</td><td>Most monitored interfaces up</td></tr>
+          <tr><td>2</td><td>Highest HA uptime (must lead by ≥5 min)</td><td><strong>Highest priority</strong></td></tr>
+          <tr><td>3</td><td>Highest priority</td><td>Highest HA uptime (≥5 min)</td></tr>
+          <tr><td>4</td><td>Highest serial number</td><td>Highest serial number</td></tr>
+        </tbody>
+      </table>
+      <p><strong>HA uptime</strong> is a distinct clock — not system uptime. It counts continuous, healthy membership in the cluster and resets to zero on exactly two triggers: a reboot, or a monitored interface failing. It can also be reset deliberately with <code>diagnose sys ha reset-uptime</code>, which is the sanctioned way to force a failover with override disabled: zero the current primary's clock and the peer wins the uptime check on demand — a one-time, controlled action with no standing side effects. Inspect the state with <code>diagnose sys ha dump-by vcluster</code>: the member showing <code>0</code> in the uptime column has the lowest HA uptime, and <code>reset_cnt</code> counts how many times that member's clock has been zeroed.</p>
+      <p>The <strong>5-minute margin</strong> exists for the reason you derived yourself: a box that flaps every 40 seconds should not keep winning elections. Under 5 minutes of difference, uptime is treated as noise and produces no verdict. This creates the trap of the session — the failback window. A briefly-absent higher-priority member walks straight back into the primary role (uptime tie → fallthrough → priority), while a long-absent one finds the door closed (survivor's uptime lead is decisive). Most engineers guess this exactly backwards.</p>
+      <p><strong>Serial number</strong> is the final tiebreaker — always deterministic, guaranteeing the election can never deadlock. And critically, the full waterfall is a <em>negotiation between members that can hear each other</em>. When the primary dies outright and goes silent, there is no comparison to run: the survivor performs one self-check (its own monitored interfaces), confirms it is healthy, and declares primary unopposed. Lower priority is irrelevant when there is no rival left to outrank.</p>
+      <div class="callout">
+        <strong>Exam tip:</strong> "Box A crashes; Box B has lower priority — does Box B take over?" Yes, always. The waterfall resolves ties between living members; it is not a qualification exam the survivor must pass.
+      </div>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Waterfall (override off): monitored interfaces → uptime (≥5 min to count) → priority → serial. Stops at the first clear winner. Uptime resets on reboot OR monitored-interface failure. Short absence = preemption via fallthrough; long absence = survivor keeps primary.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-election" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-election','Election Waterfall')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-election" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-election')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ SECTION 3 — OVERRIDE ══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · OVERRIDE &amp; FAILBACK</span>
+      </div>
+      <p class="socratic-insight">Priya wants Box A to be primary whenever it's healthy — no coin-flips of uptime timing. There's a setting that guarantees exactly that. The senior-engineer question is not whether it works, but what it costs every single time it fires.</p>
+      <ul class="socratic-questions">
+        <li>What does enabling override actually change about the election — and what does it NOT change?</li>
+        <li>What price does the cluster pay, guaranteed, every time the preferred primary comes back online with override enabled? Connect it to Session 15.</li>
+      </ul>
+      <div class="answer-area" data-section="override">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Override swaps the positions of uptime and priority in the waterfall — priority is checked second instead of third. It does not "enable" priority (priority participates either way) and it does not change criterion #1 or #4. With override on, the highest-priority healthy member always wins, regardless of uptime.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">A second, deliberate failover on every recovery — the preferred box takes its role back the moment it returns. Each failback re-triggers the NP7 resync tax from Session 15: every inherited session's first packet is CPU-punted to reprogram the fast path. Override means paying the resync cost twice per outage, by design.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-override">
+      <div class="section-label">SECTION 03</div>
+      <h2>Override Changes the <em>Order</em>, Not the Rules</h2>
+      <p>Priya's mental model — "override off means no preemption" — is the common oversimplification. The precise rule: <strong>override swaps the positions of priority and HA uptime in the election waterfall.</strong> With override enabled (CLI only: <code>set override enable</code>), priority is consulted before uptime, so the member you crowned with the highest priority value reclaims the primary role every time it is up and healthy.</p>
+      <p>The honest trade-off, straight from the study guide: with override enabled, <em>a failover event is triggered when the primary fails <strong>and also when the primary becomes available again</strong></em>. Every recovery is a second failover — and thanks to the kernel-vs-silicon distinction from Session 15, every failback re-runs the NP7 resync: all inherited sessions CPU-punted, worst case 100% at once. That's not a pathological edge case; it's the designed behaviour, purchased deliberately in exchange for a deterministic primary.</p>
+      <p>Two further details the exam loves. First, <strong>override and priority are per-member settings that are never synchronized</strong> between cluster members — you must set them on each box individually, and forgetting one side is a classic misconfiguration. Second, with override <em>enabled</em>, the easiest way to force a failover is to change priorities (raise the secondary's or lower the primary's); with override <em>disabled</em>, the tool is <code>diagnose sys ha reset-uptime</code> on the current primary.</p>
+      <div class="callout callout-green">
+        <strong>Real-world judgment (yours, and correct):</strong> leave override disabled, alert on failover events, investigate, then fail back deliberately with <code>reset-uptime</code> when you choose to. Deterministic preference is rarely worth an automatic double-resync per outage.
+      </div>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Override = swap uptime↔priority in the waterfall. Cost = a guaranteed second failover (and second NP7 resync) on every recovery. Override + priority are per-member and never synced. Manual failover: override on → change priority; override off → reset-uptime.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-override" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-override','Override &amp; Failback')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-override" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-override')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ SECTION 4 — VIRTUAL MAC & GARP ══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · VIRTUAL MAC &amp; GARP</span>
+      </div>
+      <p class="socratic-insight">Box B has just won the election. Every client ARP cache and every switch MAC table on the LAN still points at where Box A used to be. Something at Layer 2 has to change in milliseconds — but if you think it's the clients' ARP caches, you've fallen into the trap.</p>
+      <ul class="socratic-questions">
+        <li>If the MAC address associated with the cluster's IP never changes across a failover, what is the gratuitous ARP actually correcting?</li>
+        <li>Two independent FGCP clusters share the same L2 segment and the same group-id, but different group-names. Do they merge? Do they conflict? What exactly happens?</li>
+      </ul>
+      <div class="answer-area" data-section="vmac">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Switch MAC address tables, not client ARP caches. Clients map IP→MAC and that mapping is unchanged (the virtual MAC is cluster property). Switches map MAC→port, and their entry for the virtual MAC still points at the old primary's port. The GARP forces every switch to relearn which port the virtual MAC now lives behind.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">They do not merge — cluster membership requires group-id, group-name AND password all to match, and the group-name differs. But they DO conflict: the default virtual MAC formula uses group-id (plus vcluster ID and interface index), never group-name. Same group-id + same interface numbering = identical virtual MACs on two unrelated clusters — a silent L2 identity fight with no HA alarm, presenting as flaky switching.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-vmac">
+      <div class="section-label">SECTION 04</div>
+      <h2>Virtual MAC: the Identity Belongs to the <em>Cluster</em></h2>
+      <p>When the primary joins the cluster, every interface — <strong>except HA heartbeat interfaces and reserved management interfaces</strong> — is assigned a virtual MAC address, and the primary informs the secondary of the full set. At failover, the new primary silently <strong>adopts the identical virtual MACs</strong> for its equivalent interfaces. The identity never "moves" because it was never tied to a box: it is cluster property. Client ARP caches (IP→MAC) therefore never go stale.</p>
+      <p>What does go stale is every switch's MAC address table (MAC→port). The new primary's <strong>gratuitous ARP</strong> broadcasts exist for exactly one job: force switches in the path to relearn which port the virtual MAC now sits behind. Some high-end switches are stubborn and keep forwarding to the old port anyway; the fix is <code>set link-failed-signal enable</code>, which makes the <em>former</em> primary shut all its interfaces (except heartbeat and reserved management) for one second at failover — faking a physical link-down that flushes even stubborn MAC tables the hard way.</p>
+      <p>Virtual MAC assignment has three methods, highest priority first: <strong>manual per interface</strong> (<code>set virtual-mac</code> under the interface), <strong>automatic per interface</strong> (<code>set auto-virtual-mac-interface</code> — hardware MAC with the Universal/Local bit flipped, e.g. 04→06 in the first octet), and the <strong>default: group-ID-based calculation</strong> for all interfaces. The default formula encodes three inputs into the MAC — <em>group ID, virtual-cluster ID, and the interface's physical index</em> — via one of four logic tables (prefixes like <code>00:09:0f:09</code> for logic 2 and <code>e0:23:ff</code> for logics 1/4, depending on whether group-id &gt; 255, physical index &gt; 127, or vclusters are in play). You verify with <code>diagnose hardware deviceinfo nic &lt;port&gt;</code>: <code>Hwaddr</code> shows the current (virtual) MAC, <code>Permanent Hwaddr</code> the burned-in one.</p>
+      <p>This is why <strong>group-id does double duty</strong>: it is both a cluster-membership credential (must match, alongside group-name and password) and a mathematical ingredient of the virtual MAC. <strong>Group-name is credential only</strong> — required to match, but never computed into anything. Hence Fortinet's hard rule: two clusters in the same broadcast domain must use different group IDs, or they will compute colliding virtual MACs no matter how different everything else is.</p>
+      <div class="callout callout-amber">
+        <strong>Nasty failure mode:</strong> colliding virtual MACs between two healthy, independent clusters produce no HA alarm. Symptoms look like random intermittent connectivity — the same source MAC flapping between two switch ports. If two clusters share an L2 segment, check group IDs before anything else.
+      </div>
+      <div class="analogy-box">
+        <div class="analogy-label">Analogy</div>
+        <div class="analogy-text">
+          <p class="analogy-summary">The virtual MAC is a company phone number, not a personal one.</p>
+          <ul>
+            <li>Customers (clients) dial the same number (virtual MAC) forever — their address books (ARP caches) never change.</li>
+            <li>When the on-call engineer changes (failover), the switchboard (switch MAC table) must be told which desk (port) the number now rings at — that's the GARP.</li>
+            <li>If two companies accidentally register the same number (same group-id, same segment), callers randomly reach the wrong office — and neither company's own systems report a fault.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Virtual MAC = cluster property, adopted unchanged by the new primary (all interfaces except heartbeat + reserved mgmt). GARP fixes switch MAC→port tables, never client ARP. Default vMAC formula inputs: group-id + vcluster ID + physical index — group-name is never an input. link-failed-signal fakes a 1-second link-down for stubborn switches.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-vmac" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-vmac','Virtual MAC &amp; GARP')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-vmac" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-vmac')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ SECTION 5 — HEARTBEAT & THE FAILOVER SEQUENCE ══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · HEARTBEAT &amp; FAILOVER SEQUENCE</span>
+      </div>
+      <p class="socratic-insight">Everything this session built — election, virtual MAC, GARP — rests on one substrate: the two boxes hearing each other. Lose that with no backup, and something far worse than a failover happens: two primaries at once, both claiming the same virtual MACs on the same wire.</p>
+      <ul class="socratic-questions">
+        <li>Vaultline configures <code>set hbdev "port3" 10 "port4" 20</code>. Which port carries the heartbeat right now, and what happens if it fails? Is heartbeat traffic ever load-balanced across both?</li>
+        <li>Box A loses power at T=0. Using the defaults, roughly when does Box B declare it dead, and what is the complete ordered sequence from that moment until traffic flows through Box B?</li>
+      </ul>
+      <div class="answer-area" data-section="heartbeat">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Port4 (priority 20 — higher number wins). If it fails, the cluster falls to port3. Heartbeat is a strict priority-ordered failover list — one active path, never load-balanced. Contrast with <code>session-sync-dev</code>, which IS load-balanced across multiple interfaces because it carries bulk session data, a different job entirely.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Defaults: hb-interval 200 ms × hb-lost-threshold 20 = ~4 seconds to declare failure. Sequence: (1) hello packets (EtherType 0x8890/0x8891) stop arriving; (2) threshold expires, Box B declares Box A dead; (3) no election race — Box B self-checks its own monitored interfaces and declares primary unopposed; (4) Box B adopts the identical virtual MACs; (5) Box B broadcasts gratuitous ARPs; (6) switches relearn MAC→port; traffic flows. Inherited sessions then pay the NP7 resync tax as they re-offload.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-heartbeat">
+      <div class="section-label">SECTION 05</div>
+      <h2>Heartbeat Mechanics and the <em>Failover Sequence</em></h2>
+      <p>The heartbeat consists of <strong>hello packets</strong> — Layer 2 Ethernet frames using proprietary EtherTypes <strong>0x8890 and 0x8891</strong> (config sync uses <strong>0x8893</strong>) — never 0x0800 (IP) and never 0x8100 (dot1Q VLAN tagging, an unrelated technology worth explicitly not confusing). Each hello carries the sender's state: alive, uptime, priority, monitored-interface status. Because this is pure L2, heartbeat interfaces must share a broadcast domain or connect directly; a routed hop silently kills the cluster. Sniff it with <code>diagnose sniff packet any "ether proto 0x8890" 4</code>.</p>
+      <p><strong>Detection math:</strong> by default a hello is sent every <code>hb-interval</code> of 200 ms, and a member is declared dead after <code>hb-lost-threshold</code> = 20 consecutive misses — roughly <strong>4 seconds</strong>. Both are tunable: lower for faster detection (risking false positives from a busy-but-alive peer), higher for safety. Best practice is <strong>at least two heartbeat interfaces</strong>, each with an explicit priority in <code>hbdev</code> (higher value wins), forming an ordered, exclusive failover list. A <code>backup-hbdev</code> can additionally be reserved specifically for the split-brain case — the exact scenario where a heartbeat-less secondary would otherwise promote itself while the primary still lives, producing <strong>two primaries sourcing the same virtual MACs on the same wire</strong> plus diverging configs (config sync also rides the heartbeat).</p>
+      <p><strong>The complete failover sequence</strong> — the capstone of the session, in strict order:</p>
+      <ol>
+        <li><strong>Silence:</strong> hello packets (0x8890/0x8891) stop arriving on Box B's active heartbeat interface.</li>
+        <li><strong>Declaration:</strong> after hb-lost-threshold × hb-interval (default ≈ 4 s), Box B declares Box A failed.</li>
+        <li><strong>Self-check, not a race:</strong> with no living rival, there is nothing to compare. Box B verifies its own monitored interfaces and declares primary unopposed — its priority and serial are irrelevant.</li>
+        <li><strong>Identity adoption:</strong> Box B assumes the identical virtual MAC set on all equivalent interfaces.</li>
+        <li><strong>GARP:</strong> Box B broadcasts gratuitous ARPs so every switch relearns which port each virtual MAC lives behind (link-failed-signal available for stubborn switches — moot here, since Box A is powered off and its links are already down).</li>
+        <li><strong>Traffic + resync:</strong> frames flow to Box B; kernel sessions were already synced, and each inherited session's first packet is CPU-punted to program Box B's NP7 (Session 15's resync tax).</li>
+      </ol>
+      <div class="callout">
+        <strong>Exam tip:</strong> heartbeat = ordered/exclusive (hbdev priorities, one active path); session-sync-dev = load-balanced (bulk data). Two similar-looking multi-interface configs, two different jobs. Fortinet loves testing whether you conflate "dedicated for redundancy" with "load balanced."
+      </div>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Hellos on 0x8890/0x8891 (config sync 0x8893), default 20 lost × 200 ms ≈ 4 s to declare death. Dead-silent primary → survivor self-checks and declares, no election race. Then: adopt vMACs → GARP → switches relearn → traffic → NP7 resync. Split-brain = two primaries claiming the same vMACs; two heartbeat links is load-bearing best practice.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-heartbeat" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-heartbeat','Heartbeat &amp; Failover')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-heartbeat" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-heartbeat')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="page-nav" style="display:flex;border-top:2px solid var(--border);background:var(--surface);">
+  <a style="flex:1;display:flex;flex-direction:column;gap:4px;padding:16px 28px;text-decoration:none;border-right:1px solid var(--border);" href="session-15-ha-fgcp-fgsp-vrrp.html">
+    <span style="font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);display:block;text-transform:uppercase;">← PREVIOUS</span>
+    <span style="font-family:'Playfair Display',serif;font-size:17px;font-weight:600;font-style:italic;color:var(--blue);display:block;">Session 15 — The HA Problem (FGCP, FGSP, VRRP)</span>
+  </a>
+  <a style="flex:1;display:flex;flex-direction:column;gap:4px;padding:16px 28px;text-decoration:none;text-align:right;" href="#">
+    <span style="font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);display:block;text-transform:uppercase;">NEXT →</span>
+    <span style="font-family:'Playfair Display',serif;font-size:17px;font-weight:600;font-style:italic;color:var(--blue);display:block;">Session 17 — TBD</span>
+  </a>
+</div>
+
+<footer>
+  NSE7 EF 7.6<span>.</span> Domain 1.3<span>.</span> Session 16<span>.</span> FGCP Fundamentals — Active-Passive
+</footer>
+
+<script>
+const PAGE_KEY = 'nse7-s16-complete-fgcp-ap';
+const SECTIONS = {
+  'section-monitoring': 'Interface Monitoring',
+  'section-election': 'Election Waterfall',
+  'section-override': 'Override & Failback',
+  'section-vmac': 'Virtual MAC & GARP',
+  'section-heartbeat': 'Heartbeat & Failover',
+};
+document.querySelectorAll('.socratic-header').forEach(function(h) {
+  h.addEventListener('click', function() { h.closest('.socratic-block').classList.toggle('soc-open'); });
+});
+function getQArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-qs') || '[]'); }
+function saveQArr(qs) { localStorage.setItem(PAGE_KEY+'-qs', JSON.stringify(qs)); }
+function addQuestion(key, name) {
+  const ta = document.getElementById('q-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const qs = getQArr(); qs.push({id: Date.now(), section: key, sectionName: name, text});
+  saveQArr(qs); ta.value = ''; renderQPanel();
+  if (!document.getElementById('qpanel-body').classList.contains('open')) toggleQPanel();
+}
+function deleteQ(id) { saveQArr(getQArr().filter(q => q.id !== id)); renderQPanel(); }
+function toggleQPanel() {
+  const body = document.getElementById('qpanel-body');
+  const header = document.getElementById('qpanel-header');
+  const chevron = document.getElementById('qpanel-chevron');
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-qpanel-open', open);
+}
+function renderQPanel() {
+  const qs = getQArr();
+  const count = document.getElementById('qpanel-count');
+  if (count) { count.textContent = qs.length; count.style.display = qs.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.qpanel-hint');
+  if (hint) hint.textContent = qs.length ? `— ${qs.length} question${qs.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('qpanel-body'); if (!body) return;
+  if (!qs.length) { body.innerHTML = '<p class="no-questions">No questions yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  qs.forEach(q => { if (groups[q.section]) groups[q.section].push(q); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(q => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${q.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteQ(${q.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function getNotesArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-notes') || '[]'); }
+function saveNotesArr(ns) { localStorage.setItem(PAGE_KEY+'-notes', JSON.stringify(ns)); }
+function addNote(key) {
+  const ta = document.getElementById('note-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const ns = getNotesArr(); ns.push({id: Date.now(), section: key, sectionName: SECTIONS[key]||key, text});
+  saveNotesArr(ns); ta.value = ''; renderNotesPanel();
+  if (!document.getElementById('notes-panel-body').classList.contains('open')) toggleNotesPanel();
+}
+function deleteNote(id) { saveNotesArr(getNotesArr().filter(n => n.id !== id)); renderNotesPanel(); }
+function toggleNotesPanel() {
+  const body = document.getElementById('notes-panel-body');
+  const header = document.getElementById('notes-panel-header');
+  const chevron = document.getElementById('notes-panel-chevron');
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-notes-panel-open', open);
+}
+function renderNotesPanel() {
+  const ns = getNotesArr();
+  const count = document.getElementById('notes-panel-count');
+  if (count) { count.textContent = ns.length; count.style.display = ns.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.notes-panel-hint');
+  if (hint) hint.textContent = ns.length ? `— ${ns.length} note${ns.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('notes-panel-body'); if (!body) return;
+  if (!ns.length) { body.innerHTML = '<p class="no-questions">No notes yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  ns.forEach(n => { if (groups[n.section]) groups[n.section].push(n); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(n => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteNote(${n.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function saveSocAnswer(btn) {
+  const area = btn.closest('.answer-area');
+  const ta = area.querySelector('.answer-textarea');
+  if (!ta.value.trim()) { ta.focus(); return; }
+  const key = PAGE_KEY+'-socans-'+area.dataset.section;
+  try { localStorage.setItem(key, ta.value); } catch(e) {}
+  ta.disabled = true; btn.textContent = '✓ Answer saved'; btn.disabled = true;
+  const seeBtn = area.querySelector('.btn-see-answer');
+  seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+}
+function revealSocAnswer(btn) {
+  if (btn.disabled) return;
+  const answers = btn.closest('.answer-area').querySelector('.model-answers');
+  const isHidden = answers.style.display === 'none' || !answers.style.display;
+  answers.style.display = isHidden ? 'block' : 'none';
+  btn.textContent = isHidden ? '▲ Hide Model Answer' : '💡 See Model Answer';
+}
+function togglePrompt(btn) {
+  const c = btn.nextElementSibling;
+  const isHidden = c.hasAttribute('hidden');
+  if (isHidden) { c.removeAttribute('hidden'); btn.textContent = '▴ Hide prompt'; }
+  else { c.setAttribute('hidden', ''); btn.textContent = '▾ Show image prompt'; }
+}
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+document.addEventListener('DOMContentLoaded', function() {
+  renderQPanel(); renderNotesPanel();
+  if (localStorage.getItem(PAGE_KEY+'-qpanel-open') === 'true') toggleQPanel();
+  if (localStorage.getItem(PAGE_KEY+'-notes-panel-open') === 'true') toggleNotesPanel();
+  document.querySelectorAll('.answer-area').forEach(function(area) {
+    const key = PAGE_KEY+'-socans-'+area.dataset.section;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const ta = area.querySelector('.answer-textarea'); ta.value = saved; ta.disabled = true;
+        const addBtn = area.querySelector('.btn-add-answer'); addBtn.textContent = '✓ Answer saved'; addBtn.disabled = true;
+        const seeBtn = area.querySelector('.btn-see-answer'); seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+      }
+    } catch(e) {}
+  });
+  document.querySelectorAll('.analogy-box').forEach(function(box) {
+    if (box.dataset.collapsibleInit) return;
+    box.dataset.collapsibleInit = '1';
+    box.classList.add('expanded');
+    const label = box.querySelector(':scope > .analogy-label');
+    if (label) label.addEventListener('click', () => box.classList.toggle('expanded'));
+  });
+});
+</script>
+</body>
+</html>
