@@ -17,12 +17,27 @@
   header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
   header p{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:rgba(251,247,236,0.65);margin-top:8px;max-width:720px;line-height:1.6;}
   main{flex:1;padding:44px 60px 60px;max-width:1200px;width:100%;margin:0 auto;}
+  /* Sticky progress bar at the top of main */
+  .p-progress-bar{position:sticky;top:0;z-index:30;margin:-44px -60px 32px;padding:14px 60px;background:linear-gradient(135deg, var(--ink-dark) 0%, #182a5e 100%);color:#fbf7ec;box-shadow:0 8px 20px -14px rgba(10,24,56,0.45);}
+  .p-progress-inner{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(3, 1fr);gap:22px;}
+  .p-progress-cell{display:flex;flex-direction:column;gap:5px;}
+  .p-progress-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:rgba(251,247,236,0.72);}
+  .p-progress-count{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#fbf7ec;line-height:1;}
+  .p-progress-count span{font-weight:800;}
+  .p-progress-track{position:relative;height:6px;background:rgba(255,255,255,0.12);border-radius:6px;overflow:hidden;margin-top:2px;}
+  .p-progress-fill{position:absolute;left:0;top:0;bottom:0;border-radius:6px;transition:width .3s ease;}
+  .p-progress-generated .p-progress-fill{background:linear-gradient(90deg, #6ee7b7, #10b981);}
+  .p-progress-renamed .p-progress-fill{background:linear-gradient(90deg, #93c5fd, #2563eb);}
+  .p-progress-completed .p-progress-fill{background:linear-gradient(90deg, #fcd34d, #d97706);}
+  .p-progress-generated .p-progress-count span[data-count]{color:#a7f3d0;}
+  .p-progress-renamed .p-progress-count span[data-count]{color:#bfdbfe;}
+  .p-progress-completed .p-progress-count span[data-count]{color:#fde68a;}
   .phase-section{margin-bottom:44px;}
   .phase-section:last-child{margin-bottom:0;}
-  .phase-header{margin-bottom:18px;padding-left:16px;border-left:3px solid var(--blue);position:relative;padding-right:150px;}
-  .phase-eyebrow{display:inline-block;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:#fff;text-transform:uppercase;background:var(--blue);border:1px solid var(--blue);border-radius:20px;padding:4px 12px;margin-bottom:10px;}
-  .phase-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:4px;}
-  .phase-tagline{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--text-soft);line-height:1.5;max-width:720px;}
+  .phase-header{margin-bottom:18px;position:relative;padding:16px 150px 16px 20px;background:linear-gradient(135deg, var(--ink-dark) 0%, #182a5e 100%);border-left:4px solid var(--blue-vivid, #2563eb);border-radius:0 12px 12px 0;box-shadow:0 8px 18px -12px rgba(10,24,56,0.4);}
+  .phase-eyebrow{display:inline-block;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--ink-dark);text-transform:uppercase;background:var(--ink-accent);border:1px solid rgba(255,255,255,0.4);border-radius:20px;padding:4px 12px;margin-bottom:10px;}
+  .phase-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#fbf7ec;line-height:1.15;margin-bottom:4px;}
+  .phase-tagline{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.72);line-height:1.5;max-width:720px;}
   .phase-count{position:absolute;top:0;right:0;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--blue);background:var(--surface);border:1px solid var(--blue-border);border-radius:20px;padding:5px 12px;}
   .phase-tiles{display:flex;flex-wrap:nowrap;gap:12px;align-items:stretch;}
   .p-tile{flex:1 1 0;min-width:0;aspect-ratio:1 / 1;display:flex;flex-direction:column;justify-content:space-between;padding:14px 12px;border-radius:12px;text-align:left;font-family:inherit;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;position:relative;}
@@ -77,7 +92,8 @@
   <p>Audio-podcast generation prompts extracted from each session's <code>summary.txt</code>, organised by phase. Click a card to view the prompt and track workflow status — sessions still waiting on a prompt are marked <em>coming soon</em>.</p>
 </header>
 <main>
-  <section class="phase-section" id="phase-1">  <header class="phase-header">    <span class="phase-eyebrow">Phase 1</span>    <h2 class="phase-title">Foundations: Network Security Architecture</h2>    <p class="phase-tagline">Where the FortiGate fits and what each Fortinet device exists to solve.</p>    <span class="phase-count">1 / 5 ready</span>  </header>  <div class="phase-tiles" data-phase="1"><div class="p-tile p-tile--placeholder" data-session="1" aria-disabled="true"><span class="p-tile-num">01</span><span class="p-tile-title">The NSE7 Story — Roles, Audience &amp; Exam Map</span><span class="p-tile-status">Coming soon</span></div><div class="p-tile p-tile--placeholder" data-session="2" aria-disabled="true"><span class="p-tile-num">02</span><span class="p-tile-title">FortiOS 7.6 — Architecture Overview</span><span class="p-tile-status">Coming soon</span></div><button class="p-tile p-tile--has" type="button" data-session="3" data-phase="1" aria-controls="panel-03" aria-expanded="false"><span class="p-tile-num">03</span><span class="p-tile-title">Enterprise Deployment Patterns</span><span class="p-tile-status">View prompt</span></button><div class="p-tile p-tile--placeholder" data-session="4" aria-disabled="true"><span class="p-tile-num">04</span><span class="p-tile-title">Use Case Scenarios — Securing the Enterprise</span><span class="p-tile-status">Coming soon</span></div><div class="p-tile p-tile--placeholder" data-session="5" aria-disabled="true"><span class="p-tile-num">05</span><span class="p-tile-title">Lab Mindset, Reference Topology &amp; Troubleshooting</span><span class="p-tile-status">Coming soon</span></div></div>  <div class="phase-panels" data-phase="1"><div class="p-panel" id="panel-03" data-session="3" data-phase="1" hidden>  <div class="p-panel-head">    <span class="p-panel-sub">Session 03</span>    <span class="p-panel-title">Enterprise Deployment Patterns</span>    <span class="p-panel-heading">AUDIO PODCAST PROMPT (The Packet Path)</span>    <button class="p-panel-close" type="button" data-phase="1" aria-label="Close">×</button>  </div>  <div class="p-checkboxes">    <label class="p-check"><input type="checkbox" data-session="3" data-state="generated"> <span>Generated</span></label>    <label class="p-check"><input type="checkbox" data-session="3" data-state="renamed"> <span>Renamed</span></label>    <label class="p-check"><input type="checkbox" data-session="3" data-state="completed"> <span>Completed</span></label>  </div>  <div class="p-actions">    <button type="button" class="p-copy" data-target="prompt-03">Copy prompt</button>    <a class="p-source" href="../sessions/session-03-enterprise-deployment-patterns/summary.txt" target="_blank" rel="noopener">Open summary.txt</a>  </div>  <pre class="p-prompt" id="prompt-03">Generate an audio podcast episode of "The Packet Path" — an intelligent, conversational, true-crime-documentary-style podcast for network engineers.
+  <div class="p-progress-bar" id="p-progress-bar" data-total="4"><div class="p-progress-inner"><div class="p-progress-cell p-progress-generated"><span class="p-progress-label">Generated</span><span class="p-progress-count"><span data-count="generated">0</span> / 4</span><span class="p-progress-track"><span class="p-progress-fill" data-fill="generated" style="width:0%;"></span></span></div><div class="p-progress-cell p-progress-renamed"><span class="p-progress-label">Renamed</span><span class="p-progress-count"><span data-count="renamed">0</span> / 4</span><span class="p-progress-track"><span class="p-progress-fill" data-fill="renamed" style="width:0%;"></span></span></div><div class="p-progress-cell p-progress-completed"><span class="p-progress-label">Completed</span><span class="p-progress-count"><span data-count="completed">0</span> / 4</span><span class="p-progress-track"><span class="p-progress-fill" data-fill="completed" style="width:0%;"></span></span></div></div></div>
+<section class="phase-section" id="phase-1">  <header class="phase-header">    <span class="phase-eyebrow">Phase 1</span>    <h2 class="phase-title">Foundations: Network Security Architecture</h2>    <p class="phase-tagline">Where the FortiGate fits and what each Fortinet device exists to solve.</p>    <span class="phase-count">1 / 5 ready</span>  </header>  <div class="phase-tiles" data-phase="1"><div class="p-tile p-tile--placeholder" data-session="1" aria-disabled="true"><span class="p-tile-num">01</span><span class="p-tile-title">The NSE7 Story — Roles, Audience &amp; Exam Map</span><span class="p-tile-status">Coming soon</span></div><div class="p-tile p-tile--placeholder" data-session="2" aria-disabled="true"><span class="p-tile-num">02</span><span class="p-tile-title">FortiOS 7.6 — Architecture Overview</span><span class="p-tile-status">Coming soon</span></div><button class="p-tile p-tile--has" type="button" data-session="3" data-phase="1" aria-controls="panel-03" aria-expanded="false"><span class="p-tile-num">03</span><span class="p-tile-title">Enterprise Deployment Patterns</span><span class="p-tile-status">View prompt</span></button><div class="p-tile p-tile--placeholder" data-session="4" aria-disabled="true"><span class="p-tile-num">04</span><span class="p-tile-title">Use Case Scenarios — Securing the Enterprise</span><span class="p-tile-status">Coming soon</span></div><div class="p-tile p-tile--placeholder" data-session="5" aria-disabled="true"><span class="p-tile-num">05</span><span class="p-tile-title">Lab Mindset, Reference Topology &amp; Troubleshooting</span><span class="p-tile-status">Coming soon</span></div></div>  <div class="phase-panels" data-phase="1"><div class="p-panel" id="panel-03" data-session="3" data-phase="1" hidden>  <div class="p-panel-head">    <span class="p-panel-sub">Session 03</span>    <span class="p-panel-title">Enterprise Deployment Patterns</span>    <span class="p-panel-heading">AUDIO PODCAST PROMPT (The Packet Path)</span>    <button class="p-panel-close" type="button" data-phase="1" aria-label="Close">×</button>  </div>  <div class="p-checkboxes">    <label class="p-check"><input type="checkbox" data-session="3" data-state="generated"> <span>Generated</span></label>    <label class="p-check"><input type="checkbox" data-session="3" data-state="renamed"> <span>Renamed</span></label>    <label class="p-check"><input type="checkbox" data-session="3" data-state="completed"> <span>Completed</span></label>  </div>  <div class="p-actions">    <button type="button" class="p-copy" data-target="prompt-03">Copy prompt</button>    <a class="p-source" href="../sessions/session-03-enterprise-deployment-patterns/summary.txt" target="_blank" rel="noopener">Open summary.txt</a>  </div>  <pre class="p-prompt" id="prompt-03">Generate an audio podcast episode of "The Packet Path" — an intelligent, conversational, true-crime-documentary-style podcast for network engineers.
 
 Hosts: Alex (experienced network security consultant) and Sam (smart, curious co-host asking clarifying questions).
 
@@ -135,6 +151,23 @@ Act 4 — The Verdict: Alex and Sam land on the senior-engineer answer for Priya
   function saveState(s){ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch(e) {} }
   var state = loadState();
 
+  // Progress bar — counts total across all sessions with a prompt.
+  function refreshProgress(){
+    var bar = document.getElementById('p-progress-bar');
+    if (!bar) return;
+    var total = Number(bar.dataset.total) || 0;
+    var counts = { generated: 0, renamed: 0, completed: 0 };
+    document.querySelectorAll('.p-check input[type="checkbox"]').forEach(function(cb){
+      if (cb.checked && counts.hasOwnProperty(cb.dataset.state)) counts[cb.dataset.state]++;
+    });
+    ['generated','renamed','completed'].forEach(function(st){
+      var num = bar.querySelector('[data-count="' + st + '"]');
+      var fill = bar.querySelector('[data-fill="' + st + '"]');
+      if (num) num.textContent = counts[st];
+      if (fill) fill.style.width = total ? (counts[st] / total * 100).toFixed(1) + '%' : '0%';
+    });
+  }
+
   // Restore checkbox state
   document.querySelectorAll('.p-check input[type="checkbox"]').forEach(function(cb){
     var sess = cb.dataset.session;
@@ -144,8 +177,10 @@ Act 4 — The Verdict: Alex and Sam land on the senior-engineer answer for Priya
       state[sess] = state[sess] || {};
       state[sess][st] = cb.checked;
       saveState(state);
+      refreshProgress();
     });
   });
+  refreshProgress();
 
   function closePhase(phase, exceptSession){
     document.querySelectorAll('.p-tile--has[data-phase="' + phase + '"]').forEach(function(t){

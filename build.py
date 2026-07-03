@@ -3368,8 +3368,8 @@ def render_study_plan_index(extras=None, completions=None, standalone_extras=Non
   .phase-block{{margin-bottom:56px;padding-bottom:24px;border-bottom:1px solid var(--border-dim);}}
   .phase-block:last-child{{border-bottom:none;margin-bottom:0;}}
   .phase-block .section-label{{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}}
-  .phase-block h2{{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}}
-  .phase-block h2 em{{font-style:italic;font-weight:500;color:var(--blue);}}
+  .phase-block h2{{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:#fbf7ec;line-height:1.2;margin-bottom:16px;padding:12px 18px;background:linear-gradient(135deg, var(--ink-dark) 0%, #182a5e 100%);border-left:4px solid var(--blue-vivid);border-radius:0 10px 10px 0;letter-spacing:-0.01em;box-shadow:0 6px 14px -10px rgba(10,24,56,0.4);}}
+  .phase-block h2 em{{font-style:italic;font-weight:500;color:var(--ink-accent);}}
   .phase-block p{{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}}
   /* Completed panel cards */
   .card-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}}
@@ -5761,7 +5761,32 @@ def render_audio_podcasts_hub():
             f'</section>'
         )
 
-    main_body = "\n".join(phase_sections)
+    # Progress bar — sticky at the top of the page, showing counts across
+    # all sessions that have a podcast prompt (n). Three states mirror the
+    # per-panel checkboxes: generated / renamed / completed.
+    progress_bar_html = (
+        f'<div class="p-progress-bar" id="p-progress-bar" data-total="{n}">'
+        f'<div class="p-progress-inner">'
+        f'<div class="p-progress-cell p-progress-generated">'
+        f'<span class="p-progress-label">Generated</span>'
+        f'<span class="p-progress-count"><span data-count="generated">0</span> / {n}</span>'
+        f'<span class="p-progress-track"><span class="p-progress-fill" data-fill="generated" style="width:0%;"></span></span>'
+        f'</div>'
+        f'<div class="p-progress-cell p-progress-renamed">'
+        f'<span class="p-progress-label">Renamed</span>'
+        f'<span class="p-progress-count"><span data-count="renamed">0</span> / {n}</span>'
+        f'<span class="p-progress-track"><span class="p-progress-fill" data-fill="renamed" style="width:0%;"></span></span>'
+        f'</div>'
+        f'<div class="p-progress-cell p-progress-completed">'
+        f'<span class="p-progress-label">Completed</span>'
+        f'<span class="p-progress-count"><span data-count="completed">0</span> / {n}</span>'
+        f'<span class="p-progress-track"><span class="p-progress-fill" data-fill="completed" style="width:0%;"></span></span>'
+        f'</div>'
+        f'</div>'
+        f'</div>'
+    ) if n else ""
+
+    main_body = progress_bar_html + "\n" + "\n".join(phase_sections)
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -5782,12 +5807,27 @@ def render_audio_podcasts_hub():
   header h1 em{{font-style:italic;font-weight:500;color:var(--ink-accent);}}
   header p{{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:rgba(251,247,236,0.65);margin-top:8px;max-width:720px;line-height:1.6;}}
   main{{flex:1;padding:44px 60px 60px;max-width:1200px;width:100%;margin:0 auto;}}
+  /* Sticky progress bar at the top of main */
+  .p-progress-bar{{position:sticky;top:0;z-index:30;margin:-44px -60px 32px;padding:14px 60px;background:linear-gradient(135deg, var(--ink-dark) 0%, #182a5e 100%);color:#fbf7ec;box-shadow:0 8px 20px -14px rgba(10,24,56,0.45);}}
+  .p-progress-inner{{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(3, 1fr);gap:22px;}}
+  .p-progress-cell{{display:flex;flex-direction:column;gap:5px;}}
+  .p-progress-label{{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:rgba(251,247,236,0.72);}}
+  .p-progress-count{{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#fbf7ec;line-height:1;}}
+  .p-progress-count span{{font-weight:800;}}
+  .p-progress-track{{position:relative;height:6px;background:rgba(255,255,255,0.12);border-radius:6px;overflow:hidden;margin-top:2px;}}
+  .p-progress-fill{{position:absolute;left:0;top:0;bottom:0;border-radius:6px;transition:width .3s ease;}}
+  .p-progress-generated .p-progress-fill{{background:linear-gradient(90deg, #6ee7b7, #10b981);}}
+  .p-progress-renamed .p-progress-fill{{background:linear-gradient(90deg, #93c5fd, #2563eb);}}
+  .p-progress-completed .p-progress-fill{{background:linear-gradient(90deg, #fcd34d, #d97706);}}
+  .p-progress-generated .p-progress-count span[data-count]{{color:#a7f3d0;}}
+  .p-progress-renamed .p-progress-count span[data-count]{{color:#bfdbfe;}}
+  .p-progress-completed .p-progress-count span[data-count]{{color:#fde68a;}}
   .phase-section{{margin-bottom:44px;}}
   .phase-section:last-child{{margin-bottom:0;}}
-  .phase-header{{margin-bottom:18px;padding-left:16px;border-left:3px solid var(--blue);position:relative;padding-right:150px;}}
-  .phase-eyebrow{{display:inline-block;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:#fff;text-transform:uppercase;background:var(--blue);border:1px solid var(--blue);border-radius:20px;padding:4px 12px;margin-bottom:10px;}}
-  .phase-title{{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:4px;}}
-  .phase-tagline{{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--text-soft);line-height:1.5;max-width:720px;}}
+  .phase-header{{margin-bottom:18px;position:relative;padding:16px 150px 16px 20px;background:linear-gradient(135deg, var(--ink-dark) 0%, #182a5e 100%);border-left:4px solid var(--blue-vivid, #2563eb);border-radius:0 12px 12px 0;box-shadow:0 8px 18px -12px rgba(10,24,56,0.4);}}
+  .phase-eyebrow{{display:inline-block;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--ink-dark);text-transform:uppercase;background:var(--ink-accent);border:1px solid rgba(255,255,255,0.4);border-radius:20px;padding:4px 12px;margin-bottom:10px;}}
+  .phase-title{{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#fbf7ec;line-height:1.15;margin-bottom:4px;}}
+  .phase-tagline{{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.72);line-height:1.5;max-width:720px;}}
   .phase-count{{position:absolute;top:0;right:0;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--blue);background:var(--surface);border:1px solid var(--blue-border);border-radius:20px;padding:5px 12px;}}
   .phase-tiles{{display:flex;flex-wrap:nowrap;gap:12px;align-items:stretch;}}
   .p-tile{{flex:1 1 0;min-width:0;aspect-ratio:1 / 1;display:flex;flex-direction:column;justify-content:space-between;padding:14px 12px;border-radius:12px;text-align:left;font-family:inherit;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;position:relative;}}
@@ -5852,6 +5892,23 @@ def render_audio_podcasts_hub():
   function saveState(s){{ try {{ localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }} catch(e) {{}} }}
   var state = loadState();
 
+  // Progress bar — counts total across all sessions with a prompt.
+  function refreshProgress(){{
+    var bar = document.getElementById('p-progress-bar');
+    if (!bar) return;
+    var total = Number(bar.dataset.total) || 0;
+    var counts = {{ generated: 0, renamed: 0, completed: 0 }};
+    document.querySelectorAll('.p-check input[type="checkbox"]').forEach(function(cb){{
+      if (cb.checked && counts.hasOwnProperty(cb.dataset.state)) counts[cb.dataset.state]++;
+    }});
+    ['generated','renamed','completed'].forEach(function(st){{
+      var num = bar.querySelector('[data-count="' + st + '"]');
+      var fill = bar.querySelector('[data-fill="' + st + '"]');
+      if (num) num.textContent = counts[st];
+      if (fill) fill.style.width = total ? (counts[st] / total * 100).toFixed(1) + '%' : '0%';
+    }});
+  }}
+
   // Restore checkbox state
   document.querySelectorAll('.p-check input[type="checkbox"]').forEach(function(cb){{
     var sess = cb.dataset.session;
@@ -5861,8 +5918,10 @@ def render_audio_podcasts_hub():
       state[sess] = state[sess] || {{}};
       state[sess][st] = cb.checked;
       saveState(state);
+      refreshProgress();
     }});
   }});
+  refreshProgress();
 
   function closePhase(phase, exceptSession){{
     document.querySelectorAll('.p-tile--has[data-phase="' + phase + '"]').forEach(function(t){{
