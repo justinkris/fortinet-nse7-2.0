@@ -8,7 +8,7 @@ This project follows the shared `build-study-plan` skill layout (see that skill 
 
 Tiles (in order): Study Plan → `study-plan.html`, Completed Study Guides → `completed-sessions.html`, Guides → `extras.html#guides`, Bites → `extras.html#bites`, Nibbles → `extras.html#nibbles`, Extras (all) → `extras.html`. Counts under each tile come from the same discovery scans used by the other hubs (sessions, completions, extras, standalone extras), so they stay live.
 
-Chip colour scheme reuses existing theme tokens: plan = blue, completed/guide = green, bite = blue, nibble = amber, extras-all = plum (`--plum` / `--plum-light` / `--plum-border` added to landing's `:root`).
+Chip colour scheme reuses existing theme tokens: plan = blue, completed/guide = green, bite = blue, nibble = amber, extras-all = plum, labs = teal, weakness = rose (`--rose` / `--rose-light` / `--rose-border` added to landing's `:root` and reused throughout `weakness-register/`).
 
 If you add or remove a hub page, update the `tiles` list in `render_landing()`. Keep tiles as single `<a>` elements — no nested anchors (see "Hub cards" rule below).
 
@@ -45,6 +45,55 @@ Standalone Extras are discovered by `discover_standalone_extras()` in `build.py`
 
 **Registering a new topic:** append to the `EXTRAS = [...]` list in `build.py` with `num`, `slug`, `title`, `tagline`. Then rebuild.
 
+## Weakness Register (`weakness-register/`)
+
+Tracks per-session **struggles** (extracted automatically from each completed session's `summary.txt`) and dedicated **weakness sessions** where those struggles get knocked off. Peer of the Hub/Labs system.
+
+**Directory layout**
+
+```
+weakness-register/
+  index.html                             # hub with two tiles
+  struggles.html                         # per-session struggle cards, resolved struck through
+  completed-weakness-sessions/
+    index.html                           # card grid, one card per completed weakness session
+    weakness-NN-<slug>/
+      index.html                         # sorted from sorting-hat/
+      summary.txt                        # sorted from sorting-hat/
+```
+
+**Where struggles come from:** `discover_weakness_struggles()` in `build.py` scans every session's `completed-session/summary.txt`, finds the `MY UNDERSTANDING` section, and pulls bullets under the `Struggles / corrections:` sublabel. **Do not** edit those summary files by hand to "add" struggles — they're the source of truth.
+
+**Weakness session summary format** — sorted as `weakness-NN-session-summary.txt`, this drives the "resolved" cross-reference:
+
+```
+SESSION INFORMATION
+====================
+Session Number: NN
+Topic: <one-line topic — becomes the tile tagline on the completed-weakness hub>
+Date: <YYYY-MM>
+
+RESOLVED FROM REGISTER
+=======================
+- Session 17: <first ~30 chars of the struggle bullet, verbatim from summary.txt>
+- Session 18: <first ~30 chars of the struggle bullet, verbatim>
+- Session 18: <another one, same session>
+
+WHAT WE COVERED
+=================
+<free-form recap>
+
+REMAINING GAPS
+================
+<what's still on the register after this session>
+```
+
+The `RESOLVED FROM REGISTER` prefix is matched case-insensitively against each struggle bullet, normalized to alphanumerics + single spaces. Prefix match OR substring match wins. If the reference is too vague to match anything, the struggle stays open — the build prints no warning, but the count on the hub will disagree with the summary's claims.
+
+**Landing tile counts** come from the same discovery — no configuration needed. Empty register (no completed sessions with struggle bullets yet) renders a graceful empty state on both `weakness-register/index.html` and `struggles.html`.
+
+**Registering a new weakness session:** nothing to configure. Drop the paired files into `sorting-hat/`, run sort, and the folder + card appear automatically.
+
 ## Sort workflow — end-to-end mechanics
 
 `sorting-hat/` is a plain inbox. Files land there; they never render or link from the site until they are sorted into their session/extras folder. Trigger phrases: **"sort"**, **"sort please"**, **"sort the hat"**, **"process the sorting hat"**, or `/build-study-plan sort`.
@@ -71,7 +120,7 @@ Anything else → halt and ask. Never invent a destination.
 1. **List** every file in `sorting-hat/`.
 2. **If any `.zip` is present**, extract it in place (`unzip -o files.zip` then `rm files.zip`) and continue with the contents.
 3. **Classify** each filename against the pattern table above, in the table order. Report any unrecognised filenames and stop — do not partially sort.
-4. **Look up** the target session by `<NN>` in `SESSIONS` (or the target extras topic by `<NN>` in `EXTRAS`). Non-existent number → halt.
+4. **Look up** the target session by `<NN>` in `SESSIONS` (or the target extras topic by `<NN>` in `EXTRAS`). Non-existent number → halt. **Weakness files (`weakness-NN-*`) don't need a lookup** — the `NN` is a free-running counter and the destination folder is created from the file's own slug.
 5. **Validate any `session-NN-complete-*.html`** against the canonical shell contract (see the base skill for the full marker list): `socratic-block`, `qpanel`, `notes-panel`, `lesson-tools`, `mental-note-block`, `page-nav`. Any missing → halt the entire sort. Don't partially move — the user regenerates in Claude with `templates/TEMPLATE-GUIDE-CREAM.html` and re-runs sort.
 6. **Collision check** against each destination:
    - Extras (`bites/nibbles/guides/<slug>.html`) never overwrite silently — ask.
@@ -178,6 +227,10 @@ Breadcrumb shapes:
 | `sessions/session-NN-slug/{bites,nibbles,guides}/*.html` | `Home › Curriculum › Session NN › Bite/Nibble/Guide` |
 | `extras/extras-NN-slug/index.html` | `Home › Extras › <topic title>` |
 | `extras/extras-NN-slug/{bites,nibbles,guides}/*.html` | `Home › Extras › <topic title> › Bite/Nibble/Guide` |
+| `weakness-register/index.html` | `Home › Weakness Register` |
+| `weakness-register/struggles.html` | `Home › Weakness Register › Struggles` |
+| `weakness-register/completed-weakness-sessions/index.html` | `Home › Weakness Register › Completed Weakness Sessions` |
+| `weakness-register/completed-weakness-sessions/weakness-NN-slug/index.html` | `Home › Weakness Register › Completed Weakness Sessions › Weakness NN` |
 
 If you add a new page type, extend `normalize_sorted_breadcrumbs()` — don't hand-edit crumbs into individual files (the normalizer will overwrite them next build).
 
