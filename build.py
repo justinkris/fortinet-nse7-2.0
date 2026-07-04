@@ -5542,10 +5542,380 @@ def render_audio_podcasts_hub():
     return n
 
 # ---------------------------------------------------------------------------
+# WEAKNESS REGISTER — struggles from summary.txt + dedicated weakness sessions
+# ---------------------------------------------------------------------------
+
+WEAKNESS_DIR = ROOT / "weakness-register"
+COMPLETED_WEAKNESS_DIR = WEAKNESS_DIR / "completed-weakness-sessions"
+
+_WEAKNESS_STRUGGLES_HEADING = _re.compile(r"^\s*struggles\s*/?\s*corrections?\s*:\s*$", _re.IGNORECASE)
+_WEAKNESS_RESOLVED_LINE = _re.compile(r"^\s*[-*•]\s*session\s+(\d+)\s*:\s*(.+?)\s*$", _re.IGNORECASE)
+
+def discover_weakness_struggles(completions):
+    """Return {session_num: [struggle_bullet_text, ...]}.
+
+    Extracts bullets under the `Struggles / corrections:` sublabel inside the
+    `MY UNDERSTANDING` section of each session's summary.txt.
+    """
+    out = {}
+    for s in SESSIONS:
+        entry = completions.get(s["num"])
+        if not entry or not entry.get("summary_sections"):
+            continue
+        for heading, body in entry["summary_sections"]:
+            if heading.strip().upper() != "MY UNDERSTANDING":
+                continue
+            lines = body.splitlines()
+            bullets = []
+            i = 0
+            while i < len(lines):
+                if _WEAKNESS_STRUGGLES_HEADING.match(lines[i].strip()):
+                    i += 1
+                    while i < len(lines):
+                        raw = lines[i]
+                        stripped = raw.strip()
+                        if not stripped:
+                            i += 1
+                            continue
+                        if stripped.startswith(_BULLET_PREFIXES):
+                            b = stripped[2:].strip()
+                            j = i + 1
+                            while j < len(lines):
+                                nxt = lines[j].strip()
+                                if not nxt or nxt.startswith(_BULLET_PREFIXES):
+                                    break
+                                # stop at another sublabel like "Foo:"
+                                if _RECAP_SUBLABEL_RE.match(nxt):
+                                    break
+                                b += " " + nxt
+                                j += 1
+                            bullets.append(b)
+                            i = j
+                            continue
+                        break
+                    break
+                i += 1
+            if bullets:
+                out[s["num"]] = bullets
+            break
+    return out
+
+
+def discover_weakness_sessions():
+    """Return list of {num, slug, folder, title, has_html, has_summary, tagline, resolved_refs}."""
+    out = []
+    if not COMPLETED_WEAKNESS_DIR.is_dir():
+        return out
+    for folder in sorted(COMPLETED_WEAKNESS_DIR.iterdir()):
+        if not folder.is_dir():
+            continue
+        m = _re.match(r"^weakness-(\d+)-(.+)$", folder.name)
+        if not m:
+            continue
+        num = int(m.group(1))
+        slug = m.group(2)
+        html_path = folder / "index.html"
+        summary_path = folder / "summary.txt"
+        title_raw = extract_html_title(html_path) if html_path.is_file() else None
+        title = title_raw or slug.replace("-", " ").title()
+        title = _re.sub(r"^Weakness\s+\d+\s*[—–-]\s*", "", title, flags=_re.IGNORECASE)
+        tagline = ""
+        resolved_refs = []
+        if summary_path.is_file():
+            for h, body in parse_summary_txt(summary_path):
+                head_upper = h.strip().upper()
+                if head_upper == "RESOLVED FROM REGISTER":
+                    for line in body.splitlines():
+                        mm = _WEAKNESS_RESOLVED_LINE.match(line)
+                        if mm:
+                            resolved_refs.append((int(mm.group(1)), mm.group(2).strip()))
+                elif head_upper == "SESSION INFORMATION" and not tagline:
+                    for line in body.splitlines():
+                        lm = _re.match(r"^\s*Topic\s*:\s*(.+)$", line, _re.IGNORECASE)
+                        if lm:
+                            tagline = lm.group(1).strip()
+                            break
+        out.append({
+            "num": num, "slug": slug, "folder": folder, "title": title,
+            "has_html": html_path.is_file(), "has_summary": summary_path.is_file(),
+            "tagline": tagline, "resolved_refs": resolved_refs,
+        })
+    out.sort(key=lambda w: w["num"])
+    return out
+
+
+def _norm_for_match(s):
+    s = s.lower()
+    s = _re.sub(r"[^a-z0-9 ]+", "", s)
+    return _re.sub(r"\s+", " ", s).strip()
+
+
+def compute_weakness_index(struggles_by_session, weakness_sessions):
+    """Cross-reference resolved_refs against struggle bullets.
+
+    Returns (resolved, counts) where resolved is {(session_num, struggle_idx): weakness_num}.
+    """
+    resolved = {}
+    for w in weakness_sessions:
+        for ref_session, ref_text in w["resolved_refs"]:
+            struggles = struggles_by_session.get(ref_session, [])
+            rf = _norm_for_match(ref_text)
+            if not rf:
+                continue
+            for i, st in enumerate(struggles):
+                if (ref_session, i) in resolved:
+                    continue
+                sn = _norm_for_match(st)
+                if sn.startswith(rf) or rf in sn:
+                    resolved[(ref_session, i)] = w["num"]
+                    break
+    n_struggles = sum(len(v) for v in struggles_by_session.values())
+    counts = {
+        "struggles": n_struggles,
+        "resolved": len(resolved),
+        "weakness_sessions": len(weakness_sessions),
+    }
+    return resolved, counts
+
+
+_WEAKNESS_STYLE = """
+<style>
+  :root{
+    --bg:#faf5e9;--surface:#fffdf5;--surface-2:#f5eed9;
+    --border:#d4c89a;--border-dim:#ebe1c2;
+    --text:#0a1838;--text-soft:#1e2f5a;--text-muted:#6b7794;
+    --blue:#1e40af;--blue-light:#eff4fc;--blue-border:#b8cce8;
+    --ink-dark:#0d1a3a;--ink-accent:#9bb8e6;
+    --green:#1a7c4a;--green-light:#dff0e1;--green-border:#a7d8b0;
+    --rose:#9f1239;--rose-light:#fce7ed;--rose-border:#f7a8c0;
+    --amber:#b45309;--amber-light:#fcf2c3;--amber-border:#f3d68a;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html,body{min-height:100vh;}
+  body{font-family:'Cormorant Garamond',serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);color:#fbf7ec;}
+  .breadcrumb{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);margin:0 6px;}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(247,168,192,0.14);border:1px solid rgba(247,168,192,0.35);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:#f7a8c0;letter-spacing:0.12em;margin-bottom:14px;text-transform:uppercase;}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.05;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:#f7a8c0;}
+  header p{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:rgba(251,247,236,0.6);max-width:760px;margin-top:6px;line-height:1.6;}
+  header code{font-family:'SF Mono','Fira Code',monospace;font-size:13px;background:rgba(251,247,236,0.08);padding:1px 6px;border-radius:4px;color:#fbf7ec;font-style:normal;}
+  main{flex:1;padding:44px 60px 72px;max-width:1200px;margin:0 auto;width:100%;}
+  .tile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;}
+  .tile{position:relative;display:flex;flex-direction:column;gap:12px;padding:26px 28px 30px;background:var(--surface);border:1px solid var(--border);border-radius:14px;text-decoration:none;color:var(--text);transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;overflow:hidden;}
+  .tile:hover{transform:translateY(-2px);box-shadow:0 8px 24px -12px rgba(10,24,56,0.18);border-color:var(--rose);}
+  .tile-chip{align-self:flex-start;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;padding:4px 10px;border-radius:12px;text-transform:uppercase;}
+  .chip-rose{background:var(--rose-light);color:var(--rose);border:1px solid var(--rose-border);}
+  .chip-green{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}
+  .chip-blue{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border);}
+  .chip-amber{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border);}
+  .tile-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.15;}
+  .tile-desc{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.55;}
+  .tile-arrow{position:absolute;right:22px;bottom:20px;font-family:'Outfit',sans-serif;font-size:22px;color:var(--rose);transition:transform .18s ease;}
+  .tile:hover .tile-arrow{transform:translateX(4px);}
+  .empty-state{border:2px dashed var(--border);border-radius:14px;background:var(--surface);padding:44px 32px;text-align:center;color:var(--text-muted);}
+  .empty-state h3{font-family:'Playfair Display',serif;font-size:22px;color:var(--text);margin-bottom:8px;}
+  .empty-state p{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;font-style:italic;max-width:640px;margin:0 auto;}
+  .empty-state code{font-family:'SF Mono','Fira Code',monospace;font-size:13px;background:var(--surface-2);padding:2px 8px;border-radius:4px;color:var(--text);font-style:normal;}
+  .session-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 26px 24px;margin-bottom:22px;}
+  .session-card-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .session-card-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;padding:4px 10px;border-radius:12px;text-transform:uppercase;background:var(--rose-light);color:var(--rose);border:1px solid var(--rose-border);white-space:nowrap;}
+  .session-card-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;line-height:1.2;color:var(--text);}
+  .session-card-count{font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-left:auto;text-transform:uppercase;}
+  .struggle-list{list-style:none;padding:0;margin:0;}
+  .struggle-list li{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.6;color:var(--text-soft);padding:12px 0 12px 30px;border-bottom:1px solid var(--border-dim);position:relative;}
+  .struggle-list li:last-child{border-bottom:none;}
+  .struggle-list li::before{content:"•";position:absolute;left:10px;color:var(--rose);font-size:20px;line-height:1;top:14px;font-weight:700;}
+  .struggle-list li.resolved{color:var(--text-muted);text-decoration:line-through;}
+  .struggle-list li.resolved::before{content:"✓";color:var(--green);text-decoration:none;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;top:16px;}
+  .resolved-tag{display:inline-block;font-family:'Outfit',sans-serif;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;background:var(--green-light);color:var(--green);border:1px solid var(--green-border);padding:2px 8px;border-radius:10px;margin-left:8px;font-style:normal;vertical-align:middle;text-decoration:none;font-weight:600;}
+  a.resolved-tag:hover{background:var(--green);color:#fbf7ec;}
+  footer{padding:18px 60px;border-top:1px solid var(--border);background:var(--surface);font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;text-align:center;}
+  footer span{color:var(--rose);}
+  @media(max-width:640px){header{padding:32px 24px 24px;}header h1{font-size:32px;}main{padding:28px 20px 44px;}}
+</style>
+""".strip()
+
+_WEAKNESS_FONTS = (
+    '<link href="https://fonts.googleapis.com/css2?'
+    'family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400'
+    '&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400'
+    '&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">'
+)
+
+def _weakness_shell(title, body_html):
+    return (
+        f'<!DOCTYPE html>\n<html lang="en">\n<head>\n'
+        f'<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+        f'<title>{html_escape(title)}</title>\n{_WEAKNESS_FONTS}\n{_WEAKNESS_STYLE}\n</head>\n<body>\n'
+        f'{body_html}\n'
+        f'<footer>NSE7 EF 7.6 <span>·</span> Weakness Register</footer>\n'
+        f'</body>\n</html>\n'
+    )
+
+
+def render_weakness_hub(struggles_by_session, weakness_sessions, counts):
+    WEAKNESS_DIR.mkdir(parents=True, exist_ok=True)
+    n_struggles = counts["struggles"]
+    n_resolved = counts["resolved"]
+    n_open = n_struggles - n_resolved
+    n_weakness = counts["weakness_sessions"]
+    crumb = _build_crumb([
+        ("Home", "../index.html"),
+        ("Weakness Register", None),
+    ])
+    tiles = [
+        ("struggles.html", "STRUGGLES", "chip-rose", "Struggles Register",
+         f"{n_open} open · {n_resolved} resolved struggle{'' if n_struggles == 1 else 's'} pulled from your completed session summaries."),
+        ("completed-weakness-sessions/index.html", "SESSIONS", "chip-green", "Completed Weakness Sessions",
+         f"{n_weakness} weakness session{'' if n_weakness == 1 else 's'} completed — dedicated sessions that knock items off the register."),
+    ]
+    tiles_html = "".join(
+        f'<a class="tile" href="{href}">'
+        f'<span class="tile-chip {chip_class}">{chip}</span>'
+        f'<span class="tile-title">{html_escape(title)}</span>'
+        f'<span class="tile-desc">{html_escape(desc)}</span>'
+        f'<span class="tile-arrow">→</span>'
+        f'</a>'
+        for href, chip, chip_class, title, desc in tiles
+    )
+    body = f"""
+<header>
+  {crumb}
+  <div class="eyebrow"><span>Weakness Register</span></div>
+  <h1>The <em>Weakness</em> Register</h1>
+  <p>Every struggle you flagged in a completed session, tracked against dedicated weakness sessions that knock them off.</p>
+</header>
+<main>
+  <div class="tile-grid">
+    {tiles_html}
+  </div>
+</main>
+"""
+    (WEAKNESS_DIR / "index.html").write_text(_weakness_shell("Weakness Register — NSE7 EF 7.6", body), encoding="utf-8")
+
+
+def render_struggles_page(struggles_by_session, resolved):
+    WEAKNESS_DIR.mkdir(parents=True, exist_ok=True)
+    crumb = _build_crumb([
+        ("Home", "../index.html"),
+        ("Weakness Register", "index.html"),
+        ("Struggles", None),
+    ])
+    if not struggles_by_session:
+        cards_html = (
+            '<div class="empty-state">'
+            '<h3>No struggles logged yet</h3>'
+            '<p>Complete a session with a <code>summary.txt</code> containing a '
+            '<code>Struggles / corrections:</code> block under the <code>MY UNDERSTANDING</code> section — '
+            'they will appear here on the next build.</p>'
+            '</div>'
+        )
+    else:
+        session_by_num = {s["num"]: s for s in SESSIONS}
+        cards = []
+        for sess_num in sorted(struggles_by_session.keys()):
+            struggles = struggles_by_session[sess_num]
+            s_info = session_by_num.get(sess_num, {"title": f"Session {sess_num}", "slug": ""})
+            slug = s_info.get("slug", "")
+            n_res_here = sum(1 for i in range(len(struggles)) if (sess_num, i) in resolved)
+            count_txt = f"{len(struggles) - n_res_here} open · {n_res_here} resolved"
+            items = []
+            for idx, st in enumerate(struggles):
+                cls = "resolved" if (sess_num, idx) in resolved else ""
+                tag = ""
+                if (sess_num, idx) in resolved:
+                    wnum = resolved[(sess_num, idx)]
+                    tag = f' <a class="resolved-tag" href="completed-weakness-sessions/index.html">Resolved · Weakness {wnum:02d}</a>'
+                items.append(f'<li class="{cls}">{html_escape(st)}{tag}</li>')
+            session_link = f"../sessions/session-{sess_num:02d}-{slug}/index.html" if slug else "#"
+            cards.append(
+                f'<div class="session-card">'
+                f'<div class="session-card-head">'
+                f'<span class="session-card-num">Session {sess_num:02d}</span>'
+                f'<a class="session-card-title" style="text-decoration:none;color:inherit;" href="{session_link}">{html_escape(s_info.get("title",""))}</a>'
+                f'<span class="session-card-count">{count_txt}</span>'
+                f'</div>'
+                f'<ul class="struggle-list">{"".join(items)}</ul>'
+                f'</div>'
+            )
+        cards_html = "".join(cards)
+    n_total = sum(len(v) for v in struggles_by_session.values())
+    n_res = len(resolved)
+    body = f"""
+<header>
+  {crumb}
+  <div class="eyebrow"><span>Struggles Register</span></div>
+  <h1><em>Struggles</em> · session by session</h1>
+  <p>Pulled from the <code>Struggles / corrections:</code> block of every completed session summary. {n_res} of {n_total} resolved.</p>
+</header>
+<main>
+  {cards_html}
+</main>
+"""
+    (WEAKNESS_DIR / "struggles.html").write_text(_weakness_shell("Struggles Register — Weakness · NSE7 EF 7.6", body), encoding="utf-8")
+
+
+def render_completed_weakness_hub(weakness_sessions):
+    COMPLETED_WEAKNESS_DIR.mkdir(parents=True, exist_ok=True)
+    crumb = _build_crumb([
+        ("Home", "../../index.html"),
+        ("Weakness Register", "../index.html"),
+        ("Completed Weakness Sessions", None),
+    ])
+    if not weakness_sessions:
+        cards_html = (
+            '<div class="empty-state">'
+            '<h3>No completed weakness sessions yet</h3>'
+            '<p>Drop <code>weakness-NN-&lt;slug&gt;.html</code> and its paired '
+            '<code>weakness-NN-session-summary.txt</code> into <code>sorting-hat/</code> — sort will move '
+            'them to <code>weakness-register/completed-weakness-sessions/weakness-NN-&lt;slug&gt;/</code>.</p>'
+            '</div>'
+        )
+    else:
+        tiles = []
+        for w in weakness_sessions:
+            desc = w["tagline"] or f"Weakness session {w['num']:02d}."
+            if w["has_html"]:
+                href = f"weakness-{w['num']:02d}-{w['slug']}/index.html"
+                tiles.append(
+                    f'<a class="tile" href="{href}">'
+                    f'<span class="tile-chip chip-rose">Weakness {w["num"]:02d}</span>'
+                    f'<span class="tile-title">{html_escape(w["title"])}</span>'
+                    f'<span class="tile-desc">{html_escape(desc)}</span>'
+                    f'<span class="tile-arrow">→</span>'
+                    f'</a>'
+                )
+            else:
+                tiles.append(
+                    f'<div class="tile" style="opacity:0.6;cursor:default;">'
+                    f'<span class="tile-chip chip-rose">Weakness {w["num"]:02d}</span>'
+                    f'<span class="tile-title">{html_escape(w["title"])}</span>'
+                    f'<span class="tile-desc">Summary present but no HTML page yet — drop the paired HTML into sorting-hat/.</span>'
+                    f'</div>'
+                )
+        cards_html = f'<div class="tile-grid">{"".join(tiles)}</div>'
+    body = f"""
+<header>
+  {crumb}
+  <div class="eyebrow"><span>Completed Weakness Sessions</span></div>
+  <h1><em>Completed</em> Weakness Sessions</h1>
+  <p>One button per dedicated weakness session. Files land here via <code>sorting-hat/</code>.</p>
+</header>
+<main>
+  {cards_html}
+</main>
+"""
+    (COMPLETED_WEAKNESS_DIR / "index.html").write_text(_weakness_shell("Completed Weakness Sessions — NSE7 EF 7.6", body), encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
 # LANDING PAGE (index.html) — one-stop front door to every hub
 # ---------------------------------------------------------------------------
 
-def render_landing(extras, completions, n_audio_podcasts=0):
+def render_landing(extras, completions, n_audio_podcasts=0, weakness_counts=None):
     n_sessions = len(SESSIONS)
     n_phases = len(PHASES)
     n_completed = sum(1 for v in completions.values() if v.get("has_complete"))
@@ -5558,12 +5928,23 @@ def render_landing(extras, completions, n_audio_podcasts=0):
     n_nibbles = _count_kind("nibbles")
     n_extras_total = n_guides + n_bites + n_nibbles
 
+    wc = weakness_counts or {"struggles": 0, "resolved": 0, "weakness_sessions": 0}
+    w_open = wc["struggles"] - wc["resolved"]
+    if wc["struggles"] == 0:
+        weakness_desc = "No struggles logged yet — build a completed session summary to populate the register."
+    else:
+        weakness_desc = (
+            f"{w_open} open · {wc['resolved']} resolved struggle{'' if wc['struggles'] == 1 else 's'} · "
+            f"{wc['weakness_sessions']} weakness session{'' if wc['weakness_sessions'] == 1 else 's'} completed."
+        )
+
     tiles = [
         ("study-plan/index.html", "PLAN",      "chip-plan",     "Study Plan",              f"{n_sessions} sessions across {n_phases} phases — the full curriculum hub."),
         ("sessions/index.html",   "SESSIONS",  "chip-sessions", "Socratic Sessions",       f"Flat listing of all {n_sessions} sessions in order — one card each."),
         ("completed-sessions.html", "COMPLETED", "chip-complete", "Completed Study Guides", f"{n_completed} of {n_sessions} sessions finished — polished HTML study guides."),
         ("labs/index.html",       "LABS",      "chip-labs",     "Hands-On Labs",           (f"{sum(1 for l in LABS if not l.get('concept_only') and not l.get('is_orientation'))} hands-on labs + orientation across the shared topology — Socratic predict → run → verify." if LABS else "Empty — feed a lab guide PDF and run /build-lab-plan.")),
         ("audio-podcasts/index.html", "AUDIO", "chip-audio",    "Audio Podcasts",          (f"{n_audio_podcasts} audio-podcast generation prompt{'' if n_audio_podcasts == 1 else 's'} — expand to view and track workflow." if n_audio_podcasts else "No audio-podcast prompts yet — add an AUDIO PODCAST PROMPT section to a session summary.")),
+        ("weakness-register/index.html", "WEAKNESS", "chip-weakness", "Weakness Register", weakness_desc),
         ("all-resources.html",    "SEARCH",    "chip-all",      "All Study Resources",     f"Search across every session, guide, bite, nibble, completed guide, and lab — {n_sessions + n_extras_total + n_completed + len(LABS)} items."),
     ]
 
@@ -5595,6 +5976,7 @@ def render_landing(extras, completions, n_audio_podcasts=0):
     --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
     --plum:#7c1a5f; --plum-light:#f7e5f0; --plum-border:#d8a7c5;
     --teal:#0f766e; --teal-light:#ccfbf1; --teal-border:#5eead4;
+    --rose:#9f1239; --rose-light:#fce7ed; --rose-border:#f7a8c0;
   }}
   *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0;}}
   html,body{{min-height:100vh;}}
@@ -5620,6 +6002,7 @@ def render_landing(extras, completions, n_audio_podcasts=0):
   .chip-all{{background:var(--plum-light);color:var(--plum);border:1px solid var(--plum-border);}}
   .chip-labs{{background:var(--teal-light);color:var(--teal);border:1px solid var(--teal-border);}}
   .chip-audio{{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border);}}
+  .chip-weakness{{background:var(--rose-light);color:var(--rose);border:1px solid var(--rose-border);}}
   .tile-title{{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.15;}}
   .tile-desc{{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.55;}}
   .tile-arrow{{position:absolute;right:22px;bottom:20px;font-family:'Outfit',sans-serif;font-size:22px;color:var(--blue);transition:transform .18s ease;}}
