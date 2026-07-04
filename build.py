@@ -2593,9 +2593,9 @@ SESSION_TEMPLATE = """<!DOCTYPE html>
   .copy-btn.copied{{background:var(--green);color:#fff;}}
   .img-caption{{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}}
   .section-img-wrap{{margin:0 0 20px;display:flex;flex-direction:column;align-items:center;}}
-  .section-img{{width:260px;max-width:100%;border-radius:12px;cursor:zoom-in;transition:width 0.3s ease;border:1px solid var(--border);display:block;}}
+  .section-img{{width:100%;max-width:100%;border-radius:16px;cursor:zoom-out;transition:width 0.3s ease;border:1px solid var(--border);display:block;}}
   .section-img.si-expanded{{width:100%;cursor:zoom-out;border-radius:16px;}}
-  .si-placeholder{{display:none;width:260px;max-width:100%;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}}
+  .si-placeholder{{display:none;width:100%;max-width:100%;border:2px dashed var(--border);border-radius:16px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}}
   .si-placeholder.si-show{{display:flex;}}
   .si-filename{{font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--text-muted);font-family:'SF Mono','Fira Code',monospace;}}
   .prompt-toggle{{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}}
@@ -3431,9 +3431,9 @@ def render_study_plan_index(extras=None, completions=None):
   .session-card-why{{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-soft);line-height:1.55;margin:0;}}
   .img-caption{{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}}
   .section-img-wrap{{margin:0 0 20px;display:flex;flex-direction:column;align-items:center;}}
-  .section-img{{width:340px;max-width:100%;border-radius:12px;cursor:zoom-in;transition:width 0.3s ease;border:1px solid var(--border);display:block;}}
+  .section-img{{width:100%;max-width:100%;border-radius:16px;cursor:zoom-out;transition:width 0.3s ease;border:1px solid var(--border);display:block;}}
   .section-img.si-expanded{{width:100%;cursor:zoom-out;border-radius:16px;}}
-  .si-placeholder{{display:none;width:340px;max-width:100%;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}}
+  .si-placeholder{{display:none;width:100%;max-width:100%;border:2px dashed var(--border);border-radius:16px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}}
   .si-placeholder.si-show{{display:flex;}}
   .si-filename{{font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--text-muted);font-family:'SF Mono','Fira Code',monospace;}}
   .prompt-toggle{{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}}
@@ -4445,6 +4445,52 @@ def _normalize_pt_transition_in_file(path):
     else:
         new_text = text + "\n" + cleanup
     path.write_text(new_text, encoding="utf-8")
+
+_IMG_EXPANDED_REPLACEMENTS = [
+    # section-img: compact default → full-width default (matches .si-expanded look)
+    (".section-img{width:260px;max-width:100%;border-radius:12px;cursor:zoom-in;",
+     ".section-img{width:100%;max-width:100%;border-radius:16px;cursor:zoom-out;"),
+    (".section-img{width:340px;max-width:100%;border-radius:12px;cursor:zoom-in;",
+     ".section-img{width:100%;max-width:100%;border-radius:16px;cursor:zoom-out;"),
+    # si-placeholder fallback: match the wider look so it doesn't shrink when img is missing
+    (".si-placeholder{display:none;width:260px;max-width:100%;border:2px dashed var(--border);border-radius:12px;",
+     ".si-placeholder{display:none;width:100%;max-width:100%;border:2px dashed var(--border);border-radius:16px;"),
+    (".si-placeholder{display:none;width:340px;max-width:100%;border:2px dashed var(--border);border-radius:12px;",
+     ".si-placeholder{display:none;width:100%;max-width:100%;border:2px dashed var(--border);border-radius:16px;"),
+    # analogy-img inside analogy-box
+    (".analogy-img img{max-width:360px;width:100%;cursor:zoom-in;",
+     ".analogy-img img{max-width:100%;width:100%;cursor:zoom-out;"),
+]
+
+_IMG_EXPANDED_REGEX = [
+    # analogy-scoped section-img override with any pixel width → 100%
+    (re.compile(r"\.analogy-img \.section-img\{width:\d+px;"),
+     ".analogy-img .section-img{width:100%;"),
+    # si-placeholder with a max-width cap → drop the cap
+    (re.compile(r"\.si-placeholder\{display:none;width:100%;max-width:\d+px;border:2px dashed var\(--border\);border-radius:12px;"),
+     ".si-placeholder{display:none;width:100%;max-width:100%;border:2px dashed var(--border);border-radius:16px;"),
+]
+
+def _normalize_images_expanded_in_file(path):
+    try:
+        text = path.read_text(encoding="utf-8")
+    except Exception:
+        return
+    new_text = text
+    for old, new in _IMG_EXPANDED_REPLACEMENTS:
+        new_text = new_text.replace(old, new)
+    for pat, new in _IMG_EXPANDED_REGEX:
+        new_text = pat.sub(new, new_text)
+    if new_text != text:
+        path.write_text(new_text, encoding="utf-8")
+
+def normalize_images_expanded():
+    """Rewrite CSS defaults so section-img / analogy-img / si-placeholder start expanded."""
+    for p in ROOT.rglob("*.html"):
+        # skip the sorting-hat inbox — those are raw drops waiting to be sorted
+        if "sorting-hat" in p.parts:
+            continue
+        _normalize_images_expanded_in_file(p)
 
 def normalize_page_transitions():
     """Walk all sorted HTML files and heal broken pt-init preloaders."""
@@ -5686,6 +5732,7 @@ def main():
         render_lab_page(l)
     normalize_sorted_breadcrumbs()
     normalize_page_transitions()
+    normalize_images_expanded()
     write_prompts_file()
 
     n_extras = sum(len(items) for kinds in extras.values() for items in kinds.values())
