@@ -60,6 +60,8 @@ The base skill covers the first three rows. Everything below `session-<NN>-<slug
 | `session-<NN>-<slug>.txt` | Session summary | `sessions/session-<NN>-<session-slug>/summary.txt` |
 | `session-<NN>-visual-<slug>.html` | Session visual companion (semantic marker, not a formal kind) | Ask which kind — default **bite**. Then `sessions/…/bites/<slug>.html`. |
 | `extras-<NN>-<slug>.html` | Standalone Extras topic index | `extras/extras-<NN>-<slug>/index.html` (create the folder, register in `EXTRAS`) |
+| `weakness-<NN>-<slug>.html` | Completed weakness session page | `weakness-register/completed-weakness-sessions/weakness-<NN>-<slug>/index.html` (create the folder) |
+| `weakness-<NN>-session-summary.txt` | Weakness session summary | `weakness-register/completed-weakness-sessions/weakness-<NN>-<slug>/summary.txt` (folder inferred from any paired HTML; if the HTML hasn't landed yet, halt and ask for the slug) |
 | `*.zip` | Container of the above | Extract in place with `unzip -o`, delete the zip, then re-run sort on the contents. |
 
 Anything else → halt and ask. Never invent a destination.
