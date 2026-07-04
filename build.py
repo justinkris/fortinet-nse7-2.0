@@ -4537,6 +4537,24 @@ def normalize_sorted_breadcrumbs():
                     (singular, None),
                 ]))
 
+    # Weakness session pages sorted into weakness-register/completed-weakness-sessions/.
+    if COMPLETED_WEAKNESS_DIR.is_dir():
+        for folder in COMPLETED_WEAKNESS_DIR.iterdir():
+            if not folder.is_dir():
+                continue
+            m = _re.match(r"^weakness-(\d+)-(.+)$", folder.name)
+            if not m:
+                continue
+            wnum = int(m.group(1))
+            html_path = folder / "index.html"
+            if html_path.is_file():
+                _normalize_crumb_in_file(html_path, _build_crumb([
+                    ("Home", "../../../index.html"),
+                    ("Weakness Register", "../../index.html"),
+                    ("Completed Weakness Sessions", "../index.html"),
+                    (f"Weakness {wnum:02d}", None),
+                ]))
+
 # ---------------------------------------------------------------------------
 # LABS (hands-on) — see /build-lab-plan skill
 # ---------------------------------------------------------------------------
@@ -6104,7 +6122,16 @@ def main():
     render_completed_hub(completions)
     render_all_resources_hub(extras, completions)
     n_audio_podcasts = render_audio_podcasts_hub()
-    render_landing(extras, completions, n_audio_podcasts=n_audio_podcasts)
+
+    # Weakness Register: struggles pulled from summary.txt, plus sorted weakness sessions.
+    struggles_by_session = discover_weakness_struggles(completions)
+    weakness_sessions = discover_weakness_sessions()
+    resolved_map, weakness_counts = compute_weakness_index(struggles_by_session, weakness_sessions)
+    render_weakness_hub(struggles_by_session, weakness_sessions, weakness_counts)
+    render_struggles_page(struggles_by_session, resolved_map)
+    render_completed_weakness_hub(weakness_sessions)
+
+    render_landing(extras, completions, n_audio_podcasts=n_audio_podcasts, weakness_counts=weakness_counts)
     render_labs_hub()
 
     # Old root-level study-plan.html is superseded by study-plan/index.html.
@@ -6130,6 +6157,12 @@ def main():
     print(f"Wrote completed-sessions.html ({n_completed} completed, {n_summaries} summaries)")
     print(f"Wrote all-resources.html ({n_extras} session-linked supplements indexed)")
     print(f"Wrote audio-podcasts/index.html ({n_audio_podcasts} podcast prompt{'' if n_audio_podcasts == 1 else 's'})")
+    print(
+        "Wrote weakness-register/ "
+        f"({weakness_counts['struggles']} struggle{'' if weakness_counts['struggles'] == 1 else 's'}, "
+        f"{weakness_counts['resolved']} resolved, "
+        f"{weakness_counts['weakness_sessions']} weakness session{'' if weakness_counts['weakness_sessions'] == 1 else 's'})"
+    )
     print(f"Wrote index.html (landing page)")
     report_completion_validation(completions)
 
