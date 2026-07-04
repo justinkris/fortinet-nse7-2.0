@@ -1,0 +1,22 @@
+Session 18 — Bite: Visual — Two Independent Boxes, One Shared Notebook (FGSP Colo Topology)
+============================================================
+
+session-18-colo-topology.png
+
+Caption: The colo topology — one external LB making every routing decision, two fully independent FortiGates, one thin session-sync channel between them.
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic. Warm modern color palette: cream background (#faf5e9), coral accents, muted gold highlights, sage greens, soft brown outlines. Clean bold line work, no gradients, no photorealism, no 3D rendering, generous spacing, educational and visually engaging.
+
+Composition: wide horizontal layout, left-to-right flow, three tiers. Top-left: a small stylized cloud icon labeled "CLIENT TRAFFIC" with a tiny envelope/packet icon inside it, one coral arrow flowing right and down into a large sage-green rounded rectangle labeled "COLO LOAD BALANCER," topped with a small dial/switch icon representing the fact that it — and only it — makes forwarding decisions here.
+
+From the load balancer, two solid coral arrows fan downward to two identical-style FortiGate shield icons sitting side by side in the lower half of the frame, each inside its own soft-brown-outlined rounded "zone" to emphasize separation:
+— Left zone labeled "FGT-COLO-1," with a small padlock-and-key icon and a small human admin figure wearing a navy tie, representing independent management and credentials.
+— Right zone labeled "FGT-COLO-2," with its own padlock-and-key icon and a visually distinct second admin figure wearing a muted-gold scarf, reinforcing a separate, unrelated management domain.
+
+Between the two firewall zones, draw a thin dashed line in muted gold — visually much thinner and lighter than the solid coral traffic arrows — labeled beneath it in small uppercase text: "SESSION SYNC ONLY · NO SHARED IDENTITY · NO SHARED CONFIG." Along this dashed line, show two or three tiny "ticket" or index-card icons mid-transit, representing session records passing between the boxes — not commands, not configuration.
+
+Along the very base of the illustration, a thin cream-colored strip with small uppercase labels reading "INDEPENDENT HARDWARE · INDEPENDENT CONFIG · INDEPENDENT MANAGEMENT" spanning beneath both firewall zones.
+
+Mood: calm, clean, whiteboard-turned-polished-illustration. No logos, no real company branding, no readable UI screenshots, minimal text, icon-driven storytelling.
+
+============================================================

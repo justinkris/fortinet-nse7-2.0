@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Bite — Session 18: FGSP Session Synchronization</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-glow:rgba(30,64,175,0.07);
+    --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:40px 60px 30px;background:var(--ink-dark);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  header h1{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;line-height:1.1;color:#fbf7ec;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-size:15px;font-style:italic;color:rgba(251,247,236,0.6);margin-top:8px;}
+  main{max-width:880px;margin:0 auto;padding:32px 60px 60px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;margin-top:36px;}
+  h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:10px;padding-left:14px;border-left:3px solid var(--blue);}
+  h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  p{font-size:16.5px;line-height:1.7;color:var(--text-soft);margin-bottom:10px;}
+  p strong{color:var(--text);font-weight:600;}
+  ul,ol{padding-left:22px;margin-bottom:10px;}
+  li{font-size:16.5px;line-height:1.65;color:var(--text-soft);margin-bottom:5px;}
+  li strong{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:12px 18px;margin:12px 0;font-size:15.5px;line-height:1.6;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .data-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:8px 12px;text-align:left;}
+  .data-table td{font-size:14.5px;padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text-soft);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .mental-note-block{border-radius:10px;padding:12px 16px;margin:12px 0;display:flex;gap:10px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--blue);margin-bottom:3px;text-transform:uppercase;}
+  .mental-note-block-text{font-size:15.5px;font-weight:600;line-height:1.5;color:var(--text);}
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:12px 0;}
+  .analogy-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--amber);margin-bottom:6px;text-transform:uppercase;}
+  .analogy-text{font-size:15.5px;color:#5c3d09;line-height:1.65;font-style:italic;}
+  .checklist{list-style:none;padding:0;margin:10px 0;}
+  .checklist li{padding:6px 0 6px 28px;position:relative;border-bottom:1px solid var(--border-dim);font-size:16px;}
+  .checklist li:last-child{border-bottom:none;}
+  .checklist li::before{content:'☐';position:absolute;left:0;color:var(--blue);font-size:16px;}
+  .selftest{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin:14px 0;}
+  .selftest ol{margin-bottom:0;}
+  .selftest li{margin-bottom:8px;}
+  footer{font-family:'Outfit',sans-serif;font-size:10px;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;padding:18px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:700px){header,main,footer{padding-left:24px;padding-right:24px;}}
+</style>
+</head>
+<body>
+
+<header>
+<div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 18</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Bite</span></div>
+  <div class="header-eyebrow">STUDY BITE · 5–10 MIN · SESSION 18</div>
+  <h1>FGSP — <em>Session Synchronization</em></h1>
+  <p>Fast recall pass. If any of this doesn't click immediately, revisit the Complete Study Guide.</p>
+</header>
+
+<main>
+
+  <div class="section-label">OVERVIEW</div>
+  <p>FGSP lets two (or more) <strong>independently managed</strong> FortiGates survive each other's failures by sharing only the session table — no shared identity, no shared config, no elected primary. It's the answer whenever an external load balancer owns traffic distribution and failure detection, and the firewalls behind it can't or won't merge into a single FGCP identity.</p>
+
+  <div class="section-label">PROBLEM IT SOLVES</div>
+  <p>FGCP demands two things: an internally-elected decision-maker for session ownership, and full config/identity coupling. Colo deployments, multi-team environments, and anything sitting behind an existing external LB routinely violate both. FGSP removes the requirement entirely — the two boxes stay fully independent and share nothing except live session state.</p>
+
+  <div class="section-label">PRIMARY MENTAL MODEL</div>
+  <div class="mental-note-block">
+    <div class="mental-note-block-inner">
+      <div class="mental-note-block-label">Remember this first</div>
+      <div class="mental-note-block-text">No vMAC. No election. No config sync. The only thing crossing between FGSP peers is a copy of the session table — and even that only gets <em>acted on</em> when a specific packet actually lands on the wrong box.</div>
+    </div>
+  </div>
+
+  <div class="section-label">SIMPLIFIED PACKET FLOW — ASYMMETRIC HANDBACK</div>
+  <ol>
+    <li>FGT-1 receives the first packet of a session → FGT-1 becomes the <strong>session owner</strong>.</li>
+    <li>Session entry syncs to FGT-2 (TCP/IPsec: automatic; UDP/ICMP/expectation/NAT: opt-in).</li>
+    <li>LB routes a later packet in the same session to FGT-2 instead.</li>
+    <li>FGT-2 doesn't process it independently — it hands it back to FGT-1:
+      <ul>
+        <li><strong>Same subnet, L2 adjacent</strong> (<code>layer2-connection available</code>) → direct frame bounce to FGT-1's MAC.</li>
+        <li><strong>No L2 adjacency</strong> (default, e.g. cloud) → UDP-encapsulated over Layer 3 to FGT-1's IP.</li>
+      </ul>
+    </li>
+    <li>FGT-1 processes the packet normally. Only <em>that one packet</em> paid a cost — everything else flows straight through.</li>
+  </ol>
+
+  <div class="section-label">KEY TERMINOLOGY</div>
+  <table class="data-table">
+    <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Session owner</td><td>The FortiGate that received the session's first packet</td></tr>
+      <tr><td>session-pickup</td><td>Master switch enabling FGSP session synchronization</td></tr>
+      <tr><td>session-pickup-connectionless</td><td>Opt-in sync for UDP/ICMP</td></tr>
+      <tr><td>session-pickup-expectation</td><td>Opt-in sync for pinhole sessions (SIP/FTP)</td></tr>
+      <tr><td>session-pickup-nat</td><td>Opt-in sync for NAT'd sessions</td></tr>
+      <tr><td>layer2-connection</td><td>Controls whether misrouted-packet handback uses L2 frame bounce or L3 UDP encapsulation</td></tr>
+      <tr><td>session-sync-dev</td><td>Optional dedicated interface for L2 session sync (auto-fallback to L3)</td></tr>
+      <tr><td>standalone-cluster encryption</td><td>IPsec-encrypts the L3 sync channel (psksecret)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-label">EXAM-CRITICAL POINTS</div>
+  <div class="callout callout-amber">
+    <strong>Trap:</strong> "Active-Active" is not the signal for FGSP. FGCP does Active-Active too. The real marker is <strong>no shared identity/config</strong> plus an <strong>external device</strong> making the routing decision.
+  </div>
+  <div class="callout">
+    <strong>Default sync:</strong> TCP + IPsec sync automatically. UDP/ICMP/expectation/NAT are opt-in.
+  </div>
+  <div class="callout callout-green">
+    <strong>IPsec nuance:</strong> a synced SA is a <em>failover</em> benefit (owner dies → peer takes over, no renegotiation) — NOT a live-processing shortcut. While the owner is healthy, a misrouted IPsec packet still gets handed back like everything else.
+  </div>
+
+  <div class="section-label">COMMON MISTAKES</div>
+  <ul>
+    <li>Assuming FGSP peers need to be L2-adjacent — they don't, for session sync alone (Layer 3 is the default). L2 adjacency only matters for the config-sync feature and for choosing the L2 handback mechanism.</li>
+    <li>Treating a lagging sync channel like FGCP split-brain. FGSP has no identity to contest — lag just means a stray packet gets dropped and TCP retransmits. Self-healing, not a crisis.</li>
+    <li>Assuming a synced IPsec SA lets any peer decrypt mid-flow traffic freely. It doesn't — the uniform handback mechanism still applies while the owner is alive.</li>
+  </ul>
+
+  <div class="section-label">TROUBLESHOOTING CHECKLIST</div>
+  <ul class="checklist">
+    <li>Confirm which peer is the session owner (received the first packet) before assuming a "failure."</li>
+    <li>Check <code>layer2-connection</code> setting — mismatched L2 assumptions between peers cause handback failures.</li>
+    <li>Verify the LB's return-path routing behavior — is asymmetry occasional (expected) or constant (design problem)?</li>
+    <li>For UDP-heavy or NAT-heavy traffic behaving oddly after failover, check whether the relevant session-pickup-* flag is actually enabled.</li>
+    <li>For cross-datacenter sync links, confirm encryption is enabled if the path crosses shared infrastructure.</li>
+  </ul>
+
+  <div class="section-label">MEMORABLE ANALOGY</div>
+  <div class="analogy-box">
+    <div class="analogy-label">Two Roommates, One Notebook</div>
+    <div class="analogy-text">Separate bank accounts, separate leases, separate house rules — but one shared notebook by the door: "let this person in, they're fine to use either door going out too." Neither roommate needs the other's permission to act on what's written — they just need the notebook to be current. When it lags by a few seconds, worst case someone waits at the door a moment. Nobody's fighting over whose house it is.</div>
+  </div>
+
+  <div class="section-label">SELF-TEST</div>
+  <div class="selftest">
+    <ol>
+      <li>Why does FGCP's config sync make "the colo team manages their own box" structurally impossible, independent of any traffic consideration?</li>
+      <li>Out of 1000 packets with only 1 misrouted, how many pay a relay cost under FGSP vs. under FGCP Active-Active — and why is that number so different?</li>
+      <li>What's the difference between the L2 and L3 asymmetric handback mechanisms, and which one is the default?</li>
+      <li>Why does Fortinet sync TCP and IPsec by default but leave UDP/ICMP opt-in?</li>
+      <li>Why doesn't a lagging FGSP sync channel cause split-brain the way a dropped FGCP heartbeat can?</li>
+    </ol>
+  </div>
+
+</main>
+
+<footer>NSE7 Enterprise Firewall 7.6 <span>·</span> Session 18 Study Bite <span>·</span> FGSP Session Synchronization</footer>
+</body>
+</html>

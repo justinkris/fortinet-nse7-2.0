@@ -59,7 +59,8 @@
 <body>
 
 <header>
-  <div class="header-eyebrow">SESSION 18 · VISUAL · MID-LESSON</div>
+<div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 18</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Bite</span></div>
+<div class="header-eyebrow">SESSION 18 · VISUAL · MID-LESSON</div>
   <h1>Two Independent Boxes, <em>One Shared Notebook</em></h1>
   <p>Vaultline Financial's second-datacenter colo build — the topology behind the "can we just use FGCP?" question you just answered no to.</p>
 </header>
@@ -85,24 +86,15 @@
     <span class="approach-tag">Recommended visual type: Architecture Map</span>
     <p>An Architecture Map fits here because the point isn't a feeling or a trade-off — it's a literal picture of which component owns which decision, and what (if anything) crosses the boundary between two otherwise-unrelated firewalls.</p>
 
-    <div class="image-placeholder">
-      <div class="ip-filename">images/session-18-colo-topology.png</div>
-      <div class="ip-caption">The colo topology: one external LB making every routing decision, two fully independent FortiGates, one thin session-sync channel between them.</div>
-      <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-      <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic. Warm modern color palette: cream background (#faf5e9), coral accents, muted gold highlights, sage greens, soft brown outlines. Clean bold line work, no gradients, no photorealism, no 3D rendering, generous spacing, educational and visually engaging.
-
-Composition: wide horizontal layout, left-to-right flow, three tiers. Top-left: a small stylized cloud icon labeled "CLIENT TRAFFIC" with a tiny envelope/packet icon inside it, one coral arrow flowing right and down into a large sage-green rounded rectangle labeled "COLO LOAD BALANCER," topped with a small dial/switch icon representing the fact that it — and only it — makes forwarding decisions here.
-
-From the load balancer, two solid coral arrows fan downward to two identical-style FortiGate shield icons sitting side by side in the lower half of the frame, each inside its own soft-brown-outlined rounded "zone" to emphasize separation:
-— Left zone labeled "FGT-COLO-1," with a small padlock-and-key icon and a small human admin figure wearing a navy tie, representing independent management and credentials.
-— Right zone labeled "FGT-COLO-2," with its own padlock-and-key icon and a visually distinct second admin figure wearing a muted-gold scarf, reinforcing a separate, unrelated management domain.
-
-Between the two firewall zones, draw a thin dashed line in muted gold — visually much thinner and lighter than the solid coral traffic arrows — labeled beneath it in small uppercase text: "SESSION SYNC ONLY · NO SHARED IDENTITY · NO SHARED CONFIG." Along this dashed line, show two or three tiny "ticket" or index-card icons mid-transit, representing session records passing between the boxes — not commands, not configuration.
-
-Along the very base of the illustration, a thin cream-colored strip with small uppercase labels reading "INDEPENDENT HARDWARE · INDEPENDENT CONFIG · INDEPENDENT MANAGEMENT" spanning beneath both firewall zones.
-
-Mood: calm, clean, whiteboard-turned-polished-illustration. No logos, no real company branding, no readable UI screenshots, minimal text, icon-driven storytelling.</div>
+    <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:14px;">
+      <img src="images/session-18-colo-topology.png" alt="Colo topology: external LB routes to two independent FortiGates linked only by a thin session-sync channel" style="width:100%;max-width:900px;border-radius:12px;border:1px solid var(--border);display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div style="display:none;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:40px 28px;flex-direction:column;align-items:center;gap:12px;width:100%;">
+        <div style="font-size:28px;">🗺️</div>
+        <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;">Image not yet generated</div>
+        <div style="font-size:14.5px;color:var(--text-soft);text-align:center;max-width:520px;line-height:1.6;">Drop the generated PNG at <code>images/session-18-colo-topology.png</code> — see <code>images/prompts.txt</code> for the prompt.</div>
+      </div>
     </div>
+    <p style="font-size:15px;font-style:italic;color:var(--text-soft);text-align:center;margin:0 0 18px;">The colo topology: one external LB making every routing decision, two fully independent FortiGates, one thin session-sync channel between them.</p>
   </div>
 
   <div class="section-block">

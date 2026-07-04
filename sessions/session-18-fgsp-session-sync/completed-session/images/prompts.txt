@@ -1,0 +1,20 @@
+Session 18 — Completed Study Guide: FGSP Session Synchronization
+============================================================
+
+s1-colo-constraints.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic. Warm modern colour palette: cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, clean bold line work, no gradients, no photorealism. Wide horizontal composition: top-left a small cloud icon labeled "CLIENT TRAFFIC" with a coral arrow flowing into a large sage-green rounded rectangle labeled "COLO LOAD BALANCER" topped with a small dial icon. Two coral arrows fan down to two FortiGate shield icons in separate soft-brown-outlined zones labeled "FGT-COLO-1" and "FGT-COLO-2," each with its own small padlock icon and a distinct small admin figure (navy tie vs muted-gold scarf) to show independent management. Between the two zones, a thin dashed gold line labeled "SESSION SYNC ONLY" with tiny ticket icons traveling along it. Base strip reads "INDEPENDENT HARDWARE · INDEPENDENT CONFIG · INDEPENDENT MANAGEMENT." Calm, clean, icon-driven, no logos, no readable UI.
+
+============================================================
+
+s2-asymmetric-superpower.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm cream/coral/sage/gold palette, clean bold line work, no gradients, no photorealism. Two FortiGate shield icons side by side, "FGT-COLO-1" (glowing, labeled "SESSION OWNER") and "FGT-COLO-2" (neutral). A single coral packet icon arrives at FGT-Colo-2 by mistake (small "?" bubble above it), then a curved gold arrow labeled "HANDBACK" carries it over to FGT-Colo-1, where it's absorbed with a small checkmark. Beside the arrow, two small icon variants stacked vertically: one showing a simple straight line labeled "L2 — same subnet, direct frame bounce," the other showing the packet wrapped in an outer envelope icon labeled "L3 — UDP encapsulation, no shared subnet." Faded ghost outlines of 999 other packets flowing straight and undisturbed in the background, to emphasize this handback is a rare exception, not the norm. Minimal text, icon-driven, calm educational mood.
+
+============================================================
+
+s3-sync-interfaces-types.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm cream/coral/sage/gold palette, clean bold line work, no gradients, no photorealism. Split composition, left and right halves separated by a thin vertical line. Left half labeled "FGCP" in ink-navy: two identical FortiGate shield icons both reaching for a single glowing golden crown icon labeled "vMAC," sparks/conflict lines between them, small exclamation icon above — visual metaphor for identity crisis. Right half labeled "FGSP" in coral: two clearly distinct FortiGate shield icons (different colored accents), one small paper icon with a torn corner drifting between them labeled "dropped packet," a small clock icon showing a few seconds passing, then a small checkmark — visual metaphor for a brief, self-healing gap, not a fight. Bottom caption strip: "IDENTITY CRISIS vs CONSISTENCY GAP." Calm, clear, icon-driven, no logos, no readable UI.
+
+============================================================
