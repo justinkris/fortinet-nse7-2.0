@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Completed Weakness Sessions — NSE7 EF 7.6</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf5e9;--surface:#fffdf5;--surface-2:#f5eed9;
+    --border:#d4c89a;--border-dim:#ebe1c2;
+    --text:#0a1838;--text-soft:#1e2f5a;--text-muted:#6b7794;
+    --blue:#1e40af;--blue-light:#eff4fc;--blue-border:#b8cce8;
+    --ink-dark:#0d1a3a;--ink-accent:#9bb8e6;
+    --green:#1a7c4a;--green-light:#dff0e1;--green-border:#a7d8b0;
+    --rose:#9f1239;--rose-light:#fce7ed;--rose-border:#f7a8c0;
+    --amber:#b45309;--amber-light:#fcf2c3;--amber-border:#f3d68a;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html,body{min-height:100vh;}
+  body{font-family:'Cormorant Garamond',serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);color:#fbf7ec;}
+  .breadcrumb{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);margin:0 6px;}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(247,168,192,0.14);border:1px solid rgba(247,168,192,0.35);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:#f7a8c0;letter-spacing:0.12em;margin-bottom:14px;text-transform:uppercase;}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.05;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:#f7a8c0;}
+  header p{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:rgba(251,247,236,0.6);max-width:760px;margin-top:6px;line-height:1.6;}
+  header code{font-family:'SF Mono','Fira Code',monospace;font-size:13px;background:rgba(251,247,236,0.08);padding:1px 6px;border-radius:4px;color:#fbf7ec;font-style:normal;}
+  main{flex:1;padding:44px 60px 72px;max-width:1200px;margin:0 auto;width:100%;}
+  .tile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;}
+  .tile{position:relative;display:flex;flex-direction:column;gap:12px;padding:26px 28px 30px;background:var(--surface);border:1px solid var(--border);border-radius:14px;text-decoration:none;color:var(--text);transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;overflow:hidden;}
+  .tile:hover{transform:translateY(-2px);box-shadow:0 8px 24px -12px rgba(10,24,56,0.18);border-color:var(--rose);}
+  .tile-chip{align-self:flex-start;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;padding:4px 10px;border-radius:12px;text-transform:uppercase;}
+  .chip-rose{background:var(--rose-light);color:var(--rose);border:1px solid var(--rose-border);}
+  .chip-green{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}
+  .chip-blue{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border);}
+  .chip-amber{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border);}
+  .tile-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.15;}
+  .tile-desc{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.55;}
+  .tile-arrow{position:absolute;right:22px;bottom:20px;font-family:'Outfit',sans-serif;font-size:22px;color:var(--rose);transition:transform .18s ease;}
+  .tile:hover .tile-arrow{transform:translateX(4px);}
+  .empty-state{border:2px dashed var(--border);border-radius:14px;background:var(--surface);padding:44px 32px;text-align:center;color:var(--text-muted);}
+  .empty-state h3{font-family:'Playfair Display',serif;font-size:22px;color:var(--text);margin-bottom:8px;}
+  .empty-state p{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;font-style:italic;max-width:640px;margin:0 auto;}
+  .empty-state code{font-family:'SF Mono','Fira Code',monospace;font-size:13px;background:var(--surface-2);padding:2px 8px;border-radius:4px;color:var(--text);font-style:normal;}
+  .session-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 26px 24px;margin-bottom:22px;}
+  .session-card-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .session-card-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;padding:4px 10px;border-radius:12px;text-transform:uppercase;background:var(--rose-light);color:var(--rose);border:1px solid var(--rose-border);white-space:nowrap;}
+  .session-card-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;line-height:1.2;color:var(--text);}
+  .session-card-count{font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-left:auto;text-transform:uppercase;}
+  .struggle-list{list-style:none;padding:0;margin:0;}
+  .struggle-list li{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.6;color:var(--text-soft);padding:12px 0 12px 30px;border-bottom:1px solid var(--border-dim);position:relative;}
+  .struggle-list li:last-child{border-bottom:none;}
+  .struggle-list li::before{content:"•";position:absolute;left:10px;color:var(--rose);font-size:20px;line-height:1;top:14px;font-weight:700;}
+  .struggle-list li.resolved{color:var(--text-muted);text-decoration:line-through;}
+  .struggle-list li.resolved::before{content:"✓";color:var(--green);text-decoration:none;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;top:16px;}
+  .resolved-tag{display:inline-block;font-family:'Outfit',sans-serif;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;background:var(--green-light);color:var(--green);border:1px solid var(--green-border);padding:2px 8px;border-radius:10px;margin-left:8px;font-style:normal;vertical-align:middle;text-decoration:none;font-weight:600;}
+  a.resolved-tag:hover{background:var(--green);color:#fbf7ec;}
+  footer{padding:18px 60px;border-top:1px solid var(--border);background:var(--surface);font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;text-align:center;}
+  footer span{color:var(--rose);}
+  @media(max-width:640px){header{padding:32px 24px 24px;}header h1{font-size:32px;}main{padding:28px 20px 44px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Weakness Register</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Completed Weakness Sessions</span></div>
+  <div class="eyebrow"><span>Completed Weakness Sessions</span></div>
+  <h1><em>Completed</em> Weakness Sessions</h1>
+  <p>One button per dedicated weakness session. Files land here via <code>sorting-hat/</code>.</p>
+</header>
+<main>
+  <div class="empty-state"><h3>No completed weakness sessions yet</h3><p>Drop <code>weakness-NN-&lt;slug&gt;.html</code> and its paired <code>weakness-NN-session-summary.txt</code> into <code>sorting-hat/</code> — sort will move them to <code>weakness-register/completed-weakness-sessions/weakness-NN-&lt;slug&gt;/</code>.</p></div>
+</main>
+
+<footer>NSE7 EF 7.6 <span>·</span> Weakness Register</footer>
+</body>
+</html>

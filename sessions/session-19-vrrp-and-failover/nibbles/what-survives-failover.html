@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 19 Nibble — What Survives a Failover?</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+    --red:#a3201d; --red-light:#fbe6e4; --red-border:#eab3ae;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);}
+  header{padding:38px 60px 28px;background:var(--ink-dark);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:12px;text-transform:uppercase;}
+  header h1{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;line-height:1.05;color:#fbf7ec;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  .reading-time{font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.08em;margin-top:12px;}
+  main{max-width:860px;margin:0 auto;padding:34px 60px 56px;}
+  .thesis{font-family:'Playfair Display',serif;font-size:23px;font-weight:600;line-height:1.3;color:var(--text);text-align:center;padding:8px 0 24px;}
+  .thesis em{font-style:italic;color:var(--blue);}
+
+  .cmp{width:100%;border-collapse:separate;border-spacing:0;margin:8px 0 4px;font-family:'Outfit',sans-serif;border-radius:12px;overflow:hidden;border:1px solid var(--border);}
+  .cmp th{background:var(--ink-dark);color:var(--ink-accent);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:14px 12px;text-align:center;}
+  .cmp th:first-child{text-align:left;}
+  .cmp td{padding:13px 12px;text-align:center;font-size:14px;border-bottom:1px solid var(--border-dim);background:var(--surface);}
+  .cmp td:first-child{text-align:left;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--text);}
+  .cmp tr:last-child td{border-bottom:none;}
+  .yes{color:var(--green);font-weight:600;}
+  .no{color:var(--red);font-weight:700;}
+  .partial{color:var(--amber);font-weight:600;}
+  .col-vrrp{background:var(--blue-light)!important;}
+  .highlight-row td{background:var(--red-light)!important;}
+  .highlight-row td:first-child{color:var(--red);}
+  .caption{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);text-align:center;margin:6px 0 22px;}
+
+  .keyrow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0;}
+  .keycard{border-radius:12px;padding:16px 18px;border:1px solid var(--border);background:var(--surface);}
+  .keycard.win{border-color:var(--green-border);background:var(--green-light);}
+  .keycard.lose{border-color:var(--red-border);background:var(--red-light);}
+  .keycard-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:6px;}
+  .keycard.win .keycard-label{color:var(--green);}
+  .keycard.lose .keycard-label{color:var(--red);}
+  .keycard-text{font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.55;color:var(--text-soft);}
+  .keycard-text strong{color:var(--text);}
+
+  .punch{border-left:3px solid var(--amber-border);background:var(--amber-light);border-radius:0 10px 10px 0;padding:16px 20px;margin:20px 0 8px;font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.6;color:var(--text-soft);}
+  .punch strong{color:var(--text);font-weight:600;}
+  .decision{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.7;color:var(--text-soft);text-align:center;background:var(--surface-2);border:1px dashed var(--border);border-radius:12px;padding:16px 20px;margin-top:16px;}
+  .decision strong{color:var(--blue);}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:26px 24px 20px;}header h1{font-size:27px;}main{padding:24px 22px 40px;}.keyrow{grid-template-columns:1fr;}.thesis{font-size:19px;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<header>
+<div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 19</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Nibble</span></div>
+  <div class="header-eyebrow">Session 19 · Nibble · VRRP</div>
+  <h1>What actually <em>survives a failover?</em></h1>
+  <div class="reading-time">⏱ under 2 minutes · glance &amp; go</div>
+</header>
+
+<main>
+
+  <div class="thesis">VRRP gives you a surviving gateway <em>address</em> — never a surviving <em>session.</em></div>
+
+  <table class="cmp">
+    <thead>
+      <tr>
+        <th>Survives the failover?</th>
+        <th>FGCP</th>
+        <th>FGSP</th>
+        <th class="col-vrrp">VRRP</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Gateway IP / MAC</td>
+        <td class="yes">✔ yes</td>
+        <td class="yes">✔ yes</td>
+        <td class="col-vrrp yes">✔ yes</td>
+      </tr>
+      <tr class="highlight-row">
+        <td>Session state (TCP, NAT)</td>
+        <td class="yes">✔ yes</td>
+        <td class="yes">✔ yes</td>
+        <td class="no">✘ never</td>
+      </tr>
+      <tr>
+        <td>Config synchronization</td>
+        <td class="yes">✔ native</td>
+        <td class="partial">◐ optional</td>
+        <td class="col-vrrp no">✘ no</td>
+      </tr>
+      <tr>
+        <td>Works across vendors</td>
+        <td class="no">✘ no</td>
+        <td class="no">✘ no</td>
+        <td class="col-vrrp yes">✔ yes</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="caption">One empty box tells the whole story: VRRP's session-state column. That gap is <em>architectural</em>, not tunable.</div>
+
+  <div class="keyrow">
+    <div class="keycard win">
+      <div class="keycard-label">The 9 that lived</div>
+      <div class="keycard-text">Short / stateless flows. A fresh SYN just builds a <strong>new session</strong> on the new master. Nobody notices.</div>
+    </div>
+    <div class="keycard lose">
+      <div class="keycard-label">The 3 that died</div>
+      <div class="keycard-text">Long-lived / stateful / NAT'd flows. They hit the new master <strong>out-of-state</strong> → dropped → reconnect from scratch.</div>
+    </div>
+  </div>
+
+  <div class="punch">
+    <strong>The wrong-knob trap:</strong> a sub-second failover would <strong>not</strong> have saved those 3 sessions. Faster failover fixes <em>detection time</em> — it does nothing about <em>state loss</em>. The timer is never the fix for dropped sessions.
+  </div>
+
+  <div class="decision">
+    Need the gateway to survive? → <strong>VRRP is fine.</strong><br>
+    Need the sessions to survive? → <strong>VRRP is the wrong tool → use FGCP or FGSP.</strong>
+  </div>
+
+</main>
+
+<footer>
+  Vaultline Financial<span>.</span> <span>NSE7 EF 7.6</span><span>.</span> Session 19 Nibble — What Survives a Failover?
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,203 @@
+INITIAL WEAKNESS SNAPSHOT
+============================
+Baseline: 2026-07-04 — before any dedicated weakness sessions
+Source: 36 struggle bullets scraped from 9 completed session summaries
+        (sessions 01, 02, 03, 16, 17, 18, 19, 39, 40)
+Target: NSE7 Enterprise Firewall 7.6
+
+Not everything below is a real gap. This file classifies the raw register
+into three bands so the next weakness session picks the right target.
+
+
+==============================================================
+BAND A — REAL KNOWLEDGE GAPS (candidates for weakness sessions)
+==============================================================
+These are the items where reasoning was structurally wrong or a
+value/mechanism had to be corrected — the ones where a spaced-repetition
+re-drill would genuinely earn its keep.
+
+Cluster A1 — HA internals (FGCP)
+------------------------------------
+Highest priority. Cluster of five bullets from Sessions 16 and 17, all
+about the mechanics that show up on the exam most often.
+
+- [S16] Heartbeat EtherType: guessed 0x8100 (dot1Q). Actual: 0x8890 (hello)
+        / 0x8891 (session-sync). Not related to 0x8100 at all — that was
+        a bad instinct pulled from the VLAN world.
+- [S16] hb-lost-threshold default: guessed 3. Actual 20 × 200ms ≈ 4s.
+- [S16] Multiple heartbeat links: initially assumed load-balanced.
+        Actual: ordered/exclusive for heartbeat, load-balanced for
+        session-sync. Two different jobs, two different disciplines.
+- [S16] Override-off = no preemption: initial intuition INVERTED. The
+        40s-vs-5:01 clarifying question exposed it and it was corrected
+        explicitly, but the underlying reflex needs re-drilling cold.
+- [S17] LB hash input: guessed IP Identification field. Wrong — Identification
+        varies per packet so it fails the "same hash for every packet in
+        a session" test. Correct answer: the 4-tuple.
+- [S17] Active-active return path: initially modeled as always relayed
+        back through Box A for proxy sessions. Wrong — Box B replies
+        directly using its own physical MAC. This was flagged as the
+        top exam-relevant correction of Session 17.
+
+Weakness-session candidate:  "FGCP internals cold quiz" — heartbeat frames,
+timers, hash-input, A-A return path, override semantics. Estimated
+5-6 corrections available to knock off in a single session.
+
+
+Cluster A2 — VRRP mechanics
+------------------------------
+Session 19, two bullets that both point at the same issue: importing
+mental models from OSPF / HSRP / FGCP that don't apply.
+
+- [S19] vMAC framed as something the two boxes "agree on." Wrong —
+        it's computed independently from the shared VRID
+        (00-00-5E-00-01-{VRID}), no negotiation at all.
+- [S19] Master-down timer: borrowed "miss 3 hellos" from OSPF/HSRP.
+        Actual: (3 × advert) + skew formula.
+
+Weakness-session candidate:  "VRRP from first principles" — no negotiation,
+no dedicated peer link, the exact master-down formula, VRID→vMAC math.
+Small session but a clean win — 2 corrections available.
+
+
+Cluster A3 — FGSP session-owner semantics
+--------------------------------------------
+Session 18. Two bullets, both about *framing* rather than facts — but
+in exam questions the framing IS the trap.
+
+- [S18] SYN/ACK-misrouted vs mid-stream-data-misrouted: initially assumed
+        trivially identical without examining. The correct frame:
+        ownership is decided once at the SYN and the packet's position
+        in the conversation is irrelevant. Re-drill cold from a scenario.
+- [S18] UDP vs TCP sync defaults: initially framed as "which loss is
+        worse for the application." Correct frame: "which is cheaper to
+        rebuild from scratch." Directionally right for the wrong reason.
+
+Weakness-session candidate:  "FGSP asymmetric-handback re-drill"
+— cold-open scenarios that force the right framing. 2 corrections available.
+
+
+Cluster A4 — Hardware acceleration
+--------------------------------------
+Sessions 39 and 40. Largest cluster by count — 8 bullets total, mixed
+severity. The precision-of-language ones are the most exam-visible.
+
+Real gaps:
+- [S39] Slow-path triggers: unsure of the four initially — needed guided
+        discovery. Re-drill cold from memory.
+- [S39] Flow-based inspection ≠ header-only. Full L7 payload inspection
+        happens in real time. Difference from proxy is *timing*, not depth.
+- [S39] SP5 (NP+CP on one chip) still requires a bridge to the IPS engine
+        because the IPS engine is software on the CPU. This one is
+        counter-intuitive and worth re-stating.
+- [S40] "Cannot be offloaded regardless of policy" is a filter that
+        excludes configuration decisions (proxy profiles, explicit
+        disables). Only the three architectural constraints belong there.
+
+Softer / procedural:
+- [S39] Direction of the inspection-mode change (flow→proxy vs proxy→flow)
+        confused initially.
+- [S39] NTurbo by name — arrived at concept before name was revealed.
+        Now known.
+- [S40] Guessed `diagnose npu` before `diagnose sys session list`.
+- [S40] Needed nudging to see the reason-code is step one.
+
+Weakness-session candidate:  "SPU acceleration boundaries" — the four
+slow-path triggers, the SP5-doesn't-eliminate-the-IPS-bridge point, the
+offload-filter exclusion rule, and the reason-code-first troubleshooting
+discipline. Highest count-of-items available: ~5 corrections.
+
+
+Cluster A5 — Precision-of-language
+--------------------------------------
+Sessions 02 and 03. The reasoning was right; the vocabulary needed
+sharpening. Low priority individually but worth a single re-drill.
+
+- [S02] VDOM isolation described as "policy sets." Fuller answer:
+        isolated policy table + routing table + session table.
+- [S02] Flow vs proxy mode selection: initially uncertain what triggers
+        it — profile-inference model. Needed guidance to land it.
+- [S02] "What happens to existing sessions when a policy changes
+        mid-flight" — required guided reasoning.
+- [S03] Flow mode with NP7 = "less security." Wrong — full L7 inspection
+        via NTurbo → IPS → CP9 → NTurbo → NP7. This one overlaps with
+        the S39 flow-vs-proxy gap.
+- [S03] SD-WAN concept named as "application steering." Close, not
+        the industry term.
+- [S03] Edge firewall workload direction: initial framing centred on
+        inbound protection. Correct: primarily outbound user traffic.
+- [S03] Named "security profiles and deep inspection" as the edge's
+        job without articulating outbound direction.
+
+Weakness-session candidate:  "Vocabulary re-drill" — VDOM triad,
+inspection-mode triggers, flow-mode-is-not-less-security, edge-firewall
+direction. Merge with Cluster A4's flow-inspection point.
+
+
+==============================================================
+BAND B — ALREADY-DIRECTIONALLY-CORRECT ("non-significant")
+==============================================================
+The register captures these but they don't need weakness sessions.
+Leaving them in the register keeps honest counts; not driving
+strategy from them.
+
+- [S01] "None significant in this foundational session."
+- [S02] "None requiring significant correction — reasoning was consistently
+         directionally correct."
+- [S01] Suggested security profiles as the domain with most cross-domain
+         dependencies before reconsidering. Reconsidered unprompted.
+
+
+==============================================================
+BAND C — META / SESSION-HYGIENE (not knowledge gaps)
+==============================================================
+These are about the mechanics of the study sessions themselves, not the
+NSE7 material. Not drivable via a weakness session. Kept here for
+completeness of the register.
+
+- [S01] Exam experience-requirement guess: 5→1/1/1→3/3/2. This is
+         trivia about the exam prerequisites, not the exam content.
+- [S17] Mentor-instructions block pasted into chat mid-session (×2).
+- [S18] Same, ×5 instances. Student self-noticed by session's end.
+- [S19] Same, resolved this session — identified as client-side auto-
+         insertion; not model behavior.
+
+Weakness-session candidate:  none. Already resolved through the
+Session-19 explanation.
+
+
+==============================================================
+SUGGESTED WEAKNESS-SESSION ORDER
+==============================================================
+If you run one weakness session per week, this is a defensible order —
+biggest exam-surface first, cheapest wins last:
+
+  Weakness 01 — FGCP internals cold quiz              (~6 corrections)
+                Sessions 16 + 17 fold together cleanly.
+                Highest exam frequency of any cluster in the register.
+
+  Weakness 02 — SPU acceleration boundaries           (~5 corrections)
+                Sessions 39 + 40. Merge S03's "flow mode is not
+                less security" bullet in.
+
+  Weakness 03 — VRRP + FGSP re-frame                  (~4 corrections)
+                Sessions 18 + 19. Two small clusters that share
+                a common trap: don't import mental models from
+                other HA protocols.
+
+  Weakness 04 — Vocabulary + framing re-drill         (~5 corrections)
+                Sessions 02 + 03. Precision pass rather than concept
+                pass. Lowest effort, still worth doing before the exam.
+
+
+==============================================================
+HEADCOUNT
+==============================================================
+Total struggles on the register:     36
+Real knowledge gaps (Band A):        23   → 4 weakness sessions
+Directionally-correct (Band B):       3   → no action
+Meta / session hygiene (Band C):     10   → no action / resolved
+
+Refresh this file by re-running the same query against
+discover_weakness_struggles(discover_completions()) — the site's
+Weakness Register at weakness-register/struggles.html is the live view.

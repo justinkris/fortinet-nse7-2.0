@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 19 Bite — VRRP, Failover Timers &amp; Session Pickup</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-glow:rgba(30,64,175,0.07);
+    --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);}
+  header{padding:40px 60px 30px;background:var(--ink-dark);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;text-transform:uppercase;}
+  header h1{font-family:'Playfair Display',serif;font-size:40px;font-weight:700;line-height:1.05;color:#fbf7ec;margin-bottom:8px;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:8px;}
+  .reading-time{font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.08em;margin-top:14px;}
+  main{max-width:920px;margin:0 auto;padding:36px 60px 60px;}
+  .section-block{margin-bottom:36px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  h2{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:14px;padding-left:16px;border-left:3px solid var(--blue);}
+  h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:12px;}
+  p strong{color:var(--text);font-weight:600;}
+  p em{color:var(--blue);font-style:italic;}
+  ul,ol{padding-left:22px;margin-bottom:12px;}
+  li{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);margin-bottom:5px;}
+  li strong{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:14px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .data-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .code-block{background:var(--ink-dark);border-radius:10px;margin:14px 0;overflow:hidden;border:1px solid var(--border);}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:8px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:16px;overflow-x:auto;}
+  .code-block code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12.5px;line-height:1.65;color:#e8efff;}
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:14px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:14px 0;}
+  .analogy-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:6px;text-transform:uppercase;}
+  .analogy-summary{font-weight:600;color:#7a4f0c;margin-bottom:8px;font-size:17px;font-family:'Cormorant Garamond',serif;}
+  .analogy-box ul{list-style:none;padding:0;margin:0;}
+  .analogy-box li{padding-left:18px;position:relative;color:#5c3d09;font-style:italic;}
+  .analogy-box li::before{content:'•';position:absolute;left:0;font-weight:700;color:var(--amber);}
+  .selftest{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-top:16px;}
+  .selftest-q{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);padding:10px 0 10px 26px;position:relative;border-bottom:1px solid var(--border-dim);line-height:1.6;}
+  .selftest-q:last-child{border-bottom:none;}
+  .selftest-q::before{content:'?';position:absolute;left:0;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;color:var(--blue);font-size:17px;top:9px;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:28px 24px 22px;}header h1{font-size:30px;}main{padding:24px 24px 40px;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<header>
+<div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 19</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Bite</span></div>
+  <div class="header-eyebrow">Session 19 · Bite · VRRP</div>
+  <h1>VRRP — A Surviving Address, <em>Never a Session</em></h1>
+  <p>Rapid reactivation. You already understand this — this rebuilds the model in a few minutes.</p>
+  <div class="reading-time">⏱ 5–10 minute read</div>
+</header>
+
+<main>
+
+  <div class="section-block">
+    <div class="section-label">Overview</div>
+    <h2>The <em>one sentence</em></h2>
+    <p><strong>VRRP gives you a surviving gateway address, never a surviving session.</strong> It is the open-standard, cross-vendor HA mechanism you reach for when FGCP/FGSP cannot run. It floats one gateway identity — an IP and a MAC — between two devices. It synchronizes no session state at all, so any long-lived flow dies at failover regardless of how fast that failover is.</p>
+    <div class="mental-note-block">
+      <div class="mental-note-block-icon">🧠</div>
+      <div>
+        <div class="mental-note-block-label">Anchor</div>
+        <div class="mental-note-block-text">Surviving ADDRESS, never a surviving SESSION. Everything else in this Bite hangs off that line.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-label">Problem &amp; Model</div>
+    <h2>What it solves, and the <em>mental model</em></h2>
+    <p><strong>Problem:</strong> endpoints have one default-gateway IP. If the single device owning it dies, they're stranded. <strong>Solution:</strong> a second device inherits that gateway identity transparently. <strong>Constraint that makes VRRP the answer:</strong> the two devices may be different vendors, so the mechanism must be an open standard — FGCP/FGSP are Fortinet-only.</p>
+    <p>Mental model: <em>one floating gateway identity, claimed by whichever device is currently master.</em> The identity is a computed vMAC plus the virtual IP. No state, no config, no trust travels between the two boxes — only periodic "I'm alive" advertisements.</p>
+  </div>
+
+  <div class="section-block">
+    <div class="section-label">Simplified Flow</div>
+    <h2>Failover in <em>four beats</em></h2>
+    <ol>
+      <li><strong>Silence:</strong> backup stops hearing the master's advertisements.</li>
+      <li><strong>Wait:</strong> it sits out the master-down interval — <code>(3 × advert) + skew</code> ≈ 3–4s on defaults. <em>This is where the time goes.</em></li>
+      <li><strong>Claim:</strong> backup becomes master, starts answering for the same vMAC (<code>00-00-5E-00-01-{VRID}</code>). Milliseconds.</li>
+      <li><strong>GARP:</strong> new master sends a gratuitous ARP so the <em>switch</em> relearns which port the vMAC lives behind. Also milliseconds.</li>
+    </ol>
+    <div class="callout callout-green"><strong>Key split:</strong> Beat 2 is the only slow part, and it's mandated silence, not slow machinery. Beats 3–4 are near-instant. Endpoint ARP (L3) never changes; the GARP fixes the switch CAM (L2).</p></div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-label">Key Terminology</div>
+    <h2>Terms that <em>earn their place</em></h2>
+    <ul>
+      <li><strong>VRID:</strong> virtual router ID; the shared number that seeds the vMAC. Same on both peers.</li>
+      <li><strong>Virtual MAC:</strong> <code>00-00-5E-00-01-{VRID}</code> — computed independently, never negotiated. This is why VRRP is vendor-neutral.</li>
+      <li><strong>IP address owner:</strong> a router whose real interface IP equals the virtual IP; gets automatic priority 255, beating any configured priority.</li>
+      <li><strong>Advertisement interval:</strong> how often the master says "I'm alive" (default 1s). The tuning dial.</li>
+      <li><strong>Master-down interval:</strong> <code>(3 × advert) + skew</code>; the silence a backup endures before declaring the master dead.</li>
+      <li><strong>Skew time:</strong> <code>(256 − priority)/256</code> s; makes higher-priority backups win the takeover race.</li>
+    </ul>
+  </div>
+
+  <div class="section-block">
+    <div class="section-label">Exam-Critical</div>
+    <h2>What Fortinet <em>tests</em></h2>
+    <ul>
+      <li>A MAC of <code>00-00-5E-00-01-XX</code> is a VRRP vMAC; <code>XX</code> is the VRID in hex (<code>0A</code>=10, <code>14</code>=20).</li>
+      <li>Master-down = <code>(3 × advert) + skew</code> — not "miss 3 hellos." Expect a calculation or identification item.</li>
+      <li>The gratuitous ARP is for the <strong>switch CAM</strong>, not endpoints. Endpoint ARP is unchanged.</li>
+      <li>VRRP does <strong>no session synchronization</strong>. This is the highest-value fact — it's how they trap you.</li>
+      <li>IP address owner ⇒ automatic priority 255.</li>
+      <li>FortiOS supports VRRP v2 and v3, IPv4 and IPv6, and mixed FortiGate models in one domain.</li>
+    </ul>
+  </div>
+
+  <div class="section-block">
+    <div class="section-label">Common Mistakes</div>
+    <h2>Traps &amp; <em>misconceptions</em></h2>
+    <table class="data-table">
+      <thead><tr><th>The trap</th><th>The correction</th></tr></thead>
+      <tbody>
+        <tr><td>"Tune the timer to save the dropped sessions"</td><td>Faster failover fixes detection time, not state loss. The sessions die regardless — wrong knob.</td></tr>
+        <tr><td>"The two routers negotiate the vMAC"</td><td>It's computed from the VRID. No negotiation, no exchange.</td></tr>
+        <tr><td>"The GARP updates the endpoints"</td><td>Endpoint ARP was already correct. The GARP updates the switch CAM table.</td></tr>
+        <tr><td>"VRRP is just weaker FGCP"</td><td>Different problem: cross-vendor gateway float vs. Fortinet stateful cluster.</td></tr>
+        <tr><td>"Configured priority always wins"</td><td>Not if a peer is the IP address owner — it takes automatic 255.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-block">
+    <div class="section-label">Troubleshooting Checklist</div>
+    <h2>When VRRP <em>misbehaves</em></h2>
+    <ul>
+      <li><strong>Failover too slow?</strong> Check the advertisement interval; master-down is 3× it plus skew.</li>
+      <li><strong>Role flapping?</strong> Advert interval too aggressive for a congested/unstable segment — back it off.</li>
+      <li><strong>Wrong device is master?</strong> Check for an IP address owner (auto-255); check configured priorities and preempt.</li>
+      <li><strong>Traffic blackholes briefly after failover?</strong> Switch CAM not relearning — confirm the new master is sending gratuitous ARP and the L2 path allows it.</li>
+      <li><strong>Sessions dropping every failover?</strong> Expected. VRRP has no session sync. If sessions must survive, the design is wrong — needs FGCP/FGSP.</li>
+    </ul>
+  </div>
+
+  <div class="section-block">
+    <div class="section-label">Analogy</div>
+    <h2>The <em>relay baton</em></h2>
+    <div class="analogy-box">
+      <div class="analogy-label">Analogy</div>
+      <div class="analogy-summary">VRRP is a relay baton. FGCP/FGSP is a relay baton plus a shared memory of the race so far.</div>
+      <ul>
+        <li>The baton (the gateway IP + vMAC) passes cleanly to the next runner — the crowd (endpoints) doesn't even notice the handoff.</li>
+        <li>But the new runner remembers <em>nothing</em> about the laps already run (the live sessions).</li>
+        <li>Anything mid-stride that depended on that memory — long-lived, stateful, NAT'd flows — falls to the ground.</li>
+        <li>Handing the baton faster doesn't restore the lost memory. That needs a different race entirely (stateful HA).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-label">Self-Test</div>
+    <h2>Can you <em>reconstruct it?</em></h2>
+    <div class="selftest">
+      <div class="selftest-q">A packet capture shows a source MAC of <code>00-00-5E-00-01-0F</code>. What protocol, and what's the VRID?</div>
+      <div class="selftest-q">The advertisement interval is set to 1 second. Roughly how long until a backup declares the master down, and what's the formula?</div>
+      <div class="selftest-q">After a VRRP failover, does a client PC need to update its ARP cache? If not, what is the gratuitous ARP actually for?</div>
+      <div class="selftest-q">A failover dropped 4 long-lived VPN sessions. An engineer proposes halving the advertisement interval. Will that save the sessions? Why or why not?</div>
+      <div class="selftest-q">Two peers: one has a real interface IP identical to the VIP and configured priority 100; the other has priority 200. Which becomes master, and why?</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Vaultline Financial<span>.</span> <span>NSE7 EF 7.6</span><span>.</span> Session 19 Bite — VRRP
+</footer>
+
+</body>
+</html>

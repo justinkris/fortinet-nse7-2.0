@@ -4506,6 +4506,13 @@ def normalize_page_transitions():
             if kind_dir.is_dir():
                 for f in kind_dir.glob("*.html"):
                     _normalize_pt_transition_in_file(f)
+    # Sorted weakness session pages
+    if COMPLETED_WEAKNESS_DIR.is_dir():
+        for folder in COMPLETED_WEAKNESS_DIR.iterdir():
+            if folder.is_dir():
+                html_path = folder / "index.html"
+                if html_path.is_file():
+                    _normalize_pt_transition_in_file(html_path)
 
 def normalize_sorted_breadcrumbs():
     """Rewrite/inject breadcrumbs on every sorted file (complete/bite/nibble/guide)."""
@@ -5386,7 +5393,7 @@ def render_audio_podcasts_hub():
   .phase-title{{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#fbf7ec;line-height:1.15;margin-bottom:4px;}}
   .phase-tagline{{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.72);line-height:1.5;max-width:720px;}}
   .phase-count{{position:absolute;top:0;right:0;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--blue);background:var(--surface);border:1px solid var(--blue-border);border-radius:20px;padding:5px 12px;}}
-  .phase-tiles{{display:flex;flex-wrap:nowrap;gap:12px;align-items:stretch;}}
+  .phase-tiles{{display:flex;flex-wrap:nowrap;gap:20px;align-items:stretch;}}
   .p-tile{{flex:1 1 0;min-width:0;aspect-ratio:1 / 1;display:flex;flex-direction:column;justify-content:space-between;padding:14px 12px;border-radius:12px;text-align:left;font-family:inherit;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;position:relative;}}
   .p-tile--has{{background:var(--blue);color:#fff;border:1px solid var(--blue);}}
   .p-tile--has:hover{{transform:translateY(-3px);box-shadow:0 10px 20px -12px rgba(30,64,175,0.55);background:#173196;}}
@@ -5424,7 +5431,7 @@ def render_audio_podcasts_hub():
   .empty-state code{{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--text);font-style:normal;}}
   footer{{padding:18px 60px;border-top:1px solid var(--border);background:var(--surface);font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;text-align:center;}}
   footer span{{color:var(--blue);}}
-  @media(max-width:900px){{main{{padding:32px 24px 48px;}}.phase-tiles{{flex-wrap:wrap;}}.p-tile{{flex:1 1 calc(25% - 12px);}}}}
+  @media(max-width:900px){{main{{padding:32px 24px 48px;}}.phase-tiles{{flex-wrap:wrap;}}.p-tile{{flex:1 1 calc(25% - 20px);}}}}
   @media(max-width:640px){{header{{padding:32px 24px 24px;}}header h1{{font-size:30px;}}.phase-header{{padding-right:0;}}.phase-count{{position:static;display:inline-block;margin-top:8px;}}.p-tile{{flex:1 1 calc(33.333% - 12px);padding:12px 10px;}}.p-tile-num{{font-size:22px;}}.p-tile-title{{font-size:12px;-webkit-line-clamp:2;}}.p-panel{{padding:18px 18px 20px;}}.p-panel-title{{font-size:19px;}}}}
 </style>
 </head>
@@ -5566,7 +5573,14 @@ def render_audio_podcasts_hub():
 WEAKNESS_DIR = ROOT / "weakness-register"
 COMPLETED_WEAKNESS_DIR = WEAKNESS_DIR / "completed-weakness-sessions"
 
-_WEAKNESS_STRUGGLES_HEADING = _re.compile(r"^\s*struggles\s*/?\s*corrections?\s*:\s*$", _re.IGNORECASE)
+_WEAKNESS_STRUGGLES_HEADING = _re.compile(
+    r"^\s*(?:"
+    r"(?:initial|my)\s+struggles"          # "Initial Struggles:", "My Struggles:"
+    r"|struggles(?:\s*/?\s*corrections?)?"  # "Struggles:", "Struggles / corrections:"
+    r"|misconceptions?\s+corrected"         # "Misconceptions Corrected:"
+    r")\s*:\s*$",
+    _re.IGNORECASE,
+)
 _WEAKNESS_RESOLVED_LINE = _re.compile(r"^\s*[-*•]\s*session\s+(\d+)\s*:\s*(.+?)\s*$", _re.IGNORECASE)
 
 def discover_weakness_struggles(completions):
@@ -5590,8 +5604,7 @@ def discover_weakness_struggles(completions):
                 if _WEAKNESS_STRUGGLES_HEADING.match(lines[i].strip()):
                     i += 1
                     while i < len(lines):
-                        raw = lines[i]
-                        stripped = raw.strip()
+                        stripped = lines[i].strip()
                         if not stripped:
                             i += 1
                             continue
@@ -5602,7 +5615,6 @@ def discover_weakness_struggles(completions):
                                 nxt = lines[j].strip()
                                 if not nxt or nxt.startswith(_BULLET_PREFIXES):
                                     break
-                                # stop at another sublabel like "Foo:"
                                 if _RECAP_SUBLABEL_RE.match(nxt):
                                     break
                                 b += " " + nxt
@@ -5610,8 +5622,10 @@ def discover_weakness_struggles(completions):
                             bullets.append(b)
                             i = j
                             continue
+                        # Non-bullet, non-empty — end of this sublabel's block. Fall through
+                        # to outer loop so we can find the next sublabel in the same section.
                         break
-                    break
+                    continue
                 i += 1
             if bullets:
                 out[s["num"]] = bullets
