@@ -128,13 +128,17 @@ Anything else → halt and ask. Never invent a destination.
 7. **Move** with `mv` (never `cp`). Sorting-hat must be empty after a successful sort.
 8. **Post-move for `extras-NN-*.html` only**: append a new entry to the `EXTRAS = [...]` list in `build.py` with `num`, `slug`, and a hand-written `title` + one-sentence `tagline`. Strip any `Extra(s) NN —` prefix from the HTML `<title>` when picking the friendly title. (Not needed for session-linked files — they're discovered from the filesystem.)
 9. **Image placeholders**: if any sorted HTML file contains inline placeholders with prompt text, apply the "Image handling for sorted files with placeholders" rules below **before rebuilding**.
-10. **Rebuild** with `python3 build.py`. The build:
+10. **Audio-podcast check on every summary sort**: for each `session-NN-<slug>.txt` sorted, `grep -i "^AUDIO PODCAST PROMPT" <destination>/summary.txt` before rebuilding. Two outcomes:
+    - **Found** — the section is already wired into the audio-podcasts hub automatically via `discover_audio_prompts()` at build time. In the sort report, add a line like `+ audio podcast prompt detected in session NN summary → audio-podcasts/index.html#panel-NN`. Do not edit the summary or the hub by hand — the pipeline does it.
+    - **Missing** — call it out in the sort report as a soft nudge, e.g. `- session NN summary has no AUDIO PODCAST PROMPT section — audio-podcasts hub will show it as "coming soon"`. Do not block the sort or ask the user to add one; it's optional.
+11. **Rebuild** with `python3 build.py`. The build:
     - Regenerates each affected session's page (Completion callout, Session Recap, Extras block).
     - Updates `study-plan.html` (Completed badge `X/M`, Extras sidebar visibility).
     - Rewrites `extras.html`, `completed-sessions.html`, `index.html`.
+    - Re-runs `discover_audio_prompts()` and regenerates `audio-podcasts/index.html` from every summary containing an `AUDIO PODCAST PROMPT` heading.
     - Runs `normalize_sorted_breadcrumbs()` so every sorted file gets the `Home › Curriculum › …` (or `Home › Extras › …`) crumb — see the Breadcrumbs section.
     - Runs the second-layer shell-contract check across all existing `complete.html` files and prints warnings (a defence in depth if a bad file slipped in via manual move).
-11. **Report** to the user: one table row per file (source → destination), plus links to `completed-sessions.html` and (if extras were touched) `extras.html`. Do **not** re-flag pre-existing shell-contract warnings — see Known standing warnings.
+12. **Report** to the user: one table row per file (source → destination), plus links to `completed-sessions.html` and (if extras were touched) `extras.html`, and (if any audio prompts were detected in step 10) `audio-podcasts/index.html`. Do **not** re-flag pre-existing shell-contract warnings — see Known standing warnings.
 
 ### Hard rules
 
