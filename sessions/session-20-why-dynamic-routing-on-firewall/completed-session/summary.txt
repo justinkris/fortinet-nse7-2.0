@@ -71,8 +71,8 @@ Reinforcement: (a) cold re-drill the AD ladder AND the "why eBGP beats OSPF" rea
 Story: next session should open with the design meeting Priya calls — choosing OSPF for Vaultline's interior. Introduce areas via "should the DR site be in the same area?" Natural characters: Marcus's NOC team wants alerting hooks; Daniel will ask about routing-protocol security (OSPF auth) eventually.
 Spaced repetition due: FGCP internals cold quiz remains the top weakness-register candidate (unchanged).
 
-PODCAST PROMPT — "The Packet Path"
-==================================
+AUDIO PODCAST PROMPT (for "The Packet Path")
+============================================
 Write a two-host podcast script for "The Packet Path," a storytelling podcast for network engineers. Host: Alex, an experienced network security consultant. Co-host: Sam, smart and curious, asks clarifying questions. Tone: intelligent, conversational, true-crime documentary style for network engineers. Episode title: "The Route That Nobody Typed." Episode length: 12-15 minutes of dialogue.
 
 The case: A financial company's primary datacenter loses its MPLS circuit to an upstream fiber cut on a Saturday night. A fully-provisioned DR site sits idle for 55 minutes until a NOC engineer manually types two static routes — a four-minute fix. The mystery Alex unravels: the route was never the hard part; the missing piece was anything watching the network and reacting without a human.
