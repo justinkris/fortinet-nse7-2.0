@@ -1,0 +1,29 @@
+Session 20 — Bite: Route Flapping & Route Flap Damping (Memory Hook)
+============================================================
+
+village-ledger.png
+
+Title: The Boy Who Cried Wolf, With a Ledger — penalty · suppress · half-life · reuse
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic. Warm modern colour palette: cream background (#faf5e9), coral accents, muted gold highlights, sage greens, soft brown outlines. Clean bold line work, no gradients, no photorealism, no 3D rendering, generous spacing, educational and visually engaging. Storybook mood — think a warm painterly children's-book illustration that still reads as professional and educational.
+
+Composition: wide horizontal layout with four numbered vignettes arranged left-to-right across a single medieval village scene, connected by a thin sage-green flowing ribbon along the bottom that reads in small hand-lettered caps: "PENALTY → SUPPRESS → HALF-LIFE → REUSE."
+
+Vignette 1 — PENALTY:
+A young boy in a coral hood stands on a small grassy hill with a few white sheep dotted behind him, mouth open mid-shout, one hand cupped to his mouth. In the foreground an old bearded village scribe stands at a wooden lectern and adds a large gold tally mark to a huge open ledger. Above the boy: a small speech bubble reading "WOLF!" with a soft coral strike-through, indicating a false alarm. Small label under the vignette: "+ 1000 penalty".
+
+Vignette 2 — SUPPRESS:
+The same boy stands smaller in the village square, still trying to shout. Three villagers surround him, backs turned, fingers stuck in their ears, walking away. Above one villager, a small speech bubble reads "SUPPRESSED — nobody listens." The ledger in the background glows a warm coral-red, filled with too many tally marks. Small label under the vignette: "route unused · not advertised".
+
+Vignette 3 — HALF-LIFE:
+The ledger sits closed on a stone windowsill overnight. A gold hourglass tips beside it, sand flowing. The old tally marks on the visible cover fade from bold to pale, ink visibly dissolving into small drifting motes with a subtle golden hour glow through the window. A small crescent moon hangs above. Small label under the vignette: "penalty halves every 15 min".
+
+Vignette 4 — REUSE:
+Villagers turn back toward the boy, cupping their ears to listen, faces relaxed and curious. The ledger is now nearly clean with just a few soft grey marks. A small sage-green checkmark hovers above the boy's head. Above one villager: "we hear you again." Small label under the vignette: "reuse threshold — trusted again".
+
+Above the whole strip, a small cursive title banner reads: "The Boy Who Cried Wolf, with a Ledger."
+Bottom caption strip, small caps: "STABILITY BOUGHT WITH REACHABILITY."
+
+Mood: calm, painterly, whiteboard-turned-storybook, no logos, no real branding, no readable UI screenshots. Minimal text — only the ribbon labels, the strike-through in vignette 1, and the small captions listed. Icon-driven storytelling, warm and slightly whimsical but professional.
+
+============================================================

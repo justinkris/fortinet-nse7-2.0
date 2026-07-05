@@ -1,0 +1,44 @@
+Session 21 — Nibble: OSPF Neighbor States: A Love Story
+============================================================
+
+s21-comic-01-down.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, cream background, soft brown outlines, no gradients. Single comic panel, side view of a cozy café. LEFT: a young man labeled "ROUTER A" on his coral t-shirt, slumped alone at a small round table, chin in hand, deflated posture, a completely blank speech bubble above him (dotted outline, empty). RIGHT: a young woman labeled "ROUTER B" on her sage-green sweater, sitting at a separate table with her back turned, sipping coffee, oblivious. Between them: a wide empty gap of floor with a small tumbleweed made of ethernet cable. A wall clock shows a hello-packet icon with a red X through it. Caption plate at the bottom in muted gold: "DOWN — no hellos heard." Generous spacing, warm palette of cream, coral, muted gold, sage green.
+
+============================================================
+
+s21-comic-02-init.png
+
+Flat minimalistic detailed cartoon, vector style, cream background, no gradients. Comic panel: the coral-shirt guy "ROUTER A" now standing, waving enthusiastically with a big speech bubble reading "HELLO! I'm A!" containing a small envelope icon labeled "Hello packet · RID 1.1.1.1". The sage-green girl "ROUTER B" has half-turned, one eyebrow raised, holding her own speech bubble that reads "Hello, I'm B" — but crucially her bubble shows a neighbor-list clipboard that is EMPTY (his name is NOT on it, shown as a blank line with a magnifying glass hovering over it). A muted-gold caption plate: "INIT — I heard you… but your hello doesn't list ME yet." One-directional arrow from him to her drawn as a dotted coral line; the return arrow is grey and incomplete.
+
+============================================================
+
+s21-comic-03-twoway.png
+
+Flat detailed cartoon, vector style, cream background. Comic panel: coral-shirt guy and sage-green girl now facing each other, both smiling, each holding up a phone; his screen shows contact card "ROUTER B ✓" and hers shows "ROUTER A ✓" — mutual recognition. Two solid arrows between them forming a clean two-way loop, labeled "your hello lists MY name". Behind them, a small referee character in a striped shirt labeled "DR ELECTION" blows a whistle, holding two paddles labeled "DR" and "BDR", with a stopwatch labeled "wait timer = 40s". In the corner, two wallflower characters wearing "PRIORITY 0" badges sit on a bench holding hands with a sign: "we're just friends — permanently". Caption plate: "2-WAY — we both know it's mutual. Election time."
+
+============================================================
+
+s21-comic-04-exstart.png
+
+Flat detailed cartoon, vector style, cream background. Comic panel: the pair standing at a doorway labeled "DATABASE EXCHANGE — this way", doing the polite standoff: he gestures "after you", she gestures "no, after YOU". Above them a floating scoreboard compares two jersey numbers: "RID 10.10.12.1" vs "RID 10.10.12.2" with a crown appearing over the HIGHER number, labeled "MASTER — sets the sequence number"; the other gets a ribbon labeled "SLAVE". At their feet, two identical suitcases must fit through the doorway; the door frame has a measuring tape across it labeled "MTU 1500" — a subtle hint that mismatched suitcase sizes jam this exact doorway. Caption plate: "EXSTART — decide who leads before exchanging anything."
+
+============================================================
+
+s21-comic-05-exchange.png
+
+Flat detailed cartoon, vector style, cream background. Comic panel: the pair now seated at the café table, sliding documents to each other. Important detail: the documents are TABLE-OF-CONTENTS pages, clearly labeled "MY LIFE — index only" and "MY LIFE — chapter list", showing bullet lists of chapter titles with page numbers, NOT actual photos or stories. Each sheet is stamped "DBD — Database Description". He reads hers with a highlighter, circling two chapter titles he's never heard of. Small ack stamps ("ACK ✓") fly back after each sheet. Caption plate: "EXCHANGE — summaries only. Headers, not the whole database." Coral, sage, muted gold accents, clean bold line work.
+
+============================================================
+
+s21-comic-06-loading.png
+
+Flat detailed cartoon, vector style, cream background. Comic panel: the sage-green girl leaning forward like a detective, holding the highlighted index page and pointing at circled chapter titles, speech bubble: "Chapter 7. 'Barcelona 2019'. Full story. NOW." — her requests fly as envelopes labeled "LSR — Link State Request". The coral-shirt guy hands over thick full chapters as parcels labeled "LSU — Link State Update", sweating slightly. A progress bar floats above the table: "LSDB sync… 87%" in muted gold. A small stack of already-received chapters sits beside her with checkmarks. Caption plate: "LOADING — request the missing pieces, receive the full LSAs."
+
+============================================================
+
+s21-comic-07-full.png
+
+Flat detailed cartoon, vector style, cream background, wide cinematic panel. CENTER: the pair standing side by side, each holding an identical thick book — both covers read "THE NETWORK — complete edition", with a large equals sign floating between the two books and a golden banner: "IDENTICAL LSDBs". She wears a detective's satisfied smirk, arms crossed, speech bubble: "I know EVERYTHING you know. You're FULL of it." He shrugs, caught, but grinning, bubble: "…and now so are you." LEFT edge: a small heart-shaped seal stamped "ADJACENCY: FULL". RIGHT edge: a tiny Dijkstra character (old-fashioned professor with a map and compass) already drawing shortest-path tree lines from the shared book onto a wall map labeled "SPF TREE". Bottom caption plate in muted gold: "FULL — databases synchronized. Now, and only now, can routes be computed." Warm cream, coral, sage, gold palette, clean bold outlines, no gradients.
+
+============================================================

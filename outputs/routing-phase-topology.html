@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vaultline — Routing Phase Topology Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --coral:#c2410c;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond',serif;background:var(--bg);color:var(--text);line-height:1.6;}
+  header{padding:40px 56px 30px;background:var(--ink-dark);}
+  .eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  header h1{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:#fbf7ec;line-height:1.15;}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.6);margin-top:8px;}
+
+  .phase-tabs{position:sticky;top:0;z-index:90;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px;overflow-x:auto;}
+  .phase-tab{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:13px 18px;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;}
+  .phase-tab:hover{color:var(--text);}
+  .phase-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+  main{max-width:960px;margin:0 auto;padding:40px 24px 80px;}
+  .lead{font-size:18px;color:var(--text-soft);margin-bottom:36px;max-width:76ch;}
+  h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--text);margin:44px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+  h2 .num{font-family:'Outfit',sans-serif;font-size:12px;color:var(--text-muted);letter-spacing:0.1em;margin-right:10px;}
+
+  .diagram-frame{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;}
+  .diagram-frame svg{width:100%;height:auto;display:block;}
+  .svg-title{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;}
+  .svg-sub{font-family:'Outfit',sans-serif;font-size:12px;}
+  .svg-tiny{font-family:'Outfit',sans-serif;font-size:11px;}
+  .fill-neutral{fill:var(--surface-2);stroke:var(--border-dim);}
+  .fill-amber{fill:var(--amber-light);stroke:var(--amber-border);}
+  .fill-blue{fill:var(--blue-light);stroke:var(--blue-border);}
+  .fill-green{fill:var(--green-light);stroke:var(--green-border);}
+  .fill-pill{fill:var(--surface);stroke:var(--border);}
+  .fill-site{fill:none;stroke:var(--border);stroke-dasharray:6 5;}
+  .t-dark{fill:var(--text);}
+  .t-soft{fill:var(--text-soft);}
+  .t-muted{fill:var(--text-muted);}
+  .t-amber{fill:var(--amber);}
+  .t-blue{fill:var(--blue);}
+  .t-green{fill:var(--green);}
+  .t-coral{fill:var(--coral);}
+  .link-line{stroke:var(--border);stroke-width:1.5;}
+  .link-dead{stroke:var(--coral);stroke-width:1.5;stroke-dasharray:5 4;}
+  .link-stuck{stroke:var(--amber);stroke-width:2;}
+  .jack{fill:var(--border);}
+
+  table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;font-family:'Outfit',sans-serif;font-size:13px;}
+  th{background:var(--surface-2);text-align:left;padding:10px 14px;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border);}
+  td{padding:10px 14px;border-bottom:1px solid var(--border-dim);color:var(--text-soft);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td.mono{font-family:'Outfit',sans-serif;color:var(--text);}
+  .tag-dead{color:var(--coral);font-weight:600;}
+  .tag-live{color:var(--green);font-weight:600;}
+  .tag-manual{color:var(--amber);font-weight:600;}
+  .tag-verify{color:var(--amber);font-weight:600;}
+
+  .callout{border-radius:10px;padding:18px 22px;margin:20px 0;font-size:15px;}
+  .callout.note{background:var(--green-light);border:1px solid var(--green-border);}
+  .callout.open{background:var(--amber-light);border:1px solid var(--amber-border);}
+  .callout.incident{background:#fdeee6;border:1px solid #f0c4ad;}
+  .callout-title{font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;}
+  .callout.note .callout-title{color:var(--green);}
+  .callout.open .callout-title{color:var(--amber);}
+  .callout.incident .callout-title{color:var(--coral);}
+  .callout ul{margin:8px 0 0 20px;}
+  .cli-block{background:var(--ink-dark);border-radius:10px;padding:16px 20px;margin:16px 0;font-family:'Outfit',sans-serif;font-size:12.5px;color:#dfe8fb;overflow-x:auto;white-space:pre;line-height:1.7;}
+  .cli-block .hl{color:#f3d68a;font-weight:600;}
+
+  .placeholder-panel{text-align:center;padding:90px 24px;}
+  .placeholder-panel .ph-icon{font-size:34px;margin-bottom:14px;}
+  .placeholder-panel h3{font-family:'Playfair Display',serif;font-size:24px;font-weight:600;color:var(--text);margin-bottom:10px;}
+  .placeholder-panel p{font-size:16px;font-style:italic;color:var(--text-muted);max-width:52ch;margin:0 auto;}
+  footer{text-align:center;padding:30px;font-family:'Outfit',sans-serif;font-size:12px;color:var(--text-muted);border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Routing Phase · Reference</div>
+  <h1>Vaultline — routing phase topology</h1>
+  <p>One tab per session in the dynamic-routing arc. Each tab shows the network exactly as it stood for that session's scenario.</p>
+</header>
+
+<div class="phase-tabs" role="tablist">
+  <button class="phase-tab" data-panel="panel-s20" role="tab">S20 · The 2am Outage</button>
+  <button class="phase-tab active" data-panel="panel-s21" role="tab">S21 · OSPF Lab Bench</button>
+  <button class="phase-tab" data-panel="panel-s22" role="tab">S22 · BGP to the ISPs (upcoming)</button>
+</div>
+
+<!-- ══════════ SESSION 20 PANEL ══════════ -->
+<div class="tab-panel" id="panel-s20">
+<main>
+  <p class="lead">This is Vaultline as it stood on Saturday night — two sites, redundant paths everywhere, and not a single routing protocol anywhere. Every path below exists physically; nothing below decides anything. That's the whole story of Session 20.</p>
+
+  <h2><span class="num">01</span>Topology diagram — the night of the outage</h2>
+  <div class="diagram-frame">
+  <svg viewBox="0 0 900 760" role="img">
+    <title>Vaultline dual-site topology, Session 20</title>
+    <desc>Primary datacenter and DR site, each with an edge FortiGate. Primary uses ISP-A for internet and an MPLS circuit toward the DR site. DR has its own internet breakout via ISP-B. A fiber cut inside the MPLS cloud killed the inter-site path while every local interface stayed green.</desc>
+
+    <!-- Site boundary: Primary DC -->
+    <rect x="30" y="20" width="310" height="332" rx="14" class="fill-site"/>
+    <text x="46" y="44" class="svg-tiny t-muted">PRIMARY DATACENTER</text>
+
+    <rect x="60" y="58" width="250" height="44" rx="10" class="fill-neutral"/>
+    <text x="185" y="80" text-anchor="middle" dominant-baseline="central" class="svg-title t-dark">DC LAN · 10.10.0.0/16</text>
+
+    <line x1="185" y1="102" x2="185" y2="128" class="link-line"/>
+    <circle cx="185" cy="102" r="3" class="jack"/><circle cx="185" cy="128" r="3" class="jack"/>
+
+    <rect x="60" y="128" width="250" height="50" rx="10" class="fill-neutral"/>
+    <text x="185" y="147" text-anchor="middle" dominant-baseline="central" class="svg-title t-dark">Core router</text>
+    <text x="185" y="166" text-anchor="middle" dominant-baseline="central" class="svg-sub t-muted">10.10.0.1 · static routes only</text>
+
+    <line x1="185" y1="178" x2="185" y2="208" class="link-line"/>
+    <circle cx="185" cy="178" r="3" class="jack"/><circle cx="185" cy="208" r="3" class="jack"/>
+
+    <rect x="60" y="208" width="250" height="120" rx="12" class="fill-blue"/>
+    <text x="185" y="228" text-anchor="middle" dominant-baseline="central" class="svg-title t-dark">FG-EDGE-P</text>
+    <text x="185" y="248" text-anchor="middle" dominant-baseline="central" class="svg-sub t-blue">Edge FortiGate · primary</text>
+    <text x="185" y="268" text-anchor="middle" dominant-baseline="central" class="svg-sub t-soft">internal — 10.10.0.254/16</text>
+    <text x="185" y="288" text-anchor="middle" dominant-baseline="central" class="svg-sub t-soft">wan1 — 198.51.100.2/30 → ISP-A</text>
+    <text x="185" y="308" text-anchor="middle" dominant-baseline="central" class="svg-sub t-soft">mpls1 — 172.16.20.1/30 → CE</text>
+
+    <!-- Site boundary: DR -->
+    <rect x="560" y="20" width="310" height="332" rx="14" class="fill-site"/>
+    <text x="576" y="44" class="svg-tiny t-muted">DR SITE</text>
+
+    <rect x="590" y="58" width="250" height="44" rx="10" class="fill-neutral"/>
+    <text x="715" y="80" text-anchor="middle" dominant-baseline="central" class="svg-title t-dark">DR LAN · 10.20.0.0/16</text>
+
+    <line x1="715" y1="102" x2="715" y2="208" class="link-line"/>
+    <circle cx="715" cy="102" r="3" class="jack"/><circle cx="715" cy="208" r="3" class="jack"/>
+
+    <rect x="590" y="208" width="250" height="120" rx="12" class="fill-blue"/>
+    <text x="715" y="228" text-anchor="middle" dominant-baseline="central" class="svg-title t-dark">FG-EDGE-DR</text>
+    <text x="715" y="248" text-anchor="middle" dominant-baseline="central" class="svg-sub t-blue">Edge FortiGate · DR</text>
+    <text x="715" y="268" text-anchor="middle" dominant-baseline="central" class="svg-sub t-soft">internal — 10.20.0.254/16</text>
+    <text x="715" y="288" text-anchor="middle" dominant-baseline="central" class="svg-sub t-soft">wan1 — 203.0.113.2/30 → ISP-B</text>
+    <text x="715" y="308" text-anchor="middle" dominant-baseline="central" class="svg-sub t-soft">mpls1 — 172.16.20.5/30 → CE</text>
+
+    <!-- ISP-A -->
+    <line x1="130" y1="328" x2="130" y2="430" class="link-line"/>
+    <circle cx="130" cy="328" r="3" class="jack"/><circle cx="130" cy="430" r="3" class="jack"/>
+    <rect x="70" y="368" width="120" height="20" rx="10" class="fill-pill"/>
+    <text x="130" y="378" text-anchor="middle" dominant-baseline="central" class="svg-tiny t-muted">wan1 &#8596; ISP-A</text>
+
+    <rect x="60" y="430" width="200" height="52" rx="10" class="fill-neutral"/>
+    <text x="160" y="450" text-anchor="middle" dominant-baseline="central" class="svg-title t-dark">ISP-A router</text>
+    <text x="160" y="469" text-anchor="middle" dominant-baseline="central" class="svg-sub t-muted">198.51.100.1 · primary breakout</text>
+
+    <!-- ISP-B -->
+    <line x1="770" y1="328" x2="770" y2="430" class="link-line"/>
+    <circle cx="770" cy="328" r="3" class="jack"/><circle cx="770" cy="430" r="3" class="jack"/>
+    <rect x="710" y="368" width="120" height="20" rx="10" class="fill-pill"/>
+    <text x="770" y="378" text-anchor="middle" dominant-baseline="central" class="svg-tiny t-muted">wan1 &#8596; ISP-B</text>
+
+    <rect x="640" y="430" width="200" height="52" rx="10" class="fill-neutral"/>
+    <text x="740" y="450" text-anchor="middle" dominant-baseline="central" class="svg-title t-dark">ISP-B router</text>
+    <text x="740" y="469" text-anchor="middle" dominant-baseline="central" class="svg-sub t-muted">203.0.113.1 · DR breakout</text>
+
+    <!-- Internet cloud -->
+    <line x1="260" y1="456" x2="350" y2="456" class="link-line"/>
+    <circle cx="260" cy="456" r="3" class="jack"/><circle cx="350" cy="456" r="3" class="jack"/>
+    <line x1="550" y1="456" x2="640" y2="456" class="link-line"/>
+    <circle cx="550" cy="456" r="3" class="jack"/><circle cx="640" cy="456" r="3" class="jack"/>
+
+    <rect x="350" y="424" width="200" height="64" rx="28" class="fill-green"/>
+    <text x="450" y="448" text-anchor="middle" dominant-baseline="central" class="svg-title t-dark">Internet</text>
+    <text x="450" y="468" text-anchor="middle" dominant-baseline="central" class="svg-sub t-green">alive all night</text>
+
+    <!-- MPLS cloud -->
+    <line x1="240" y1="328" x2="360" y2="590" class="link-dead"/>
+    <circle cx="240" cy="328" r="3" class="jack"/><circle cx="360" cy="590" r="3" class="jack"/>
+    <rect x="230" y="450" width="128" height="20" rx="10" class="fill-pill"/>
+    <text x="294" y="460" text-anchor="middle" dominant-baseline="central" class="svg-tiny t-muted">mpls1 &#8596; CE-PRI</text>
+
+    <line x1="660" y1="328" x2="540" y2="590" class="link-dead"/>
+    <circle cx="660" cy="328" r="3" class="jack"/><circle cx="540" cy="590" r="3" class="jack"/>
+    <rect x="545" y="450" width="128" height="20" rx="10" class="fill-pill"/>
+    <text x="609" y="460" text-anchor="middle" dominant-baseline="central" class="svg-tiny t-muted">mpls1 &#8596; CE-DR</text>
+
+    <rect x="300" y="560" width="300" height="110" rx="26" class="fill-amber"/>
+    <text x="450" y="586" text-anchor="middle" dominant-baseline="central" class="svg-title t-dark">MPLS provider cloud</text>
+    <text x="450" y="608" text-anchor="middle" dominant-baseline="central" class="svg-sub t-soft">inter-site circuit · 172.16.20.0/29</text>
+    <text x="450" y="632" text-anchor="middle" dominant-baseline="central" class="svg-sub t-coral">✂ fiber cut — Sat 01:07, three hops in</text>
+    <text x="450" y="652" text-anchor="middle" dominant-baseline="central" class="svg-tiny t-muted">both CE-facing interfaces stayed GREEN</text>
+
+    <text x="450" y="712" text-anchor="middle" class="svg-tiny t-muted">Blue = FortiGate · Amber = provider infrastructure · Green = healthy · Coral dashes = path dead beyond a green interface</text>
+    <text x="450" y="732" text-anchor="middle" class="svg-tiny t-muted">Dashed site boxes = administrative boundaries (one Vaultline administration; ISPs and MPLS are other people's networks)</text>
+  </svg>
+  </div>
+
+  <h2><span class="num">02</span>Connections — End A / End B</h2>
+  <table>
+    <tr><th>End A device</th><th>End A interface</th><th>End B device</th><th>End B interface</th><th>Notes</th></tr>
+    <tr><td>Core router</td><td class="mono">Gi0/0</td><td>FG-EDGE-P</td><td class="mono">internal</td><td>All primary-site traffic funnels here</td></tr>
+    <tr><td>FG-EDGE-P</td><td class="mono">wan1</td><td>ISP-A router</td><td class="mono">Handoff</td><td>Primary internet breakout · 198.51.100.0/30</td></tr>
+    <tr><td>FG-EDGE-P</td><td class="mono">mpls1</td><td>MPLS CE (primary)</td><td class="mono">Handoff</td><td class="tag-dead">Path dead beyond CE — interface stayed up</td></tr>
+    <tr><td>FG-EDGE-DR</td><td class="mono">wan1</td><td>ISP-B router</td><td class="mono">Handoff</td><td>DR internet breakout · 203.0.113.0/30</td></tr>
+    <tr><td>FG-EDGE-DR</td><td class="mono">mpls1</td><td>MPLS CE (DR)</td><td class="mono">Handoff</td><td class="tag-dead">Same dead path, far side</td></tr>
+  </table>
+
+  <h2><span class="num">03</span>Static routing — before, and the 2am fix</h2>
+  <table>
+    <tr><th>Device</th><th>Route</th><th>Next hop / interface</th><th>Status that night</th></tr>
+    <tr><td class="mono">FG-EDGE-P</td><td class="mono">0.0.0.0/0</td><td class="mono">wan1 → ISP-A</td><td class="tag-live">Fine — internet never broke</td></tr>
+    <tr><td class="mono">FG-EDGE-P</td><td class="mono">10.20.0.0/16 (DR nets)</td><td class="mono">mpls1 → MPLS</td><td class="tag-dead">Pointing into the dead cloud, silently</td></tr>
+    <tr><td class="mono">Core router</td><td class="mono">0.0.0.0/0</td><td class="mono">FG-EDGE-P</td><td class="tag-live">Fine</td></tr>
+    <tr><td class="mono">Core router</td><td class="mono">DR public range</td><td class="mono">FG-EDGE-P → internet</td><td class="tag-manual">ADDED BY HAND at 02:04</td></tr>
+    <tr><td class="mono">FG-EDGE-P</td><td class="mono">DR-bound traffic</td><td class="mono">shifted from mpls1 to wan1</td><td class="tag-manual">ADJUSTED BY HAND at 02:06</td></tr>
+  </table>
+
+  <div class="callout incident">
+    <div class="callout-title">The incident in one sentence</div>
+    Every redundant path existed; nothing was watching, so nothing decided. Detection + reaction lived in a sleeping human — 55 minutes of outage for 4 minutes of typing.
+  </div>
+
+  <div class="callout note">
+    <div class="callout-title">Why the interface stayed green</div>
+    The cut was three hops inside the MPLS cloud — infrastructure Vaultline doesn't own. FortiOS will withdraw a static route when its next-hop <em>interface</em> drops, but the CE-facing interfaces never dropped. Local link state proves the first hop only; remote path failure needs a protocol (someone who saw it must tell you).
+  </div>
+
+  <div class="callout note">
+    <div class="callout-title">Administrative boundaries drawn on purpose</div>
+    The dashed boxes mark where Vaultline's administration ends. Inside them, an IGP (OSPF) can flood full topology among trusted routers. Across them — toward ISP-A, ISP-B, or the MPLS provider — only an EGP (BGP) is appropriate: reachability claims over TCP 179, no map-sharing with other companies.
+  </div>
+
+  <div class="callout open">
+    <div class="callout-title">What this phase will change on this diagram</div>
+    <ul>
+      <li>OSPF between the core router and both FortiGates, so interior routes converge without hands (S21).</li>
+      <li>eBGP from FG-EDGE-P to ISP-A and FG-EDGE-DR to ISP-B, so a dead breakout withdraws itself (S22).</li>
+      <li>Redistribution decisions — and the AD ladder (Static 10 · eBGP 20 · OSPF 110 · iBGP 200) arbitrating any overlap.</li>
+    </ul>
+  </div>
+</main>
+</div>
+
+<!-- ══════════ SESSION 21 PANEL ══════════ -->
+<div class="tab-panel active" id="panel-s21">
+<main>
+  <p class="lead">Monday morning, one week after the post-mortem. Priya's design meeting settled the protocol — OSPF for the interior — but nothing ships to production without proof. So today's world is small on purpose: a lab bench, two FortiGates, one cable, one adjacency that refuses to complete. Everything below is the bench as it stood when the neighbor command was run.</p>
+
+  <h2><span class="num">01</span>The lab bench — two FortiGates, one link, one stuck state</h2>
+  <div class="diagram-frame">
+  <svg viewBox="0 0 900 470" role="img">
+    <title>Session 21 lab bench topology</title>
+    <desc>Two lab FortiGates connected by a single point-to-point Ethernet link between their port5 interfaces on subnet 10.10.12.0/24. Both run OSPF in area 0. The observed neighbor state is stuck at 2-Way/DROTHER.</desc>
+
+    <!-- Lab boundary -->
+    <rect x="30" y="20" width="840" height="330" rx="14" class="fill-site"/>
+    <text x="46" y="44" class="svg-tiny t-muted">LAB BENCH · HQ BUILD ROOM · MIRRORS HQ-CORE ↔ MERIDIAN BRANCH</text>
+
+    <!-- FGT-HQ-CORE -->
+    <rect x="80" y="90" width="270" height="150" rx="12" class="fill-blue"/>
+    <text x="215" y="114" text-anchor="middle" dominant-baseline="central" class="svg-title t-dark">FGT-HQ-CORE</text>
+    <text x="215" y="134" text-anchor="middle" dominant-baseline="central" class="svg-sub t-blue">Lab twin of the HQ core FortiGate</text>
+    <text x="215" y="158" text-anchor="middle" dominant-baseline="central" class="svg-sub t-soft">port5 — 10.10.12.1/24</text>
+    <text x="215" y="178" text-anchor="middle" dominant-baseline="central" class="svg-sub t-soft">OSPF enabled · area 0.0.0.0</text>
+    <text x="215" y="198" text-anchor="middle" dominant-baseline="central" class="svg-sub t-soft">router-id — not set explicitly</text>
+    <text x="215" y="220" text-anchor="middle" dominant-baseline="central" class="svg-tiny t-muted">where the neighbor command was run</text>
+
+    <!-- FGT-LAB-BR -->
+    <rect x="550" y="90" width="270" height="150" rx="12" class="fill-blue"/>
+    <text x="685" y="114" text-anchor="middle" dominant-baseline="central" class="svg-title t-dark">FGT-LAB-BR</text>
+    <text x="685" y="134" text-anchor="middle" dominant-baseline="central" class="svg-sub t-blue">Lab twin of the Meridian branch FGT</text>
+    <text x="685" y="158" text-anchor="middle" dominant-baseline="central" class="svg-sub t-soft">port5 — 10.10.12.2/24</text>
+    <text x="685" y="178" text-anchor="middle" dominant-baseline="central" class="svg-sub t-soft">OSPF enabled · area 0.0.0.0</text>
+    <text x="685" y="198" text-anchor="middle" dominant-baseline="central" class="svg-sub t-soft">router-id — not set explicitly</text>
+    <text x="685" y="220" text-anchor="middle" dominant-baseline="central" class="svg-tiny t-muted">configured by the other engineer</text>
+
+    <!-- Link between them -->
+    <line x1="350" y1="165" x2="550" y2="165" class="link-stuck"/>
+    <circle cx="350" cy="165" r="3" class="jack"/><circle cx="550" cy="165" r="3" class="jack"/>
+    <rect x="380" y="128" width="140" height="20" rx="10" class="fill-pill"/>
+    <text x="450" y="138" text-anchor="middle" dominant-baseline="central" class="svg-tiny t-muted">port5 &#8596; port5 · direct</text>
+    <rect x="372" y="180" width="156" height="20" rx="10" class="fill-pill"/>
+    <text x="450" y="190" text-anchor="middle" dominant-baseline="central" class="svg-tiny t-muted">10.10.12.0/24 · link UP</text>
+
+    <!-- Stuck state badge -->
+    <rect x="300" y="262" width="300" height="64" rx="12" class="fill-amber"/>
+    <text x="450" y="284" text-anchor="middle" dominant-baseline="central" class="svg-title t-amber">STATE: 2-Way / DROTHER</text>
+    <text x="450" y="306" text-anchor="middle" dominant-baseline="central" class="svg-sub t-soft">10+ minutes and holding · never reached Full</text>
+
+    <text x="450" y="384" text-anchor="middle" class="svg-tiny t-muted">Amber link = adjacency attempted but incomplete · both interfaces physically UP, hellos clearly flowing (a neighbor is visible)</text>
+    <text x="450" y="404" text-anchor="middle" class="svg-tiny t-muted">Nothing in this bench is production — break it freely</text>
+    <text x="450" y="424" text-anchor="middle" class="svg-tiny t-muted">Open question of the session: is 2-Way a fault here, or normal behavior for this network type?</text>
+  </svg>
+  </div>
+
+  <h2><span class="num">02</span>The evidence so far</h2>
+  <div class="cli-block">FGT-HQ-CORE # get router info ospf neighbor
+
+Neighbor IP     Pri   State           Dead Time   Address         Interface
+10.10.12.2      1     <span class="hl">2-Way/DROTHER</span>   00:00:32    10.10.12.2      port5</div>
+  <table>
+    <tr><th>Fact</th><th>What it proves</th><th>What it does NOT prove</th></tr>
+    <tr><td class="mono">A neighbor entry exists at all</td><td>Hellos are being received from 10.10.12.2 — timers, area ID, and subnet checks on the hello passed</td><td>That a full adjacency can or will form</td></tr>
+    <tr><td class="mono">State reached 2-Way</td><td>Bidirectional communication confirmed — each router sees its own Router ID listed inside the other's hello</td><td>That any LSDB exchange has started</td></tr>
+    <tr><td class="mono">Dead Time keeps resetting (~40s)</td><td>Hellos continue to arrive on schedule — the relationship is alive, not decaying</td><td>That the state will ever advance</td></tr>
+    <tr><td class="mono">Role shown: DROTHER</td><td class="tag-verify">This is the thread to pull — why does this segment think the neighbor is a DROTHER?</td><td>—</td></tr>
+  </table>
+
+  <h2><span class="num">03</span>Bench configuration — known vs. not yet verified</h2>
+  <table>
+    <tr><th>Parameter</th><th>FGT-HQ-CORE</th><th>FGT-LAB-BR</th><th>Status</th></tr>
+    <tr><td class="mono">port5 IP</td><td class="mono">10.10.12.1/24</td><td class="mono">10.10.12.2/24</td><td class="tag-live">Confirmed, same subnet</td></tr>
+    <tr><td class="mono">OSPF area on port5</td><td class="mono">0.0.0.0</td><td class="mono">0.0.0.0</td><td class="tag-live">Confirmed — must match for hellos to be accepted</td></tr>
+    <tr><td class="mono">Hello / Dead intervals</td><td class="mono">defaults assumed</td><td class="mono">defaults assumed</td><td class="tag-live">Implicitly proven matching — a neighbor entry exists</td></tr>
+    <tr><td class="mono">Network type on port5</td><td class="mono">?</td><td class="mono">?</td><td class="tag-verify">NOT verified — Ethernet defaults to broadcast</td></tr>
+    <tr><td class="mono">Interface OSPF priority</td><td class="mono">?</td><td class="mono">?</td><td class="tag-verify">NOT verified — the other engineer configured his side alone</td></tr>
+    <tr><td class="mono">Router IDs</td><td class="mono">auto-selected</td><td class="mono">auto-selected</td><td class="tag-verify">NOT verified — worth capturing before production</td></tr>
+    <tr><td class="mono">MTU on port5</td><td class="mono">?</td><td class="mono">?</td><td class="tag-verify">NOT verified — irrelevant until ExStart, but note it</td></tr>
+  </table>
+
+  <div class="callout open">
+    <div class="callout-title">Investigation state — where the session stands</div>
+    <ul>
+      <li>What has 2-Way actually confirmed, and what hasn't started yet?</li>
+      <li>Is stuck-at-2-Way necessarily a fault — or normal, depending on the network type and the roles on the segment?</li>
+      <li>What single command output separates those two cases?</li>
+    </ul>
+  </div>
+
+  <div class="callout note">
+    <div class="callout-title">Why a lab bench at all</div>
+    Session 20's lesson was that Vaultline's interior converges only at human speed. Before OSPF touches the production core, the team proves adjacency formation, watches every neighbor state transition live, and deliberately breaks timers, areas, and interface parameters — so the first time an adjacency sticks in production, the symptom is already an old friend.
+  </div>
+
+  <div class="callout note">
+    <div class="callout-title">Priya's whiteboard — the target this bench is rehearsing for</div>
+    OSPF interior across Vaultline: backbone (area 0) at HQ containing the core router and FG-EDGE-P; branches hanging off it. One design question deliberately left open on the whiteboard: <em>does the DR site join area 0, or get its own area?</em> That decision needs today's LSA-flooding-scope discussion before it can be made honestly.
+  </div>
+</main>
+</div>
+
+<!-- ══════════ SESSION 22 PLACEHOLDER ══════════ -->
+<div class="tab-panel" id="panel-s22">
+<main>
+  <div class="placeholder-panel">
+    <div class="ph-icon">🤝</div>
+    <h3>Session 22 — BGP to the ISPs</h3>
+    <p>This tab gets its topology when the session runs: eBGP peerings from each edge FortiGate to its ISP, AS numbers, and the advertised/received prefixes.</p>
+  </div>
+</main>
+</div>
+
+<footer>Vaultline Financial · NSE7 Enterprise Firewall 7.6 journey · Routing phase supporting reference</footer>
+
+<script>
+document.querySelectorAll('.phase-tab').forEach(function(tab){
+  tab.addEventListener('click', function(){
+    document.querySelectorAll('.phase-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.panel).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

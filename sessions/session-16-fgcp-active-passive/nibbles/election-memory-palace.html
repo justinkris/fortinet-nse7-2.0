@@ -58,6 +58,28 @@
   footer span{color:var(--blue);}
   @media(max-width:720px){header{padding:28px 24px;}header h1{font-size:30px;}main{padding:24px 20px 40px;}}
 </style>
+<style data-injected="related-sidebar">
+main.main-with-sidebar{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;padding:0 40px;}
+main.main-with-sidebar > .main-content{padding:36px 20px 60px 20px;}
+.related-sidebar{padding:36px 0 60px;}
+.related-sidebar-inner{background:var(--surface,#fffdf5);border:1px solid var(--border,#d4c89a);border-radius:14px;padding:22px 24px 26px;box-shadow:0 8px 22px -16px rgba(13,26,58,0.25);}
+.related-sidebar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text,#0a1838);letter-spacing:-0.005em;margin:0 0 6px;}
+.related-sidebar-sub{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:14px;}
+.related-group{margin-top:14px;}
+.related-group:first-of-type{margin-top:0;}
+.related-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group ul{list-style:none;padding:0;margin:0;}
+.related-group li{padding:6px 0;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group li:last-child{border-bottom:none;}
+.related-group a{display:flex;align-items:baseline;gap:8px;text-decoration:none;color:var(--text-soft,#1e2f5a);font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.4;transition:color .15s;}
+.related-group a:hover{color:var(--blue,#1e40af);}
+.related-group a .r-arrow{color:var(--blue,#1e40af);font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;opacity:0.6;transition:transform .15s, opacity .15s;flex-shrink:0;}
+.related-group a:hover .r-arrow{transform:translateX(2px);opacity:1;}
+.related-group a .r-tag{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted,#6b7794);background:var(--surface-2,#f5eed9);border:1px solid var(--border,#d4c89a);border-radius:10px;padding:2px 7px;margin-left:auto;flex-shrink:0;}
+.related-empty{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted,#6b7794);padding:6px 0;}
+@media(max-width:960px){main.main-with-sidebar{grid-template-columns:1fr;padding:0;gap:0;}main.main-with-sidebar > .main-content{padding:36px 60px 30px 60px;}.related-sidebar{padding:0 60px 60px;}}
+@media(max-width:640px){main.main-with-sidebar > .main-content{padding:28px 24px 24px 24px;}.related-sidebar{padding:0 24px 40px;}}
+</style>
 </head>
 <body>
 <header>
@@ -66,7 +88,8 @@
   <h1>The FGCP <em>Election Courthouse</em></h1>
   <p>A building you can walk through in your head — four floors, one strict rule, and a lever that swaps two floors.</p>
 </header>
-<main>
+<main class="main-with-sidebar">
+  <div class="main-content">
 
 <h2>Why This Palace Exists</h2>
 <p>The FGCP primary election is an <strong>ordered waterfall of four criteria that stops at the first decisive one</strong> — and the <code>override</code> setting swaps the middle two floors. That's precisely the kind of ordered, positional knowledge a memory palace encodes best: rooms have fixed positions, and swapping two rooms is a vivid, memorable event. Walk this courthouse once, and reciting the election order — in either override mode — becomes a stroll, not a recall struggle.</p>
@@ -147,6 +170,10 @@
 
 <div class="callout-amber callout"><strong>Exam notes:</strong> (1) "Override off, primary reboots, returns in 90 s with higher priority — who wins?" → the rebooted box, via Hourglass-shrug → Paddles. (2) "Returns after 6 min?" → the survivor, Hourglass decides, Paddles never consulted. (3) "Primary crashes, secondary has lower priority — takeover?" → yes, always: no rival, no trial. (4) Override changes criteria <em>order</em>, never criteria <em>membership</em>.</div>
 
+</div>
+<!-- related-sidebar:start -->
+<aside class="related-sidebar"><div class="related-sidebar-inner"><div class="related-sidebar-title">Related pages</div><div class="related-sidebar-sub">Session 16</div><div class="related-group"><div class="related-group-label">Session</div><ul><li><a href="../index.html"><span class="r-arrow">›</span><span>Session hub</span></a></li><li><a href="../completed-session/index.html"><span class="r-arrow">›</span><span>Completed study guide</span><span class="r-tag">Guide</span></a></li><li><a href="../completed-session/summary.txt" target="_blank" rel="noopener"><span class="r-arrow">›</span><span>Session summary</span><span class="r-tag">txt</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Bites</div><ul><li><a href="../bites/2-fgcp-topology-and-failover.html"><span class="r-arrow">›</span><span>Study Bite 2 — FGCP Topology, Config &amp;amp; What Happens When Box A Dies</span></a></li><li><a href="../bites/fgcp-fundamentals-a-p.html"><span class="r-arrow">›</span><span>FGCP Fundamentals: Active-Passive</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Nibbles</div><ul><li><a href="../nibbles/2-link-failed-signal.html"><span class="r-arrow">›</span><span>link-failed-signal: When GARP Isn't Enough</span></a></li><li><a href="../nibbles/election-order-override.html"><span class="r-arrow">›</span><span>The Election Waterfall &amp;amp; the Override Swap</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Weakness sessions</div><ul><li><a href="../../../weakness-register/completed-weakness-sessions/weakness-01-fgcp-internals-cold-quiz/index.html"><span class="r-arrow">›</span><span>FGCP Internals Cold Quiz</span><span class="r-tag">W01</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Audio podcast</div><ul><li><a href="../../../audio-podcasts/index.html#panel-16"><span class="r-arrow">›</span><span>Podcast prompt</span><span class="r-tag">Prompt</span></a></li></ul></div></div></aside>
+<!-- related-sidebar:end -->
 </main>
 <footer>NSE7 EF 7.6<span>.</span> Session 16<span>.</span> Memory Palace — The Election Courthouse</footer>
 </body>

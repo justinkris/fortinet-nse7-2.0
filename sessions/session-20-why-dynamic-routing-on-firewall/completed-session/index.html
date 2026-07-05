@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 20 Complete — Why Dynamic Routing on a Firewall</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb a:hover{text-decoration:underline;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.005em;}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+  .top-panels{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+  .top-panels .qpanel{border-bottom:none;border-right:1px solid var(--border);}
+  .top-panels .qpanel-header{padding-left:32px;padding-right:32px;}
+  .top-panels .qpanel-body{padding-left:32px;padding-right:32px;}
+  .qpanel{background:var(--surface);}
+  .qpanel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .qpanel-header:hover,.qpanel-header.open{background:var(--surface-2);}
+  .qpanel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .qpanel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .qpanel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .qpanel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .qpanel-body{display:none;padding:0 20px 22px;}
+  .qpanel-body.open{display:block;}
+  .notes-panel{background:var(--surface);}
+  .notes-panel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 32px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .notes-panel-header:hover,.notes-panel-header.open{background:var(--surface-2);}
+  .notes-panel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .notes-panel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .notes-panel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .notes-panel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .notes-panel-body{display:none;padding:0 32px 22px;}
+  .notes-panel-body.open{display:block;}
+  .q-group{margin-bottom:16px;}
+  .q-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+  .q-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-dim);}
+  .q-item:last-child{border-bottom:none;}
+  .q-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;color:var(--blue);min-width:16px;margin-top:2px;}
+  .q-text{font-size:14px;color:var(--text-soft);line-height:1.5;flex:1;}
+  .q-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:0 4px;margin-top:1px;}
+  .q-del:hover{color:var(--blue);}
+  .no-questions{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);padding:8px 0;}
+  .btn-add-q{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-q:hover{opacity:0.85;}
+  .section-nav{position:sticky;top:0;z-index:90;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px;overflow-x:auto;}
+  .nav-tab{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:12px 18px;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s,border-color 0.15s;}
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+  main{max-width:1200px;margin:0 auto;padding:0;}
+  .main-content{padding:36px 60px 60px 60px;}
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:4px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .code-block{background:var(--ink-dark);border-radius:10px;padding:0;margin:16px 0;overflow:hidden;border:1px solid var(--border);}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:8px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:16px;overflow-x:auto;}
+  .code-block code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12.5px;line-height:1.65;color:#e8efff;}
+  .img-caption{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}
+  .section-img-wrap{margin:0 0 20px;display:flex;flex-direction:column;align-items:center;}
+  .section-img{width:100%;max-width:100%;border-radius:16px;cursor:zoom-out;transition:width 0.3s ease;border:1px solid var(--border);display:block;}
+  .section-img.si-expanded{width:100%;cursor:zoom-out;border-radius:16px;}
+  .si-placeholder{display:none;width:100%;max-width:100%;border:2px dashed var(--border);border-radius:16px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}
+  .si-placeholder.si-show{display:flex;}
+  .si-filename{font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--text-muted);font-family:'SF Mono','Fira Code',monospace;}
+  .socratic-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:16px;border-top:3px solid var(--blue);}
+  .socratic-header{display:flex;align-items:center;gap:8px;margin-bottom:0;cursor:pointer;user-select:none;}
+  .socratic-header::after{content:'▸ Expand';margin-left:auto;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-block.soc-open .socratic-header{margin-bottom:10px;}
+  .socratic-block.soc-open .socratic-header::after{content:'▾ Collapse';}
+  .socratic-block:not(.soc-open) .socratic-insight,
+  .socratic-block:not(.soc-open) .socratic-questions,
+  .socratic-block:not(.soc-open) .answer-area{display:none;}
+  .socratic-icon{font-size:17px;flex-shrink:0;}
+  .socratic-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-insight{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;margin-bottom:12px;border-left:3px solid var(--border);padding-left:14px;font-style:italic;}
+  .socratic-questions{list-style:none;padding:0;margin:0;}
+  .socratic-questions li{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--border-dim);line-height:1.6;}
+  .socratic-questions li:last-child{border-bottom:none;}
+  .socratic-questions li::before{content:'?';position:absolute;left:0;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:16px;top:7px;color:var(--blue);}
+  .answer-area{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .answer-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .answer-textarea:focus{border-color:var(--blue);}
+  .answer-textarea:disabled{opacity:0.75;background:var(--surface-2);cursor:default;}
+  .answer-buttons{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .btn-add-answer{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-answer:hover:not(:disabled){opacity:0.85;}
+  .btn-add-answer:disabled{opacity:0.5;cursor:default;}
+  .btn-see-answer{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-see-answer:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-see-answer:not(:disabled){color:var(--blue);border-color:var(--blue);}
+  .btn-see-answer:hover:not(:disabled){background:var(--blue-glow);}
+  .model-answers{margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .model-answer-item{padding:10px 0;border-bottom:1px solid var(--border-dim);}
+  .model-answer-item:first-child{padding-top:0;}
+  .model-answer-item:last-child{border-bottom:none;padding-bottom:0;}
+  .model-answer-q{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;}
+  .model-answer-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;}
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+  .analogy-label{display:flex;align-items:center;gap:6px;user-select:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px;text-transform:uppercase;}
+  .analogy-label::after{content:'▾  Reveal illustration';margin-left:auto;font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:none;opacity:0.75;}
+  .analogy-label:hover::after{opacity:1;}
+  .analogy-box.expanded>.analogy-label::after{content:'▴  Hide illustration';}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
+  .analogy-text ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;}
+  .analogy-text li{padding-left:18px;position:relative;}
+  .analogy-text li::before{content:'•';position:absolute;left:0;font-weight:700;color:var(--amber);}
+  .analogy-box>.analogy-img{display:none;}
+  .analogy-box.expanded>.analogy-img{display:block;}
+  .analogy-img img{max-width:100%;width:100%;cursor:zoom-out;transition:max-width 0.25s ease;border-radius:8px;margin-top:10px;}
+  .analogy-img img.zoomed{max-width:100%;cursor:zoom-out;}
+  .analogy-img .img-missing-msg{display:none!important;}
+  .prompt-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}
+  .prompt-toggle:hover{color:var(--text);border-color:var(--text);}
+  .prompt-content{margin-top:10px;padding:10px 14px;background:rgba(0,0,0,0.04);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.65;text-align:left;}
+  .prompt-content[hidden]{display:none;}
+  .lesson-tools{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:40px;}
+  .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .tool-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .tool-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .tool-textarea:focus{border-color:var(--blue);}
+  .tool-row{margin-top:8px;display:flex;gap:8px;}
+  .page-nav{display:flex;border-top:2px solid var(--border);background:var(--surface);}
+  .page-nav-btn{flex:1;display:flex;flex-direction:column;gap:4px;padding:16px 28px;text-decoration:none;transition:background 0.15s;cursor:pointer;}
+  .page-nav-btn:hover:not(.page-nav-disabled){background:var(--surface-2);}
+  .page-nav-prev{border-right:1px solid var(--border);}
+  .page-nav-next{text-align:right;}
+  .page-nav-disabled{opacity:0.3;pointer-events:none;}
+  .page-nav-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);display:block;text-transform:uppercase;}
+  .page-nav-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;font-style:italic;color:var(--blue);display:block;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:34px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}.section-nav{padding:0 16px;}.top-panels{grid-template-columns:1fr;}.top-panels .qpanel{border-right:none;border-bottom:1px solid var(--border);}.lesson-tools-grid{grid-template-columns:1fr;}footer{padding:16px 24px;}}
+</style>
+<style data-injected="related-sidebar">
+main.main-with-sidebar{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;padding:0 40px;}
+main.main-with-sidebar > .main-content{padding:36px 20px 60px 20px;}
+.related-sidebar{padding:36px 0 60px;}
+.related-sidebar-inner{background:var(--surface,#fffdf5);border:1px solid var(--border,#d4c89a);border-radius:14px;padding:22px 24px 26px;box-shadow:0 8px 22px -16px rgba(13,26,58,0.25);}
+.related-sidebar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text,#0a1838);letter-spacing:-0.005em;margin:0 0 6px;}
+.related-sidebar-sub{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:14px;}
+.related-group{margin-top:14px;}
+.related-group:first-of-type{margin-top:0;}
+.related-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group ul{list-style:none;padding:0;margin:0;}
+.related-group li{padding:6px 0;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group li:last-child{border-bottom:none;}
+.related-group a{display:flex;align-items:baseline;gap:8px;text-decoration:none;color:var(--text-soft,#1e2f5a);font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.4;transition:color .15s;}
+.related-group a:hover{color:var(--blue,#1e40af);}
+.related-group a .r-arrow{color:var(--blue,#1e40af);font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;opacity:0.6;transition:transform .15s, opacity .15s;flex-shrink:0;}
+.related-group a:hover .r-arrow{transform:translateX(2px);opacity:1;}
+.related-group a .r-tag{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted,#6b7794);background:var(--surface-2,#f5eed9);border:1px solid var(--border,#d4c89a);border-radius:10px;padding:2px 7px;margin-left:auto;flex-shrink:0;}
+.related-empty{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted,#6b7794);padding:6px 0;}
+@media(max-width:960px){main.main-with-sidebar{grid-template-columns:1fr;padding:0;gap:0;}main.main-with-sidebar > .main-content{padding:36px 60px 30px 60px;}.related-sidebar{padding:0 60px 60px;}}
+@media(max-width:640px){main.main-with-sidebar > .main-content{padding:28px 24px 24px 24px;}.related-sidebar{padding:0 24px 40px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 20</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Completed Study Guide</span></div>
+    <div class="header-eyebrow"><span class="dot-live"></span> Study Guide · NSE7 EF 7.6 · Session 20</div>
+    <h1>The Route That <em>Nobody Typed</em></h1>
+    <p>Why a firewall becomes a routing peer — IGP vs EGP, OSPF vs BGP, and the meaning of Administrative Distance.</p>
+  </div>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">Dynamic routing doesn't replace the route. <em>It replaces the person who would have typed it.</em></div>
+  <p class="motivation-sub">Vaultline's DR site sat healthy and idle for 55 minutes because the network had redundant paths but no way to decide to use them. This session builds the entire Domain 4 foundation from that one outage.</p>
+</div>
+
+<div class="top-panels">
+  <div class="qpanel" id="qpanel">
+    <button class="qpanel-header" onclick="toggleQPanel()" id="qpanel-header">
+      <span class="qpanel-title">MY QUESTIONS</span>
+      <span class="qpanel-count" id="qpanel-count">0</span>
+      <span class="qpanel-hint">— click to expand</span>
+      <span class="qpanel-chevron" id="qpanel-chevron">▾</span>
+    </button>
+    <div class="qpanel-body" id="qpanel-body"></div>
+  </div>
+  <div class="notes-panel" id="notes-panel">
+    <button class="notes-panel-header" onclick="toggleNotesPanel()" id="notes-panel-header">
+      <span class="notes-panel-title">MY NOTES</span>
+      <span class="notes-panel-count" id="notes-panel-count">0</span>
+      <span class="notes-panel-hint">— click to expand</span>
+      <span class="notes-panel-chevron" id="notes-panel-chevron">▾</span>
+    </button>
+    <div class="notes-panel-body" id="notes-panel-body"></div>
+  </div>
+</div>
+
+<nav class="section-nav" id="section-nav">
+  <a class="nav-tab active" href="#section-human">The 2am Problem</a>
+  <a class="nav-tab" href="#section-hellos">Hellos &amp; Neighbors</a>
+  <a class="nav-tab" href="#section-rumor-map">Rumor vs Map</a>
+  <a class="nav-tab" href="#section-igp-egp">The IGP/EGP Boundary</a>
+  <a class="nav-tab" href="#section-ad">Administrative Distance</a>
+</nav>
+
+<main class="main-with-sidebar">
+  <div class="main-content">
+
+    <!-- ══════════ SECTION 1 ══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · THE 2AM PROBLEM</span>
+      </div>
+      <p class="socratic-insight">The NOC engineer fixed a 55-minute outage with four minutes of typing. The route was trivially easy to create — which means the route itself was never the missing piece. Something else was.</p>
+      <ul class="socratic-questions">
+        <li>If a human can add the correct static route in four minutes, what exactly is dynamic routing replacing — the route, or something else in the chain of events?</li>
+        <li>The FortiGate's MPLS-facing interface showed green all night. The fiber cut was three hops away, inside the provider's cloud. Why can't any amount of local interface monitoring detect that failure?</li>
+      </ul>
+      <div class="answer-area" data-section="human">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">It replaces the human. The route was 20 characters of configuration; what was missing was something watching the network continuously, detecting failure immediately, and reacting automatically — all three, at 2am, with nobody awake. Dynamic routing is automated detection and reaction, not automated typing.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Local interface state only proves the first hop. A FortiGate will already withdraw a static route if its next-hop interface goes down — no protocol needed for that. The failure that matters here is remote: the path is dead beyond a link the FortiGate doesn't own and can't see. Learning about remote failure requires someone who <em>can</em> see it to tell you — which requires a protocol.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-human">
+      <div class="section-label">SECTION 01</div>
+      <h2>Static Routes Are Silent — <em>The Human Is the Protocol</em></h2>
+
+      <div class="section-img-wrap">
+        <img src="images/s1-2am-outage.png" class="section-img"
+             alt="A NOC engineer at 2am typing a static route while a green interface light shines over a dead path"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">The green light lies: local link state says nothing about the path beyond it.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/s1-2am-outage.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm palette with cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, clean bold line work, no gradients. Composition: a split scene. Left half: a tired NOC engineer in a dim office at 2am, lit by a monitor showing a terminal prompt, one hand on a coffee mug, a wall clock reading 2:00. On his screen a single short command line is highlighted in gold. Right half: a stylized network path drawn as a road — a FortiGate tower with a bright green status LED, a road leading into a cloud labelled "MPLS", and deep inside the cloud a snapped fiber cable drawn as a cut rope with frayed ends, three road-markers (hops) away from the FortiGate. A thought bubble from the FortiGate shows the green LED, contrasted with a red X far away in the cloud. Labels: "interface: UP" near the LED, "fiber cut — 3 hops away" near the break, "the fix: 20 characters" near the terminal. The visual message: the device's local light is green while the real failure is far away and invisible to it.</div>
+        </div>
+      </div>
+
+      <p>Saturday night at Vaultline: the primary datacenter's MPLS circuit died from a fiber cut <strong>inside the provider's cloud</strong>. The DR site — its own internet breakout, healthy firewall, running servers — never came up. The outage lasted 55 minutes; the eventual fix took four: one static route on the core router, one static default adjustment on the edge FortiGate.</p>
+      <p>A static route is a rule sitting in a table. It never talks to anyone, never verifies anything, and never gets better with new information. The only failure it can react to is <em>local interface state</em> — FortiOS will withdraw a static route whose next-hop interface goes down. But Saturday's interface stayed green the whole time, because the break was three hops away on infrastructure Vaultline doesn't own.</p>
+      <p>So the missing capability was never "a route." It was <strong>continuous monitoring, immediate detection, and automatic reaction</strong> — the three things the NOC engineer performed manually at 2am. Static routing scales to roughly three sites before that human-in-the-loop cost breaks operations; dynamic routing is what removes the human from the loop.</p>
+
+      <div class="callout callout-amber"><strong>Common misconception:</strong> "dynamic routing detects link failures." So does a static route, for the local link. The distinctive job of a routing protocol is detecting and propagating <em>remote</em> failures — the ones your own interface LEDs can never show you.</div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Dynamic routing replaces the human, not the route. Local interface state proves the first hop only — remote failure requires someone who can see it to tell you.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-human" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-human','The 2am Problem')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-human" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-human')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ SECTION 2 ══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · HELLOS &amp; NEIGHBORS</span>
+      </div>
+      <p class="socratic-insight">If a router needs to know its neighbor is alive, silence is a problem: silence could mean "nothing changed" or "I'm dead." Routing protocols solve this with an ongoing conversation — but a conversation with your direct neighbor only proves your direct neighbor.</p>
+      <ul class="socratic-questions">
+        <li>What does a dynamic routing protocol do on the wire, continuously, that a static route never does at all?</li>
+        <li>Hellos between the FortiGate and its direct neighbor were healthy all Saturday night. The failure was three hops away. What has to happen for a failure far away to become knowledge close to home?</li>
+      </ul>
+      <div class="answer-area" data-section="hellos">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">It sends periodic hello/keepalive packets and forms neighbor relationships — two routers continuously proving to each other "I'm still here, and what I told you is still true." Liveness becomes an active, verifiable claim instead of an assumption.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">The router that directly witnessed the failure must advertise it, and every router must propagate that advertisement onward until it reaches everyone who needs it. Hellos establish who you can talk to; advertisements carry what changed. Detection is local; knowledge is propagated.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-hellos">
+      <div class="section-label">SECTION 02</div>
+      <h2>The Liveness Conversation — <em>Hellos, Neighbors, Advertisements</em></h2>
+      <p>Every dynamic routing protocol is built on the same primitive: the <strong>neighbor relationship</strong>. Two routers agree to exchange periodic proof-of-life messages, and to tell each other when something they previously claimed stops being true. This turns the network from a set of silent rules into an active conversation.</p>
+      <p>But hellos only prove the <em>directly connected</em> neighbor. Remote failure knowledge travels by <strong>advertisement</strong>: the router that saw the failure announces it, and the announcement propagates. How that announcement is structured — a raw fact about topology, or a summarized conclusion — is exactly what splits the two great families of routing protocol in Section 3.</p>
+      <table class="data-table">
+        <thead><tr><th>Mechanism</th><th>Question it answers</th><th>Scope</th></tr></thead>
+        <tbody>
+          <tr><td>Hello / keepalive</td><td>"Is my neighbor still alive?"</td><td>Directly connected peer only</td></tr>
+          <tr><td>Advertisement / update</td><td>"What changed in the network?"</td><td>Propagated hop by hop or flooded domain-wide</td></tr>
+          <tr><td>Interface state</td><td>"Is my own link up?"</td><td>Local — even static routes react to this</td></tr>
+        </tbody>
+      </table>
+      <div class="callout"><strong>Exam framing:</strong> when a question describes a failure the local device "should have detected," first ask <em>where</em> the failure was. Local link → interface monitoring suffices. Remote path → only a routing protocol (or probe-based SD-WAN health check, later in the curriculum) can know.</div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Hellos prove the neighbor. Advertisements carry the change. Detection is always local to the failure — everyone else has to be told.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-hellos" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-hellos','Hellos & Neighbors')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-hellos" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-hellos')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ SECTION 3 ══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · RUMOR VS MAP</span>
+      </div>
+      <p class="socratic-insight">There are two ways to spread routing knowledge: pass along your conclusions ("I can reach X, 2 hops — trust me"), or share the raw facts and let everyone reach their own conclusions. One of these loops. One structurally cannot.</p>
+      <ul class="socratic-questions">
+        <li>Four routers in a line, A–B–C–D. D's link to network X dies, but before C hears the news, B asks C for a route and C answers from its stale table. Trace what B now believes, and what happens to a packet sent along that belief.</li>
+        <li>If B and C both run Dijkstra independently over the <em>same</em> link-state database, is it possible for B's calculated path to depend on what C currently believes? What is the only condition under which they can disagree?</li>
+      </ul>
+      <div class="answer-area" data-section="rumor-map">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">B installs "X via C, 2 hops" — a belief pointing at a path that no longer exists. If C then hears B advertise reachability to X, C may install "X via B." The packet bounces B→C→B→C, decrementing TTL each hop, until TTL hits 0 and a router drops it (usually sending ICMP Time Exceeded to the source). TTL is the fuse, not the fix: it kills the packet but repairs nothing. This is the classic distance-vector routing loop — the reason RIP needs split-horizon, poison reverse, and hold-down timers bolted on.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">No — B never consults C's opinion. B asks its own database "what does the graph look like?" and computes its own shortest-path tree. Dijkstra over identical inputs gives identical answers, so the <em>only</em> way B and C disagree is if their link-state databases momentarily differ — flooding still in progress or an LSA lost. That's why OSPF's reliable flooding (sequence numbers, acknowledgments, retransmission) exists: to make databases identical, fast.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-rumor-map">
+      <div class="section-label">SECTION 03</div>
+      <h2>Rumor vs Map — <em>Why OSPF Cannot Loop</em></h2>
+
+      <div class="section-img-wrap">
+        <img src="images/s3-rumor-vs-map.png" class="section-img"
+             alt="Split illustration: routers whispering rumors in a chain versus routers each holding an identical map"
+             onerror="this.style.display='none';this.nextElementSibling.classList.add('si-show');">
+        <p class="img-caption">Distance-vector passes conclusions; link-state shares facts and lets every router draw its own conclusion.</p>
+        <div class="si-placeholder">
+          <span class="si-filename">images/s3-rumor-vs-map.png</span>
+          <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, bold clean line work, no gradients, structured two-panel composition with generous spacing. Left panel titled "RUMOR" in small caps: four cartoon routers drawn as friendly boxes with faces in a line labelled A, B, C, D, leaning toward each other whispering with cupped hands; speech bubbles show shrinking, distorting text ("X: 1 hop" → "X: 2 hops" → "X: ???"); between B and C a coral circular arrow shows a small envelope (a packet) trapped bouncing back and forth, with a burning fuse labelled "TTL" attached to the envelope. Right panel titled "MAP": the same four routers, but each calmly holds an identical unfolded map showing the same sage-green graph of nodes and edges; one edge on every copy of the map is crossed out in coral with a small tag "LSA: link down"; each router has a small gold gear over its head labelled "Dijkstra" computing independently. Bottom caption area: "conclusions loop · facts converge".</div>
+        </div>
+      </div>
+
+      <p><strong>Distance-vector</strong> (RIP's family) is rumor-passing: each router tells neighbors its <em>conclusions</em> — "I can reach X at distance N" — and each neighbor adds a hop and passes the rumor on. No router holds a map; every router trusts summaries. When a link dies, stale beliefs keep circulating for a while, and two routers pointing at each other creates the classic <strong>routing loop</strong>. TTL limits the damage per packet; split-horizon, poison reverse, and hold-down timers are band-aids that suppress the loop — but the information model itself remains rumor.</p>
+      <p><strong>Link-state</strong> (OSPF) changes what travels: not conclusions, but <em>facts about the graph</em>. When a link dies, the witnessing router floods a <strong>Link-State Advertisement</strong> — "this specific edge no longer exists" — verbatim and unmodified, to every router in the area. Each router deletes that edge from its own identical copy of the <strong>link-state database</strong> and independently reruns <strong>Dijkstra's shortest-path-first</strong> algorithm from itself outward.</p>
+      <p>That's why the loop is <em>structurally</em> impossible rather than merely unlikely: B never asks C's opinion, so C's stale belief can't contaminate B's calculation. OSPF's correctness guarantee is precise — <strong>no loops, once databases are synchronized</strong>. The brief flooding window is the only exposure, and OSPF's reliable flooding machinery (sequence numbers, acknowledgments, retransmission) exists solely to shrink it.</p>
+
+      <div class="analogy-box">
+        <div class="analogy-label">Analogy</div>
+        <div class="analogy-text">
+          <p class="analogy-summary">Chinese whispers vs a shared newspaper.</p>
+          <ul>
+            <li>Distance-vector is a whisper chain: every ear-to-mouth hop can carry stale or distorted claims, and two people repeating each other's rumor can loop forever.</li>
+            <li>Link-state is everyone reading the same newspaper: the correction ("bridge closed on Route X") is printed identically for all readers, and each reader replans their own commute from the same facts.</li>
+            <li>The newspaper can only mislead you during the minutes before your copy arrives — which is exactly OSPF's flooding window.</li>
+          </ul>
+        </div>
+        <div class="analogy-img" style="margin-top:14px;background:rgba(255,255,255,0.5);border-radius:10px;padding:14px;text-align:center;">
+          <img src="images/a1-whispers-vs-newspaper.png" alt="Whisper chain of routers versus routers all reading an identical newspaper"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='block';"
+               style="max-width:100%;border-radius:8px;display:block;margin:0 auto 4px;">
+          <p class="img-caption" style="margin-bottom:8px;">Rumors decay hop by hop; a shared publication converges everyone on the same facts.</p>
+          <div class="img-missing-msg" style="display:none;padding:24px 12px;background:rgba(0,0,0,0.03);border:1px dashed #f3d68a;border-radius:8px;color:#5c3d09;font-size:14px;margin-bottom:10px;font-family:'Cormorant Garamond',serif;">📷 <strong>images/a1-whispers-vs-newspaper.png</strong> — add this image</div>
+          <button class="prompt-toggle" onclick="togglePrompt(this)" type="button">▾ Show analogy image prompt</button>
+          <div class="prompt-content" hidden>Flat minimalistic highly detailed cartoon illustration, vector-art aesthetic, cream background, coral and muted gold accents, sage green, soft brown outlines, no gradients. Two stacked scenes. Top: a whisper chain of five cartoon routers-with-faces passing a message ear to mouth; the speech bubble text visibly degrades left to right, ending in a garbled scribble; a small coral loop arrow circles between the last two figures. Bottom: the same five routers seated on a park bench, each holding an identical broadsheet newspaper titled "THE LSA TIMES" with the same headline "LINK DOWN: D–X"; each router has a tiny gold compass or route-planning doodle above its head, all drawing different personal routes from the same news. Calm, orderly composition contrasting the chaos above.</div>
+        </div>
+      </div>
+
+      <div class="callout callout-green"><strong>Remember the anchor sentence:</strong> OSPF floods <em>facts</em>; distance-vector passes <em>conclusions</em>. Facts converge; conclusions loop.</div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Identical databases + independent Dijkstra = loops structurally impossible. The only way two OSPF routers disagree is a momentary database mismatch — which is why reliable flooding exists.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-rumor-map" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-rumor-map','Rumor vs Map')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-rumor-map" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-rumor-map')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ SECTION 4 ══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · THE IGP/EGP BOUNDARY</span>
+      </div>
+      <p class="socratic-insight">OSPF's model — everyone holds the full map — works beautifully inside one company. Now imagine running it between Vaultline and its ISP, or across the entire internet. Two independent things break, and both matter.</p>
+      <ul class="socratic-questions">
+        <li>What happens to a router's CPU and memory if "the area" isn't a few dozen routers, but hundreds of thousands of networks owned by companies that don't trust each other?</li>
+        <li>BGP's default hold timer is 180 seconds; OSPF declares a neighbor dead in 40. Why would the protocol carrying the internet tolerate three minutes of silence?</li>
+      </ul>
+      <div class="answer-area" data-section="igp-egp">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">A self-reinforcing death spiral: more networks → bigger database and more LSAs → more CPU spent on Dijkstra → routers fall behind → the falling-behind looks like more instability → more LSAs. And even before the CPU dies, the trust model fails: flooding your full topology to a rival organization exposes your internal network, and their instability triggers your recalculation. Full-map sharing requires one administration; the internet has tens of thousands.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Blast radius. A BGP session carries a peer's entire advertised table — potentially hundreds of thousands of prefixes. A twitchy timer turns one congestion blip into a full-table withdrawal followed seconds later by a full-table re-advertisement, rippling across every downstream router on the internet: route flapping. BGP deliberately trades reaction speed for global stability; route flap damping exists to punish prefixes that flap anyway. OSPF makes the opposite trade because its blast radius is one area inside one company.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-igp-egp">
+      <div class="section-label">SECTION 04</div>
+      <h2>Inside vs Between — <em>OSPF Is the House Rules, BGP Is Diplomacy</em></h2>
+      <p>The boundary is <strong>administrative</strong>, not technical. An <strong>IGP</strong> (Interior Gateway Protocol — OSPF is the dominant enterprise choice) runs <em>inside</em> one administration, where every router is trusted, the domain is small, and fast convergence is worth occasional false alarms. An <strong>EGP</strong> (Exterior Gateway Protocol — BGP is the internet's protocol of record) runs <em>between</em> administrations that are commercial rivals, at a scale where full topology sharing is impossible for both trust and CPU reasons.</p>
+      <p>BGP therefore inverts OSPF's information model. Peers form a <strong>session over TCP port 179</strong> (OSPF runs directly on IP — a real exam detail) and exchange <strong>reachability claims</strong>, not topology: "I can reach these prefixes; here's the path summary." The claim stays valid only while the session lives, and is revocable at any moment via an explicit <strong>withdrawal</strong> message. Because silence is ambiguous — "nothing changed" and "I'm dead" look identical — BGP peers exchange <strong>keepalives (default 60s)</strong>, and a peer that stays silent past the <strong>hold timer (default 180s)</strong> is declared dead, at which point <em>every route learned from it is flushed</em>.</p>
+      <p>Those glacial timers are a design choice, not laziness. A session flap doesn't withdraw one route — it dumps and then reloads an <em>entire table</em>, potentially 900,000+ internet prefixes, across every downstream router. Constant flapping at internet scale is a named pathology, <strong>route flapping</strong>, serious enough that <strong>route flap damping</strong> (penalize the unstable prefix, suppress it, decay the penalty over a half-life) was invented to contain it. See <em>extras-04</em> for the dedicated bite.</p>
+      <table class="data-table">
+        <thead><tr><th>Dimension</th><th>OSPF (IGP)</th><th>BGP (EGP)</th></tr></thead>
+        <tbody>
+          <tr><td>Shares</td><td>Topology facts (LSAs) — the graph itself</td><td>Reachability claims — "I can get there"</td></tr>
+          <tr><td>Trust domain</td><td>One administration</td><td>Between administrations</td></tr>
+          <tr><td>Transport</td><td>Directly on IP (protocol 89)</td><td>TCP port 179</td></tr>
+          <tr><td>Liveness defaults</td><td>Hello 10s · Dead 40s (broadcast)</td><td>Keepalive 60s · Hold 180s</td></tr>
+          <tr><td>On failure</td><td>Flood LSA, everyone reruns Dijkstra</td><td>Explicit withdrawal, peer to peer</td></tr>
+          <tr><td>Design trade</td><td>Stability sacrificed for speed — small blast radius</td><td>Speed sacrificed for stability — global blast radius</td></tr>
+        </tbody>
+      </table>
+      <div class="callout"><strong>Exam contrast worth memorizing verbatim:</strong> OSPF trades stability for speed; BGP trades speed for stability. The timer defaults (10/40 vs 60/180) are that philosophy written in numbers.</div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">IGP = inside one administration, share the map, converge fast. EGP = between administrations, exchange claims over TCP 179, stay stable. The boundary is who owns the routers, not what the technology could do.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-igp-egp" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-igp-egp','The IGP/EGP Boundary')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-igp-egp" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-igp-egp')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ SECTION 5 ══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · ADMINISTRATIVE DISTANCE</span>
+      </div>
+      <p class="socratic-insight">eBGP (AD 20) outranks OSPF (AD 110) on a FortiGate — even though BGP is the slow, cautious outsider and OSPF is your own trusted interior protocol. That should feel wrong until you see when the two actually compete.</p>
+      <ul class="socratic-questions">
+        <li>In a well-designed network, when do OSPF and eBGP ever genuinely offer routes to the <em>same</em> prefix — and what configuration choice creates that overlap on purpose?</li>
+        <li>When the overlap exists, why should the FortiGate prefer the directly-learned eBGP route over the OSPF copy — what's different about the freshness of the information?</li>
+      </ul>
+      <div class="answer-area" data-section="ad">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Normally never — OSPF describes internal subnets, eBGP describes external reachability; no shared prefix, AD never consulted. <strong>Redistribution</strong> creates the overlap deliberately: e.g. injecting the BGP-learned default into OSPF so internal routers can reach the internet. Now the FortiGate can hold two candidates for the same prefix, and AD must arbitrate.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">The redistributed OSPF route is a <em>copy of stale news</em> — it reflects what BGP knew at redistribution time and updates only at OSPF's flooding pace. The direct eBGP session is the original, live source: if the ISP withdraws, the session hears it first. AD encodes <strong>proximity to truth</strong> — always prefer the horse's mouth over any secondhand copy, even a copy carried by your own trusted IGP.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-ad">
+      <div class="section-label">SECTION 05</div>
+      <h2>Administrative Distance — <em>Proximity to Truth</em></h2>
+      <p>When multiple sources offer a route to the same destination, the FortiGate installs exactly one — decided by <strong>Administrative Distance</strong>, where <strong>lower wins</strong>. The FortiGate values you must know cold:</p>
+      <table class="data-table">
+        <thead><tr><th>Route source</th><th>FortiGate AD</th><th>Why it sits there</th></tr></thead>
+        <tbody>
+          <tr><td>Static</td><td>10</td><td>An administrator's explicit, deliberate instruction</td></tr>
+          <tr><td>eBGP</td><td>20</td><td>Live claim direct from the external source of truth</td></tr>
+          <tr><td>OSPF</td><td>110</td><td>Trusted interior calculation — but possibly carrying redistributed copies</td></tr>
+          <tr><td>iBGP</td><td>200</td><td>BGP relayed <em>inside</em> the AS — furthest from the original claim</td></tr>
+        </tbody>
+      </table>
+      <p>The ordering only looks strange until you notice what it consistently rewards: <strong>directness</strong>. A static route is the admin's own hand. An eBGP route is the live session with the actual owner of the destination. An OSPF route may be an original interior fact — or a redistributed secondhand copy that ages at flooding speed. An iBGP route is a claim that has already been relayed through your own AS. AD is the table's tiebreaker, and it always sides with whoever is closest to the truth.</p>
+      <div class="callout callout-amber"><strong>Common trap:</strong> "AD compares protocol quality." It doesn't — it only fires when two sources offer the <em>same prefix</em>, which in clean designs means redistribution is in play. If an exam scenario shows OSPF and BGP "competing," look for the redistribution statement in the question.</div>
+      <div class="callout callout-green"><strong>Session 20's closing line, worth keeping:</strong> dynamic routing doesn't replace the route — it replaces the person who would have typed it. Priya's 2am problem is solved by an FortiGate that participates as a first-class routing peer: OSPF inside Vaultline, BGP toward both ISPs.</div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Static 10 · eBGP 20 · OSPF 110 · iBGP 200. Lower wins. AD = proximity to truth, and it only matters when redistribution makes two sources compete for one prefix.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-ad" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-ad','Administrative Distance')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-ad" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-ad')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+<!-- related-sidebar:start -->
+<aside class="related-sidebar"><div class="related-sidebar-inner"><div class="related-sidebar-title">Related pages</div><div class="related-sidebar-sub">Session 20</div><div class="related-group"><div class="related-group-label">Session</div><ul><li><a href="../index.html"><span class="r-arrow">›</span><span>Session hub</span></a></li><li><a href="summary.txt" target="_blank" rel="noopener"><span class="r-arrow">›</span><span>Session summary</span><span class="r-tag">txt</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Bites</div><ul><li><a href="../bites/route-flapping-dampening.html"><span class="r-arrow">›</span><span>Route Flapping &amp;amp; Route Flap Damping</span></a></li><li><a href="../bites/why-dynamic-routing.html"><span class="r-arrow">›</span><span>Session 20 Bite — Why Dynamic Routing on a Firewall</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Nibbles</div><ul><li><a href="../nibbles/facts-vs-claims.html"><span class="r-arrow">›</span><span>Session 20 Nibble — Facts vs Claims</span></a></li></ul></div></div></aside>
+<!-- related-sidebar:end -->
+</main>
+
+<div class="page-nav">
+  <a class="page-nav-btn page-nav-prev" href="session-19-complete-vrrp-failover-timers.html">
+    <span class="page-nav-label">← Previous</span>
+    <span class="page-nav-title">Session 19 — VRRP, Failover Timers &amp; Session Pickup</span>
+  </a>
+  <a class="page-nav-btn page-nav-next page-nav-disabled" href="#">
+    <span class="page-nav-label">NEXT →</span>
+    <span class="page-nav-title">Session 21 — OSPF on the FortiGate (upcoming)</span>
+  </a>
+</div>
+
+<footer>
+  Vaultline Financial<span>.</span> <span>NSE7 Enterprise Firewall 7.6</span><span>.</span> Session 20 — Why Dynamic Routing on a Firewall
+</footer>
+
+<script>
+const PAGE_KEY = 'nse7-session20-why-dynamic-routing';
+const SECTIONS = {
+  'section-human': 'The 2am Problem',
+  'section-hellos': 'Hellos & Neighbors',
+  'section-rumor-map': 'Rumor vs Map',
+  'section-igp-egp': 'The IGP/EGP Boundary',
+  'section-ad': 'Administrative Distance',
+};
+
+document.querySelectorAll('.socratic-header').forEach(function(h) {
+  h.addEventListener('click', function() { h.closest('.socratic-block').classList.toggle('soc-open'); });
+});
+function getQArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-qs') || '[]'); }
+function saveQArr(qs) { localStorage.setItem(PAGE_KEY+'-qs', JSON.stringify(qs)); }
+function addQuestion(key, name) {
+  const ta = document.getElementById('q-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const qs = getQArr(); qs.push({id: Date.now(), section: key, sectionName: name, text});
+  saveQArr(qs); ta.value = ''; renderQPanel();
+  if (!document.getElementById('qpanel-body').classList.contains('open')) toggleQPanel();
+}
+function deleteQ(id) { saveQArr(getQArr().filter(q => q.id !== id)); renderQPanel(); }
+function toggleQPanel() {
+  const body = document.getElementById('qpanel-body');
+  const header = document.getElementById('qpanel-header');
+  const chevron = document.getElementById('qpanel-chevron');
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-qpanel-open', open);
+}
+function renderQPanel() {
+  const qs = getQArr();
+  const count = document.getElementById('qpanel-count');
+  if (count) { count.textContent = qs.length; count.style.display = qs.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.qpanel-hint');
+  if (hint) hint.textContent = qs.length ? `— ${qs.length} question${qs.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('qpanel-body'); if (!body) return;
+  if (!qs.length) { body.innerHTML = '<p class="no-questions">No questions yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  qs.forEach(q => { if (groups[q.section]) groups[q.section].push(q); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(q => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${q.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteQ(${q.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function getNotesArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-notes') || '[]'); }
+function saveNotesArr(ns) { localStorage.setItem(PAGE_KEY+'-notes', JSON.stringify(ns)); }
+function addNote(key) {
+  const ta = document.getElementById('note-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const ns = getNotesArr(); ns.push({id: Date.now(), section: key, sectionName: SECTIONS[key]||key, text});
+  saveNotesArr(ns); ta.value = ''; renderNotesPanel();
+  if (!document.getElementById('notes-panel-body').classList.contains('open')) toggleNotesPanel();
+}
+function deleteNote(id) { saveNotesArr(getNotesArr().filter(n => n.id !== id)); renderNotesPanel(); }
+function toggleNotesPanel() {
+  const body = document.getElementById('notes-panel-body');
+  const header = document.getElementById('notes-panel-header');
+  const chevron = document.getElementById('notes-panel-chevron');
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-notes-panel-open', open);
+}
+function renderNotesPanel() {
+  const ns = getNotesArr();
+  const count = document.getElementById('notes-panel-count');
+  if (count) { count.textContent = ns.length; count.style.display = ns.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.notes-panel-hint');
+  if (hint) hint.textContent = ns.length ? `— ${ns.length} note${ns.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('notes-panel-body'); if (!body) return;
+  if (!ns.length) { body.innerHTML = '<p class="no-questions">No notes yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  ns.forEach(n => { if (groups[n.section]) groups[n.section].push(n); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(n => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteNote(${n.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function saveSocAnswer(btn) {
+  const area = btn.closest('.answer-area');
+  const ta = area.querySelector('.answer-textarea');
+  if (!ta.value.trim()) { ta.focus(); return; }
+  const key = PAGE_KEY+'-socans-'+area.dataset.section;
+  try { localStorage.setItem(key, ta.value); } catch(e) {}
+  ta.disabled = true; btn.textContent = '✓ Answer saved'; btn.disabled = true;
+  const seeBtn = area.querySelector('.btn-see-answer');
+  seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+}
+function revealSocAnswer(btn) {
+  if (btn.disabled) return;
+  const answers = btn.closest('.answer-area').querySelector('.model-answers');
+  const isHidden = answers.style.display === 'none' || !answers.style.display;
+  answers.style.display = isHidden ? 'block' : 'none';
+  btn.textContent = isHidden ? '▲ Hide Model Answer' : '💡 See Model Answer';
+}
+function togglePrompt(btn) {
+  const c = btn.nextElementSibling;
+  const isHidden = c.hasAttribute('hidden');
+  if (isHidden) { c.removeAttribute('hidden'); btn.textContent = '▴ Hide prompt'; }
+  else { c.setAttribute('hidden', ''); btn.textContent = '▾ Show image prompt'; }
+}
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+document.addEventListener('DOMContentLoaded', function() {
+  renderQPanel(); renderNotesPanel();
+  if (localStorage.getItem(PAGE_KEY+'-qpanel-open') === 'true') toggleQPanel();
+  if (localStorage.getItem(PAGE_KEY+'-notes-panel-open') === 'true') toggleNotesPanel();
+  document.querySelectorAll('.answer-area').forEach(function(area) {
+    const key = PAGE_KEY+'-socans-'+area.dataset.section;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const ta = area.querySelector('.answer-textarea'); ta.value = saved; ta.disabled = true;
+        const addBtn = area.querySelector('.btn-add-answer'); addBtn.textContent = '✓ Answer saved'; addBtn.disabled = true;
+        const seeBtn = area.querySelector('.btn-see-answer'); seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+      }
+    } catch(e) {}
+  });
+  document.querySelectorAll('.analogy-box').forEach(function(box) {
+    if (box.dataset.collapsibleInit) return;
+    box.dataset.collapsibleInit = '1';
+    box.classList.add('expanded');
+    const label = box.querySelector(':scope > .analogy-label');
+    if (label) label.addEventListener('click', () => box.classList.toggle('expanded'));
+  });
+  document.querySelectorAll('.analogy-img img').forEach(function(img) {
+    if (img.dataset.zoomInit) return;
+    img.dataset.zoomInit = '1';
+    img.addEventListener('click', () => img.classList.toggle('zoomed'));
+  });
+  document.querySelectorAll('.section-img').forEach(function(img) {
+    img.addEventListener('click', () => img.classList.toggle('si-expanded'));
+  });
+});
+</script>
+</body>
+</html>

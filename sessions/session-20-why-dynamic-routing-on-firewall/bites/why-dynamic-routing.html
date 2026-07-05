@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 20 Bite — Why Dynamic Routing on a Firewall</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-glow:rgba(30,64,175,0.07);
+    --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  header h1{font-family:'Playfair Display',serif;font-size:40px;font-weight:700;line-height:1.05;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+  main{max-width:920px;margin:0 auto;}
+  .main-content{padding:36px 60px 60px;}
+  .section-block{margin-bottom:40px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:14px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:16.5px;line-height:1.7;color:var(--text-soft);margin-bottom:5px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+  .analogy-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px;text-transform:uppercase;}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:30px;}.main-content{padding:24px 24px 40px;}footer{padding:16px 24px;}}
+</style>
+<style data-injected="related-sidebar">
+main.main-with-sidebar{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;padding:0 40px;}
+main.main-with-sidebar > .main-content{padding:36px 20px 60px 20px;}
+.related-sidebar{padding:36px 0 60px;}
+.related-sidebar-inner{background:var(--surface,#fffdf5);border:1px solid var(--border,#d4c89a);border-radius:14px;padding:22px 24px 26px;box-shadow:0 8px 22px -16px rgba(13,26,58,0.25);}
+.related-sidebar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text,#0a1838);letter-spacing:-0.005em;margin:0 0 6px;}
+.related-sidebar-sub{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:14px;}
+.related-group{margin-top:14px;}
+.related-group:first-of-type{margin-top:0;}
+.related-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group ul{list-style:none;padding:0;margin:0;}
+.related-group li{padding:6px 0;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group li:last-child{border-bottom:none;}
+.related-group a{display:flex;align-items:baseline;gap:8px;text-decoration:none;color:var(--text-soft,#1e2f5a);font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.4;transition:color .15s;}
+.related-group a:hover{color:var(--blue,#1e40af);}
+.related-group a .r-arrow{color:var(--blue,#1e40af);font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;opacity:0.6;transition:transform .15s, opacity .15s;flex-shrink:0;}
+.related-group a:hover .r-arrow{transform:translateX(2px);opacity:1;}
+.related-group a .r-tag{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted,#6b7794);background:var(--surface-2,#f5eed9);border:1px solid var(--border,#d4c89a);border-radius:10px;padding:2px 7px;margin-left:auto;flex-shrink:0;}
+.related-empty{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted,#6b7794);padding:6px 0;}
+@media(max-width:960px){main.main-with-sidebar{grid-template-columns:1fr;padding:0;gap:0;}main.main-with-sidebar > .main-content{padding:36px 60px 30px 60px;}.related-sidebar{padding:0 60px 60px;}}
+@media(max-width:640px){main.main-with-sidebar > .main-content{padding:28px 24px 24px 24px;}.related-sidebar{padding:0 24px 40px;}}
+</style>
+</head>
+<body>
+
+<header>
+<div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 20</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Bite</span></div>
+<div class="header-eyebrow">SESSION 20 · BITE · WHY DYNAMIC ROUTING</div>
+  <h1>The Route That <em>Nobody Typed</em></h1>
+  <p>Five-minute reactivation: static's silence, OSPF's map, BGP's diplomacy, and the AD ladder.</p>
+</header>
+
+<main class="main-with-sidebar">
+  <div class="main-content">
+
+    <div class="section-block">
+      <div class="section-label">OVERVIEW</div>
+      <h2>One <em>Paragraph</em></h2>
+      <p>Vaultline's DR site sat healthy for 55 minutes while nobody typed the 20-character static route that fixed everything — because static routes are silent rules that only react to local interface state, and the failure was three hops away with a green local link. Dynamic routing replaces the human: continuous liveness (hellos/keepalives), failure advertisement, automatic reconvergence. Inside one administration, OSPF floods topology <strong>facts</strong> and every router runs Dijkstra over an identical database, making loops structurally impossible once synchronized. Between administrations, BGP exchanges revocable reachability <strong>claims</strong> over TCP 179, deliberately slow (keepalive 60s / hold 180s) because a session flap dumps an entire table. When redistribution makes sources compete for one prefix, Administrative Distance arbitrates — and it always sides with proximity to truth.</p>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">PROBLEM SOLVED</div>
+      <h2>What Was Actually <em>Missing</em></h2>
+      <ul>
+        <li><strong>Not the route</strong> — four minutes of typing, trivially known in advance.</li>
+        <li><strong>The watcher</strong> — something monitoring continuously, detecting immediately, reacting automatically at 2am.</li>
+        <li><strong>Remote visibility</strong> — the local interface stayed green; only a protocol can carry news of a failure you can't see.</li>
+      </ul>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">MENTAL MODEL</div>
+      <h2>Facts vs <em>Claims</em></h2>
+      <p><strong>OSPF floods facts</strong> ("this link died" — an LSA, forwarded verbatim); every router deletes the edge from its own map and independently recomputes. Disagreement is only possible while databases are momentarily mismatched — which is why reliable flooding exists. <strong>BGP exchanges claims</strong> ("I can reach these prefixes"), alive only while the session lives, revoked by explicit withdrawal, or flushed wholesale when the hold timer expires.</p>
+      <table class="data-table">
+        <thead><tr><th>Dimension</th><th>OSPF (IGP)</th><th>BGP (EGP)</th></tr></thead>
+        <tbody>
+          <tr><td>Shares</td><td>Topology facts (LSAs)</td><td>Reachability claims</td></tr>
+          <tr><td>Transport</td><td>Directly on IP</td><td>TCP port 179</td></tr>
+          <tr><td>Liveness</td><td>Hello 10s / Dead 40s</td><td>Keepalive 60s / Hold 180s</td></tr>
+          <tr><td>Trade</td><td>Stability → speed</td><td>Speed → stability</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">FAILURE FLOW</div>
+      <h2>The Distance-Vector <em>Loop</em></h2>
+      <p>A–B–C–D in a line; D's link to X dies. C's stale table answers B; B installs "X via C"; C later believes "X via B." The packet ping-pongs, losing 1 TTL per hop, until TTL=0 → drop + ICMP Time Exceeded. <strong>TTL is the fuse, not the fix</strong> — it kills the packet, repairs nothing. RIP's band-aids: split-horizon, poison reverse, hold-down timers. OSPF makes the loop impossible instead of suppressed: nobody trusts a neighbor's conclusion, everyone computes from the same facts.</p>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">KEY TERMS</div>
+      <h2>Vocabulary <em>Checklist</em></h2>
+      <ul>
+        <li><strong>IGP / EGP</strong> — inside one administration / between administrations. The boundary is who owns the routers.</li>
+        <li><strong>LSA, LSDB, Dijkstra/SPF</strong> — the fact, the shared map, the independent calculation.</li>
+        <li><strong>Withdrawal</strong> — BGP's explicit revocation of a previously advertised prefix.</li>
+        <li><strong>Hold timer expiry</strong> — flushes <em>every</em> route learned from that peer.</li>
+        <li><strong>Route flapping / route flap damping</strong> — the global-churn pathology and its penalty/suppress/half-life countermeasure (see extras-04).</li>
+        <li><strong>Redistribution</strong> — deliberately copying routes between protocols; the thing that makes AD matter.</li>
+      </ul>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">EXAM CRITICAL</div>
+      <h2>What Fortinet <em>Tests</em></h2>
+      <table class="data-table">
+        <thead><tr><th>Source</th><th>FortiGate AD</th></tr></thead>
+        <tbody>
+          <tr><td>Static</td><td>10</td></tr>
+          <tr><td>eBGP</td><td>20</td></tr>
+          <tr><td>OSPF</td><td>110</td></tr>
+          <tr><td>iBGP</td><td>200</td></tr>
+        </tbody>
+      </table>
+      <div class="callout"><strong>The "why":</strong> AD rewards directness. eBGP beats OSPF because a redistributed OSPF copy is stale secondhand news; the live eBGP session is the horse's mouth. AD only fires when two sources offer the <em>same prefix</em> — in clean designs, that means redistribution is in the scenario.</div>
+      <div class="callout callout-amber"><strong>Distractors to expect:</strong> "TTL prevents routing loops" (it limits damage, doesn't prevent or fix) · "BGP's slow timers are a weakness" (they're the stability design) · "OSPF routers can compute different paths from the same database" (impossible — only mismatched LSDBs diverge) · "BGP runs on IP like OSPF" (no — TCP 179).</div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">ANALOGY</div>
+      <h2>Whispers vs the <em>Newspaper</em></h2>
+      <div class="analogy-box">
+        <div class="analogy-label">Memory hook</div>
+        <div class="analogy-text">Distance-vector is Chinese whispers: conclusions decay hop by hop and two people repeating each other loop forever. OSPF is everyone reading the same newspaper: the correction is printed identically for all, and each reader replans their own commute. BGP is diplomacy between rival nations: formal claims over a formal channel, revocable in writing, deliberately unhurried — because a nervous diplomat who tears up every treaty at the first missed phone call destabilizes the whole world.</div>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">TROUBLESHOOTING</div>
+      <h2>Checklist <em>Instincts</em></h2>
+      <ul>
+        <li>Green interface + dead path? Local state proves the first hop only — look for missing dynamic routing or path-level health checks.</li>
+        <li>Two OSPF routers "disagreeing"? Suspect a database sync problem (flooding, MTU mismatch, adjacency stuck) — never the math.</li>
+        <li>All routes from one BGP peer vanished at once? That's a session event (hold timer expiry), not many individual withdrawals.</li>
+        <li>OSPF and BGP both offering one prefix? Find the redistribution config before reasoning about anything else.</li>
+      </ul>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">SELF-TEST</div>
+      <h2>Five <em>Questions</em></h2>
+      <ol>
+        <li>What does dynamic routing replace — and what does it explicitly <em>not</em> replace?</li>
+        <li>Trace the B/C loop and name the exact mechanism that finally kills the packet. Why is it "the fuse, not the fix"?</li>
+        <li>What is the <em>only</em> condition under which two OSPF routers in one area compute different answers?</li>
+        <li>BGP hold timer expires on a peer. What happens to the routing table, and why is 180 seconds a feature rather than a flaw?</li>
+        <li>Recite the FortiGate AD ladder cold, then explain in one sentence why eBGP outranks OSPF.</li>
+      </ol>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">THE ONE SENTENCE</div>
+          <div class="mental-note-block-text">Dynamic routing doesn't replace the route — it replaces the person who would have typed it.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+<!-- related-sidebar:start -->
+<aside class="related-sidebar"><div class="related-sidebar-inner"><div class="related-sidebar-title">Related pages</div><div class="related-sidebar-sub">Session 20</div><div class="related-group"><div class="related-group-label">Session</div><ul><li><a href="../index.html"><span class="r-arrow">›</span><span>Session hub</span></a></li><li><a href="../completed-session/index.html"><span class="r-arrow">›</span><span>Completed study guide</span><span class="r-tag">Guide</span></a></li><li><a href="../completed-session/summary.txt" target="_blank" rel="noopener"><span class="r-arrow">›</span><span>Session summary</span><span class="r-tag">txt</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Bites</div><ul><li><a href="../bites/route-flapping-dampening.html"><span class="r-arrow">›</span><span>Route Flapping &amp;amp; Route Flap Damping</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Nibbles</div><ul><li><a href="../nibbles/facts-vs-claims.html"><span class="r-arrow">›</span><span>Session 20 Nibble — Facts vs Claims</span></a></li></ul></div></div></aside>
+<!-- related-sidebar:end -->
+</main>
+
+<footer>
+  Vaultline Financial<span>.</span> <span>NSE7 EF 7.6</span><span>.</span> Session 20 Bite — Why Dynamic Routing
+</footer>
+
+<script>
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+</script>
+</body>
+</html>

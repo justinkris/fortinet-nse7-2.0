@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 20 Nibble — Facts vs Claims</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-glow:rgba(30,64,175,0.07);
+    --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:40px 56px 30px;background:var(--ink-dark);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;line-height:1.05;color:#fbf7ec;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;}
+  main{max-width:880px;margin:0 auto;padding:32px 32px 56px;}
+  .section-block{margin-bottom:28px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:12px;padding-left:14px;border-left:3px solid var(--blue);}
+  h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .data-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:9px 13px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:9px 13px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .big-cell{font-family:'Playfair Display',serif;font-weight:700;font-size:16px;}
+  .callout{border-left:3px solid var(--amber-border);background:var(--amber-light);border-radius:0 10px 10px 0;padding:12px 18px;margin:14px 0;font-family:'Cormorant Garamond',serif;font-size:15.5px;line-height:1.6;color:#5c3d09;}
+  .callout strong{color:var(--text);}
+  .decision{background:var(--green-light);border:1px solid var(--green-border);border-radius:10px;padding:14px 18px;margin:14px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.8;color:var(--text-soft);}
+  .decision strong{color:var(--green);}
+  .mental-note-block{border-radius:10px;padding:13px 17px;margin:14px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:3px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:15.5px;font-weight:600;line-height:1.55;color:var(--text);}
+  .ad-ladder{display:flex;gap:10px;margin:12px 0;flex-wrap:wrap;}
+  .ad-step{flex:1;min-width:130px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;text-align:center;}
+  .ad-step .ad-num{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--blue);}
+  .ad-step .ad-name{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-top:2px;}
+  .ad-step .ad-why{font-family:'Cormorant Garamond',serif;font-size:13px;font-style:italic;color:var(--text-soft);margin-top:6px;line-height:1.4;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:18px 32px;border-top:1px solid var(--border);background:var(--surface);text-align:center;}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:26px 20px 22px;}header h1{font-size:28px;}main{padding:22px 18px 40px;}}
+</style>
+<style data-injected="related-sidebar">
+main.main-with-sidebar{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;padding:0 40px;}
+main.main-with-sidebar > .main-content{padding:36px 20px 60px 20px;}
+.related-sidebar{padding:36px 0 60px;}
+.related-sidebar-inner{background:var(--surface,#fffdf5);border:1px solid var(--border,#d4c89a);border-radius:14px;padding:22px 24px 26px;box-shadow:0 8px 22px -16px rgba(13,26,58,0.25);}
+.related-sidebar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text,#0a1838);letter-spacing:-0.005em;margin:0 0 6px;}
+.related-sidebar-sub{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:14px;}
+.related-group{margin-top:14px;}
+.related-group:first-of-type{margin-top:0;}
+.related-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group ul{list-style:none;padding:0;margin:0;}
+.related-group li{padding:6px 0;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group li:last-child{border-bottom:none;}
+.related-group a{display:flex;align-items:baseline;gap:8px;text-decoration:none;color:var(--text-soft,#1e2f5a);font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.4;transition:color .15s;}
+.related-group a:hover{color:var(--blue,#1e40af);}
+.related-group a .r-arrow{color:var(--blue,#1e40af);font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;opacity:0.6;transition:transform .15s, opacity .15s;flex-shrink:0;}
+.related-group a:hover .r-arrow{transform:translateX(2px);opacity:1;}
+.related-group a .r-tag{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted,#6b7794);background:var(--surface-2,#f5eed9);border:1px solid var(--border,#d4c89a);border-radius:10px;padding:2px 7px;margin-left:auto;flex-shrink:0;}
+.related-empty{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted,#6b7794);padding:6px 0;}
+@media(max-width:960px){main.main-with-sidebar{grid-template-columns:1fr;padding:0;gap:0;}main.main-with-sidebar > .main-content{padding:36px 60px 30px 60px;}.related-sidebar{padding:0 60px 60px;}}
+@media(max-width:640px){main.main-with-sidebar > .main-content{padding:28px 24px 24px 24px;}.related-sidebar{padding:0 24px 40px;}}
+</style>
+</head>
+<body>
+
+<header>
+<div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 20</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Nibble</span></div>
+<div class="header-eyebrow"><span class="dot-live"></span> SESSION 20 · NIBBLE</div>
+  <h1>Facts vs <em>Claims</em></h1>
+  <p>The one table that reconstructs the whole session — and the AD ladder that decides ties.</p>
+</header>
+
+<main class="main-with-sidebar">
+  <div class="main-content">
+
+  <div class="section-block">
+    <div class="section-label">THE COMPARISON</div>
+    <h2>OSPF and BGP Are Different <em>Kinds</em> of Information</h2>
+    <table class="data-table">
+      <thead><tr><th></th><th>OSPF — the IGP</th><th>BGP — the EGP</th></tr></thead>
+      <tbody>
+        <tr><td>What travels</td><td class="big-cell">Facts — "this link died" (LSA)</td><td class="big-cell">Claims — "I can reach X" (revocable)</td></tr>
+        <tr><td>Who computes</td><td>Everyone, independently, over an identical database (Dijkstra)</td><td>Nobody maps anything — claims are believed while the session lives</td></tr>
+        <tr><td>Runs where</td><td>Inside one administration</td><td>Between administrations</td></tr>
+        <tr><td>Transport</td><td>Directly on IP</td><td>TCP port 179</td></tr>
+        <tr><td>Liveness</td><td>Hello 10s · Dead 40s</td><td>Keepalive 60s · Hold 180s</td></tr>
+        <tr><td>On failure</td><td>Flood the fact → everyone recalculates</td><td>Explicit withdrawal · hold expiry flushes the whole peer</td></tr>
+        <tr><td>The trade</td><td><strong>Stability sacrificed for speed</strong> — small, trusted blast radius</td><td><strong>Speed sacrificed for stability</strong> — a flap re-sends an entire table</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-block">
+    <div class="section-label">THE TIEBREAKER</div>
+    <h2>FortiGate AD — <em>Proximity to Truth</em></h2>
+    <div class="ad-ladder">
+      <div class="ad-step"><div class="ad-num">10</div><div class="ad-name">Static</div><div class="ad-why">the admin's own hand</div></div>
+      <div class="ad-step"><div class="ad-num">20</div><div class="ad-name">eBGP</div><div class="ad-why">live, direct, the horse's mouth</div></div>
+      <div class="ad-step"><div class="ad-num">110</div><div class="ad-name">OSPF</div><div class="ad-why">trusted — but may carry secondhand copies</div></div>
+      <div class="ad-step"><div class="ad-num">200</div><div class="ad-name">iBGP</div><div class="ad-why">a claim already relayed inside the AS</div></div>
+    </div>
+    <div class="callout"><strong>The trap:</strong> AD doesn't rank protocol "quality," and it never fires unless two sources offer the <em>same prefix</em> — which in a clean design means <strong>redistribution</strong> is in the scenario. Lower wins; directness wins.</div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-label">WRONG KNOB</div>
+    <h2>TTL Is the <em>Fuse</em>, Not the Fix</h2>
+    <div class="callout">A distance-vector loop bounces the packet until TTL hits 0 (drop + ICMP Time Exceeded). Nothing is repaired — the tables are still wrong. TTL limits damage per packet; the protocol design is what prevents loops. OSPF prevents them structurally; RIP merely suppresses them with split-horizon, poison reverse, and hold-downs.</div>
+  </div>
+
+  <div class="decision">
+    Inside your own network, need fast convergence? → <strong>OSPF.</strong><br>
+    Talking to another organization — an ISP, a partner, the internet? → <strong>BGP.</strong><br>
+    Both offering the same prefix? → <strong>Someone configured redistribution. AD decides: lower wins.</strong>
+  </div>
+
+  <div class="mental-note-block">
+    <div class="mental-note-block-icon">🧠</div>
+    <div>
+      <div class="mental-note-block-label">GLANCE-AND-RECONSTRUCT</div>
+      <div class="mental-note-block-text">Facts converge; conclusions loop. OSPF trades stability for speed; BGP trades speed for stability. 10 · 20 · 110 · 200 — proximity to truth.</div>
+    </div>
+  </div>
+
+</div>
+<!-- related-sidebar:start -->
+<aside class="related-sidebar"><div class="related-sidebar-inner"><div class="related-sidebar-title">Related pages</div><div class="related-sidebar-sub">Session 20</div><div class="related-group"><div class="related-group-label">Session</div><ul><li><a href="../index.html"><span class="r-arrow">›</span><span>Session hub</span></a></li><li><a href="../completed-session/index.html"><span class="r-arrow">›</span><span>Completed study guide</span><span class="r-tag">Guide</span></a></li><li><a href="../completed-session/summary.txt" target="_blank" rel="noopener"><span class="r-arrow">›</span><span>Session summary</span><span class="r-tag">txt</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Bites</div><ul><li><a href="../bites/route-flapping-dampening.html"><span class="r-arrow">›</span><span>Route Flapping &amp;amp; Route Flap Damping</span></a></li><li><a href="../bites/why-dynamic-routing.html"><span class="r-arrow">›</span><span>Session 20 Bite — Why Dynamic Routing on a Firewall</span></a></li></ul></div></div></aside>
+<!-- related-sidebar:end -->
+</main>
+
+<footer>
+  Vaultline Financial<span>.</span> <span>NSE7 EF 7.6</span><span>.</span> Session 20 Nibble — Facts vs Claims
+</footer>
+
+<script>
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+</script>
+</body>
+</html>

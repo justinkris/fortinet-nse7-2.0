@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 21 Nibble — OSPF Neighbor States: A Love Story</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+    --coral:#c2410c;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;color:rgba(251,247,236,0.6);text-transform:uppercase;}
+  .breadcrumb a{color:#9bb8e6;text-decoration:none;}
+  .breadcrumb a:hover{text-decoration:underline;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.005em;}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+
+  main{max-width:1200px;margin:0 auto;padding:0;}
+  .main-content{padding:36px 60px 60px 60px;}
+
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+
+  .prompt-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}
+  .prompt-toggle:hover{color:var(--text);border-color:var(--text);}
+  .prompt-content{margin-top:10px;padding:10px 14px;background:rgba(0,0,0,0.04);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.65;text-align:left;}
+  .prompt-content[hidden]{display:none;}
+
+  /* ── COMIC STRIP LAYOUT ── */
+  .comic-strip{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin:20px 0;}
+  .comic-panel{background:var(--surface);border:2px solid var(--ink-dark);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:5px 5px 0 var(--border);}
+  .comic-panel.panel-wide{grid-column:1 / -1;}
+  .panel-top{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--ink-dark);}
+  .panel-num{font-family:'Playfair Display',serif;font-size:20px;font-weight:800;font-style:italic;color:var(--ink-accent);}
+  .panel-state{font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#fbf7ec;}
+  .panel-badge{margin-left:auto;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 10px;border-radius:12px;}
+  .badge-story{background:rgba(155,184,230,0.15);color:var(--ink-accent);border:1px solid rgba(155,184,230,0.35);}
+  .panel-art{margin:14px 14px 0;border:2px dashed var(--border);border-radius:10px;background:var(--surface-2);padding:16px;min-height:150px;display:flex;flex-direction:column;justify-content:center;gap:8px;}
+  .panel-art-img{width:100%;border-radius:8px;display:block;cursor:zoom-in;transition:transform 0.15s;}
+  .panel-art-img:hover{transform:scale(1.01);}
+  .lightbox-backdrop{position:fixed;inset:0;background:rgba(20,15,8,0.88);display:flex;align-items:center;justify-content:center;z-index:9999;cursor:zoom-out;padding:40px;opacity:0;transition:opacity 0.18s;}
+  .lightbox-backdrop.open{opacity:1;}
+  .lightbox-backdrop img{max-width:100%;max-height:100%;border-radius:12px;box-shadow:0 30px 80px -20px rgba(0,0,0,0.6);cursor:zoom-out;transform:scale(0.96);transition:transform 0.18s;}
+  .lightbox-backdrop.open img{transform:scale(1);}
+  .lightbox-hint{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(251,247,236,0.55);pointer-events:none;}
+  .panel-art.has-image{border-style:solid;border-color:transparent;padding:0;background:transparent;gap:0;}
+  .panel-art.has-image .panel-art-filename,.panel-art.has-image .panel-art-desc{display:none;}
+  .panel-art.has-image .prompt-toggle{margin-top:8px;align-self:flex-start;}
+  .panel-art-filename{font-family:'SF Mono','Fira Code',monospace;font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--text-muted);}
+  .panel-art-desc{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-soft);line-height:1.55;}
+  .panel-body{padding:12px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1;}
+  .panel-story{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:#5c3d09;background:#fcf5dc;border:1px solid var(--amber-border);border-radius:8px;padding:9px 12px;line-height:1.55;}
+  .panel-story strong{font-style:normal;color:var(--amber);font-weight:700;}
+  .panel-tech{font-family:'Cormorant Garamond',serif;font-size:15.5px;color:var(--text-soft);background:var(--blue-light);border:1px solid var(--blue-border);border-radius:8px;padding:9px 12px;line-height:1.55;}
+  .panel-tech strong{color:var(--blue);font-weight:700;}
+  .panel-stuck{font-family:'Outfit',sans-serif;font-size:11px;line-height:1.55;color:var(--coral);padding:2px 2px 0;}
+  .panel-stuck strong{letter-spacing:0.06em;text-transform:uppercase;font-size:9.5px;}
+
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+
+  @media(max-width:820px){.comic-strip{grid-template-columns:1fr;}}
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:34px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}footer{padding:16px 24px;}}
+</style>
+<style data-injected="related-sidebar">
+main.main-with-sidebar{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;padding:0 40px;}
+main.main-with-sidebar > .main-content{padding:36px 20px 60px 20px;}
+.related-sidebar{padding:36px 0 60px;}
+.related-sidebar-inner{background:var(--surface,#fffdf5);border:1px solid var(--border,#d4c89a);border-radius:14px;padding:22px 24px 26px;box-shadow:0 8px 22px -16px rgba(13,26,58,0.25);}
+.related-sidebar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text,#0a1838);letter-spacing:-0.005em;margin:0 0 6px;}
+.related-sidebar-sub{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:14px;}
+.related-group{margin-top:14px;}
+.related-group:first-of-type{margin-top:0;}
+.related-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group ul{list-style:none;padding:0;margin:0;}
+.related-group li{padding:6px 0;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group li:last-child{border-bottom:none;}
+.related-group a{display:flex;align-items:baseline;gap:8px;text-decoration:none;color:var(--text-soft,#1e2f5a);font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.4;transition:color .15s;}
+.related-group a:hover{color:var(--blue,#1e40af);}
+.related-group a .r-arrow{color:var(--blue,#1e40af);font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;opacity:0.6;transition:transform .15s, opacity .15s;flex-shrink:0;}
+.related-group a:hover .r-arrow{transform:translateX(2px);opacity:1;}
+.related-group a .r-tag{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted,#6b7794);background:var(--surface-2,#f5eed9);border:1px solid var(--border,#d4c89a);border-radius:10px;padding:2px 7px;margin-left:auto;flex-shrink:0;}
+.related-empty{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted,#6b7794);padding:6px 0;}
+@media(max-width:960px){main.main-with-sidebar{grid-template-columns:1fr;padding:0;gap:0;}main.main-with-sidebar > .main-content{padding:36px 60px 30px 60px;}.related-sidebar{padding:0 60px 60px;}}
+@media(max-width:640px){main.main-with-sidebar > .main-content{padding:28px 24px 24px 24px;}.related-sidebar{padding:0 24px 40px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 21</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Nibble</span></div>
+    <div class="header-eyebrow"><span class="dot-live"></span> SESSION 21 · NIBBLE · OSPF NEIGHBOR STATES</div>
+    <h1>Down to Full: <em>A Love Story</em></h1>
+    <p>Seven states, one relationship. A guy was DOWN to INITiate a 2-WAY... and by the end, she knew he was FULL of it.</p>
+  </div>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">If you can retell this comic, you can recite the <em>entire OSPF adjacency state machine</em> — in order, under exam pressure.</div>
+  <p class="motivation-sub">Down → Init → 2-Way → ExStart → Exchange → Loading → Full. Each panel pairs the joke with the real protocol event, plus the stuck-state that the exam loves to hide there.</p>
+</div>
+
+<main class="main-with-sidebar">
+  <div class="main-content">
+
+    <div class="section-block" id="section-comic">
+      <div class="section-label">THE MNEMONIC · 60-SECOND COMIC</div>
+      <h2>He was <em>DOWN</em> to <em>INIT</em>iate a <em>2-WAY</em>...</h2>
+      <p>Two routers meeting is a courtship with rules. Read the strip left to right — the amber box is the story beat, the blue box is what OSPF is actually doing, and the red line is where real adjacencies get stuck at that exact state.</p>
+
+      <div class="comic-strip">
+
+        <!-- PANEL 1 — DOWN -->
+        <div class="comic-panel">
+          <div class="panel-top"><span class="panel-num">1</span><span class="panel-state">DOWN</span><span class="panel-badge badge-story">Hasn't even said hi</span></div>
+          <div class="panel-art">
+            <img class="panel-art-img" src="images/s21-comic-01-down.png" alt="He&#x27;s slumped alone at a café table. She hasn&#x27;t noticed he exists." onload="this.parentElement.classList.add('has-image')" onerror="this.remove()">
+            <div class="panel-art-filename">images/s21-comic-01-down.png</div>
+            <div class="panel-art-desc">He's slumped alone at a café table. She hasn't noticed he exists.</div>
+            <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+            <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, cream background, soft brown outlines, no gradients. Single comic panel, side view of a cozy café. LEFT: a young man labeled "ROUTER A" on his coral t-shirt, slumped alone at a small round table, chin in hand, deflated posture, a completely blank speech bubble above him (dotted outline, empty). RIGHT: a young woman labeled "ROUTER B" on her sage-green sweater, sitting at a separate table with her back turned, sipping coffee, oblivious. Between them: a wide empty gap of floor with a small tumbleweed made of ethernet cable. A wall clock shows a hello-packet icon with a red X through it. Caption plate at the bottom in muted gold: "DOWN — no hellos heard." Generous spacing, warm palette of cream, coral, muted gold, sage green.</div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-story">He's <strong>DOWN</strong> bad — but she doesn't know he exists yet. Not one word exchanged.</div>
+            <div class="panel-tech"><strong>No hellos received</strong> from this neighbor. Dead interval may have expired on a previously-known neighbor, dropping it back here.</div>
+            <div class="panel-stuck"><strong>Stuck here?</strong> Hellos never accepted at all: mismatched hello/dead timers, area ID, subnet/mask, or authentication. A timer mismatch means no neighbor entry ever forms.</div>
+          </div>
+        </div>
+
+        <!-- PANEL 2 — INIT -->
+        <div class="comic-panel">
+          <div class="panel-top"><span class="panel-num">2</span><span class="panel-state">INIT</span><span class="panel-badge badge-story">He said hi… silence</span></div>
+          <div class="panel-art">
+            <img class="panel-art-img" src="images/s21-comic-02-init.png" alt="He waves &quot;HELLO!&quot; — she&#x27;s heard it, but her reply doesn&#x27;t mention him yet." onload="this.parentElement.classList.add('has-image')" onerror="this.remove()">
+            <div class="panel-art-filename">images/s21-comic-02-init.png</div>
+            <div class="panel-art-desc">He waves "HELLO!" — she's heard it, but her reply doesn't mention him yet.</div>
+            <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+            <div class="prompt-content" hidden>Flat minimalistic detailed cartoon, vector style, cream background, no gradients. Comic panel: the coral-shirt guy "ROUTER A" now standing, waving enthusiastically with a big speech bubble reading "HELLO! I'm A!" containing a small envelope icon labeled "Hello packet · RID 1.1.1.1". The sage-green girl "ROUTER B" has half-turned, one eyebrow raised, holding her own speech bubble that reads "Hello, I'm B" — but crucially her bubble shows a neighbor-list clipboard that is EMPTY (his name is NOT on it, shown as a blank line with a magnifying glass hovering over it). A muted-gold caption plate: "INIT — I heard you… but your hello doesn't list ME yet." One-directional arrow from him to her drawn as a dotted coral line; the return arrow is grey and incomplete.</div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-story">He <strong>INIT</strong>iates: "Hello!" She's heard him… but her replies don't mention his name yet. One-way conversation.</div>
+            <div class="panel-tech"><strong>Hello received</strong>, but my own Router ID is <strong>not yet listed</strong> inside the neighbor's hello. Communication proven in one direction only.</div>
+            <div class="panel-stuck"><strong>Stuck here?</strong> Your hellos aren't reaching or aren't accepted by them — one-way filtering, ACL, or unicast/multicast delivery problem toward the neighbor.</div>
+          </div>
+        </div>
+
+        <!-- PANEL 3 — 2-WAY -->
+        <div class="comic-panel">
+          <div class="panel-top"><span class="panel-num">3</span><span class="panel-state">2-WAY</span><span class="panel-badge badge-story">Mutual — numbers saved</span></div>
+          <div class="panel-art">
+            <img class="panel-art-img" src="images/s21-comic-03-twoway.png" alt="Both smiling, each holding a phone with the other&#x27;s name saved. A referee appears: &quot;Who&#x27;s the DR here?&quot;" onload="this.parentElement.classList.add('has-image')" onerror="this.remove()">
+            <div class="panel-art-filename">images/s21-comic-03-twoway.png</div>
+            <div class="panel-art-desc">Both smiling, each holding a phone with the other's name saved. A referee appears: "Who's the DR here?"</div>
+            <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+            <div class="prompt-content" hidden>Flat detailed cartoon, vector style, cream background. Comic panel: coral-shirt guy and sage-green girl now facing each other, both smiling, each holding up a phone; his screen shows contact card "ROUTER B ✓" and hers shows "ROUTER A ✓" — mutual recognition. Two solid arrows between them forming a clean two-way loop, labeled "your hello lists MY name". Behind them, a small referee character in a striped shirt labeled "DR ELECTION" blows a whistle, holding two paddles labeled "DR" and "BDR", with a stopwatch labeled "wait timer = 40s". In the corner, two wallflower characters wearing "PRIORITY 0" badges sit on a bench holding hands with a sign: "we're just friends — permanently". Caption plate: "2-WAY — we both know it's mutual. Election time."</div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-story">It's officially a <strong>2-WAY</strong> thing — she saved his number, he saved hers, and both of them <em>know</em> it's mutual. But who takes the lead? The room votes.</div>
+            <div class="panel-tech"><strong>I see my own RID inside their hello.</strong> Bidirectional confirmed. On broadcast networks the <strong>DR/BDR election</strong> happens from here (wait timer = dead interval).</div>
+            <div class="panel-stuck"><strong>Stuck here?</strong> Two cases. HEALTHY: DROTHER↔DROTHER pairs stop at 2-Way forever by design. FAULT: both routers priority 0 → no one is eligible → no DR can ever exist → the lab bench bug.</div>
+          </div>
+        </div>
+
+        <!-- PANEL 4 — EXSTART -->
+        <div class="comic-panel">
+          <div class="panel-top"><span class="panel-num">4</span><span class="panel-state">EXSTART</span><span class="panel-badge badge-story">Who texts first?</span></div>
+          <div class="panel-art">
+            <img class="panel-art-img" src="images/s21-comic-04-exstart.png" alt="Standing at a doorway: &quot;After you.&quot; &quot;No, after YOU.&quot; Higher Router ID wins and goes first." onload="this.parentElement.classList.add('has-image')" onerror="this.remove()">
+            <div class="panel-art-filename">images/s21-comic-04-exstart.png</div>
+            <div class="panel-art-desc">Standing at a doorway: "After you." "No, after YOU." Higher Router ID wins and goes first.</div>
+            <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+            <div class="prompt-content" hidden>Flat detailed cartoon, vector style, cream background. Comic panel: the pair standing at a doorway labeled "DATABASE EXCHANGE — this way", doing the polite standoff: he gestures "after you", she gestures "no, after YOU". Above them a floating scoreboard compares two jersey numbers: "RID 10.10.12.1" vs "RID 10.10.12.2" with a crown appearing over the HIGHER number, labeled "MASTER — sets the sequence number"; the other gets a ribbon labeled "SLAVE". At their feet, two identical suitcases must fit through the doorway; the door frame has a measuring tape across it labeled "MTU 1500" — a subtle hint that mismatched suitcase sizes jam this exact doorway. Caption plate: "EXSTART — decide who leads before exchanging anything."</div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-story">The <strong>ExStart</strong> standoff: who texts first? They settle it like adults — <em>biggest Router ID leads</em>, and sets the pace of the whole conversation.</div>
+            <div class="panel-tech"><strong>Master/slave negotiation</strong> — higher RID becomes master and picks the initial DBD sequence number. Nothing about the database has moved yet.</div>
+            <div class="panel-stuck"><strong>Stuck here?</strong> The classic: <strong>MTU mismatch</strong> — DBD packets from the big-MTU side get dropped. Also duplicate Router IDs. Exam gold: "stuck at ExStart" ≈ check MTU first.</div>
+          </div>
+        </div>
+
+        <!-- PANEL 5 — EXCHANGE -->
+        <div class="comic-panel">
+          <div class="panel-top"><span class="panel-num">5</span><span class="panel-state">EXCHANGE</span><span class="panel-badge badge-story">Swapping life stories</span></div>
+          <div class="panel-art">
+            <img class="panel-art-img" src="images/s21-comic-05-exchange.png" alt="They trade photo-album INDEXES — tables of contents, not the actual photos." onload="this.parentElement.classList.add('has-image')" onerror="this.remove()">
+            <div class="panel-art-filename">images/s21-comic-05-exchange.png</div>
+            <div class="panel-art-desc">They trade photo-album INDEXES — tables of contents, not the actual photos.</div>
+            <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+            <div class="prompt-content" hidden>Flat detailed cartoon, vector style, cream background. Comic panel: the pair now seated at the café table, sliding documents to each other. Important detail: the documents are TABLE-OF-CONTENTS pages, clearly labeled "MY LIFE — index only" and "MY LIFE — chapter list", showing bullet lists of chapter titles with page numbers, NOT actual photos or stories. Each sheet is stamped "DBD — Database Description". He reads hers with a highlighter, circling two chapter titles he's never heard of. Small ack stamps ("ACK ✓") fly back after each sheet. Caption plate: "EXCHANGE — summaries only. Headers, not the whole database." Coral, sage, muted gold accents, clean bold line work.</div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-story">Now they <strong>EXCHANGE</strong> life stories — but only the <em>chapter titles</em>. "Here's an index of everything I know." Neither hands over the full book yet.</div>
+            <div class="panel-tech"><strong>DBD packets flow</strong> — summaries (LSA headers) of each LSDB. Each router compares the index against its own database and notes what it's missing.</div>
+            <div class="panel-stuck"><strong>Stuck here?</strong> Usually the same suspects as ExStart — MTU or packet loss chopping the DBD conversation mid-stream.</div>
+          </div>
+        </div>
+
+        <!-- PANEL 6 — LOADING -->
+        <div class="comic-panel">
+          <div class="panel-top"><span class="panel-num">6</span><span class="panel-state">LOADING</span><span class="panel-badge badge-story">"Tell me EVERYTHING"</span></div>
+          <div class="panel-art">
+            <img class="panel-art-img" src="images/s21-comic-06-loading.png" alt="She&#x27;s LOADING up on the missing chapters — cross-examining every story he glossed over." onload="this.parentElement.classList.add('has-image')" onerror="this.remove()">
+            <div class="panel-art-filename">images/s21-comic-06-loading.png</div>
+            <div class="panel-art-desc">She's LOADING up on the missing chapters — cross-examining every story he glossed over.</div>
+            <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+            <div class="prompt-content" hidden>Flat detailed cartoon, vector style, cream background. Comic panel: the sage-green girl leaning forward like a detective, holding the highlighted index page and pointing at circled chapter titles, speech bubble: "Chapter 7. 'Barcelona 2019'. Full story. NOW." — her requests fly as envelopes labeled "LSR — Link State Request". The coral-shirt guy hands over thick full chapters as parcels labeled "LSU — Link State Update", sweating slightly. A progress bar floats above the table: "LSDB sync… 87%" in muted gold. A small stack of already-received chapters sits beside her with checkmarks. Caption plate: "LOADING — request the missing pieces, receive the full LSAs."</div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-story">She's <strong>LOADING</strong> up on details — every chapter he glossed over, she demands in full. "You mentioned Barcelona. Tell me <em>everything</em> about Barcelona."</div>
+            <div class="panel-tech"><strong>LSRs go out</strong> for every LSA that was in their index but missing (or newer) in my LSDB; <strong>LSUs come back</strong> with the complete LSAs.</div>
+            <div class="panel-stuck"><strong>Stuck here?</strong> Rare — corrupted or repeatedly-retransmitted LSAs, packet loss. Persistent Loading usually means something is mangling LSUs in transit.</div>
+          </div>
+        </div>
+
+        <!-- PANEL 7 — FULL (wide finale) -->
+        <div class="comic-panel panel-wide">
+          <div class="panel-top"><span class="panel-num">7</span><span class="panel-state">FULL</span><span class="panel-badge badge-story">She knows everything. He's FULL of it.</span></div>
+          <div class="panel-art">
+            <img class="panel-art-img" src="images/s21-comic-07-full.png" alt="Wide finale panel: identical &quot;story books&quot; side by side — she now holds a complete copy of his entire database. Verdict delivered." onload="this.parentElement.classList.add('has-image')" onerror="this.remove()">
+            <div class="panel-art-filename">images/s21-comic-07-full.png</div>
+            <div class="panel-art-desc">Wide finale panel: identical "story books" side by side — she now holds a complete copy of his entire database. Verdict delivered.</div>
+            <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+            <div class="prompt-content" hidden>Flat detailed cartoon, vector style, cream background, wide cinematic panel. CENTER: the pair standing side by side, each holding an identical thick book — both covers read "THE NETWORK — complete edition", with a large equals sign floating between the two books and a golden banner: "IDENTICAL LSDBs". She wears a detective's satisfied smirk, arms crossed, speech bubble: "I know EVERYTHING you know. You're FULL of it." He shrugs, caught, but grinning, bubble: "…and now so are you." LEFT edge: a small heart-shaped seal stamped "ADJACENCY: FULL". RIGHT edge: a tiny Dijkstra character (old-fashioned professor with a map and compass) already drawing shortest-path tree lines from the shared book onto a wall map labeled "SPF TREE". Bottom caption plate in muted gold: "FULL — databases synchronized. Now, and only now, can routes be computed." Warm cream, coral, sage, gold palette, clean bold outlines, no gradients.</div>
+          </div>
+          <div class="panel-body">
+            <div class="panel-story">And in the end she knows <em>every single story he's got</em> — which is exactly how she can prove he's <strong>FULL</strong> of it. The punchline is the protocol: you can only call someone's whole database "lies" once you hold a complete copy of it.</div>
+            <div class="panel-tech"><strong>LSDBs are identical.</strong> The adjacency is Full — and only now does SPF/Dijkstra compute routes over the shared map. On broadcast segments, Full is reached only with the DR and BDR (2n−3 Full adjacencies for n routers, never the full mesh of n(n−1)/2).</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="section-block" id="section-cheat">
+      <div class="section-label">30-SECOND RECALL TABLE</div>
+      <h2>Stuck-state <em>cheat row</em></h2>
+      <p>The exam rarely asks "list the states." It shows you a router <em>parked</em> at one state and asks why. One line each:</p>
+      <table class="data-table">
+        <tr><th>Parked at</th><th>The story</th><th>First suspect</th></tr>
+        <tr><td>No neighbor at all</td><td>She never even heard him</td><td>Hello/dead timer, area, subnet, or auth mismatch — hellos rejected</td></tr>
+        <tr><td>INIT</td><td>One-way conversation</td><td>Your hellos not reaching/accepted by them (one-way filtering)</td></tr>
+        <tr><td>2-WAY</td><td>Mutual, but nobody leads</td><td>Normal for DROTHER pairs · fault if ALL routers are priority 0 (no DR possible)</td></tr>
+        <tr><td>EXSTART</td><td>Endless "after you" at the door</td><td>MTU mismatch · duplicate Router IDs</td></tr>
+        <tr><td>EXCHANGE / LOADING</td><td>Stories keep getting cut off</td><td>MTU, packet loss, mangled LSAs</td></tr>
+        <tr><td>FULL</td><td>She knows everything — he's full of it</td><td>Nothing. This is the goal. Celebrate.</td></tr>
+      </table>
+
+      <div class="callout callout-amber">
+        <strong>Lab bench flashback:</strong> our two FortiGates sat at <strong>2-Way/DROTHER</strong> forever because <em>both</em> interfaces carried <strong>priority 0</strong> — a flawless election with zero candidates. One <em>set priority 1</em> on one box and the neighbor sprinted ExStart → Exchange → Loading → Full in seconds.
+      </div>
+
+      <div class="mental-note-block">
+        <span class="mental-note-block-icon">💘</span>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">Mental Note — say it once, own it forever</div>
+          <div class="mental-note-block-text">He was DOWN to INITiate a 2-WAY. They ExStart-ed to EXCHANGE stories, she kept LOADING up on the details — until she knew everything, and he was FULL of it. Hellos get you to 2-Way; databases get you to Full; the DR election decides whether you ever leave 2-Way at all.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+<!-- related-sidebar:start -->
+<aside class="related-sidebar"><div class="related-sidebar-inner"><div class="related-sidebar-title">Related pages</div><div class="related-sidebar-sub">Session 21</div><div class="related-group"><div class="related-group-label">Session</div><ul><li><a href="../index.html"><span class="r-arrow">›</span><span>Session hub</span></a></li></ul></div></div></aside>
+<!-- related-sidebar:end -->
+</main>
+
+<footer>NSE7 EF 7.6 · SESSION 21 NIBBLE · <span>OSPF NEIGHBOR STATES — DOWN → FULL</span></footer>
+
+<script>
+function togglePrompt(btn) {
+  const c = btn.nextElementSibling;
+  const isHidden = c.hasAttribute('hidden');
+  if (isHidden) { c.removeAttribute('hidden'); btn.textContent = '▴ Hide prompt'; }
+  else { c.setAttribute('hidden', ''); btn.textContent = '▾ Show image prompt'; }
+}
+function closeLightbox() {
+  const box = document.querySelector('.lightbox-backdrop');
+  if (!box) return;
+  box.classList.remove('open');
+  setTimeout(function() { box.remove(); document.removeEventListener('keydown', lightboxKey); }, 180);
+}
+function lightboxKey(e) { if (e.key === 'Escape') closeLightbox(); }
+document.addEventListener('click', function(e) {
+  const img = e.target.closest('.panel-art-img');
+  if (!img) return;
+  e.preventDefault();
+  const box = document.createElement('div');
+  box.className = 'lightbox-backdrop';
+  const big = document.createElement('img');
+  big.src = img.src;
+  big.alt = img.alt;
+  box.appendChild(big);
+  const hint = document.createElement('div');
+  hint.className = 'lightbox-hint';
+  hint.textContent = 'Click anywhere or press Esc to close';
+  box.appendChild(hint);
+  box.addEventListener('click', closeLightbox);
+  document.body.appendChild(box);
+  requestAnimationFrame(function() { box.classList.add('open'); });
+  document.addEventListener('keydown', lightboxKey);
+});
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+</script>
+</body>
+</html>

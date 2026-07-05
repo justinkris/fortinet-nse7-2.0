@@ -167,6 +167,28 @@
     footer{padding:16px 24px;}
   }
 </style>
+<style data-injected="related-sidebar">
+main.main-with-sidebar{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;padding:0 40px;}
+main.main-with-sidebar > .main-content{padding:36px 20px 60px 20px;}
+.related-sidebar{padding:36px 0 60px;}
+.related-sidebar-inner{background:var(--surface,#fffdf5);border:1px solid var(--border,#d4c89a);border-radius:14px;padding:22px 24px 26px;box-shadow:0 8px 22px -16px rgba(13,26,58,0.25);}
+.related-sidebar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text,#0a1838);letter-spacing:-0.005em;margin:0 0 6px;}
+.related-sidebar-sub{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:14px;}
+.related-group{margin-top:14px;}
+.related-group:first-of-type{margin-top:0;}
+.related-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group ul{list-style:none;padding:0;margin:0;}
+.related-group li{padding:6px 0;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group li:last-child{border-bottom:none;}
+.related-group a{display:flex;align-items:baseline;gap:8px;text-decoration:none;color:var(--text-soft,#1e2f5a);font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.4;transition:color .15s;}
+.related-group a:hover{color:var(--blue,#1e40af);}
+.related-group a .r-arrow{color:var(--blue,#1e40af);font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;opacity:0.6;transition:transform .15s, opacity .15s;flex-shrink:0;}
+.related-group a:hover .r-arrow{transform:translateX(2px);opacity:1;}
+.related-group a .r-tag{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted,#6b7794);background:var(--surface-2,#f5eed9);border:1px solid var(--border,#d4c89a);border-radius:10px;padding:2px 7px;margin-left:auto;flex-shrink:0;}
+.related-empty{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted,#6b7794);padding:6px 0;}
+@media(max-width:960px){main.main-with-sidebar{grid-template-columns:1fr;padding:0;gap:0;}main.main-with-sidebar > .main-content{padding:36px 60px 30px 60px;}.related-sidebar{padding:0 60px 60px;}}
+@media(max-width:640px){main.main-with-sidebar > .main-content{padding:28px 24px 24px 24px;}.related-sidebar{padding:0 24px 40px;}}
+</style>
 </head>
 <body>
 
@@ -182,7 +204,8 @@
   </div>
 </header>
 
-<main>
+<main class="main-with-sidebar">
+  <div class="main-content">
 
   <!-- ══════════════════════════════════════════════════════════
        NARRATIVE INTRO
@@ -388,6 +411,10 @@
     </ul>
   </div>
 
+</div>
+<!-- related-sidebar:start -->
+<aside class="related-sidebar"><div class="related-sidebar-inner"><div class="related-sidebar-title">Related pages</div><div class="related-sidebar-sub">Session 03</div><div class="related-group"><div class="related-group-label">Session</div><ul><li><a href="../index.html"><span class="r-arrow">›</span><span>Session hub</span></a></li><li><a href="../completed-session/index.html"><span class="r-arrow">›</span><span>Completed study guide</span><span class="r-tag">Guide</span></a></li><li><a href="../completed-session/summary.txt" target="_blank" rel="noopener"><span class="r-arrow">›</span><span>Session summary</span><span class="r-tag">txt</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Bites</div><ul><li><a href="../bites/enterprise-deployment-patterns.html"><span class="r-arrow">›</span><span>Session 03 Bite — Enterprise Deployment Patterns</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Nibbles</div><ul><li><a href="../nibbles/enterprise-deployment-patterns.html"><span class="r-arrow">›</span><span>Session 03 Nibble — The Five-Role Matrix</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Audio podcast</div><ul><li><a href="../../../audio-podcasts/index.html#panel-03"><span class="r-arrow">›</span><span>Podcast prompt</span><span class="r-tag">Prompt</span></a></li></ul></div></div></aside>
+<!-- related-sidebar:end -->
 </main>
 
 <footer>

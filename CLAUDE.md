@@ -196,6 +196,69 @@ Title: <optional title from the source>
 …
 ```
 
+## Auto-inject image placeholders for analogy / memory-hook blocks
+
+Whenever a sorted HTML file contains an **analogy-box** or a block labelled **Memory hook** / **Memory Hook** / **Analogy** *and it does not already have an image next to that text*, inject a placeholder underneath the text as part of the sort operation. This applies to bites, nibbles, guides, standalone extras, and completed-session files.
+
+**Detection heuristics** — trigger the injection when any of these are true:
+
+- The block has class `analogy-box` and no `<img>` inside it.
+- A section has an `.analogy-label`, `Memory hook` label text, `MEMORY HOOK` heading, or `Memory Hook` label, and no adjacent `<img>` in the same block.
+- A section has `<div class="mental-note-block">` with an obvious analogy tone (e.g. a boxed metaphor / one-sentence memory hook) — inject only if the file has no other section image at all.
+
+If the block already contains an `<img>` (or a `si-placeholder` / `image-placeholder` structure), do nothing — the existing "Image handling for sorted files with placeholders" rules take over.
+
+**Injection template** (drop under the analogy-text / memory-hook text, still inside the analogy-box so it inherits the amber theme):
+
+```html
+<div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:16px;">
+  <img src="images/<slug>.png" alt="<one-line description of the visual>"
+       style="width:100%;max-width:820px;border-radius:12px;border:1px solid var(--amber-border);display:block;"
+       onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+  <div style="display:none;border:2px dashed var(--amber-border);border-radius:12px;background:rgba(255,255,255,0.55);padding:32px 24px;flex-direction:column;align-items:center;gap:10px;width:100%;">
+    <div style="font-size:26px;">📜</div>
+    <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;color:#7a4f0c;text-transform:uppercase;">Image not yet generated</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:14.5px;color:#5c3d09;text-align:center;max-width:520px;line-height:1.6;font-style:italic;">Drop the generated PNG at <code style="font-family:'SF Mono','Fira Code',monospace;font-style:normal;background:rgba(0,0,0,0.05);padding:1px 6px;border-radius:4px;">images/<slug>.png</code> — see <code style="font-family:'SF Mono','Fira Code',monospace;font-style:normal;background:rgba(0,0,0,0.05);padding:1px 6px;border-radius:4px;">images/prompts.txt</code> for the prompt.</div>
+  </div>
+</div>
+```
+
+If the block sits outside an `analogy-box` (e.g. a bare `mental-note-block` memory hook), swap `--amber-border` → `--blue-border`, the emoji to 🧠, and the muted colors to blue tones so the fallback matches the mental-note theme.
+
+**Slug rules for `<slug>.png`:**
+
+- Kebab-case, descriptive of the analogy's central metaphor — not the topic. For "Boy Who Cried Wolf with a Ledger" pick `village-ledger.png`, not `route-flap-damping.png`.
+- Unique within the file's `images/` folder. If two analogies collide, append a discriminator (`-a`, `-b`).
+
+**Prompt authoring** — one entry per injected image, appended to the *same* `images/prompts.txt` file (create it if absent) using the shared block format:
+
+```
+Session NN — <kind>: <human title> (Memory Hook / Analogy)
+============================================================
+
+<slug>.png
+
+Title: <optional, short caption line>
+
+<full generation prompt — the project's flat minimalistic cartoon vector-art house style,
+warm cream + coral + sage + gold palette, no gradients/photorealism/3D, storybook mood,
+composition that literally illustrates the analogy's metaphor with 3–5 vignettes and
+minimal on-image text. Match the tone of the analogy — playful metaphors get whimsical
+compositions, cautionary metaphors get calmer/darker compositions.>
+
+============================================================
+```
+
+Prefer building the prompt directly from the analogy's own imagery (its ledger, its whisper chain, its notebook, its village). Do not invent unrelated art. The whole point is that when the image is generated, it *is* the analogy on the page.
+
+**When to skip:**
+
+- Standalone extras or guides that are pure CLI reference / cheat-sheets (no analogy). Adding storybook art to a code reference is out-of-place.
+- Files that already have a section illustration inside or immediately above/below the analogy — the reader doesn't need two images per concept.
+- Any analogy-box that explicitly reads like a throwaway one-liner ("Think of it like X.") without extended metaphor — reserve the image budget for real memory hooks.
+
+**Reporting** — in the sort report, add a short line noting which analogy images were auto-injected (e.g. `+ village-ledger.png placeholder + prompts.txt entry for extras-04 memory hook`) so the user knows the image is expected next.
+
 ## Page-transition normalization
 
 Session `index.html` uses a two-part page-transition system: a preloader `<script>` at the top of `<head>` that adds `pt-init` to `<html>` (which the CSS uses to hide body via `opacity:0`), plus a cleanup `<script>` before `</body>` that removes the class after DOMContentLoaded. When links are clicked, they set `sessionStorage.pt = 1` so the *next* page loads with body hidden and then fades in.

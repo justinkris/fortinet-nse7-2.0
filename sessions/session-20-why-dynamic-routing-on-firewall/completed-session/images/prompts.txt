@@ -1,0 +1,20 @@
+Session 20 — Completed Study Guide: Why Dynamic Routing on a Firewall
+============================================================
+
+s1-2am-outage.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm palette with cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, clean bold line work, no gradients. Composition: a split scene. Left half: a tired NOC engineer in a dim office at 2am, lit by a monitor showing a terminal prompt, one hand on a coffee mug, a wall clock reading 2:00. On his screen a single short command line is highlighted in gold. Right half: a stylized network path drawn as a road — a FortiGate tower with a bright green status LED, a road leading into a cloud labelled "MPLS", and deep inside the cloud a snapped fiber cable drawn as a cut rope with frayed ends, three road-markers (hops) away from the FortiGate. A thought bubble from the FortiGate shows the green LED, contrasted with a red X far away in the cloud. Labels: "interface: UP" near the LED, "fiber cut — 3 hops away" near the break, "the fix: 20 characters" near the terminal. The visual message: the device's local light is green while the real failure is far away and invisible to it.
+
+============================================================
+
+s3-rumor-vs-map.png
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, bold clean line work, no gradients, structured two-panel composition with generous spacing. Left panel titled "RUMOR" in small caps: four cartoon routers drawn as friendly boxes with faces in a line labelled A, B, C, D, leaning toward each other whispering with cupped hands; speech bubbles show shrinking, distorting text ("X: 1 hop" → "X: 2 hops" → "X: ???"); between B and C a coral circular arrow shows a small envelope (a packet) trapped bouncing back and forth, with a burning fuse labelled "TTL" attached to the envelope. Right panel titled "MAP": the same four routers, but each calmly holds an identical unfolded map showing the same sage-green graph of nodes and edges; one edge on every copy of the map is crossed out in coral with a small tag "LSA: link down"; each router has a small gold gear over its head labelled "Dijkstra" computing independently. Bottom caption area: "conclusions loop · facts converge".
+
+============================================================
+
+a1-whispers-vs-newspaper.png
+
+Flat minimalistic highly detailed cartoon illustration, vector-art aesthetic, cream background, coral and muted gold accents, sage green, soft brown outlines, no gradients. Two stacked scenes. Top: a whisper chain of five cartoon routers-with-faces passing a message ear to mouth; the speech bubble text visibly degrades left to right, ending in a garbled scribble; a small coral loop arrow circles between the last two figures. Bottom: the same five routers seated on a park bench, each holding an identical broadsheet newspaper titled "THE LSA TIMES" with the same headline "LINK DOWN: D–X"; each router has a tiny gold compass or route-planning doodle above its head, all drawing different personal routes from the same news. Calm, orderly composition contrasting the chaos above.
+
+============================================================

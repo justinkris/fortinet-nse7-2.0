@@ -4518,6 +4518,222 @@ def normalize_images_expanded():
             continue
         _normalize_images_expanded_in_file(p)
 
+
+# ────────────────────────────────────────────────────────────
+# Related-pages sidebar for completed-session/index.html
+# ────────────────────────────────────────────────────────────
+
+_RELATED_SIDEBAR_CSS = """
+<style data-injected="related-sidebar">
+main.main-with-sidebar{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;padding:0 40px;}
+main.main-with-sidebar > .main-content{padding:36px 20px 60px 20px;}
+.related-sidebar{padding:36px 0 60px;}
+.related-sidebar-inner{background:var(--surface,#fffdf5);border:1px solid var(--border,#d4c89a);border-radius:14px;padding:22px 24px 26px;box-shadow:0 8px 22px -16px rgba(13,26,58,0.25);}
+.related-sidebar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text,#0a1838);letter-spacing:-0.005em;margin:0 0 6px;}
+.related-sidebar-sub{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:14px;}
+.related-group{margin-top:14px;}
+.related-group:first-of-type{margin-top:0;}
+.related-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group ul{list-style:none;padding:0;margin:0;}
+.related-group li{padding:6px 0;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group li:last-child{border-bottom:none;}
+.related-group a{display:flex;align-items:baseline;gap:8px;text-decoration:none;color:var(--text-soft,#1e2f5a);font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.4;transition:color .15s;}
+.related-group a:hover{color:var(--blue,#1e40af);}
+.related-group a .r-arrow{color:var(--blue,#1e40af);font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;opacity:0.6;transition:transform .15s, opacity .15s;flex-shrink:0;}
+.related-group a:hover .r-arrow{transform:translateX(2px);opacity:1;}
+.related-group a .r-tag{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted,#6b7794);background:var(--surface-2,#f5eed9);border:1px solid var(--border,#d4c89a);border-radius:10px;padding:2px 7px;margin-left:auto;flex-shrink:0;}
+.related-empty{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted,#6b7794);padding:6px 0;}
+@media(max-width:960px){main.main-with-sidebar{grid-template-columns:1fr;padding:0;gap:0;}main.main-with-sidebar > .main-content{padding:36px 60px 30px 60px;}.related-sidebar{padding:0 60px 60px;}}
+@media(max-width:640px){main.main-with-sidebar > .main-content{padding:28px 24px 24px 24px;}.related-sidebar{padding:0 24px 40px;}}
+</style>
+""".strip()
+
+_RELATED_SIDEBAR_START = "<!-- related-sidebar:start -->"
+_RELATED_SIDEBAR_END = "<!-- related-sidebar:end -->"
+
+def _related_link_title(html_path):
+    """Extract a clean display title from a bite/nibble/guide/session HTML."""
+    raw = extract_html_title(html_path)
+    if not raw:
+        return html_path.stem.replace("-", " ").title()
+    return raw
+
+def _build_related_sidebar_html(session, session_dir, weakness_refs, has_podcast,
+                                current_kind, current_filename):
+    """Return the <aside> HTML.
+
+    current_kind is one of 'completed-session', 'bites', 'nibbles', 'guides'.
+    current_filename is the basename of the file being injected (used to dedupe self).
+    """
+    groups = []
+
+    # Group 1: Session
+    session_items = [
+        f'<li><a href="../index.html"><span class="r-arrow">›</span><span>Session hub</span></a></li>'
+    ]
+    complete_path = session_dir / "completed-session" / "index.html"
+    if current_kind != "completed-session" and complete_path.is_file():
+        session_items.append(
+            '<li><a href="../completed-session/index.html">'
+            '<span class="r-arrow">›</span><span>Completed study guide</span>'
+            '<span class="r-tag">Guide</span></a></li>'
+        )
+    summary_path = session_dir / "completed-session" / "summary.txt"
+    if summary_path.is_file():
+        summary_href = "summary.txt" if current_kind == "completed-session" else "../completed-session/summary.txt"
+        session_items.append(
+            f'<li><a href="{summary_href}" target="_blank" rel="noopener">'
+            f'<span class="r-arrow">›</span><span>Session summary</span>'
+            f'<span class="r-tag">txt</span></a></li>'
+        )
+    groups.append(('Session', session_items))
+
+    # Groups 2–4: Extras — bites, nibbles, guides (in that order)
+    for kind, label in (("bites", "Bites"), ("nibbles", "Nibbles"), ("guides", "Guides")):
+        kind_dir = session_dir / kind
+        if not kind_dir.is_dir():
+            continue
+        items = []
+        for f in sorted(kind_dir.glob("*.html")):
+            if current_kind == kind and current_filename == f.name:
+                continue  # dedupe self
+            title = html_escape(_related_link_title(f))
+            items.append(
+                f'<li><a href="../{kind}/{f.name}">'
+                f'<span class="r-arrow">›</span><span>{title}</span></a></li>'
+            )
+        if items:
+            groups.append((label, items))
+
+    # Group 5: Weakness sessions that resolved struggles from this session
+    if weakness_refs:
+        items = []
+        for w in weakness_refs:
+            title = html_escape(w["title"])
+            items.append(
+                f'<li><a href="../../../weakness-register/completed-weakness-sessions/weakness-{w["num"]:02d}-{w["slug"]}/index.html">'
+                f'<span class="r-arrow">›</span><span>{title}</span>'
+                f'<span class="r-tag">W{w["num"]:02d}</span></a></li>'
+            )
+        groups.append(('Weakness sessions', items))
+
+    # Group 6: Audio podcast
+    if has_podcast:
+        groups.append(('Audio podcast', [
+            f'<li><a href="../../../audio-podcasts/index.html#panel-{session["num"]:02d}">'
+            f'<span class="r-arrow">›</span><span>Podcast prompt</span>'
+            f'<span class="r-tag">Prompt</span></a></li>'
+        ]))
+
+    groups_html = "".join(
+        f'<div class="related-group"><div class="related-group-label">{label}</div><ul>{"".join(items)}</ul></div>'
+        for label, items in groups
+    )
+    return (
+        f'{_RELATED_SIDEBAR_START}\n'
+        f'<aside class="related-sidebar">'
+        f'<div class="related-sidebar-inner">'
+        f'<div class="related-sidebar-title">Related pages</div>'
+        f'<div class="related-sidebar-sub">Session {session["num"]:02d}</div>'
+        f'{groups_html}'
+        f'</div></aside>\n'
+        f'{_RELATED_SIDEBAR_END}'
+    )
+
+def _ensure_main_content_wrapper(text):
+    """If <main> doesn't already contain a .main-content wrapper, wrap its inner HTML in one.
+
+    Needed because bites/nibbles ship in two shapes:
+      A) <main><div class="main-content">...</div></main>   ← ready for the sidebar grid
+      B) <main>...direct children...</main>                  ← needs wrapping first
+    The grid rule targets main.main-with-sidebar > .main-content — shape (B) would
+    otherwise put every section-block into the grid as its own column child.
+    """
+    m = re.search(r'(<main\b[^>]*>)(.*?)(</main>)', text, re.DOTALL)
+    if not m:
+        return text
+    open_tag, inner, close_tag = m.group(1), m.group(2), m.group(3)
+    if 'class="main-content"' in inner or "class='main-content'" in inner:
+        return text
+    new_inner = f'\n  <div class="main-content">{inner}</div>\n'
+    return text[:m.start()] + open_tag + new_inner + close_tag + text[m.end():]
+
+def _inject_related_sidebar(path, session, weakness_refs, has_podcast, current_kind):
+    """Inject the sidebar into path (a completed-session/, bites/, nibbles/ or guides/ HTML)."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except Exception:
+        return
+    # 1. Strip any previous injection so we can re-render cleanly.
+    text = re.sub(
+        r'<style data-injected="related-sidebar">.*?</style>\s*',
+        '', text, flags=re.DOTALL,
+    )
+    text = re.sub(
+        re.escape(_RELATED_SIDEBAR_START) + r'.*?' + re.escape(_RELATED_SIDEBAR_END) + r'\s*',
+        '', text, flags=re.DOTALL,
+    )
+    if "</head>" not in text or "<main" not in text or "</main>" not in text:
+        return
+    # 2. Ensure the file has a .main-content wrapper for the grid layout.
+    text = _ensure_main_content_wrapper(text)
+    # 3. Inject fresh CSS before </head>.
+    text = text.replace("</head>", f'{_RELATED_SIDEBAR_CSS}\n</head>', 1)
+    # 4. Ensure <main> carries the sidebar-grid class.
+    def _add_class(match):
+        opening = match.group(0)
+        if 'class=' in opening:
+            return re.sub(
+                r'class=("|\')([^"\']*)(\1)',
+                lambda m: f'class={m.group(1)}main-with-sidebar {m.group(2)}{m.group(1)}' if 'main-with-sidebar' not in m.group(2) else m.group(0),
+                opening, count=1,
+            )
+        return opening[:-1] + ' class="main-with-sidebar">'
+    text = re.sub(r'<main\b[^>]*>', _add_class, text, count=1)
+    # 5. Insert the aside right before </main>.
+    # session_dir sits two levels up: {session_dir}/{kind}/{file}.html
+    session_dir = path.parent.parent
+    aside_html = _build_related_sidebar_html(
+        session, session_dir, weakness_refs, has_podcast,
+        current_kind, path.name,
+    )
+    text = text.replace("</main>", f'{aside_html}\n</main>', 1)
+    path.write_text(text, encoding="utf-8")
+
+def normalize_related_sidebars(weakness_sessions=None, audio_prompts=None):
+    """Inject the Related pages sidebar into every sorted completed-session, bite, nibble and guide."""
+    weakness_sessions = weakness_sessions or []
+    audio_prompts = audio_prompts or {}
+    # Reverse map: session_num → [weakness session dicts that reference it]
+    # (dedup by weakness num — the same session can appear multiple times if the
+    # weakness resolved several struggles from the same source session.)
+    weakness_by_session = {}
+    for w in weakness_sessions:
+        seen_targets = set()
+        for ref_session, _text in w.get("resolved_refs", []):
+            if ref_session in seen_targets:
+                continue
+            seen_targets.add(ref_session)
+            weakness_by_session.setdefault(ref_session, []).append(w)
+    for s in SESSIONS:
+        session_dir = SESSIONS_DIR / f"session-{s['num']:02d}-{s['slug']}"
+        if not session_dir.is_dir():
+            continue
+        refs = weakness_by_session.get(s["num"], [])
+        has_podcast = s["num"] in audio_prompts
+        # completed-session/index.html
+        complete_path = session_dir / "completed-session" / "index.html"
+        if complete_path.is_file():
+            _inject_related_sidebar(complete_path, s, refs, has_podcast, "completed-session")
+        # bites/, nibbles/, guides/
+        for kind in EXTRA_KINDS:
+            kind_dir = session_dir / kind
+            if not kind_dir.is_dir():
+                continue
+            for f in sorted(kind_dir.glob("*.html")):
+                _inject_related_sidebar(f, s, refs, has_podcast, kind)
+
+
 def normalize_page_transitions():
     """Walk all sorted HTML files and heal broken pt-init preloaders."""
     for s in SESSIONS:
@@ -6276,6 +6492,10 @@ def main():
     normalize_sorted_breadcrumbs()
     normalize_page_transitions()
     normalize_images_expanded()
+    normalize_related_sidebars(
+        weakness_sessions=weakness_sessions,
+        audio_prompts=discover_audio_prompts(),
+    )
     write_prompts_file()
 
     n_extras = sum(len(items) for kinds in extras.values() for items in kinds.values())
