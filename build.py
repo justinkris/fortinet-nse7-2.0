@@ -5472,6 +5472,23 @@ def render_sessions_index(completions=None, extras=None):
 # AUDIO PODCASTS HUB (audio-podcasts/index.html)
 # ---------------------------------------------------------------------------
 
+def _audio_short_label_words(title, n=3):
+    """Compress a session title to <= n leading words for the audio-podcast
+    copy label. Strips any subtitle after em-dash / hyphen-separator / colon
+    so the label is the topic, not the framing."""
+    t = title
+    for sep in ["—", " - ", ": "]:
+        idx = t.find(sep)
+        if idx > 0:
+            t = t[:idx].strip()
+    words = [w.strip(",&") for w in t.split()]
+    words = [w for w in words if w]
+    return " ".join(words[:n])
+
+def audio_copy_label(phase_num, sess_num, title):
+    """Build the P<phase>-S<session>-<short title> label for the audio-podcasts hub."""
+    return f"P{phase_num}-S{sess_num:02d}-{_audio_short_label_words(title)}"
+
 def discover_audio_prompts():
     """Return {session_num: (heading, body)} for sessions whose summary.txt
     contains an "AUDIO PODCAST PROMPT..." section."""
@@ -5514,6 +5531,8 @@ def render_audio_podcasts_hub():
                 heading, body = prompts[sess_num]
                 heading_esc = html_escape(heading)
                 prompt_esc = html_escape(body)
+                copy_label = audio_copy_label(phase_num, sess_num, s["title"])
+                copy_label_esc = html_escape(copy_label)
                 tiles_parts.append(
                     f'<button class="p-tile p-tile--has" type="button" '
                     f'data-session="{sess_num}" data-phase="{phase_num}" '
@@ -5538,6 +5557,7 @@ def render_audio_podcasts_hub():
                     f'  </div>'
                     f'  <div class="p-actions">'
                     f'    <button type="button" class="p-copy" data-target="{prompt_id}">Copy prompt</button>'
+                    f'    <button type="button" class="p-copy-label" data-copy-text="{copy_label_esc}" title="Copy filename label">{copy_label_esc}</button>'
                     f'    <a class="p-source" href="../sessions/{slug}/completed-session/summary.txt" target="_blank" rel="noopener">Open summary.txt</a>'
                     f'  </div>'
                     f'  <pre class="p-prompt" id="{prompt_id}">{prompt_esc}</pre>'
@@ -5666,6 +5686,9 @@ def render_audio_podcasts_hub():
   .p-copy{{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;background:var(--blue);color:#fff;border:0;border-radius:20px;padding:7px 14px;cursor:pointer;transition:background .15s;}}
   .p-copy:hover{{background:#173196;}}
   .p-copy.is-copied{{background:var(--green);}}
+  .p-copy-label{{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;font-weight:600;letter-spacing:0.02em;text-transform:none;background:var(--surface-2);color:var(--text-soft);border:1px solid var(--border);border-radius:20px;padding:6px 12px;cursor:pointer;transition:background .15s,color .15s,border-color .15s;}}
+  .p-copy-label:hover{{background:var(--blue-light);color:var(--blue);border-color:var(--blue-border);}}
+  .p-copy-label.is-copied{{background:var(--green-light);color:var(--green);border-color:var(--green-border);}}
   .p-source{{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);text-decoration:none;border-bottom:1px dotted var(--blue-border);padding-bottom:1px;}}
   .p-source:hover{{color:#173196;border-bottom-color:var(--blue);}}
   .p-prompt{{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:13px;line-height:1.55;color:var(--text);background:var(--bg);border:1px solid var(--border-dim);border-radius:8px;padding:16px 18px;white-space:pre-wrap;word-wrap:break-word;max-height:520px;overflow-y:auto;}}
@@ -5781,6 +5804,24 @@ def render_audio_podcasts_hub():
       var text = target.textContent;
       var done = function(){{
         var original = btn.textContent;
+        btn.textContent = 'Copied';
+        btn.classList.add('is-copied');
+        setTimeout(function(){{ btn.textContent = original; btn.classList.remove('is-copied'); }}, 1400);
+      }};
+      if (navigator.clipboard && navigator.clipboard.writeText) {{
+        navigator.clipboard.writeText(text).then(done).catch(function(){{ fallbackCopy(text); done(); }});
+      }} else {{
+        fallbackCopy(text); done();
+      }}
+    }});
+  }});
+
+  // Copy filename label (P<X>-S<Y>-<Title>)
+  document.querySelectorAll('.p-copy-label').forEach(function(btn){{
+    btn.addEventListener('click', function(){{
+      var text = btn.dataset.copyText || btn.textContent;
+      var original = btn.textContent;
+      var done = function(){{
         btn.textContent = 'Copied';
         btn.classList.add('is-copied');
         setTimeout(function(){{ btn.textContent = original; btn.classList.remove('is-copied'); }}, 1400);

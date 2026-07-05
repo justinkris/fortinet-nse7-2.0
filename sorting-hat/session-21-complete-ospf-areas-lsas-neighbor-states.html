@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 21 Complete — OSPF: Areas, LSAs &amp; Neighbor States</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+    --coral:#c2410c;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:rgba(251,247,236,0.6);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;text-transform:uppercase;}
+  .breadcrumb a{color:#9bb8e6;text-decoration:none;}
+  .breadcrumb a:hover{text-decoration:underline;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:46px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+  .top-panels{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+  .top-panels .qpanel{border-bottom:none;border-right:1px solid var(--border);}
+  .top-panels .qpanel-header{padding-left:32px;padding-right:32px;}
+  .top-panels .qpanel-body{padding-left:32px;padding-right:32px;}
+  .qpanel{background:var(--surface);}
+  .qpanel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .qpanel-header:hover,.qpanel-header.open{background:var(--surface-2);}
+  .qpanel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .qpanel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .qpanel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .qpanel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .qpanel-body{display:none;padding:0 20px 22px;}
+  .qpanel-body.open{display:block;}
+  .notes-panel{background:var(--surface);}
+  .notes-panel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 32px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .notes-panel-header:hover,.notes-panel-header.open{background:var(--surface-2);}
+  .notes-panel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .notes-panel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .notes-panel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .notes-panel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .notes-panel-body{display:none;padding:0 32px 22px;}
+  .notes-panel-body.open{display:block;}
+  .q-group{margin-bottom:16px;}
+  .q-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+  .q-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-dim);}
+  .q-item:last-child{border-bottom:none;}
+  .q-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;color:var(--blue);min-width:16px;margin-top:2px;}
+  .q-text{font-size:14px;color:var(--text-soft);line-height:1.5;flex:1;}
+  .q-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:0 4px;margin-top:1px;}
+  .q-del:hover{color:var(--blue);}
+  .no-questions{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);padding:8px 0;}
+  .btn-add-q{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-q:hover{opacity:0.85;}
+  .section-nav{position:sticky;top:0;z-index:90;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px;overflow-x:auto;}
+  .nav-tab{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:12px 18px;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s,border-color 0.15s;}
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+  main{max-width:1200px;margin:0 auto;padding:0;}
+  .main-content{padding:36px 60px 60px 60px;}
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:4px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;vertical-align:top;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .data-table td code, p code, li code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;background:var(--surface-2);border:1px solid var(--border-dim);border-radius:4px;padding:1px 6px;color:var(--blue);}
+  .code-block{background:var(--ink-dark);border-radius:10px;padding:0;margin:16px 0;overflow:hidden;border:1px solid var(--border);}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:8px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:16px;overflow-x:auto;}
+  .code-block code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12.5px;line-height:1.65;color:#e8efff;background:none;border:none;padding:0;}
+  .socratic-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:16px;border-top:3px solid var(--blue);}
+  .socratic-header{display:flex;align-items:center;gap:8px;margin-bottom:0;cursor:pointer;user-select:none;}
+  .socratic-header::after{content:'▸ Expand';margin-left:auto;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-block.soc-open .socratic-header{margin-bottom:10px;}
+  .socratic-block.soc-open .socratic-header::after{content:'▾ Collapse';}
+  .socratic-block:not(.soc-open) .socratic-insight,
+  .socratic-block:not(.soc-open) .socratic-questions,
+  .socratic-block:not(.soc-open) .answer-area{display:none;}
+  .socratic-icon{font-size:17px;flex-shrink:0;}
+  .socratic-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-insight{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;margin-bottom:12px;border-left:3px solid var(--border);padding-left:14px;font-style:italic;}
+  .socratic-questions{list-style:none;padding:0;margin:0;}
+  .socratic-questions li{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--border-dim);line-height:1.6;}
+  .socratic-questions li:last-child{border-bottom:none;}
+  .socratic-questions li::before{content:'?';position:absolute;left:0;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:16px;top:7px;color:var(--blue);}
+  .answer-area{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .answer-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .answer-textarea:focus{border-color:var(--blue);}
+  .answer-textarea:disabled{opacity:0.75;background:var(--surface-2);cursor:default;}
+  .answer-buttons{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .btn-add-answer{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-answer:hover:not(:disabled){opacity:0.85;}
+  .btn-add-answer:disabled{opacity:0.5;cursor:default;}
+  .btn-see-answer{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-see-answer:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-see-answer:not(:disabled){color:var(--blue);border-color:var(--blue);}
+  .btn-see-answer:hover:not(:disabled){background:var(--blue-glow);}
+  .model-answers{margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .model-answer-item{padding:10px 0;border-bottom:1px solid var(--border-dim);}
+  .model-answer-item:first-child{padding-top:0;}
+  .model-answer-item:last-child{border-bottom:none;padding-bottom:0;}
+  .model-answer-q{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;}
+  .model-answer-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;}
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+  .analogy-label{display:flex;align-items:center;gap:6px;user-select:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px;text-transform:uppercase;}
+  .analogy-label::after{content:'▾  Reveal illustration';margin-left:auto;font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:none;opacity:0.75;}
+  .analogy-label:hover::after{opacity:1;}
+  .analogy-box.expanded>.analogy-label::after{content:'▴  Hide illustration';}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
+  .lesson-tools{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:40px;}
+  .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .tool-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .tool-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .tool-textarea:focus{border-color:var(--blue);}
+  .tool-row{margin-top:8px;display:flex;gap:8px;}
+  .page-nav{display:flex;border-top:2px solid var(--border);background:var(--surface);}
+  .page-nav-btn{flex:1;display:flex;flex-direction:column;gap:4px;padding:16px 28px;text-decoration:none;transition:background 0.15s;cursor:pointer;}
+  .page-nav-btn:hover:not(.page-nav-disabled){background:var(--surface-2);}
+  .page-nav-prev{border-right:1px solid var(--border);}
+  .page-nav-next{text-align:right;}
+  .page-nav-disabled{opacity:0.3;pointer-events:none;}
+  .page-nav-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);display:block;text-transform:uppercase;}
+  .page-nav-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;font-style:italic;color:var(--blue);display:block;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:34px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}.section-nav{padding:0 16px;}.top-panels{grid-template-columns:1fr;}.top-panels .qpanel{border-right:none;border-bottom:1px solid var(--border);}.lesson-tools-grid{grid-template-columns:1fr;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="breadcrumb">
+      <a href="#">Home</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="#">Curriculum</a>
+      <span class="breadcrumb-sep">›</span>
+      <span>Session 21 — OSPF: Areas, LSAs &amp; Neighbor States</span>
+    </div>
+    <div class="header-eyebrow"><span class="dot-live"></span> Study Guide · NSE7 EF 7.6 · Domain 4 — Routing</div>
+    <h1>The Election That <em>Chose Nobody</em></h1>
+    <p>Two FortiGates parked at 2-Way for ten minutes, a whiteboard question about the DR site, and the discovery that OSPF quietly stops being link-state at every area border.</p>
+  </div>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">Hellos get you to 2-Way. Databases get you to Full. The DR election decides <em>whether you ever leave 2-Way at all.</em></div>
+  <p class="motivation-sub">Session 21 of the Vaultline journey: the lab bench before the production rollout, the backbone rule as loop prevention, all five LSAs invented before they were named, and the cost trap that breaks networks without a single symptom.</p>
+</div>
+
+<div class="top-panels">
+  <div class="qpanel" id="qpanel">
+    <button class="qpanel-header" onclick="toggleQPanel()" id="qpanel-header">
+      <span class="qpanel-title">MY QUESTIONS</span>
+      <span class="qpanel-count" id="qpanel-count">0</span>
+      <span class="qpanel-hint">— click to expand</span>
+      <span class="qpanel-chevron" id="qpanel-chevron">▾</span>
+    </button>
+    <div class="qpanel-body" id="qpanel-body"></div>
+  </div>
+  <div class="notes-panel" id="notes-panel">
+    <button class="notes-panel-header" onclick="toggleNotesPanel()" id="notes-panel-header">
+      <span class="notes-panel-title">MY NOTES</span>
+      <span class="notes-panel-count" id="notes-panel-count">0</span>
+      <span class="notes-panel-hint">— click to expand</span>
+      <span class="notes-panel-chevron" id="notes-panel-chevron">▾</span>
+    </button>
+    <div class="notes-panel-body" id="notes-panel-body"></div>
+  </div>
+</div>
+
+<nav class="section-nav" id="section-nav">
+  <a class="nav-tab active" href="#section-states">Neighbor States &amp; DR</a>
+  <a class="nav-tab" href="#section-areas">Areas &amp; the Backbone Rule</a>
+  <a class="nav-tab" href="#section-lsas">The Five LSAs</a>
+  <a class="nav-tab" href="#section-cost">Cost &amp; the Ruler</a>
+  <a class="nav-tab" href="#section-tshoot">Troubleshooting</a>
+</nav>
+
+<main>
+  <div class="main-content">
+
+    <!-- ═══════════ SECTION 1 — NEIGHBOR STATES & DR ═══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · NEIGHBOR STATES &amp; DR</span>
+      </div>
+      <p class="socratic-insight">Two lab FortiGates, one cable, OSPF on both sides — and the neighbor table has read <code>2-Way/DROTHER</code> for ten minutes. The other engineer asks: "Is that broken, or is that what working looks like?" Before reading on, answer him.</p>
+      <ul class="socratic-questions">
+        <li>What has 2-Way actually confirmed between two routers — and what hasn't even begun yet?</li>
+        <li>Could stuck-at-2-Way ever be healthy, permanent, designed behavior? Under what exact circumstances?</li>
+      </ul>
+      <div class="answer-area" data-section="states">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">2-Way means each router has seen its own Router ID listed inside the neighbor's hello — bidirectional communication is proven, full stop. No database description packets, no LSAs, nothing about topology has moved. And critically: the mere existence of a neighbor entry proves the hello's timer, area, subnet, and authentication checks all passed.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Yes — on a broadcast segment, two DROTHER routers hold 2-Way with each other permanently, by design. They both synchronize through the DR/BDR instead. The exam shows a healthy multi-router segment with 2-Way entries and invites you to "fix" it; there's nothing to fix. The fault case is different: ALL routers at priority 0 means the election ran perfectly and elected nobody.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-states">
+      <div class="section-label">SECTION 01 · THE ADJACENCY STATE MACHINE</div>
+      <h2>Seven states, and the election that <em>chose nobody</em></h2>
+      <p>The adjacency is a courtship with rules: <strong>Down → Init → 2-Way → ExStart → Exchange → Loading → Full</strong>. The first three are the hello conversation; the last four are database synchronization. The session's comic nibble carries the story version (he was DOWN to INITiate a 2-WAY…); this section carries the engineering.</p>
+      <table class="data-table">
+        <tr><th>State</th><th>What has been achieved</th><th>Parked here means</th></tr>
+        <tr><td>Down</td><td>Nothing — no hellos heard</td><td>Hellos rejected: timer / area / subnet / auth mismatch (checked inside the hello itself)</td></tr>
+        <tr><td>Init</td><td>Their hello received; my RID not yet listed in it</td><td>One-way delivery problem toward the neighbor</td></tr>
+        <tr><td>2-Way</td><td>My own RID appears in their hello — mutual, proven</td><td>Healthy for DROTHER pairs · fault if no DR can ever be elected</td></tr>
+        <tr><td>ExStart</td><td>Master/slave negotiation — higher RID leads, sets DBD sequence</td><td>MTU mismatch (the classic) or duplicate Router IDs</td></tr>
+        <tr><td>Exchange</td><td>DBD packets — LSA <em>headers</em>, database summaries only</td><td>Same suspects — MTU, loss</td></tr>
+        <tr><td>Loading</td><td>LSRs request missing/newer LSAs; LSUs deliver them in full</td><td>Rare — mangled LSAs, persistent loss</td></tr>
+        <tr><td>Full</td><td>LSDBs identical — only now does SPF compute routes</td><td>The goal</td></tr>
+      </table>
+      <p><strong>The bench incident.</strong> Both lab FortiGates carried <code>priority 0</code> on port5 — copied from a production <em>spoke template</em> draft where priority 0 is intentional. Priority 0 doesn't mean "unlikely to win" the DR election; it means <strong>ineligible</strong> — the router withdraws entirely. Two ineligible candidates → a flawless election that produced nobody → both routers waiting forever to synchronize with a DR that is constitutionally impossible to elect. The output said it plainly: <em>"No designated router on this network."</em> Correct config, wrong context — a real-world failure mode worth remembering.</p>
+      <p><strong>Why the DR exists — the arithmetic you can construct.</strong> Six routers fully meshed would need 6×5/2 = 15 database-sync conversations, all carrying identical information across the same wire. With a DR and BDR: the DR is Full with all 5 others, the BDR adds 4 new ones, DROTHER↔DROTHER pairs contribute 0 → <strong>5 + 4 + 0 = 9 = 2n−3</strong>. The six deleted adjacencies are exactly the DROTHER pairs, parked at 2-Way by design. The DR turns a gossip mesh into hub-and-spoke.</p>
+      <div class="callout callout-amber">
+        <strong>Two corrections that stuck this session:</strong> (1) A hello/dead <em>timer mismatch does not park you at 2-Way</em> — it prevents the neighbor entry from ever existing. Any visible neighbor has already proven the timers match. (2) The DR doesn't "send LSAs instead of each router" — every router still <em>originates</em> its own LSAs; the DR changes the <em>flooding pattern</em> (everyone floods to the DR, the DR reflects back out). The exam implies the DR generates other routers' LSAs; it doesn't.
+      </div>
+      <div class="callout callout-green">
+        <strong>Production use of priority 0:</strong> deliberately exclude devices from DR duty — a branch FortiGate whose CPU should inspect traffic, not reflect LSAs — and make DR placement <em>deterministic</em>: core boxes at priority 100+, everything else at 0. Designed elections, not accidental ones. The bench fix was one line: <code>set priority 1</code> on one box, and the state sprinted ExStart → Exchange → Loading → Full in seconds.
+      </div>
+      <div class="mental-note-block">
+        <span class="mental-note-block-icon">🗳️</span>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">Mental Note</div>
+          <div class="mental-note-block-text">Hellos get you to 2-Way; databases get you to Full; the DR election decides whether you ever leave 2-Way at all. Priority 0 = ineligible, not unlikely. Full adjacencies on a segment = 2n−3, never the mesh.</div>
+        </div>
+      </div>
+    </div>
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ADD A QUESTION · NEIGHBOR STATES</div>
+          <textarea class="tool-textarea" id="q-states" placeholder="What's still unclear about states or the DR election?"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQ('states')">+ Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE · NEIGHBOR STATES</div>
+          <textarea class="tool-textarea" id="note-states" placeholder="Capture an insight worth keeping..."></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('states')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ SECTION 2 — AREAS ═══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · AREAS &amp; THE BACKBONE RULE</span>
+      </div>
+      <p class="socratic-insight">Priya's whiteboard splits Vaultline into area 0 at HQ and branch areas, joined by ABRs. Session 20's anchor line was "OSPF floods facts; BGP exchanges claims." Hold a Type 3 summary — "prefix X reachable through me, cost 20" — against that line.</p>
+      <ul class="socratic-questions">
+        <li>Is a Type 3 a fact or a claim — and what does that make OSPF's behavior between areas?</li>
+        <li>If claims can rumor-loop (Session 20's B↔C disease), what stops inter-area claims from looping — given that areas deliberately don't share databases?</li>
+      </ul>
+      <div class="answer-area" data-section="areas">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">A claim. No links, no topology, no way for the receiving area to verify — a conclusion, "trust me." OSPF is link-state within an area and distance-vector between areas. That's not a flaw; it's the entire point of areas: Meridian holds conclusions about HQ instead of HQ's map, so HQ's topology changes cost Meridian nothing.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">A topology law, not an algorithm: every non-zero area must attach to area 0, and areas never attach to each other. A star has no cycles — every inter-area claim travels spoke → area 0 → spoke, and an ABR ignores Type 3s heard from a non-zero area. Backstop: intra-area routes always beat inter-area, regardless of cost.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-areas">
+      <div class="section-label">SECTION 02 · AREAS, THE BACKBONE RULE &amp; THE DR-SITE VERDICT</div>
+      <h2>Where OSPF stops being <em>link-state</em></h2>
+      <p>Inside an area: full map (Types 1/2), identical LSDBs, independent Dijkstra — loops structurally impossible. At the ABR, the map is digested into <strong>Type 3 claims</strong>: prefix, cost, "through me." The receiving area cannot verify a claim, only trust it — which is distance-vector behavior, and it resurrects distance-vector's loop problem <em>between</em> areas. OSPF's answer is not an algorithm but a law:</p>
+      <ul>
+        <li><strong>The backbone rule:</strong> every area attaches to area 0; areas never attach to each other. Area 0's real job isn't "the core" — it's the <strong>single trusted clearing house for claims</strong>. A star has no cycles; a claim's only path back to its origin area runs through the hub that already distributed it, and ABRs discard Type 3s arriving from non-zero areas.</li>
+        <li><strong>The preference backstop:</strong> intra-area routes beat inter-area routes always, regardless of cost — a router can never be seduced by a secondhand claim about a prefix it holds firsthand facts for.</li>
+        <li><strong>The cost asymmetry that justifies areas:</strong> a topology change inside an area = Type 1/2 re-origination + <em>full SPF on every router in that area</em>. The same change seen from another area = at worst a Type 3 appearing/vanishing = <strong>partial SPF</strong> — one prefix recomputed, the map untouched.</li>
+      </ul>
+      <p><strong>The DR-site verdict.</strong> Priya's circled question — DR site in area 0, or its own area? Option A (join area 0) has one genuine merit: no ABRs, no summarization decisions, one LSDB, simpler troubleshooting. But it wires the backbone's own Type 1/2 topology to the flappiest circuit Vaultline owns — the very link that died in Session 20, soon a VPN over two ISPs. Four flaps overnight = eight full-SPF storms on every backbone router, including ones with no traffic toward the DR site. <strong>Verdict: the DR site gets its own area (0.0.0.3).</strong> The edge FortiGates become ABRs, and every flap demotes to a partial recalculation at HQ. The simplicity of one area is not worth wiring the backbone's nervous system to the least reliable link.</p>
+      <div class="callout callout-amber">
+        <strong>Two rulings that fell out of the rule:</strong> (1) A direct branch↔branch link ("to save hops") is dead on arrival — physically pluggable, but no Type 3 heard across it from a non-zero area is ever believed. (2) <strong>Virtual links</strong> are the exam distractor here: their real purpose is to <em>reconnect a stranded area to the backbone</em> through an intermediate area. They extend area 0's reach; they never bypass it. Any answer using a virtual link to avoid the backbone is wrong.
+      </div>
+      <div class="callout">
+        <strong>Design detail parked for the config session:</strong> every WAN link must belong to exactly one area — and that choice decides <em>which router is the ABR</em> on that boundary. Also on ABRs: <code>config range</code> summarizes intra-area prefixes at the border (hub advertises one summary instead of many spoke subnets).
+      </div>
+      <div class="mental-note-block">
+        <span class="mental-note-block-icon">⭐</span>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">Mental Note</div>
+          <div class="mental-note-block-text">Link-state inside, distance-vector between. The backbone rule IS the loop prevention: a star has no cycles. Intra-area change = full SPF for the whole area; inter-area change = partial SPF. Put fragile links inside their own area — the border converts storms into footnotes.</div>
+        </div>
+      </div>
+    </div>
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ADD A QUESTION · AREAS</div>
+          <textarea class="tool-textarea" id="q-areas" placeholder="What's still unclear about areas or the backbone rule?"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQ('areas')">+ Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE · AREAS</div>
+          <textarea class="tool-textarea" id="note-areas" placeholder="Capture an insight worth keeping..."></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('areas')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ SECTION 3 — LSAS ═══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · THE FIVE LSAS</span>
+      </div>
+      <p class="socratic-insight">Marcus from the NOC squints at the area design: "Nice areas. So how does Meridian get to the internet?" The default route lives on FG-EDGE-P — but it wasn't born from any Type 1 or 2. It's news from outside the protocol entirely.</p>
+      <ul class="socratic-questions">
+        <li>If you were designing the LSA to carry external news, would you scope it to one area — or let it do something no other LSA is allowed to do?</li>
+        <li>Area 1 receives that external news, but it names an originating router that lives in a different area — invisible on area 1's map. What missing piece does area 1 need, and who can supply it?</li>
+      </ul>
+      <div class="answer-area" data-section="lsas">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Domain-wide. Everyone in every standard area needs the default route, so the Type 5 floods through all standard areas unchanged — the only LSA that crosses borders without being digested. ABRs don't translate it the way they turn topology into Type 3s.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Directions to the ASBR — supplied by the ABR as a Type 4 (ASBR Summary), essentially a Type 3 about a router instead of a network. The ASBR cannot supply it: a router can't advertise directions to itself from an area it isn't in — that impossibility is the entire reason Type 4 exists.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-lsas">
+      <div class="section-label">SECTION 03 · LSA TYPES — WHO SPEAKS, AND HOW FAR</div>
+      <h2>Five LSAs, each invented <em>when a problem demanded it</em></h2>
+      <p>Every LSA answers two questions: who is allowed to say this, and how far may the message travel. The session encountered all five in problem order — and the originator column is where every exam distractor lives.</p>
+      <table class="data-table">
+        <tr><th>Type</th><th>Describes</th><th>Originated by</th><th>Floods</th></tr>
+        <tr><td>1 — Router</td><td>A router's own links and costs (its autobiography); an ASBR flags itself here with the E-bit</td><td>Every router</td><td>Own area only</td></tr>
+        <tr><td>2 — Network</td><td>The multi-access <strong>segment itself</strong> (pseudonode) and everyone attached</td><td><strong>The DR — only.</strong> The BDR originates nothing</td><td>Own area only</td></tr>
+        <tr><td>3 — Summary</td><td>An inter-area <strong>claim</strong>: prefix, cost, "through me"</td><td>ABR</td><td>Per-area; re-originated by each ABR it crosses</td></tr>
+        <tr><td>4 — ASBR Summary</td><td>Directions to an ASBR in another area</td><td><strong>The ABR — not the ASBR</strong></td><td>Into areas that can't see the ASBR</td></tr>
+        <tr><td>5 — AS External</td><td>The foreign prefix itself (static, BGP, RIP)</td><td>ASBR</td><td><strong>Domain-wide, unchanged</strong> — all standard areas; banned from stub/NSSA</td></tr>
+      </table>
+      <p><strong>The two-hat router.</strong> At Vaultline, <strong>FG-EDGE-P</strong> becomes the ASBR the moment the ISP-A default is redistributed into OSPF — and with WAN links assigned to areas on its side, it's simultaneously the ABR. One box originating both Type 5s and Type 3s. Nuance: when the ABR <em>is</em> the ASBR, the branches barely need a Type 4 for it — Type 4 earns its keep when the smuggler and the border are <strong>different routers</strong> (picture the core router redistributing a legacy RIP network: now FG-EDGE-P must publish directions to an ASBR the branches can't see). <em>Type 4 exists for the gap between the border and the smuggler.</em></p>
+      <ul>
+        <li><strong>External metric types:</strong> E1 = internal cost + external cost; E2 = external cost only. E1 preferred over E2 when both exist.</li>
+        <li><strong>Stub &amp; NSSA (reference, not yet derived in session):</strong> stub areas ban Type 5s and receive a default route from their ABR instead; an NSSA additionally lets its own internal ASBR's externals out as <strong>Type 7</strong>, translated to Type 5 by the NSSA ABR at the border. On FortiGate the area type is regular by default; stub/nssa are configurable.</li>
+        <li><strong>ASBR summarization:</strong> <code>config summary-address</code> on the ASBR condenses redistributed externals.</li>
+      </ul>
+      <div class="callout callout-amber">
+        <strong>Register item — the Type 4 originator.</strong> This was missed in-session even after correction, which earns it a permanent red flag: <em>Type 4 — originated by the ABR, about the ASBR.</em> The distractor logic: it feels like the ASBR's job because the LSA is about the ASBR. Kill it with the structural argument — the Type 4 exists precisely because the ASBR is invisible to that area; an invisible router can't inject directions to itself.
+      </div>
+      <div class="mental-note-block">
+        <span class="mental-note-block-icon">📜</span>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">Mental Note</div>
+          <div class="mental-note-block-text">1 = everyone's autobiography · 2 = the DR speaks for the square · 3 = the herald's claim at the gate · 4 = the herald's directions to the smuggler (ABR-authored!) · 5 = the smuggler's news over every wall. Maps stay home; claims cross borders; only external news flies domain-wide.</div>
+        </div>
+      </div>
+    </div>
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ADD A QUESTION · LSAS</div>
+          <textarea class="tool-textarea" id="q-lsas" placeholder="What's still unclear about the LSA types?"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQ('lsas')">+ Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE · LSAS</div>
+          <textarea class="tool-textarea" id="note-lsas" placeholder="Capture an insight worth keeping..."></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('lsas')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ SECTION 4 — COST ═══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · COST &amp; THE REFERENCE RULER</span>
+      </div>
+      <p class="socratic-insight">The bench output said <code>Cost: 1</code>. That number is what Dijkstra sums when it walks the map — and it comes from a formula with a default that silently broke the moment networks got faster than 1 Gbps.</p>
+      <ul class="socratic-questions">
+        <li>Reference bandwidth ÷ interface bandwidth, with FortiGate's default reference of 1 Gbps: what does a 100 Mbps link cost? A 1 Gbps link? A 10 Gbps link?</li>
+        <li>If you raise the reference on only the new fast routers, the LSDBs stay perfectly identical everywhere. So what exactly goes wrong?</li>
+      </ul>
+      <div class="answer-area" data-section="cost">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">100 Mbps → cost 10. 1 Gbps → cost 1. 10 Gbps → formula says 0.1, clamped to the minimum: cost 1. With the default reference, Dijkstra is blind above 1 Gbps — a 1 Gig link and a 100 Gig link look identical.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Mixed rulers. Cost travels inside the Type 1/2 LSAs, so the shared map is drawn with inconsistent units: one router's 10G link costs 10 while another's 1G link costs 1. Identical databases, unanimous agreement, confidently wrong shortest paths — worse than disagreement, because nothing looks broken. One ruler for the whole domain: change it everywhere or nowhere.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-cost">
+      <div class="section-label">SECTION 04 · OSPF COST ON FORTIGATE</div>
+      <h2>Big pipe, <em>small cost</em> — and the broken default</h2>
+      <p>OSPF's metric is <strong>cost</strong>: a positive integer (1–65,535) per interface; a route's cost is the sum along the path; lowest total wins. FortiGate derives it as <strong>reference bandwidth ÷ interface bandwidth</strong>, default reference <strong>1 Gbps</strong> (1,000,000 kbps). The slogan that prevents inversion: <em>big pipe, small cost</em> — bandwidth lives in the denominator.</p>
+      <ul>
+        <li>100 Mbps → 10 · 1 Gbps → 1 · 10 Gbps → 0.1, <strong>clamped to 1</strong> (integer minimum).</li>
+        <li><strong>The blindness:</strong> at the default reference, 1G = 10G = 40G = 100G = cost 1. Vaultline's new 10/40G core would be invisible as an upgrade; traffic load-shares onto the 1G legacy path because the map says they're equal.</li>
+        <li><strong>The silent disaster:</strong> raising the reference on <em>some</em> routers doesn't break flooding — LSDBs stay identical — but the map is now drawn with mixed rulers. Every router computes the same wrong answer. No stuck state, no alarm, just traffic on the slow path.</li>
+      </ul>
+      <div class="code-block">
+        <div class="code-label">FORTIGATE · ONE RULER FOR THE WHOLE KINGDOM (value in Mbps)</div>
+        <pre><code>config router ospf
+    set auto-cost-ref-bandwidth 100000   &#47;&#47; 100 Gbps reference
+end
+&#47;&#47; Resulting costs: 100G=1 · 40G=2(rounded) · 10G=10 · 1G=100 · 100M=1000</code></pre>
+      </div>
+      <p>Why the config exists, tied to the model: the reference bandwidth is the <em>unit of measurement</em> for the entire shared map. Because cost travels inside Types 1 and 2, the setting is domain-wide by nature even though it's configured per-router — which is exactly why it must be applied <strong>everywhere or nowhere</strong>.</p>
+      <div class="mental-note-block">
+        <span class="mental-note-block-icon">📏</span>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">Mental Note</div>
+          <div class="mental-note-block-text">Cost = reference ÷ bandwidth. Big pipe, small cost. Default reference (1G) is blind above 1 Gbps — everything clamps to 1. Fix with auto-cost-ref-bandwidth on EVERY router: mixed rulers = identical LSDBs, unanimous, confidently wrong.</div>
+        </div>
+      </div>
+    </div>
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ADD A QUESTION · COST</div>
+          <textarea class="tool-textarea" id="q-cost" placeholder="What's still unclear about cost or the reference bandwidth?"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQ('cost')">+ Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE · COST</div>
+          <textarea class="tool-textarea" id="note-cost" placeholder="Capture an insight worth keeping..."></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('cost')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ SECTION 5 — TROUBLESHOOTING ═══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · TROUBLESHOOTING METHODOLOGY</span>
+      </div>
+      <p class="socratic-insight">The whole session was one continuous fault investigation. Before reading the methodology back, reconstruct it.</p>
+      <ul class="socratic-questions">
+        <li>A neighbor is visible but parked. Why does that single observation instantly exonerate the hello timers — and what does the parked state itself tell you?</li>
+        <li>Everything shows Full, yet traffic takes the slow path. Why is this the scariest OSPF failure — and which output field exposes it?</li>
+      </ul>
+      <div class="answer-area" data-section="tshoot">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">A neighbor entry only exists because hellos were accepted — and hello acceptance validates timers, area, subnet, and auth. So a visible neighbor at any state has already passed those checks. The state names the failing layer: Init = one-way delivery · 2-Way = DR election/priority · ExStart/Exchange = MTU or duplicate RID.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Because it produces zero symptoms in the neighbor table — Full everywhere, synchronized LSDBs, unanimous and wrong. Reference-bandwidth mismatch or default-reference blindness. The exposing field is Cost in <code>get router info ospf interface</code>: faster link must show lower cost, and the ruler must match domain-wide.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-tshoot">
+      <div class="section-label">SECTION 05 · TROUBLESHOOTING — SYMPTOM NAMES THE SUSPECT</div>
+      <h2>One symptom, one suspect, <em>one command</em></h2>
+      <p>The methodology built across the session: <strong>locate the failing layer before touching config.</strong> Start at <code>get</code> (what OSPF believes), escalate to <code>diagnose</code> (the wire and the engine) only when belief and reality disagree, and reach for <code>execute</code> when you need the fault reproduced under observation.</p>
+      <ol>
+        <li><code>get router info ospf neighbor</code> — the fault-tree splitter. No entry vs parked-at-state vs Full.</li>
+        <li>No entry → compare <code>get router info ospf interface</code> on <strong>both</strong> sides: timers, area, subnet, auth.</li>
+        <li>Parked → the state is the suspect list (Init/2-Way/ExStart as above). Same interface command; read Priority, DR/BDR lines, MTU.</li>
+        <li>Full but routes missing → <code>get router info ospf database brief</code> (is it in the map?) vs <code>get router info routing-table all</code> (did AD competition eat it? Static 10 · eBGP 20 · OSPF 110 · iBGP 200 — LSDB ≠ RIB).</li>
+        <li>Summaries contradict reality → <code>diagnose sniffer packet &lt;port&gt; 'proto 89' 4</code> (OSPF = IP protocol 89, hellos to 224.0.0.5; DR/BDR listen on 224.0.0.6), then the OSPF engine debug — and <strong>always</strong> <code>diagnose debug disable</code> afterwards.</li>
+        <li>Reproduce cleanly → <code>execute router clear ospf process</code>, with debug watching. An execute: real consequences, production caution.</li>
+      </ol>
+      <div class="analogy-box">
+        <div class="analogy-label">ANALOGY · THE COURTSHIP &amp; THE CLEARING HOUSE</div>
+        <div class="analogy-text"><div class="analogy-summary">Two analogies carried the session.</div>The adjacency is a courtship: he was DOWN to INITiate a 2-WAY, they ExStart-ed to EXCHANGE stories, she kept LOADING up on details until she held his complete book and could prove he was FULL of it — you can only call someone's whole database lies once you hold an identical copy. And the area design is a kingdom: villagers hold maps of their own houses (Type 1), one town crier speaks for each square (Type 2, the DR), heralds at the gates carry claims not maps (Type 3), post directions to the smuggler (Type 4 — herald-authored), and the smuggler's paper airplanes fly over every wall (Type 5). Maps never leave the village; the capital clears every claim; a star has no cycles.</div>
+      </div>
+      <div class="callout callout-green">
+        <strong>Workplace application:</strong> the bench discipline itself is the lesson — prove adjacency formation, break timers/areas/priorities deliberately, and log incidents in one sentence ("a perfectly executed election with no candidates") <em>before</em> a protocol touches production. The first production stuck-state should be an old friend.
+      </div>
+      <div class="mental-note-block">
+        <span class="mental-note-block-icon">🔎</span>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">Mental Note</div>
+          <div class="mental-note-block-text">Neighbor missing → hello contents. Neighbor parked → the state names the layer. Full but wrong paths → costs and the ruler. LSDB ≠ RIB — AD arbitrates. Protocol 89, 224.0.0.5. Debug off before you walk away.</div>
+        </div>
+      </div>
+    </div>
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ADD A QUESTION · TROUBLESHOOTING</div>
+          <textarea class="tool-textarea" id="q-tshoot" placeholder="What's still unclear about the methodology?"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQ('tshoot')">+ Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE · TROUBLESHOOTING</div>
+          <textarea class="tool-textarea" id="note-tshoot" placeholder="Capture an insight worth keeping..."></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('tshoot')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="page-nav">
+  <a class="page-nav-btn page-nav-prev" href="#">
+    <span class="page-nav-label">◀ PREVIOUS SESSION</span>
+    <span class="page-nav-title">Session 20 — Why Dynamic Routing on a Firewall</span>
+  </a>
+  <a class="page-nav-btn page-nav-next page-nav-disabled" href="#">
+    <span class="page-nav-label">NEXT SESSION ▶</span>
+    <span class="page-nav-title">Session 22 — BGP to the ISPs (upcoming)</span>
+  </a>
+</div>
+
+<footer>NSE7 EF 7.6 · SESSION 21 COMPLETE · <span>OSPF — AREAS, LSAS &amp; NEIGHBOR STATES</span> · VAULTLINE FINANCIAL</footer>
+
+<script>
+const PAGE_KEY = 'nse7-s21-complete-ospf';
+const SECTIONS = {
+  'states': 'Neighbor States & DR',
+  'areas': 'Areas & the Backbone Rule',
+  'lsas': 'The Five LSAs',
+  'cost': 'Cost & the Ruler',
+  'tshoot': 'Troubleshooting'
+};
+function getQArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-questions') || '[]'); }
+function saveQArr(qs) { localStorage.setItem(PAGE_KEY+'-questions', JSON.stringify(qs)); }
+function addQ(key) {
+  const ta = document.getElementById('q-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const qs = getQArr(); qs.push({id: Date.now(), section: key, text});
+  saveQArr(qs); ta.value = ''; renderQPanel();
+  if (!document.getElementById('qpanel-body').classList.contains('open')) toggleQPanel();
+}
+function deleteQ(id) { saveQArr(getQArr().filter(q => q.id !== id)); renderQPanel(); }
+function toggleQPanel() {
+  const body = document.getElementById('qpanel-body');
+  const header = document.getElementById('qpanel-header');
+  const chevron = document.getElementById('qpanel-chevron');
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-qpanel-open', open);
+}
+function renderQPanel() {
+  const qs = getQArr();
+  const count = document.getElementById('qpanel-count');
+  if (count) { count.textContent = qs.length; count.style.display = qs.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.qpanel-hint');
+  if (hint) hint.textContent = qs.length ? `— ${qs.length} question${qs.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('qpanel-body'); if (!body) return;
+  if (!qs.length) { body.innerHTML = '<p class="no-questions">No questions yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  qs.forEach(q => { if (groups[q.section]) groups[q.section].push(q); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(q => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${q.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteQ(${q.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function getNotesArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-notes') || '[]'); }
+function saveNotesArr(ns) { localStorage.setItem(PAGE_KEY+'-notes', JSON.stringify(ns)); }
+function addNote(key) {
+  const ta = document.getElementById('note-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const ns = getNotesArr(); ns.push({id: Date.now(), section: key, sectionName: SECTIONS[key]||key, text});
+  saveNotesArr(ns); ta.value = ''; renderNotesPanel();
+  if (!document.getElementById('notes-panel-body').classList.contains('open')) toggleNotesPanel();
+}
+function deleteNote(id) { saveNotesArr(getNotesArr().filter(n => n.id !== id)); renderNotesPanel(); }
+function toggleNotesPanel() {
+  const body = document.getElementById('notes-panel-body');
+  const header = document.getElementById('notes-panel-header');
+  const chevron = document.getElementById('notes-panel-chevron');
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-notes-panel-open', open);
+}
+function renderNotesPanel() {
+  const ns = getNotesArr();
+  const count = document.getElementById('notes-panel-count');
+  if (count) { count.textContent = ns.length; count.style.display = ns.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.notes-panel-hint');
+  if (hint) hint.textContent = ns.length ? `— ${ns.length} note${ns.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('notes-panel-body'); if (!body) return;
+  if (!ns.length) { body.innerHTML = '<p class="no-questions">No notes yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  ns.forEach(n => { if (groups[n.section]) groups[n.section].push(n); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(n => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteNote(${n.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function saveSocAnswer(btn) {
+  const area = btn.closest('.answer-area');
+  const ta = area.querySelector('.answer-textarea');
+  if (!ta.value.trim()) { ta.focus(); return; }
+  const key = PAGE_KEY+'-socans-'+area.dataset.section;
+  try { localStorage.setItem(key, ta.value); } catch(e) {}
+  ta.disabled = true; btn.textContent = '✓ Answer saved'; btn.disabled = true;
+  const seeBtn = area.querySelector('.btn-see-answer');
+  seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+}
+function revealSocAnswer(btn) {
+  if (btn.disabled) return;
+  const answers = btn.closest('.answer-area').querySelector('.model-answers');
+  const isHidden = answers.style.display === 'none' || !answers.style.display;
+  answers.style.display = isHidden ? 'block' : 'none';
+  btn.textContent = isHidden ? '▲ Hide Model Answer' : '💡 See Model Answer';
+}
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+document.addEventListener('DOMContentLoaded', function() {
+  renderQPanel(); renderNotesPanel();
+  if (localStorage.getItem(PAGE_KEY+'-qpanel-open') === 'true') toggleQPanel();
+  if (localStorage.getItem(PAGE_KEY+'-notes-panel-open') === 'true') toggleNotesPanel();
+  document.querySelectorAll('.answer-area').forEach(function(area) {
+    const key = PAGE_KEY+'-socans-'+area.dataset.section;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const ta = area.querySelector('.answer-textarea'); ta.value = saved; ta.disabled = true;
+        const addBtn = area.querySelector('.btn-add-answer'); addBtn.textContent = '✓ Answer saved'; addBtn.disabled = true;
+        const seeBtn = area.querySelector('.btn-see-answer'); seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+      }
+    } catch(e) {}
+  });
+  document.querySelectorAll('.socratic-block').forEach(function(block) {
+    const header = block.querySelector('.socratic-header');
+    if (header) header.addEventListener('click', () => block.classList.toggle('soc-open'));
+  });
+  document.querySelectorAll('.analogy-box').forEach(function(box) {
+    if (box.dataset.collapsibleInit) return;
+    box.dataset.collapsibleInit = '1';
+    box.classList.add('expanded');
+    const label = box.querySelector(':scope > .analogy-label');
+    if (label) label.addEventListener('click', () => box.classList.toggle('expanded'));
+  });
+});
+</script>
+</body>
+</html>

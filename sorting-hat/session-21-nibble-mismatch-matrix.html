@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 21 Nibble — The OSPF Mismatch Matrix</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+    --coral:#c2410c;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;color:rgba(251,247,236,0.6);text-transform:uppercase;}
+  .breadcrumb a{color:#9bb8e6;text-decoration:none;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:46px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+  main{max-width:1200px;margin:0 auto;}
+  .main-content{padding:36px 60px 60px;}
+  .section-block{margin-bottom:44px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;vertical-align:top;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .data-table code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;background:var(--surface-2);border:1px solid var(--border-dim);border-radius:4px;padding:1px 6px;color:var(--blue);white-space:nowrap;}
+  .sym{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:2px 9px;border-radius:10px;display:inline-block;}
+  .sym-dead{background:#fdeee6;color:var(--coral);border:1px solid #f0c4ad;}
+  .sym-warn{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border);}
+  .sym-ok{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:32px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="breadcrumb">
+    <a href="#">Home</a><span class="breadcrumb-sep">›</span><a href="#">Curriculum</a><span class="breadcrumb-sep">›</span><span>Session 21 Nibble — The Mismatch Matrix</span>
+  </div>
+  <div class="header-eyebrow"><span class="dot-live"></span> SESSION 21 · NIBBLE · OSPF DIAGNOSTICS</div>
+  <h1>The OSPF <em>Mismatch Matrix</em></h1>
+  <p>Every OSPF misconfiguration leaves a fingerprint. Read the symptom, name the suspect, run one command. This is the reflex the exam tests.</p>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">The exam never asks "list the states" — it shows you a router <em>parked somewhere</em> and asks why.</div>
+  <p class="motivation-sub">Six fingerprints below. Five park the adjacency at a known state. The sixth is the scariest: it parks nothing, breaks nothing visibly, and quietly routes your traffic down the slow path.</p>
+</div>
+
+<main>
+  <div class="main-content">
+
+    <div class="section-block" id="section-matrix">
+      <div class="section-label">THE MATRIX · SYMPTOM → SUSPECT → PROOF</div>
+      <h2>Read the fingerprint, name the <em>one</em> mismatch</h2>
+      <table class="data-table">
+        <tr><th>Symptom you observe</th><th>What it means</th><th>First suspect(s)</th><th>Command that proves it</th></tr>
+        <tr>
+          <td><span class="sym sym-dead">NO NEIGHBOR ENTRY AT ALL</span></td>
+          <td>Hellos are being rejected on arrival — the relationship never begins</td>
+          <td><strong>Hello/dead timer</strong>, <strong>area ID</strong>, subnet/mask, or authentication mismatch. All four are checked inside the hello packet itself.</td>
+          <td><code>get router info ospf interface</code> on BOTH sides — compare Hello/Dead, Area, network line by line</td>
+        </tr>
+        <tr>
+          <td><span class="sym sym-dead">PARKED AT INIT</span></td>
+          <td>Their hellos reach you; yours never register with them. One-way street.</td>
+          <td>One-way filtering/ACL, or your hellos not delivered (multicast blocked toward them)</td>
+          <td><code>diagnose sniffer packet &lt;port&gt; 'proto 89' 4</code> — are your hellos leaving? Are theirs listing your RID?</td>
+        </tr>
+        <tr>
+          <td><span class="sym sym-warn">PARKED AT 2-WAY</span></td>
+          <td>Mutual recognition complete; database exchange never begins</td>
+          <td><strong>Case 1 (healthy):</strong> both routers are DROTHERs on a multi-router segment — designed behavior. <strong>Case 2 (fault):</strong> ALL routers priority 0 → election ran perfectly, elected nobody, no DR can ever exist.</td>
+          <td><code>get router info ospf interface</code> — read <strong>Priority</strong> and the DR/BDR lines. "No designated router on this network" + Priority 0 everywhere = the fault.</td>
+        </tr>
+        <tr>
+          <td><span class="sym sym-dead">PARKED AT EXSTART / EXCHANGE</span></td>
+          <td>Master/slave chosen (or being chosen), but DBD packets aren't surviving the trip</td>
+          <td><strong>MTU mismatch</strong> (the classic — big-MTU side's DBDs get dropped) · duplicate Router IDs</td>
+          <td><code>get router info ospf interface</code> + interface MTU on both sides; <code>get router info ospf status</code> to compare Router IDs</td>
+        </tr>
+        <tr>
+          <td><span class="sym sym-warn">FLAPPING — FULL, THEN DOWN, THEN FULL</span></td>
+          <td>Adjacency forms fine, then dead interval keeps expiring</td>
+          <td>Unstable link, packet loss eating hellos, or asymmetric timers that <em>almost</em> align</td>
+          <td><code>get router info ospf neighbor</code> repeatedly — watch Dead Time; if it counts to zero instead of resetting near max, hellos are being lost</td>
+        </tr>
+        <tr>
+          <td><span class="sym sym-ok">FULL EVERYWHERE — BUT TRAFFIC TAKES THE SLOW PATH</span></td>
+          <td><strong>No stuck state. Nothing looks broken.</strong> The map is unanimous and wrong.</td>
+          <td><strong>Reference-bandwidth mismatch</strong> — one router measures with a 100G ruler, another with the 1G default. Identical LSDBs, mixed rulers, confidently wrong SPF. Also: default ref-bw blindness (1G and 100G both cost 1).</td>
+          <td><code>get router info ospf interface</code> — read <strong>Cost</strong> on the links along the path; sanity-check faster link = lower cost, and that <code>auto-cost-ref-bandwidth</code> matches domain-wide</td>
+        </tr>
+      </table>
+
+      <div class="callout callout-amber">
+        <strong>The trap hiding in row 1:</strong> a timer mismatch does <em>not</em> park you at 2-Way — it prevents the neighbor entry from ever existing. If you can see a neighbor at ANY state, the hellos already passed the timer/area/subnet/auth checks. That single observation instantly eliminates four suspects. (This was Session 21's own misconception, corrected on the lab bench.)
+      </div>
+
+      <div class="callout callout-green">
+        <strong>The one that should scare you (row 6):</strong> every other row announces itself. Reference-bandwidth mismatch produces zero symptoms in the neighbor table — Full adjacencies, synchronized LSDBs, and a backbone quietly preferring a 1 Gbps legacy link over the 10 Gbps core. One ruler for the whole kingdom: change <code>auto-cost-ref-bandwidth</code> everywhere or nowhere.
+      </div>
+
+      <div class="mental-note-block">
+        <span class="mental-note-block-icon">🔎</span>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">Mental Note — the 10-second triage</div>
+          <div class="mental-note-block-text">Neighbor missing → hello contents (timers/area/subnet/auth). Neighbor visible but parked → the state names the layer: Init = one-way delivery · 2-Way = DR election (priority!) · ExStart = MTU/RID. Everything Full but paths wrong → costs and the reference ruler. One symptom, one suspect, one command.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>NSE7 EF 7.6 · SESSION 21 NIBBLE · <span>THE OSPF MISMATCH MATRIX</span></footer>
+
+<script>
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+</script>
+</body>
+</html>

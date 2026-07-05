@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 21 Bite — OSPF Troubleshooting Commands on FortiGate</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-glow:rgba(30,64,175,0.07);
+    --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+    --coral:#c2410c;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;color:rgba(251,247,236,0.6);text-transform:uppercase;}
+  .breadcrumb a{color:#9bb8e6;text-decoration:none;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  header h1{font-family:'Playfair Display',serif;font-size:42px;font-weight:700;line-height:1.05;color:#fbf7ec;margin-bottom:10px;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+  main{max-width:960px;margin:0 auto;}
+  .main-content{padding:36px 60px 60px;}
+  .section-block{margin-bottom:44px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:27px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+  .section-block ol,.section-block ul{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:16.5px;line-height:1.7;color:var(--text-soft);margin-bottom:6px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;vertical-align:top;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td code, p code, li code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px;background:var(--surface-2);border:1px solid var(--border-dim);border-radius:4px;padding:1px 6px;color:var(--blue);}
+  .code-block{background:var(--ink-dark);border-radius:10px;margin:16px 0;overflow:hidden;border:1px solid var(--border);}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:8px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:16px;overflow-x:auto;}
+  .code-block code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12.5px;line-height:1.65;color:#e8efff;background:none;border:none;padding:0;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+  .analogy-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:6px;text-transform:uppercase;}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .socratic-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:16px;border-top:3px solid var(--blue);}
+  .socratic-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .socratic-icon{font-size:17px;flex-shrink:0;}
+  .socratic-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-questions{list-style:none;padding:0;margin:0;}
+  .socratic-questions li{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--border-dim);line-height:1.6;}
+  .socratic-questions li:last-child{border-bottom:none;}
+  .socratic-questions li::before{content:'?';position:absolute;left:0;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:16px;top:7px;color:var(--blue);}
+  .answer-area{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .answer-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .answer-textarea:focus{border-color:var(--blue);}
+  .answer-textarea:disabled{opacity:0.75;background:var(--surface-2);cursor:default;}
+  .answer-buttons{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .btn-add-answer{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-answer:hover:not(:disabled){opacity:0.85;}
+  .btn-add-answer:disabled{opacity:0.5;cursor:default;}
+  .btn-see-answer{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-see-answer:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-see-answer:not(:disabled){color:var(--blue);border-color:var(--blue);}
+  .model-answers{margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .model-answer-item{padding:10px 0;border-bottom:1px solid var(--border-dim);}
+  .model-answer-item:first-child{padding-top:0;}
+  .model-answer-item:last-child{border-bottom:none;padding-bottom:0;}
+  .model-answer-q{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;}
+  .model-answer-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:30px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="breadcrumb">
+    <a href="#">Home</a><span class="breadcrumb-sep">›</span><a href="#">Curriculum</a><span class="breadcrumb-sep">›</span><span>Session 21 Bite — OSPF Troubleshooting Commands</span>
+  </div>
+  <div class="header-eyebrow">SESSION 21 · BITE · OSPF ON THE FORTIGATE CLI</div>
+  <h1>The OSPF <em>Interrogation Kit</em></h1>
+  <p>Six get commands, one sniffer filter, one debug path, one reset — and the discipline to know which question each one answers.</p>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">A stuck adjacency can only be caused by a handful of mismatches — and <em>every one of them is visible in exactly one command's output</em>.</div>
+  <p class="motivation-sub">The skill isn't memorizing nine commands. It's knowing which question you're asking, then reaching for the one command that answers it.</p>
+</div>
+
+<main>
+  <div class="main-content">
+
+    <div class="section-block" id="section-overview">
+      <div class="section-label">01 · OVERVIEW &amp; THE PROBLEM</div>
+      <h2>Why a <em>kit</em>, not a list</h2>
+      <p>OSPF fails in layers: hellos can be rejected before a neighbor exists, adjacencies can park mid-handshake, the LSDB can be perfect while the routing table disagrees, and — worst of all — everything can be Full while traffic quietly takes the wrong path. Each layer has its own interrogation command. The problem this kit solves: <strong>engineers who run one command, see "something," and start changing config.</strong> The kit forces the opposite — locate the failing layer first, then look at exactly that layer.</p>
+      <p>The mental model is the FortiOS CLI taxonomy applied to OSPF: <strong><code>get</code></strong> reads clean operational state (what does OSPF believe right now?), <strong><code>diagnose</code></strong> reaches the raw engine and the wire (what is actually happening?), <strong><code>execute</code></strong> takes real action (make it happen again). Start at <code>get</code>; escalate to <code>diagnose</code> only when the summaries disagree with reality.</p>
+    </div>
+
+    <div class="section-block" id="section-kit">
+      <div class="section-label">02 · THE KIT · ONE QUESTION PER COMMAND</div>
+      <h2>Which question are you <em>asking?</em></h2>
+      <table class="data-table">
+        <tr><th>The question</th><th>The command</th><th>What to read in the output</th></tr>
+        <tr><td>Who are my neighbors, and how far did each relationship get?</td><td><code>get router info ospf neighbor</code></td><td>State column (and role suffix: DR / BDR / DROther) · Pri · Dead Time behavior (resetting = hellos arriving)</td></tr>
+        <tr><td>What is THIS interface's OSPF personality?</td><td><code>get router info ospf interface</code></td><td>Network Type · <strong>Priority</strong> · <strong>Cost</strong> · Hello/Dead/Wait timers · DR and BDR identity · Area · your own Router ID. The single richest output for adjacency faults.</td></tr>
+        <tr><td>What is this router's overall OSPF identity?</td><td><code>get router info ospf status</code></td><td>Router ID · number of areas attached · count of fully adjacent neighbors — the health-at-a-glance number</td></tr>
+        <tr><td>What does the map actually contain?</td><td><code>get router info ospf database brief</code></td><td>The whole LSDB ordered by LSA type — is the expected Type 1/2/3/5 even present?</td></tr>
+        <tr><td>What exactly did that router advertise about its links?</td><td><code>get router info ospf database router lsa</code></td><td>Type 1 detail — links, costs, flags (an ASBR's E-bit lives here)</td></tr>
+        <tr><td>Did OSPF's opinion make it into the routing table?</td><td><code>get router info routing-table ospf</code></td><td>Only OSPF-derived routes. Compare against <code>get router info routing-table all</code> — if the LSDB has it but the RIB doesn't, a better AD (Static 10, eBGP 20) is beating OSPF's 110</td></tr>
+        <tr><td>Is fast failure detection actually negotiated?</td><td><code>get router info bfd neighbor</code></td><td>BFD status when BFD is enabled on OSPF routers</td></tr>
+        <tr><td>Are hellos physically on the wire?</td><td><code>diagnose sniffer packet &lt;port&gt; 'proto 89' 4</code></td><td>OSPF is IP protocol 89, hellos to multicast 224.0.0.5 (DR/BDR listen on 224.0.0.6). Proves the wire when the summaries can't.</td></tr>
+        <tr><td>What is the OSPF engine thinking, live?</td><td><code>diagnose ip router ospf all enable</code><br><code>diagnose ip router ospf level info</code><br><code>diagnose debug enable</code></td><td>Real-time engine events: hellos rejected and <em>why</em>, state transitions, elections. <strong>Finish with <code>diagnose debug disable</code> — always, no exceptions.</strong></td></tr>
+        <tr><td>Make it happen again, from zero</td><td><code>execute router clear ospf process</code></td><td>Restarts OSPF — all adjacencies re-form while you watch with debug/sniffer running. An <code>execute</code>: real consequences, production caution.</td></tr>
+      </table>
+      <div class="callout callout-amber">
+        <strong>Config-side companion:</strong> when the fault is a value rather than a state, remember <code>show</code> is silent on defaults — a default hello timer or default priority is invisible to it. <code>show full-configuration router ospf</code> reveals every value, including the ones nobody typed.
+      </div>
+    </div>
+
+    <div class="section-block" id="section-workflow">
+      <div class="section-label">03 · THE WORKFLOW · OSPF GOLDEN SEQUENCE</div>
+      <h2>Escalate <em>downward</em> through the layers</h2>
+      <ol>
+        <li><strong><code>get router info ospf neighbor</code></strong> — does a neighbor entry exist, and at what state? This single output splits the entire fault tree.</li>
+        <li><strong>No entry at all?</strong> → hello-acceptance problem. <code>get router info ospf interface</code> on <em>both</em> sides; compare timers, area, subnet, auth line by line.</li>
+        <li><strong>Entry parked at a state?</strong> → the state names the suspect: Init = one-way delivery · 2-Way = DR election / priority · ExStart-Exchange = MTU or duplicate RID. Interrogate with <code>get router info ospf interface</code>.</li>
+        <li><strong>Full, but routes missing?</strong> → <code>database brief</code> (is it in the map?) then <code>routing-table ospf</code> vs <code>routing-table all</code> (did AD competition eat it?).</li>
+        <li><strong>Summaries contradict reality?</strong> → drop to the wire: sniffer <code>'proto 89'</code>, then OSPF debug. The engine will tell you exactly why it rejects a hello.</li>
+        <li><strong>Need a clean re-run?</strong> → <code>execute router clear ospf process</code> with debug watching. Then <strong><code>diagnose debug disable</code></strong>.</li>
+      </ol>
+    </div>
+
+    <div class="section-block" id="section-terms">
+      <div class="section-label">04 · TERMINOLOGY &amp; EXAM-CRITICAL POINTS</div>
+      <h2>What the exam <em>actually checks</em></h2>
+      <ul>
+        <li><strong>Protocol 89</strong> — OSPF rides directly on IP (no TCP/UDP). Hellos to <strong>224.0.0.5</strong>; DR/BDR listen on <strong>224.0.0.6</strong>. Sniffer filter: <code>'proto 89'</code>.</li>
+        <li><strong>State suffix</strong> — <code>Full/DR</code> means <em>the neighbor</em> is the DR, not you. Read the suffix as the neighbor's role.</li>
+        <li><strong>Dead Time column</strong> — a countdown that keeps resetting is a healthy hello stream; one that marches to zero is packet loss in progress.</li>
+        <li><strong>LSDB ≠ RIB</strong> — <code>database brief</code> shows what OSPF knows; <code>routing-table ospf</code> shows what survived AD competition (Static 10 · eBGP 20 · OSPF 110 · iBGP 200).</li>
+        <li><strong>2-Way is not always a fault</strong> — DROTHER↔DROTHER pairs park there by design. The exam shows a healthy multi-router segment and invites you to "fix" it.</li>
+        <li><strong>get vs diagnose vs execute</strong> — summary vs raw engine vs real action. The exam tests whether you know which family a task belongs to.</li>
+      </ul>
+    </div>
+
+    <div class="section-block" id="section-mistakes">
+      <div class="section-label">05 · COMMON MISTAKES &amp; CHECKLIST</div>
+      <h2>The five ways engineers <em>fool themselves</em></h2>
+      <ul>
+        <li><strong>Blaming timers for a visible neighbor.</strong> If any neighbor entry exists, timers/area/subnet/auth already matched. Stop suspecting them.</li>
+        <li><strong>Reading only one side.</strong> Adjacency faults are comparisons; <code>ospf interface</code> from one router proves nothing about the mismatch.</li>
+        <li><strong>Trusting <code>show</code>.</strong> Defaults are invisible to it — the "missing" priority setting may be the whole story.</li>
+        <li><strong>Declaring victory at Full.</strong> Full proves synchronization, not sensible paths — check Cost and the reference bandwidth before signing off.</li>
+        <li><strong>Leaving debug running.</strong> <code>diagnose debug disable</code> is the last line of every debug session. No exceptions.</li>
+      </ul>
+      <div class="callout callout-green">
+        <strong>Pocket checklist:</strong> neighbor? → state? → both interfaces compared? → LSDB has it? → RIB kept it? → costs sane? → wire proves it? → debug OFF.
+      </div>
+      <div class="analogy-box">
+        <div class="analogy-label">ANALOGY · THE DETECTIVE'S DESK</div>
+        <div class="analogy-text">The <code>get</code> commands are witness statements — clean, summarized, occasionally missing what nobody thought to mention. The sniffer is CCTV footage: unglamorous, but it never lies about what was on the wire. Debug is the wiretap on the suspect's own phone — the engine narrating its decisions in real time. And <code>execute clear ospf process</code> is the reconstruction: make the crime happen again while every camera is rolling. A good detective doesn't collect everything — they ask one precise question and pull exactly that evidence.</div>
+      </div>
+      <div class="mental-note-block">
+        <span class="mental-note-block-icon">🧰</span>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">Mental Note</div>
+          <div class="mental-note-block-text">neighbor → interface → status → database → routing-table: belief, personality, identity, map, verdict. Then sniffer and debug when belief and reality disagree. OSPF = protocol 89 = 224.0.0.5. Debug off before you walk away.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-selftest">
+      <div class="section-label">06 · SELF-TEST · RECALL, DON'T RECOGNIZE</div>
+      <h2>Five questions, <em>cold</em></h2>
+      <div class="socratic-block">
+        <div class="socratic-header">
+          <span class="socratic-icon">💭</span>
+          <span class="socratic-label">ANSWER BEFORE REVEALING</span>
+        </div>
+        <ul class="socratic-questions">
+          <li>A neighbor shows <code>2-Way/DROTHER</code> for ten minutes on a two-router link. Which single command's output contains the smoking gun, and which two lines do you read?</li>
+          <li>No neighbor entry exists at all. Name the four hello-packet mismatches this instantly puts on the suspect list — and the one famous suspect it instantly removes from every OTHER stuck state.</li>
+          <li>The LSDB contains a prefix but the routing table doesn't. Which two commands prove it, and what concept explains the gap?</li>
+          <li>You need to see raw hellos on the wire. Exact sniffer filter, and the multicast address hellos are sent to?</li>
+          <li>What is the mandatory final command of any OSPF debug session, and which CLI family does restarting the OSPF process belong to — and why does that family demand caution?</li>
+        </ul>
+        <div class="answer-area" data-section="selftest">
+          <textarea class="answer-textarea" placeholder="Write your answers from memory before revealing..." rows="4"></textarea>
+          <div class="answer-buttons">
+            <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+            <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+          </div>
+          <div class="model-answers" style="display:none;">
+            <div class="model-answer-item">
+              <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+              <div class="model-answer-text"><code>get router info ospf interface</code>. Read <strong>Priority</strong> (0 = ineligible for DR election, not merely unlikely) and the <strong>DR/BDR lines</strong> ("No designated router on this network"). Both routers at priority 0 = a flawless election with zero candidates = parked at 2-Way forever.</div>
+            </div>
+            <div class="model-answer-item">
+              <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+              <div class="model-answer-text">Hello/dead <strong>timers</strong>, <strong>area ID</strong>, <strong>subnet/mask</strong>, <strong>authentication</strong> — all validated inside the hello. And the removal: if a neighbor is visible at ANY state, timers are already proven matching — a timer mismatch can never be the cause of a parked-but-visible neighbor.</div>
+            </div>
+            <div class="model-answer-item">
+              <div class="model-answer-q">Q3 — MODEL ANSWER</div>
+              <div class="model-answer-text"><code>get router info ospf database brief</code> (it's in the map) vs <code>get router info routing-table all</code> (it lost the table). The gap is <strong>Administrative Distance</strong> — a Static (10) or eBGP (20) route to the same prefix beats OSPF's 110. LSDB ≠ RIB.</div>
+            </div>
+            <div class="model-answer-item">
+              <div class="model-answer-q">Q4 — MODEL ANSWER</div>
+              <div class="model-answer-text"><code>diagnose sniffer packet &lt;port&gt; 'proto 89' 4</code> — OSPF is IP protocol 89. Hellos go to multicast <strong>224.0.0.5</strong> (224.0.0.6 is the DR/BDR listeners' address).</div>
+            </div>
+            <div class="model-answer-item">
+              <div class="model-answer-q">Q5 — MODEL ANSWER</div>
+              <div class="model-answer-text"><code>diagnose debug disable</code> — always, no exceptions. Restarting OSPF is <code>execute router clear ospf process</code> — the <strong>execute</strong> family: immediate real-world action, no config change, potentially disruptive (every adjacency re-forms), so production requires thought before Enter.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>NSE7 EF 7.6 · SESSION 21 BITE · <span>OSPF TROUBLESHOOTING COMMANDS — THE INTERROGATION KIT</span></footer>
+
+<script>
+const PAGE_KEY = 'nse7-s21-bite-ospf-commands';
+function saveSocAnswer(btn) {
+  const area = btn.closest('.answer-area');
+  const ta = area.querySelector('.answer-textarea');
+  if (!ta.value.trim()) { ta.focus(); return; }
+  const key = PAGE_KEY+'-socans-'+area.dataset.section;
+  try { localStorage.setItem(key, ta.value); } catch(e) {}
+  ta.disabled = true; btn.textContent = '✓ Answer saved'; btn.disabled = true;
+  const seeBtn = area.querySelector('.btn-see-answer');
+  seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+}
+function revealSocAnswer(btn) {
+  if (btn.disabled) return;
+  const answers = btn.closest('.answer-area').querySelector('.model-answers');
+  const isHidden = answers.style.display === 'none' || !answers.style.display;
+  answers.style.display = isHidden ? 'block' : 'none';
+  btn.textContent = isHidden ? '▲ Hide Model Answer' : '💡 See Model Answer';
+}
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.answer-area').forEach(function(area) {
+    const key = PAGE_KEY+'-socans-'+area.dataset.section;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const ta = area.querySelector('.answer-textarea'); ta.value = saved; ta.disabled = true;
+        const addBtn = area.querySelector('.btn-add-answer'); addBtn.textContent = '✓ Answer saved'; addBtn.disabled = true;
+        const seeBtn = area.querySelector('.btn-see-answer'); seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+      }
+    } catch(e) {}
+  });
+});
+</script>
+</body>
+</html>

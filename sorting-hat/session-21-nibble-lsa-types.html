@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 21 Nibble — The Six LSAs: Who Speaks, and How Far</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-glow:rgba(30,64,175,0.07);
+    --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+    --coral:#c2410c;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;color:rgba(251,247,236,0.6);text-transform:uppercase;}
+  .breadcrumb a{color:#9bb8e6;text-decoration:none;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:44px;font-weight:700;line-height:1.05;color:#fbf7ec;margin-bottom:10px;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+  main{max-width:1200px;margin:0 auto;}
+  .main-content{padding:36px 60px 60px;}
+  .section-block{margin-bottom:44px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;vertical-align:top;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:700;white-space:nowrap;}
+  .who{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;padding:2px 9px;border-radius:10px;display:inline-block;white-space:nowrap;}
+  .who-router{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border);}
+  .who-dr{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}
+  .who-abr{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border);}
+  .who-asbr{background:#fdeee6;color:var(--coral);border:1px solid #f0c4ad;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .callout-coral{border-left-color:#f0c4ad;background:#fdeee6;}
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+  .image-placeholder{border:2px dashed var(--border);border-radius:14px;background:var(--surface-2);padding:26px 28px;margin:18px 0;}
+  .ip-filename{font-family:'SF Mono','Fira Code',monospace;font-size:11px;font-weight:700;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:10px;}
+  .ip-caption{font-size:16px;font-style:italic;color:var(--text-soft);margin-bottom:12px;font-family:'Cormorant Garamond',serif;}
+  .prompt-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.1em;padding:5px 12px;border-radius:6px;cursor:pointer;text-transform:uppercase;}
+  .prompt-toggle:hover{color:var(--text);border-color:var(--text);}
+  .prompt-content{margin-top:10px;padding:10px 14px;background:rgba(0,0,0,0.04);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text-muted);font-style:italic;line-height:1.65;}
+  .prompt-content[hidden]{display:none;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:32px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}footer{padding:16px 24px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="breadcrumb">
+    <a href="#">Home</a><span class="breadcrumb-sep">›</span><a href="#">Curriculum</a><span class="breadcrumb-sep">›</span><span>Session 21 Nibble — The Six LSAs</span>
+  </div>
+  <div class="header-eyebrow"><span class="dot-live"></span> SESSION 21 · NIBBLE · LSA TYPES 1–5 + 7</div>
+  <h1>The Six LSAs: <em>Who Speaks, and How Far</em></h1>
+  <p>Every LSA answers two questions — who is allowed to say this, and how far is the message allowed to travel. Answer both and the exam question answers itself.</p>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">The exam almost never asks "what is a Type 3." It asks <em>who originates it</em> — because the originator is where the distractors live.</div>
+  <p class="motivation-sub">Type 2 is originated by the DR, never the BDR. Type 4 by the ABR, never the ASBR. Type 7 by the ASBR, translated by the ABR. Three traps, one table.</p>
+</div>
+
+<main>
+  <div class="main-content">
+
+    <div class="section-block" id="section-table">
+      <div class="section-label">THE TABLE · ONE ROW PER LSA</div>
+      <h2>Type · describes · <em>author</em> · reach</h2>
+      <table class="data-table">
+        <tr><th>Type</th><th>Name</th><th>What it describes</th><th>Originated by</th><th>How far it floods</th><th>The exam trap</th></tr>
+        <tr>
+          <td>1</td><td>Router LSA</td>
+          <td>A router's autobiography — its own links and their costs</td>
+          <td><span class="who who-router">EVERY ROUTER</span></td>
+          <td>Own area only — never crosses an ABR</td>
+          <td>An ASBR flags itself here with the <strong>E-bit</strong> — that flag is what triggers the ABR to generate a Type 4</td>
+        </tr>
+        <tr>
+          <td>2</td><td>Network LSA</td>
+          <td>The multi-access <strong>segment itself</strong> (the pseudonode) and everyone attached to it</td>
+          <td><span class="who who-dr">THE DR — ONLY</span></td>
+          <td>Own area only</td>
+          <td>Not "the DR and BDR." The BDR originates <strong>nothing</strong> — it's an understudy holding a script, not a co-author</td>
+        </tr>
+        <tr>
+          <td>3</td><td>Summary LSA</td>
+          <td>A <strong>claim</strong>, not a map: "prefix X reachable through me, cost Y" — inter-area routes</td>
+          <td><span class="who who-abr">ABR</span></td>
+          <td>Injected per-area; <strong>re-originated by each ABR</strong> it crosses — hops border to border, never floods domain-wide as one object</td>
+          <td>This is where OSPF turns distance-vector. Loop prevention is the <strong>backbone rule</strong> (all areas attach to area 0; Type 3s heard from a non-zero area are ignored), plus intra-area routes always beat inter-area</td>
+        </tr>
+        <tr>
+          <td>4</td><td>ASBR Summary</td>
+          <td>Directions to an ASBR that lives in another area — "reach that smuggler through me"</td>
+          <td><span class="who who-abr">ABR — NOT THE ASBR</span></td>
+          <td>Into areas that can't see the ASBR</td>
+          <td><strong>The #1 LSA distractor.</strong> A router can't advertise directions to itself from an area it isn't in. Type 4 = originated by the ABR, <em>about</em> the ASBR. It exists for the gap between the border and the smuggler</td>
+        </tr>
+        <tr>
+          <td>5</td><td>AS External</td>
+          <td>Foreign news itself — a prefix from outside OSPF (static, BGP, RIP, connected non-OSPF)</td>
+          <td><span class="who who-asbr">ASBR</span></td>
+          <td><strong>Domain-wide</strong> — the only LSA that crosses area borders <em>unchanged</em>, through all standard areas</td>
+          <td>Banned from stub areas and NSSAs. Stub areas get a default route (as a Type 3) from their ABR instead. External metrics: type E1 = internal + external cost; E2 = external only; E1 preferred over E2</td>
+        </tr>
+        <tr>
+          <td>7</td><td>NSSA External</td>
+          <td>Foreign news born <strong>inside an NSSA</strong> — the "not-so-stubby" loophole</td>
+          <td><span class="who who-asbr">ASBR INSIDE THE NSSA</span></td>
+          <td>NSSA only — at the border, the <span class="who who-abr">NSSA ABR</span> <strong>translates it into a Type 5</strong> for the rest of the domain</td>
+          <td>Why it exists: a stub area bans Type 5s to stay small, but what if a router <em>inside</em> it needs to redistribute something? NSSA = stub rules + a local envelope (7) that gets re-stamped as a 5 at the exit. Two authors, one route: ASBR writes the 7, ABR publishes the 5</td>
+        </tr>
+      </table>
+
+      <div class="callout callout-amber">
+        <strong>Stub &amp; NSSA in two lines:</strong> a <strong>stub area</strong> says "don't flood me the world's externals — just hand me a default route" (ABR sends the default as a Type 3; Type 5s banned). An <strong>NSSA</strong> says the same, <em>plus</em> "…but I have my own small ASBR, so let its externals out" — those travel as Type 7 inside, translated to Type 5 at the ABR.
+      </div>
+
+      <div class="callout callout-coral">
+        <strong>Session 21 register note:</strong> the Type 4 originator was missed in this session's quiz — even after correction. If you read only one row twice, read row 4. Say it aloud: <em>Type 4 — originated by the ABR, about the ASBR.</em>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-picture">
+      <div class="section-label">ONE PICTURE · THE KINGDOM</div>
+      <h2>The kingdom of <em>claims and maps</em></h2>
+      <p>One image to reconstruct the whole table: villages (areas) around a capital (area 0), heralds at the gates, and a foreign merchant whose news travels further than any map is allowed to.</p>
+      <div class="image-placeholder">
+        <div class="ip-filename">images/s21-lsa-kingdom.png</div>
+        <div class="ip-caption">The LSA kingdom — every LSA type as a character, every flooding scope as a wall it can or cannot cross.</div>
+        <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
+        <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm palette: cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, clean bold line work, no gradients, no 3D. Wide landscape composition, slightly elevated three-quarter view of a medieval kingdom drawn as a network diagram. CENTER: a walled capital city labeled "AREA 0 — BACKBONE", its wall gates manned by herald characters in amber sashes labeled "ABR". Around it, three walled villages labeled "AREA 1", "AREA 2", and "AREA 51 — NSSA" (the NSSA village wall has a small mail-slot instead of an open gate), each connected to the capital by a single road — NO roads between villages (one faint, crossed-out dirt path between two villages stamped "FORBIDDEN — backbone rule"). INSIDE each village: (Type 1) every villager holds up a hand-drawn map of their own house and yard, labeled "Type 1 — my own links"; (Type 2) in the village square, ONE town crier wearing a green "DR" medal stands on a podium describing the square itself with a banner "Type 2 — the segment speaks through its DR", while a second character with a "BDR" badge sits silently on a bench holding a rolled-up copy, clearly NOT speaking. AT THE GATES: the amber ABR heralds hold up short scrolls reading "Type 3 — prefix X, through me, cost Y" — pointedly summaries, not maps; a small sign at each gate reads "maps never leave the village". FAR EDGE: outside the kingdom entirely, a foreign merchant caravan labeled "ISP / BGP / static" hands goods to a coral-cloaked smuggler character at the kingdom's edge labeled "ASBR", who launches paper airplanes labeled "Type 5 — external news" that fly OVER all the walls into every standard village (dotted flight paths crossing walls unchanged) — but bounce off the NSSA village and a small "STUB" hamlet, each protected by an umbrella labeled "no Type 5s — default route only". NEAR THE NSSA village: inside its wall, a tiny local smuggler writes on a distinctive coral envelope labeled "Type 7", passes it through the mail-slot to the amber ABR herald, who re-stamps it at a desk labeled "translated: 7 → 5" and launches it onward as a paper airplane. FINALLY: one herald at the capital holds a signpost pointing toward the far-edge smuggler, labeled "Type 4 — directions to the ASBR (written by the ABR!)". Generous spacing, every labeled object reinforcing exactly one LSA concept, educational yet playful.</div>
+      </div>
+      <div class="mental-note-block">
+        <span class="mental-note-block-icon">🏰</span>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">Mental Note — the recall chain</div>
+          <div class="mental-note-block-text">1 = everyone's autobiography. 2 = the DR speaks for the square. 3 = the herald's claim at the gate. 4 = the herald's directions to the smuggler. 5 = the smuggler's paper airplane over every wall. 7 = the NSSA's envelope, re-stamped to a 5 at the exit. Maps stay home; claims cross borders; only external news flies domain-wide.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>NSE7 EF 7.6 · SESSION 21 NIBBLE · <span>LSA TYPES 1–5 + 7 — WHO SPEAKS, AND HOW FAR</span></footer>
+
+<script>
+function togglePrompt(btn) {
+  const c = btn.nextElementSibling;
+  const isHidden = c.hasAttribute('hidden');
+  if (isHidden) { c.removeAttribute('hidden'); btn.textContent = '▴ Hide prompt'; }
+  else { c.setAttribute('hidden', ''); btn.textContent = '▾ Show image prompt'; }
+}
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+</script>
+</body>
+</html>
