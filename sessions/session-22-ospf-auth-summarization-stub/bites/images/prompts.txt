@@ -1,0 +1,24 @@
+Session 22 — Bite: Who Speaks, How Much Is Told (Memory Hook / Analogy)
+============================================================
+
+gated-community.png
+
+Title: The gated community mailroom — every OSPF hardening feature as a policy choice at the gate.
+
+Flat minimalistic cartoon illustration, modern vector-art aesthetic, warm palette: cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, clean bold line work, no gradients, no 3D. Wide landscape three-quarter view of a small suburban gated community drawn as a network diagram, one cohesive scene with 6 clearly-labeled vignettes:
+
+1. GATEHOUSE (left) — a stone gatehouse where a uniformed guard checks a scroll. Two comparison callouts pinned to the wall: (a) an OPEN gate with an entry code "1234" chalked on the gate itself, labelled "DEFAULT OSPF — code on the gate"; (b) a resident YELLING a password across the street to a neighbor, labelled "PLAINTEXT AUTH — anyone listening steals it"; (c) the guard holding up a SIGNET RING, pressing a wax seal onto an envelope, with a small clock beside it showing today's date, labelled "MD5 / HMAC — proof by seal, sequence number stops replay". The guard's belt has a keyring — none of the rings ever leave the belt.
+
+2. THE PASSIVE HOUSE (front-center) — a cozy cottage with a MAILBOX at the fence receiving letters, but the front door is closed, curtains drawn, no doorbell, no lawn signs. A caption ribbon: "PASSIVE INTERFACE — receives mail (subnet advertised), never answers the door (no hellos)".
+
+3. THE TOTALLY-STUBBY RESIDENT (right-center) — a friendly homeowner at a mailroom counter holding ONE forwarding slip stamped "DEFAULT ROUTE — 0.0.0.0/0 covers it all". Rejected letters stack behind them on a discard bin labelled "no Type 3 / Type 5 needed — mailroom keeps it simple".
+
+4. THE STREET DIRECTORY (right) — a wooden signpost showing "Numbers 8–11: this block". Below the sign, a moving van drives away from house number 9 — but the directory stays printed unchanged. Caption: "AREA RANGE — a claim about the block, not a census".
+
+5. NEIGHBOR HANDSHAKE (back-center) — two residents shaking hands with matching lapel pins that both read "E-bit: OFF (stub)". A third resident stands off to the side with a pin that reads "E-bit: ON" — arms crossed, refused entry. Caption: "STUB E-BIT — mismatch = no neighbor at all".
+
+6. ABR PIVOT (upper-right) — a herald in an amber sash at a small border booth turning a VOLUME KNOB labelled "totally-stubby". The knob's positions read "stub → totally-stubby → NSSA". A signpost beside them reads "ABR alone decides — internal routers don't need to sign".
+
+Bottom border, muted gold caption plate: "Type needs agreement. Quantity does not. The seal never leaves your hand." Warm cream, coral, sage, gold palette, clean bold outlines, no gradients, storybook mood, every labeled element carrying exactly one hardening concept.
+
+============================================================

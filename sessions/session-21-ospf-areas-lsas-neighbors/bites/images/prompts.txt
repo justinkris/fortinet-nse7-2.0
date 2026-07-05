@@ -1,0 +1,15 @@
+Session 21 — Bite: OSPF Troubleshooting Commands (Memory Hook / Analogy)
+============================================================
+
+detectives-desk.png
+
+Title: The detective's desk — every OSPF troubleshooting command as an evidence tool.
+
+Flat minimalistic cartoon illustration, modern vector-art aesthetic, warm palette: cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, clean bold line work, no gradients, no 3D. Wide overhead three-quarter view of a wooden detective's desk in a small precinct office. On the desk, arranged in a semicircle, four labeled evidence tools, each with a tiny caption tag written in a serif hand:
+  (1) a stack of neatly typed WITNESS STATEMENTS with a label "get commands — witnesses";
+  (2) a small CRT monitor showing grainy CCTV FOOTAGE of a wire and a passing packet, label "sniffer — CCTV";
+  (3) a set of vintage HEADPHONES plugged into a WIRETAP box beside a phone, label "debug — wiretap on the engine";
+  (4) a chalkboard easel showing a chalk-drawn RECONSTRUCTION arrow (arrow labeled "Down → Init → 2-Way → ExStart → Exchange → Loading → Full"), label "clear ospf process — reconstruction".
+CENTER of the desk: a coral-cloaked DETECTIVE character mid-thought, tapping one pinned photo on the corkboard behind them — the photo shows a single OSPF neighbor entry frozen at "2-Way/DROTHER" with a red circle around it. A small brass name plate on the desk reads: "ASK ONE PRECISE QUESTION". Muted amber lamp glow, warm shadows, storybook tone, no on-image explanatory paragraphs — every element carries exactly one caption.
+
+============================================================

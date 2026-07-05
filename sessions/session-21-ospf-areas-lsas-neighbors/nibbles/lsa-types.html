@@ -74,14 +74,34 @@
   footer span{color:var(--blue);}
   @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:32px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}footer{padding:16px 24px;}}
 </style>
+<style data-injected="related-sidebar">
+main.main-with-sidebar{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;padding:0 40px;}
+main.main-with-sidebar > .main-content{padding:36px 20px 60px 20px;}
+.related-sidebar{padding:36px 0 60px;}
+.related-sidebar-inner{background:var(--surface,#fffdf5);border:1px solid var(--border,#d4c89a);border-radius:14px;padding:22px 24px 26px;box-shadow:0 8px 22px -16px rgba(13,26,58,0.25);}
+.related-sidebar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text,#0a1838);letter-spacing:-0.005em;margin:0 0 6px;}
+.related-sidebar-sub{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:14px;}
+.related-group{margin-top:14px;}
+.related-group:first-of-type{margin-top:0;}
+.related-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group ul{list-style:none;padding:0;margin:0;}
+.related-group li{padding:6px 0;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group li:last-child{border-bottom:none;}
+.related-group a{display:flex;align-items:baseline;gap:8px;text-decoration:none;color:var(--text-soft,#1e2f5a);font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.4;transition:color .15s;}
+.related-group a:hover{color:var(--blue,#1e40af);}
+.related-group a .r-arrow{color:var(--blue,#1e40af);font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;opacity:0.6;transition:transform .15s, opacity .15s;flex-shrink:0;}
+.related-group a:hover .r-arrow{transform:translateX(2px);opacity:1;}
+.related-group a .r-tag{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted,#6b7794);background:var(--surface-2,#f5eed9);border:1px solid var(--border,#d4c89a);border-radius:10px;padding:2px 7px;margin-left:auto;flex-shrink:0;}
+.related-empty{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted,#6b7794);padding:6px 0;}
+@media(max-width:960px){main.main-with-sidebar{grid-template-columns:1fr;padding:0;gap:0;}main.main-with-sidebar > .main-content{padding:36px 60px 30px 60px;}.related-sidebar{padding:0 60px 60px;}}
+@media(max-width:640px){main.main-with-sidebar > .main-content{padding:28px 24px 24px 24px;}.related-sidebar{padding:0 24px 40px;}}
+</style>
 </head>
 <body>
 
 <header>
-  <div class="breadcrumb">
-    <a href="#">Home</a><span class="breadcrumb-sep">›</span><a href="#">Curriculum</a><span class="breadcrumb-sep">›</span><span>Session 21 Nibble — The Six LSAs</span>
-  </div>
-  <div class="header-eyebrow"><span class="dot-live"></span> SESSION 21 · NIBBLE · LSA TYPES 1–5 + 7</div>
+<div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 21</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Nibble</span></div>
+<div class="header-eyebrow"><span class="dot-live"></span> SESSION 21 · NIBBLE · LSA TYPES 1–5 + 7</div>
   <h1>The Six LSAs: <em>Who Speaks, and How Far</em></h1>
   <p>Every LSA answers two questions — who is allowed to say this, and how far is the message allowed to travel. Answer both and the exam question answers itself.</p>
 </header>
@@ -91,7 +111,7 @@
   <p class="motivation-sub">Type 2 is originated by the DR, never the BDR. Type 4 by the ABR, never the ASBR. Type 7 by the ASBR, translated by the ABR. Three traps, one table.</p>
 </div>
 
-<main>
+<main class="main-with-sidebar">
   <div class="main-content">
 
     <div class="section-block" id="section-table">
@@ -156,11 +176,13 @@
       <div class="section-label">ONE PICTURE · THE KINGDOM</div>
       <h2>The kingdom of <em>claims and maps</em></h2>
       <p>One image to reconstruct the whole table: villages (areas) around a capital (area 0), heralds at the gates, and a foreign merchant whose news travels further than any map is allowed to.</p>
-      <div class="image-placeholder">
-        <div class="ip-filename">images/s21-lsa-kingdom.png</div>
-        <div class="ip-caption">The LSA kingdom — every LSA type as a character, every flooding scope as a wall it can or cannot cross.</div>
-        <button class="prompt-toggle" onclick="togglePrompt(this)">▾ Show image prompt</button>
-        <div class="prompt-content" hidden>Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm palette: cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, clean bold line work, no gradients, no 3D. Wide landscape composition, slightly elevated three-quarter view of a medieval kingdom drawn as a network diagram. CENTER: a walled capital city labeled "AREA 0 — BACKBONE", its wall gates manned by herald characters in amber sashes labeled "ABR". Around it, three walled villages labeled "AREA 1", "AREA 2", and "AREA 51 — NSSA" (the NSSA village wall has a small mail-slot instead of an open gate), each connected to the capital by a single road — NO roads between villages (one faint, crossed-out dirt path between two villages stamped "FORBIDDEN — backbone rule"). INSIDE each village: (Type 1) every villager holds up a hand-drawn map of their own house and yard, labeled "Type 1 — my own links"; (Type 2) in the village square, ONE town crier wearing a green "DR" medal stands on a podium describing the square itself with a banner "Type 2 — the segment speaks through its DR", while a second character with a "BDR" badge sits silently on a bench holding a rolled-up copy, clearly NOT speaking. AT THE GATES: the amber ABR heralds hold up short scrolls reading "Type 3 — prefix X, through me, cost Y" — pointedly summaries, not maps; a small sign at each gate reads "maps never leave the village". FAR EDGE: outside the kingdom entirely, a foreign merchant caravan labeled "ISP / BGP / static" hands goods to a coral-cloaked smuggler character at the kingdom's edge labeled "ASBR", who launches paper airplanes labeled "Type 5 — external news" that fly OVER all the walls into every standard village (dotted flight paths crossing walls unchanged) — but bounce off the NSSA village and a small "STUB" hamlet, each protected by an umbrella labeled "no Type 5s — default route only". NEAR THE NSSA village: inside its wall, a tiny local smuggler writes on a distinctive coral envelope labeled "Type 7", passes it through the mail-slot to the amber ABR herald, who re-stamps it at a desk labeled "translated: 7 → 5" and launches it onward as a paper airplane. FINALLY: one herald at the capital holds a signpost pointing toward the far-edge smuggler, labeled "Type 4 — directions to the ASBR (written by the ABR!)". Generous spacing, every labeled object reinforcing exactly one LSA concept, educational yet playful.</div>
+      <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;margin:18px 0;">
+        <img src="images/s21-lsa-kingdom.png" alt="The LSA kingdom — every LSA type as a character, every flooding scope as a wall it can or cannot cross." style="width:100%;max-width:900px;border-radius:12px;border:1px solid var(--border);display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div style="display:none;border:2px dashed var(--border);border-radius:12px;background:var(--surface-2);padding:32px 24px;flex-direction:column;align-items:center;gap:10px;width:100%;">
+          <div style="font-size:26px;">🏰</div>
+          <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;">Image not yet generated</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:14.5px;color:var(--text-soft);text-align:center;max-width:560px;line-height:1.6;font-style:italic;">Drop the generated PNG at <code style="font-family:'SF Mono','Fira Code',monospace;font-style:normal;background:rgba(0,0,0,0.05);padding:1px 6px;border-radius:4px;">images/s21-lsa-kingdom.png</code> — see <code style="font-family:'SF Mono','Fira Code',monospace;font-style:normal;background:rgba(0,0,0,0.05);padding:1px 6px;border-radius:4px;">images/prompts.txt</code> for the prompt.</div>
+        </div>
       </div>
       <div class="mental-note-block">
         <span class="mental-note-block-icon">🏰</span>
@@ -172,6 +194,9 @@
     </div>
 
   </div>
+<!-- related-sidebar:start -->
+<aside class="related-sidebar"><div class="related-sidebar-inner"><div class="related-sidebar-title">Related pages</div><div class="related-sidebar-sub">Session 21</div><div class="related-group"><div class="related-group-label">Session</div><ul><li><a href="../index.html"><span class="r-arrow">›</span><span>Session hub</span></a></li><li><a href="../completed-session/index.html"><span class="r-arrow">›</span><span>Completed study guide</span><span class="r-tag">Guide</span></a></li><li><a href="../completed-session/summary.txt" target="_blank" rel="noopener"><span class="r-arrow">›</span><span>Session summary</span><span class="r-tag">txt</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Bites</div><ul><li><a href="../bites/ospf-troubleshooting-commands.html"><span class="r-arrow">›</span><span>Session 21 Bite — OSPF Troubleshooting Commands on FortiGate</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Nibbles</div><ul><li><a href="../nibbles/mismatch-matrix.html"><span class="r-arrow">›</span><span>Session 21 Nibble — The OSPF Mismatch Matrix</span></a></li><li><a href="../nibbles/ospf-neighbor-states.html"><span class="r-arrow">›</span><span>Session 21 Nibble — OSPF Neighbor States: A Love Story</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Audio podcast</div><ul><li><a href="../../../audio-podcasts/index.html#panel-21"><span class="r-arrow">›</span><span>Podcast prompt</span><span class="r-tag">Prompt</span></a></li></ul></div></div></aside>
+<!-- related-sidebar:end -->
 </main>
 
 <footer>NSE7 EF 7.6 · SESSION 21 NIBBLE · <span>LSA TYPES 1–5 + 7 — WHO SPEAKS, AND HOW FAR</span></footer>

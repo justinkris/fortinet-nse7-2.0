@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 22 Bite — Who Speaks, and How Much They're Told</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb a:hover{text-decoration:underline;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  header h1{font-family:'Playfair Display',serif;font-size:44px;font-weight:700;line-height:1.05;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.005em;}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+  main{max-width:1200px;margin:0 auto;padding:0;}
+  .main-content{max-width:920px;margin:0 auto;padding:36px 60px 60px;}
+  .section-block{margin-bottom:44px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block h3{font-family:'Playfair Display',serif;font-size:19px;font-weight:600;color:var(--text);margin:20px 0 10px;}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:16.5px;line-height:1.65;color:var(--text-soft);margin-bottom:5px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .flow-line{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:13px;background:var(--ink-dark);color:#e8efff;border-radius:10px;padding:16px 20px;margin:16px 0;line-height:1.9;overflow-x:auto;white-space:pre;}
+  .flow-line .hl{color:#9bb8e6;font-weight:700;}
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+  .analogy-label{display:flex;align-items:center;gap:6px;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px;text-transform:uppercase;}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
+  .analogy-text ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;}
+  .analogy-text li{padding-left:18px;position:relative;font-size:15.5px;}
+  .analogy-text li::before{content:'•';position:absolute;left:0;font-weight:700;color:var(--amber);}
+  .selftest{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin:16px 0;border-top:3px solid var(--blue);}
+  .selftest-q{font-family:'Cormorant Garamond',serif;font-size:16.5px;color:var(--text);padding:9px 0 9px 24px;position:relative;border-bottom:1px solid var(--border-dim);line-height:1.6;}
+  .selftest-q:last-child{border-bottom:none;}
+  .selftest-q::before{content:'?';position:absolute;left:0;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:17px;top:8px;color:var(--blue);}
+  .selftest-q details{display:inline;}
+  .selftest-q summary{display:inline-block;cursor:pointer;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--blue);text-transform:uppercase;margin-left:6px;}
+  .selftest-q details p{font-size:15px;font-style:italic;color:var(--text-muted);margin:6px 0 0;line-height:1.6;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:32px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}footer{padding:16px 24px;}}
+</style>
+<style data-injected="related-sidebar">
+main.main-with-sidebar{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;padding:0 40px;}
+main.main-with-sidebar > .main-content{padding:36px 20px 60px 20px;}
+.related-sidebar{padding:36px 0 60px;}
+.related-sidebar-inner{background:var(--surface,#fffdf5);border:1px solid var(--border,#d4c89a);border-radius:14px;padding:22px 24px 26px;box-shadow:0 8px 22px -16px rgba(13,26,58,0.25);}
+.related-sidebar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text,#0a1838);letter-spacing:-0.005em;margin:0 0 6px;}
+.related-sidebar-sub{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:14px;}
+.related-group{margin-top:14px;}
+.related-group:first-of-type{margin-top:0;}
+.related-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group ul{list-style:none;padding:0;margin:0;}
+.related-group li{padding:6px 0;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group li:last-child{border-bottom:none;}
+.related-group a{display:flex;align-items:baseline;gap:8px;text-decoration:none;color:var(--text-soft,#1e2f5a);font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.4;transition:color .15s;}
+.related-group a:hover{color:var(--blue,#1e40af);}
+.related-group a .r-arrow{color:var(--blue,#1e40af);font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;opacity:0.6;transition:transform .15s, opacity .15s;flex-shrink:0;}
+.related-group a:hover .r-arrow{transform:translateX(2px);opacity:1;}
+.related-group a .r-tag{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted,#6b7794);background:var(--surface-2,#f5eed9);border:1px solid var(--border,#d4c89a);border-radius:10px;padding:2px 7px;margin-left:auto;flex-shrink:0;}
+.related-empty{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted,#6b7794);padding:6px 0;}
+@media(max-width:960px){main.main-with-sidebar{grid-template-columns:1fr;padding:0;gap:0;}main.main-with-sidebar > .main-content{padding:36px 60px 30px 60px;}.related-sidebar{padding:0 60px 60px;}}
+@media(max-width:640px){main.main-with-sidebar > .main-content{padding:28px 24px 24px 24px;}.related-sidebar{padding:0 24px 40px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 22</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Bite</span></div>
+    <div class="header-eyebrow">SESSION 22 · BITE · OSPF AUTH, STUB AREAS &amp; SUMMARIZATION</div>
+    <h1>Who Speaks, and <em>How Much They're Told</em></h1>
+    <p>Five features, two questions. Rapid reactivation — 5 to 10 minutes.</p>
+  </div>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">Production OSPF answers two questions a lab never asks: <em>who gets to speak</em>, and <em>how much each router needs to be told</em>.</div>
+  <p class="motivation-sub">Authentication and passive interfaces answer the first. Stub areas and summarization answer the second. The exam hides all five inside "why is this not working?" scenarios.</p>
+</div>
+
+<main class="main-with-sidebar">
+  <div class="main-content">
+
+    <div class="section-block">
+      <div class="section-label">OVERVIEW</div>
+      <h2>The Session in <em>One Paragraph</em></h2>
+      <p>A rogue Linux laptop on a shared VLAN can become a full OSPF neighbor because <strong>default OSPF runs on pure trust</strong> — every hello-match field is public. The fixes split by interface role: <strong>passive</strong> silences interfaces that should never peer (subnet still advertised via Type 1); <strong>MD5/HMAC auth</strong> guards interfaces that must peer (key never on the wire; per-interface). Meanwhile a one-exit leaf site drowning in Type 3/5 detail needs only its information floor — <strong>a default route</strong> — delivered by <strong>stub</strong> (kills Type 5s, E-bit handshake area-wide) or <strong>totally stubby</strong> (also kills Type 3 specifics, ABR-side alone). When visibility must be kept, <strong>area range</strong> (ABR) and <strong>summary-address</strong> (ASBR) compress many prefixes into one stable claim — which stays healthy even when a member dies, so troubleshooting moves inside the area.</p>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">PROBLEM &amp; MENTAL MODEL</div>
+      <h2>Two Problems, <em>One Design Session</em></h2>
+      <h3>Problem 1 — who gets to speak</h3>
+      <p>Area ID and timers are broadcast in cleartext every 10 seconds to 224.0.0.5. The subnet is the price of being on the VLAN. MTU isn't even a hello field — it lives in DBD packets (which is <em>why</em> its mismatch symptom is stuck ExStart). Nothing in a standard hello is secret. <strong>Matching the fields IS the trust.</strong></p>
+      <h3>Problem 2 — how much a router needs to be told</h3>
+      <p>A router with one exit makes the same decision for every destination: "toward HQ." Its information floor is one default route. Everything above the floor costs LSDB memory plus a partial SPF run every time any prefix changes anywhere — for a router whose next hop can never change.</p>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">PRIMARY MENTAL MODEL</div>
+          <div class="mental-note-block-text">Auth guards interfaces that must speak. Passive silences interfaces that never should. Stub-ness and summarization both trade visibility for stability — and the cost is that troubleshooting must happen closer to the source.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">WORKFLOW</div>
+      <h2>The Decision Flow, <em>Compressed</em></h2>
+      <div class="flow-line"><span class="hl">INTERFACE:</span> has legit neighbors?
+   NO  → passive          (no hellos; Type 1 stub entry still advertised)
+   YES → MD5/HMAC auth    (per-interface; mismatch = neighbor never appears)
+
+<span class="hl">AREA:</span> leaf with one exit?
+   pure leaf, no local ASBR   → totally stubby (stub everywhere + no-summary on ABR)
+   leaf that redistributes    → NSSA (Type 7 inside → Type 5 at the ABR)
+   needs per-prefix visibility → regular + <span class="hl">area range</span> at the ABR
+
+<span class="hl">EXTERNALS:</span> chunky redistribution at the ASBR? → summary-address</div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">KEY TERMINOLOGY</div>
+      <h2>Terms That <em>Must Be Exact</em></h2>
+      <table class="data-table">
+        <thead><tr><th>Term</th><th>Exact meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Auth Type 0 / 1 / 2</td><td>None / plaintext (defeated by capture) / MD5-HMAC (key never transmitted; digest + sequence number)</td></tr>
+          <tr><td>E-bit</td><td>Hello Options bit: "I accept Type 5s." Cleared in stub areas; mismatch = no adjacency</td></tr>
+          <tr><td>Stub</td><td>No Type 5s in; ABR injects default; area-wide agreement; no ASBR ever</td></tr>
+          <tr><td>Totally stubby</td><td>Stub + ABR replaces Type 3 specifics with one default (no-summary, ABR-side only)</td></tr>
+          <tr><td>NSSA / Type 7</td><td>Stub that hosts a local ASBR; Type 7 inside, converted to Type 5 at the NSSA's ABR</td></tr>
+          <tr><td>area range</td><td>ABR compresses contiguous Type 3s into one shorter-mask summary</td></tr>
+          <tr><td>summary-address</td><td>Same trick at the ASBR, on Type 5s, before they fly domain-wide</td></tr>
+          <tr><td>Passive interface</td><td>No hellos out; adjacency impossible; subnet still in the router's own Type 1</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">EXAM-CRITICAL</div>
+      <h2>What Fortinet <em>Actually Tests</em></h2>
+      <ul>
+        <li><strong>Type 1 vs Type 2 auth</strong> — the distractor is plaintext auth "protecting" against a sniffer. One capture defeats it.</li>
+        <li><strong>Auth is per-interface</strong>, not a global OSPF setting — and mismatch presents as a neighbor that never appears.</li>
+        <li><strong>Stub on the ABR only</strong> = E-bit mismatch = internal routers vanish from the neighbor table. Symptom is missing <em>neighbors</em>, not missing routes.</li>
+        <li><strong>MTU is a DBD field, not a hello field</strong> — that's why its mismatch is stuck ExStart, not an invisible neighbor.</li>
+        <li><strong>A stub area can never host an ASBR</strong> — that requirement is the entire reason NSSA exists.</li>
+        <li><strong>Area 0 can never be stub</strong> of any flavor.</li>
+        <li><strong>A healthy summary proves nothing about a member prefix</strong> — it survives on one living component.</li>
+        <li><strong>Passive ≠ removed from OSPF</strong> — the subnet is still advertised as a Type 1 stub network entry.</li>
+      </ul>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">COMMON MISTAKES</div>
+      <h2>The Traps <em>You Personally Hit</em></h2>
+      <div class="callout callout-amber"><strong>MTU in the hello:</strong> it isn't. Your own S21 rule was the disproof — if MTU were a hello gate, a mismatch could never strand routers at ExStart.</div>
+      <div class="callout callout-amber"><strong>Auth as a global setting:</strong> it's per-interface — that's what allows HMAC on the exposed trunk and nothing on the locked-room link.</div>
+      <div class="callout callout-amber"><strong>"E-bit mismatch forms a half-working adjacency":</strong> no hello-gate mismatch ever half-works. Clean refusal beats silent disagreement — no adjacency at all.</div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">TROUBLESHOOTING</div>
+      <h2>The Checklist — <em>Symptom Names the Suspect</em></h2>
+      <table class="data-table">
+        <thead><tr><th>Symptom</th><th>Suspects</th><th>First command</th></tr></thead>
+        <tbody>
+          <tr><td>Neighbor never appears</td><td>Timers, area, subnet, <strong>auth, E-bit</strong> — all hello gates</td><td>get router info ospf neighbor</td></tr>
+          <tr><td>Stuck ExStart</td><td>MTU (DBD-stage), duplicate RID</td><td>get router info ospf neighbor</td></tr>
+          <tr><td>Prefix dead, border summary healthy</td><td>Component died behind area range — diagnose INSIDE the area</td><td>get router info ospf database (in-area)</td></tr>
+          <tr><td>No adjacency on one link, subnet still advertised</td><td>Interface is passive</td><td>get router info ospf interface</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-green"><strong>The upgraded elimination trick:</strong> a visible neighbor at ANY state exonerates every hello-stage gate at once — timers, area, subnet, auth, and the E-bit.</div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">ANALOGY</div>
+      <h2>The Gated Community</h2>
+      <div class="analogy-box">
+        <div class="analogy-label">Analogy</div>
+        <div class="analogy-text">
+          <p class="analogy-summary">OSPF hardening is a gated community's mailroom policy.</p>
+          <ul>
+            <li><strong>Default OSPF</strong> — the gate is open and the entry code is printed on the gate itself. Anyone who copies it walks in (rogue neighbor).</li>
+            <li><strong>Plaintext auth</strong> — a password shouted across the street. Anyone listening now has it too.</li>
+            <li><strong>MD5/HMAC</strong> — a signet ring: you prove you own it by the seal it leaves, but the ring never leaves your hand. Yesterday's seal won't pass today (sequence number).</li>
+            <li><strong>Passive interface</strong> — a house that receives mail (subnet advertised) but never answers the door (no hellos, no visitors).</li>
+            <li><strong>Totally stubby</strong> — a resident who tells the mailroom "just hand me anything addressed elsewhere — one forwarding slip covers it all" (the default route).</li>
+            <li><strong>area range</strong> — the community's street directory lists "Numbers 8–11: this block," and stays printed even if number 9 moves out. The directory is a claim about the block, not a census.</li>
+          </ul>
+        </div>
+        <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:16px;">
+          <img src="images/gated-community.png" alt="A gated community mailroom scene — each OSPF hardening feature drawn as a mailroom policy: the signet-ring guard, the passive house, the totally-stubby resident holding a forwarding slip, and the street directory listing a range of numbers."
+               style="width:100%;max-width:820px;border-radius:12px;border:1px solid var(--amber-border);display:block;"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div style="display:none;border:2px dashed var(--amber-border);border-radius:12px;background:rgba(255,255,255,0.55);padding:32px 24px;flex-direction:column;align-items:center;gap:10px;width:100%;">
+            <div style="font-size:26px;">📜</div>
+            <div style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;color:#7a4f0c;text-transform:uppercase;">Image not yet generated</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:14.5px;color:#5c3d09;text-align:center;max-width:520px;line-height:1.6;font-style:italic;">Drop the generated PNG at <code style="font-family:'SF Mono','Fira Code',monospace;font-style:normal;background:rgba(0,0,0,0.05);padding:1px 6px;border-radius:4px;">images/gated-community.png</code> — see <code style="font-family:'SF Mono','Fira Code',monospace;font-style:normal;background:rgba(0,0,0,0.05);padding:1px 6px;border-radius:4px;">images/prompts.txt</code> for the prompt.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-label">SELF-TEST</div>
+      <h2>Five Questions — <em>Cold, No Notes</em></h2>
+      <div class="selftest">
+        <div class="selftest-q">A rogue device captures every hello on a VLAN for a week. Which auth type still keeps it out, and what two properties make that true?
+          <details><summary>Reveal</summary><p>Type 2 (MD5/HMAC). The key is never transmitted — only a digest of key+packet, which can't be computed without the key — and a non-decreasing sequence number makes captured packets unreplayable.</p></details>
+        </div>
+        <div class="selftest-q">Stub is configured on the ABR but forgotten on the internal routers. What exact symptom appears, and why?
+          <details><summary>Reveal</summary><p>No adjacency forms — the E-bit in the hello Options mismatches, and hello-gate mismatches never half-work. The ABR's neighbor table shows nothing from area-internal routers.</p></details>
+        </div>
+        <div class="selftest-q">Why does "totally stubby" require no new handshake bit when stub required the E-bit?
+          <details><summary>Reveal</summary><p>Stub bans an LSA <em>type</em> — receiving a banned type is a protocol violation, so agreement must be checked up front. Totally stubby just sends <em>fewer</em> Type 3s (one default instead of many) — a quantity change a receiver processes normally. The ABR decides alone.</p></details>
+        </div>
+        <div class="selftest-q">10.50.9.0/24 is unreachable but its /22 area-range summary is healthy in area 0. Where do you look and why?
+          <details><summary>Reveal</summary><p>Inside the source area — the summary survives while one member lives, so it proves nothing about a specific /24. Specifics exist un-summarized only inside the area; summarization happens solely at the border crossing.</p></details>
+        </div>
+        <div class="selftest-q">An interface is made passive. Complete the sentence: passive hides the ______, not the ______.
+          <details><summary>Reveal</summary><p>Willingness to peer, not the network. Hellos stop (no adjacency possible), but the subnet is still originated in the router's Type 1 as a stub network entry.</p></details>
+        </div>
+      </div>
+    </div>
+
+  </div>
+<!-- related-sidebar:start -->
+<aside class="related-sidebar"><div class="related-sidebar-inner"><div class="related-sidebar-title">Related pages</div><div class="related-sidebar-sub">Session 22</div><div class="related-group"><div class="related-group-label">Session</div><ul><li><a href="../index.html"><span class="r-arrow">›</span><span>Session hub</span></a></li><li><a href="../completed-session/index.html"><span class="r-arrow">›</span><span>Completed study guide</span><span class="r-tag">Guide</span></a></li><li><a href="../completed-session/summary.txt" target="_blank" rel="noopener"><span class="r-arrow">›</span><span>Session summary</span><span class="r-tag">txt</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Nibbles</div><ul><li><a href="../nibbles/handshake-vs-unilateral.html"><span class="r-arrow">›</span><span>Session 22 Nibble — Banning Needs a Handshake, Sending Fewer Needs None</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Audio podcast</div><ul><li><a href="../../../audio-podcasts/index.html#panel-22"><span class="r-arrow">›</span><span>Podcast prompt</span><span class="r-tag">Prompt</span></a></li></ul></div></div></aside>
+<!-- related-sidebar:end -->
+</main>
+
+<footer>
+  Vaultline Financial<span>.</span> <span>NSE7 Enterprise Firewall 7.6</span><span>.</span> Session 22 Bite — Who Speaks, and How Much They're Told
+</footer>
+
+<script>
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+</script>
+</body>
+</html>

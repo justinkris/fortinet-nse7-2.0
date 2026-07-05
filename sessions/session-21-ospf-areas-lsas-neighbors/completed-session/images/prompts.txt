@@ -1,0 +1,23 @@
+Session 21 — Completed Study Guide: OSPF — Areas, LSAs & Neighbor States (Memory Hook / Analogy)
+============================================================
+
+courtship-and-clearing-house.png
+
+Title: The courtship and the clearing house — the seven neighbor states as a slow romance, the OSPF area hierarchy as a walled kingdom.
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm palette: cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, clean bold line work, no gradients, no 3D. Wide diptych composition — one image, split down the middle by a thin decorative rope-border.
+
+LEFT PANEL — "THE COURTSHIP": a gentle pastoral scene showing the OSPF adjacency states as a seven-panel romance between two well-dressed characters walking a garden path. Each panel is a small vignette with a caption ribbon in gold:
+  1. DOWN — the pair sit on opposite benches, backs turned, unaware.
+  2. INIT — one waves; the other has not yet looked up.
+  3. 2-WAY — they finally lock eyes; both hold small badges labelled "Router-ID" and "Priority".
+  4. EXSTART — a formal handshake with a small crown drifting to the taller one, labelled "Master by higher Router-ID".
+  5. EXCHANGE — the pair swap thick summary catalogues labelled "DBD — headers only".
+  6. LOADING — the pair rush back and forth exchanging small letters labelled "LSR / LSU / LSAck".
+  7. FULL — they stand shoulder to shoulder, each holding an identical thick book labelled "THE NETWORK — complete edition"; a heart-shaped seal reads "ADJACENCY: FULL".
+
+RIGHT PANEL — "THE CLEARING HOUSE": a slightly elevated three-quarter view of a walled kingdom drawn as a network diagram. CENTER: a walled capital city labelled "AREA 0 — BACKBONE", its wall gates manned by herald characters in amber sashes labelled "ABR". Two surrounding walled villages labelled "AREA 1" and "AREA 2" connect to the capital by a single road each — NO road between villages. INSIDE each village: villagers hold hand-drawn maps of their own houses ("Type 1 — my own links"); one town crier with a green "DR" medal stands on a podium ("Type 2 — the segment speaks through its DR"). AT THE GATES: amber ABR heralds hold short scrolls reading "Type 3 — prefix X, cost Y"; a small sign at each gate reads "maps never leave the village". FAR EDGE: a coral-cloaked smuggler labelled "ASBR" at the kingdom's border launches paper airplanes labelled "Type 5 — external news" that fly OVER every wall (dotted flight paths crossing walls unchanged). One capital herald holds a signpost pointing to the smuggler, labelled "Type 4 — directions to the ASBR (written by the ABR)". A tiny background chalkboard reads "STAR TOPOLOGY: no cycles by design".
+
+Bottom border, muted gold caption plate spanning both halves: "You cannot call someone's whole database lies until you hold an identical copy — and even then, maps stay home while claims cross borders." Warm cream, coral, sage, gold palette, clean bold outlines, no gradients, storybook mood.
+
+============================================================

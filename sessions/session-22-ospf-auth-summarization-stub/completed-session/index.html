@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session 22 Complete — OSPF Authentication, Summarization &amp; Stub Areas</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb a:hover{text-decoration:underline;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.005em;}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+  .top-panels{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+  .top-panels .qpanel{border-bottom:none;border-right:1px solid var(--border);}
+  .top-panels .qpanel-header{padding-left:32px;padding-right:32px;}
+  .top-panels .qpanel-body{padding-left:32px;padding-right:32px;}
+  .qpanel{background:var(--surface);}
+  .qpanel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .qpanel-header:hover,.qpanel-header.open{background:var(--surface-2);}
+  .qpanel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .qpanel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .qpanel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .qpanel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .qpanel-body{display:none;padding:0 20px 22px;}
+  .qpanel-body.open{display:block;}
+  .notes-panel{background:var(--surface);}
+  .notes-panel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 32px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .notes-panel-header:hover,.notes-panel-header.open{background:var(--surface-2);}
+  .notes-panel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .notes-panel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .notes-panel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .notes-panel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .notes-panel-body{display:none;padding:0 32px 22px;}
+  .notes-panel-body.open{display:block;}
+  .q-group{margin-bottom:16px;}
+  .q-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+  .q-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-dim);}
+  .q-item:last-child{border-bottom:none;}
+  .q-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;color:var(--blue);min-width:16px;margin-top:2px;}
+  .q-text{font-size:14px;color:var(--text-soft);line-height:1.5;flex:1;}
+  .q-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:0 4px;margin-top:1px;}
+  .q-del:hover{color:var(--blue);}
+  .no-questions{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);padding:8px 0;}
+  .btn-add-q{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-q:hover{opacity:0.85;}
+  .section-nav{position:sticky;top:0;z-index:90;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px;overflow-x:auto;}
+  .nav-tab{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:12px 18px;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s,border-color 0.15s;}
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+  main{max-width:1200px;margin:0 auto;padding:0;}
+  .main-content{padding:36px 60px 60px 60px;}
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block h3{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);margin:22px 0 10px;}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:4px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .code-block{background:var(--ink-dark);border-radius:10px;padding:0;margin:16px 0;overflow:hidden;border:1px solid var(--border);}
+  .code-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-accent);padding:8px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .code-block pre{padding:16px;overflow-x:auto;}
+  .code-block code{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12.5px;line-height:1.65;color:#e8efff;}
+  .topo-block{background:var(--ink-dark);border-radius:12px;padding:22px 26px;margin:16px 0;overflow-x:auto;border:1px solid var(--border);}
+  .topo-block pre{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12.5px;line-height:1.55;color:#e8efff;white-space:pre;}
+  .topo-block .t-hl{color:#9bb8e6;font-weight:700;}
+  .socratic-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:16px;border-top:3px solid var(--blue);}
+  .socratic-header{display:flex;align-items:center;gap:8px;margin-bottom:0;cursor:pointer;user-select:none;}
+  .socratic-header::after{content:'▸ Expand';margin-left:auto;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-block.soc-open .socratic-header{margin-bottom:10px;}
+  .socratic-block.soc-open .socratic-header::after{content:'▾ Collapse';}
+  .socratic-block:not(.soc-open) .socratic-insight,
+  .socratic-block:not(.soc-open) .socratic-questions,
+  .socratic-block:not(.soc-open) .answer-area{display:none;}
+  .socratic-icon{font-size:17px;flex-shrink:0;}
+  .socratic-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-insight{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;margin-bottom:12px;border-left:3px solid var(--border);padding-left:14px;font-style:italic;}
+  .socratic-questions{list-style:none;padding:0;margin:0;}
+  .socratic-questions li{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--border-dim);line-height:1.6;}
+  .socratic-questions li:last-child{border-bottom:none;}
+  .socratic-questions li::before{content:'?';position:absolute;left:0;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:16px;top:7px;color:var(--blue);}
+  .answer-area{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .answer-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .answer-textarea:focus{border-color:var(--blue);}
+  .answer-textarea:disabled{opacity:0.75;background:var(--surface-2);cursor:default;}
+  .answer-buttons{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .btn-add-answer{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-answer:hover:not(:disabled){opacity:0.85;}
+  .btn-add-answer:disabled{opacity:0.5;cursor:default;}
+  .btn-see-answer{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-see-answer:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-see-answer:not(:disabled){color:var(--blue);border-color:var(--blue);}
+  .btn-see-answer:hover:not(:disabled){background:var(--blue-glow);}
+  .model-answers{margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .model-answer-item{padding:10px 0;border-bottom:1px solid var(--border-dim);}
+  .model-answer-item:first-child{padding-top:0;}
+  .model-answer-item:last-child{border-bottom:none;padding-bottom:0;}
+  .model-answer-q{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;}
+  .model-answer-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;}
+  .mental-note-block{border-radius:10px;padding:14px 18px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;background:rgba(30,64,175,0.06);border:1px solid var(--blue-border);}
+  .mental-note-block-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+  .mental-note-block-inner{flex:1;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--blue);margin-bottom:4px;text-transform:uppercase;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;line-height:1.55;color:var(--text);}
+  .analogy-box{background:#fcf5dc;border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+  .analogy-label{display:flex;align-items:center;gap:6px;user-select:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px;text-transform:uppercase;}
+  .analogy-label::after{content:'▾  Reveal illustration';margin-left:auto;font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:none;opacity:0.75;}
+  .analogy-label:hover::after{opacity:1;}
+  .analogy-box.expanded>.analogy-label::after{content:'▴  Hide illustration';}
+  .analogy-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:#5c3d09;line-height:1.7;font-style:italic;}
+  .analogy-summary{font-style:normal;font-weight:600;color:#7a4f0c;margin-bottom:10px;font-size:17px;}
+  .analogy-text ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;}
+  .analogy-text li{padding-left:18px;position:relative;}
+  .analogy-text li::before{content:'•';position:absolute;left:0;font-weight:700;color:var(--amber);}
+  .analogy-box>.analogy-img{display:none;}
+  .analogy-box.expanded>.analogy-img{display:block;}
+  .lesson-tools{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:40px;}
+  .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .tool-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .tool-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .tool-textarea:focus{border-color:var(--blue);}
+  .tool-row{margin-top:8px;display:flex;gap:8px;}
+  .page-nav{display:flex;border-top:2px solid var(--border);background:var(--surface);}
+  .page-nav-btn{flex:1;display:flex;flex-direction:column;gap:4px;padding:16px 28px;text-decoration:none;transition:background 0.15s;cursor:pointer;}
+  .page-nav-btn:hover:not(.page-nav-disabled){background:var(--surface-2);}
+  .page-nav-prev{border-right:1px solid var(--border);}
+  .page-nav-next{text-align:right;}
+  .page-nav-disabled{opacity:0.3;pointer-events:none;}
+  .page-nav-label{font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;color:var(--text-muted);display:block;text-transform:uppercase;}
+  .page-nav-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;font-style:italic;color:var(--blue);display:block;}
+  footer{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  footer span{color:var(--blue);}
+  @media(max-width:720px){header{padding:28px 24px 24px;}header h1{font-size:34px;}.motivation-banner{padding:16px 24px;}.main-content{padding:24px 24px 40px;}.section-nav{padding:0 16px;}.top-panels{grid-template-columns:1fr;}.top-panels .qpanel{border-right:none;border-bottom:1px solid var(--border);}.lesson-tools-grid{grid-template-columns:1fr;}footer{padding:16px 24px;}}
+</style>
+<style data-injected="related-sidebar">
+main.main-with-sidebar{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;padding:0 40px;}
+main.main-with-sidebar > .main-content{padding:36px 20px 60px 20px;}
+.related-sidebar{padding:36px 0 60px;}
+.related-sidebar-inner{background:var(--surface,#fffdf5);border:1px solid var(--border,#d4c89a);border-radius:14px;padding:22px 24px 26px;box-shadow:0 8px 22px -16px rgba(13,26,58,0.25);}
+.related-sidebar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text,#0a1838);letter-spacing:-0.005em;margin:0 0 6px;}
+.related-sidebar-sub{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:14px;}
+.related-group{margin-top:14px;}
+.related-group:first-of-type{margin-top:0;}
+.related-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted,#6b7794);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group ul{list-style:none;padding:0;margin:0;}
+.related-group li{padding:6px 0;border-bottom:1px solid var(--border-dim,#ebe1c2);}
+.related-group li:last-child{border-bottom:none;}
+.related-group a{display:flex;align-items:baseline;gap:8px;text-decoration:none;color:var(--text-soft,#1e2f5a);font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.4;transition:color .15s;}
+.related-group a:hover{color:var(--blue,#1e40af);}
+.related-group a .r-arrow{color:var(--blue,#1e40af);font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;opacity:0.6;transition:transform .15s, opacity .15s;flex-shrink:0;}
+.related-group a:hover .r-arrow{transform:translateX(2px);opacity:1;}
+.related-group a .r-tag{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted,#6b7794);background:var(--surface-2,#f5eed9);border:1px solid var(--border,#d4c89a);border-radius:10px;padding:2px 7px;margin-left:auto;flex-shrink:0;}
+.related-empty{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted,#6b7794);padding:6px 0;}
+@media(max-width:960px){main.main-with-sidebar{grid-template-columns:1fr;padding:0;gap:0;}main.main-with-sidebar > .main-content{padding:36px 60px 30px 60px;}.related-sidebar{padding:0 60px 60px;}}
+@media(max-width:640px){main.main-with-sidebar > .main-content{padding:28px 24px 24px 24px;}.related-sidebar{padding:0 24px 40px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../../study-plan/index.html" style="color:#9bb8e6;text-decoration:none;">Curriculum</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Session 22</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Completed Study Guide</span></div>
+    <div class="header-eyebrow"><span class="dot-live"></span> Study Guide · NSE7 EF 7.6 · Domain 4 — Routing</div>
+    <h1>Locks, Silence, and <em>the Lie of Omission</em></h1>
+    <p>OSPF authentication, stub &amp; totally stubby areas, area range, summary-address, and passive interfaces — Session 22 at Vaultline Financial.</p>
+  </div>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">Hello-only OSPF works in a lab. Production OSPF must decide <em>who gets to speak</em> and <em>how much each router needs to be told</em>.</div>
+  <p class="motivation-sub">These five features are the ones the exam most often hides inside a "why is this not working?" scenario — because each one changes behavior silently, at a boundary you can't see from where you're standing.</p>
+</div>
+
+<div class="top-panels">
+  <div class="qpanel" id="qpanel">
+    <button class="qpanel-header" onclick="toggleQPanel()" id="qpanel-header">
+      <span class="qpanel-title">MY QUESTIONS</span>
+      <span class="qpanel-count" id="qpanel-count">0</span>
+      <span class="qpanel-hint">— click to expand</span>
+      <span class="qpanel-chevron" id="qpanel-chevron">▾</span>
+    </button>
+    <div class="qpanel-body" id="qpanel-body"></div>
+  </div>
+  <div class="notes-panel" id="notes-panel">
+    <button class="notes-panel-header" onclick="toggleNotesPanel()" id="notes-panel-header">
+      <span class="notes-panel-title">MY NOTES</span>
+      <span class="notes-panel-count" id="notes-panel-count">0</span>
+      <span class="notes-panel-hint">— click to expand</span>
+      <span class="notes-panel-chevron" id="notes-panel-chevron">▾</span>
+    </button>
+    <div class="notes-panel-body" id="notes-panel-body"></div>
+  </div>
+</div>
+
+<nav class="section-nav" id="section-nav">
+  <a class="nav-tab active" href="#section-topology">Topology</a>
+  <a class="nav-tab" href="#section-auth">Authentication</a>
+  <a class="nav-tab" href="#section-areatypes">Area Types</a>
+  <a class="nav-tab" href="#section-summarization">Summarization</a>
+  <a class="nav-tab" href="#section-passive">Passive &amp; Go-Live</a>
+</nav>
+
+<main class="main-with-sidebar">
+  <div class="main-content">
+
+    <!-- ═══════════ SECTION 1 — TOPOLOGY ═══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · TOPOLOGY</span>
+      </div>
+      <p class="socratic-insight">Before touching any feature, rebuild the map from memory. Every design decision this session — where auth goes, which area is stub, where summarization happens — is a decision about a specific point on this map.</p>
+      <ul class="socratic-questions">
+        <li>Sketch Vaultline's areas from memory: which sites are in which areas, and which routers are the ABRs?</li>
+        <li>The DR site has exactly one path to anywhere. What does that fact alone tell you about how much routing information it genuinely needs?</li>
+      </ul>
+      <div class="answer-area" data-section="topology">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Area 0 is the HQ backbone (FGT-HQ-CORE plus the edge boxes). Meridian is area 0.0.0.1 (the VRRP branch from S19). Harbourview is area 0.0.0.2 (hypothetical scaling branch from S21). The DR site is area 0.0.0.3 — decided in S21 so its flappy WAN circuit triggers partial, not full, SPF at HQ. The ABRs are whichever HQ boxes hold an interface in both area 0 and a leaf area; FG-EDGE-P is also the future ASBR (eBGP to ISP-A next session).</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">If every destination resolves to the same next hop ("toward HQ"), the router's routing decision never changes regardless of detail. The information floor is a single default route. Everything beyond that is bookkeeping it pays for — LSDB memory and partial SPF runs — without ever making a different choice.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-topology">
+      <div class="section-label">SECTION 01</div>
+      <h2>The Vaultline Map — <em>Where Every Feature Lives</em></h2>
+
+      <p>Session 22 opens one week after the DR-site area redesign shipped. The network now has four OSPF areas, and every feature in this session attaches to a <strong>specific point</strong> on this map — auth to an interface, stub-ness to an area, summarization to a border. Hold the whole picture before zooming in.</p>
+
+      <div class="topo-block"><pre>
+                              ┌─────────────────────────────────────────────┐
+                              │            AREA 0.0.0.0 — BACKBONE          │
+                              │              (Vaultline HQ)                 │
+                              │                                             │
+   ISP-A ═══(eBGP, S23)═══ <span class="t-hl">FG-EDGE-P</span>            <span class="t-hl">FG-EDGE-DR</span> ═══(eBGP, S23)═══ ISP-B
+                              │   future ABR+ASBR       future ASBR         │
+                              │        │                                    │
+                              │   <span class="t-hl">FGT-HQ-CORE</span>                             │
+                              │    ├── trunk → core switch  ← REAL OSPF     │
+                              │    │   neighbors live here → <span class="t-hl">HMAC AUTH</span>     │
+                              │    └── office VLAN (users)                  │
+                              │        Daniel's rogue-laptop jack           │
+                              │        → <span class="t-hl">PASSIVE INTERFACE</span>                │
+                              └───────┬──────────────┬──────────────┬───────┘
+                                      │              │              │
+                                      │ ABR          │ ABR          │ ABR
+                          ┌───────────┴───┐  ┌───────┴────────┐  ┌──┴──────────────┐
+                          │ AREA 0.0.0.1  │  │ AREA 0.0.0.2   │  │ AREA 0.0.0.3    │
+                          │ MERIDIAN      │  │ HARBOURVIEW    │  │ DR SITE         │
+                          │ (VRRP site,   │  │ (regular area) │  │ <span class="t-hl">TOTALLY STUBBY</span>  │
+                          │  S19)         │  │ 10.50.8.0/24   │  │ one WAN link,   │
+                          │               │  │ 10.50.9.0/24   │  │ one exit →      │
+                          │               │  │ 10.50.10.0/24  │  │ default route   │
+                          │               │  │ 10.50.11.0/24  │  │ is the floor    │
+                          │               │  │ → <span class="t-hl">AREA RANGE</span>   │  │                 │
+                          │               │  │   10.50.8.0/22 │  │                 │
+                          └───────────────┘  └────────────────┘  └─────────────────┘
+      </pre></div>
+
+      <h3>The map, feature by feature</h3>
+      <ul>
+        <li><strong>Area 0.0.0.0 — HQ backbone.</strong> FGT-HQ-CORE anchors the interior. FG-EDGE-P and FG-EDGE-DR peer eBGP to ISP-A/ISP-B next session, making FG-EDGE-P the two-hat ABR+ASBR (S21 verdict). Two interface roles matter today: the <em>core switch trunk</em> (real OSPF neighbors — needs authentication) and the <em>office VLAN</em> (end users, Daniel's conference-room jack — needs passive).</li>
+        <li><strong>Area 0.0.0.1 — Meridian.</strong> The S19 VRRP branch. Unchanged this session, but part of the ABR's Type 3 load.</li>
+        <li><strong>Area 0.0.0.2 — Harbourview.</strong> Regular area holding four contiguous /24s (10.50.8–11.0/24). Priya wants it <em>visible</em> for monitoring, not hidden behind a default — so its ABR uses <strong>area range</strong> to fold four Type 3s into one 10.50.8.0/22 summary.</li>
+        <li><strong>Area 0.0.0.3 — DR site.</strong> Two routers, one WAN link, one exit. This session it becomes <strong>totally stubby</strong>: the ABR replaces both external (Type 5) and inter-area (Type 3) detail with a single default.</li>
+      </ul>
+
+      <div class="callout"><strong>Why the map matters on the exam:</strong> NSE7 scenario questions describe a symptom at one point on a map like this and hide the cause at another. "Harbourview can't reach 10.50.9.0/24" is diagnosed <em>inside area 2</em>, not at the backbone — because the summary at the border hides exactly the detail you need.</div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Every Session 22 feature is a point decision: auth lives on an interface, stub-ness lives on an area, summarization lives at a border. Name the point before you name the feature.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-topology" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-topology','Topology')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-topology" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-topology')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ SECTION 2 — AUTHENTICATION ═══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · AUTHENTICATION</span>
+      </div>
+      <p class="socratic-insight">Daniel's rogue laptop formed a full adjacency with someone's production core. Before reaching for a feature, ask what was ever standing in its way.</p>
+      <ul class="socratic-questions">
+        <li>Of the things two OSPF routers must match to become neighbors — area ID, subnet, timers, MTU — which are actually secret from a device plugged into the same VLAN?</li>
+        <li>Why does a plaintext password fail against exactly the attacker it's meant to stop, and what does MD5/HMAC change about what crosses the wire?</li>
+      </ul>
+      <div class="answer-area" data-section="auth">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">None of them. Area ID and hello/dead timers are broadcast in cleartext in every hello, every 10 seconds, to 224.0.0.5. The subnet must be matched just to have a working interface on the VLAN. MTU isn't even checked at the hello stage — it lives in DBD packets during Exchange (that's why an MTU mismatch shows as stuck ExStart, not a missing neighbor). Default OSPF runs on pure trust: matching the published fields IS the trust.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Type 1 puts the password itself, in cleartext, inside the hello — the same capture that reveals the area ID reveals the password. Type 2 never transmits the key: it sends a digest of (key + packet contents), so an attacker with a full capture archive still cannot compute a valid digest without the key. A rolling sequence number is hashed in, so captured packets can't be replayed later either.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-auth">
+      <div class="section-label">SECTION 02</div>
+      <h2>Authentication — <em>OSPF Runs on Pure Trust</em></h2>
+
+      <p>The finding that opened the session: <strong>there is no secret handshake in default OSPF.</strong> Every field two routers must match to become neighbors is either broadcast in plaintext or trivially satisfied by being on the wire:</p>
+
+      <table class="data-table">
+        <thead><tr><th>Field</th><th>How a rogue device gets it</th><th>When it's checked</th></tr></thead>
+        <tbody>
+          <tr><td>Area ID</td><td>Plaintext field in every hello (every 10s to 224.0.0.5)</td><td>Hello</td></tr>
+          <tr><td>Subnet / mask</td><td>Must already be configured just to be on the VLAN — nothing to "discover"</td><td>Hello</td></tr>
+          <tr><td>Hello / dead timers</td><td>Plaintext fields in every hello</td><td>Hello</td></tr>
+          <tr><td>MTU</td><td>Set a normal MTU — done. Not in the hello at all</td><td>DBD / Exchange (mismatch = stuck ExStart)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-amber"><strong>Correction from this session:</strong> MTU is <em>not</em> carried in the hello. It's announced in Database Description packets during Exchange. Your own S21 rule was the proof: if MTU were a hello gate, a mismatch could never produce a <em>stuck ExStart</em> — the routers would never have gotten past hello.</div>
+
+      <p>Passive interface can't save the interface that matters, either: the core trunk carries <em>real</em> neighbors, and passive kills hellos for everyone — rogue and legitimate alike. The only defense that works on an interface that must actively peer is to add something to the exchange that a wire-listener can't observe: <strong>a shared secret</strong> — the same shape of mechanism as the FGCP heartbeat and VRRP group secrets.</p>
+
+      <h3>The three authentication types</h3>
+      <table class="data-table">
+        <thead><tr><th>Type</th><th>Mechanism</th><th>Survives a tcpdump?</th><th>Actual protection</th></tr></thead>
+        <tbody>
+          <tr><td>Type 0 — None</td><td>Match the plaintext fields, you're in</td><td>—</td><td>None. Pure trust (the FortiOS default)</td></tr>
+          <tr><td>Type 1 — Plaintext</td><td>Password sent in cleartext inside the packet</td><td><strong>No</strong> — one capture reveals it</td><td>Fat-finger protection only (uncoordinated admins)</td></tr>
+          <tr><td>Type 2 — Cryptographic (MD5 / HMAC-SHA)</td><td>Digest of (key + packet) sent; <strong>key never transmitted</strong></td><td><strong>Yes</strong> — capture archive is useless without the key</td><td>Real: only key-holders form adjacencies</td></tr>
+        </tbody>
+      </table>
+
+      <p>Two properties complete the Type 2 story. <strong>Anti-replay:</strong> a non-decreasing sequence number is part of what gets hashed, so replaying a captured hello later fails — the sequence is stale. <strong>Scope:</strong> authentication is <strong>per-interface</strong>, not global. That's what makes it usable: HMAC on the exposed trunk, nothing (or a different key) on the locked-comms-room point-to-point link. A mismatch between two ends of a link — one side authed, the other not, or different keys — fails exactly like an area-ID mismatch: <em>no neighbor entry ever appears</em>. Invisible neighbor, not a stuck state.</p>
+
+      <div class="code-block">
+        <div class="code-label">FortiOS CLI — per-interface OSPF authentication</div>
+        <pre><code>config router ospf
+    config ospf-interface
+        edit "core-trunk"
+            set interface "port3"
+            set authentication md5        &lt;- or: text (Type 1) / none (Type 0)
+            config md5-keys
+                edit 1
+                    set key-string &lt;shared-secret&gt;
+                next
+            end
+        next
+    end
+end</code></pre>
+      </div>
+
+      <div class="callout"><strong>Exam trap:</strong> the tested distinction is Type 1 vs Type 2, not which hash algorithm. The distractor answer is plaintext auth "protecting" against a sniffing attacker — it doesn't; capture defeats it. And remember the failure signature: auth mismatch = <em>no neighbor at all</em>, which means a visible neighbor at any state has already exonerated authentication (your S21 elimination trick still holds).</div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Type 0 trusts everyone. Type 1 trusts anyone who owns a packet sniffer. Type 2 trusts only key-holders — because the key never crosses the wire, only a digest that's worthless without it.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-auth" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-auth','Authentication')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-auth" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-auth')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ SECTION 3 — AREA TYPES ═══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · AREA TYPES</span>
+      </div>
+      <p class="socratic-insight">The DR-site router has one exit and dozens of Type 3/5 entries it will never act on differently. You derived the fix from first principles this session — reconstruct the chain.</p>
+      <ul class="socratic-questions">
+        <li>Why must stub be configured on every router in the area, and what mechanism enforces the agreement at hello time?</li>
+        <li>Why is "totally stubby" a unilateral ABR-side decision needing no new handshake bit — what's different about suppressing Type 3s vs banning Type 5s?</li>
+      </ul>
+      <div class="answer-area" data-section="areatypes">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">The E-bit in the hello's Options field. Set = "I accept external (Type 5) routes"; a stub router clears it. Mismatched E-bits fail at hello, same family as an area-ID mismatch: no adjacency ever forms. That's a design virtue — a stub router receiving a Type 5 its area isn't supposed to carry is a protocol violation, so OSPF refuses the relationship up front rather than tolerating silent disagreement about what belongs in the area.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">Suppressing Type 3s is a quantity change, not a type change. A router receiving one default Type 3 instead of fifty specifics processes it normally — nothing breaks, so nothing needs negotiating. Receiving an unexpected LSA *type* (a Type 5 in a stub area) is a real violation, which is why only that gets an up-front hello check. "Totally" is purely an origination decision the ABR makes alone: originate one default Type 3, stop sending the rest.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-areatypes">
+      <div class="section-label">SECTION 03</div>
+      <h2>Area Types — <em>How Much Does a Leaf Need to Be Told?</em></h2>
+
+      <p>The derivation ran in this order, and it's worth preserving because the exam tests the <em>reasoning</em>, not the labels. The DR-site router has exactly one exit. Every Type 3 and Type 5 in its database resolves to the same decision: "send it toward HQ." The information <strong>floor</strong> for that decision is a single default route. Everything above the floor costs LSDB memory and — the live, ongoing tax — a <strong>partial SPF run every time any of those prefixes changes anywhere in the domain</strong>, for a router whose next hop can never change.</p>
+
+      <p><strong>Stub</strong> collapses the external half: no Type 5s enter the area; the ABR injects a default in their place. Crucially, stub is <em>not a local knob</em> — a router that unilaterally ignored Type 3/5s would still receive, store, and SPF them; the flooding has to stop at the source (the ABR), and every router in the area must agree, enforced by the <strong>E-bit handshake</strong> at hello time. <strong>Totally stubby</strong> then collapses the inter-area half too — the ABR replaces the individual Type 3s with a single default Type 3 — and this half is unilateral, because fewer LSAs of a known type breaks nothing.</p>
+
+      <table class="data-table">
+        <thead><tr><th>Area type</th><th>Type 5 (external)</th><th>Type 3 (inter-area)</th><th>Local ASBR allowed?</th><th>Handshake</th></tr></thead>
+        <tbody>
+          <tr><td>Regular (default)</td><td>Yes, full detail</td><td>Yes, full detail</td><td>Yes</td><td>E-bit set</td></tr>
+          <tr><td>Stub</td><td>No → default from ABR</td><td>Yes, full detail</td><td><strong>No — absolute</strong></td><td>E-bit cleared, must match area-wide</td></tr>
+          <tr><td>Totally stubby</td><td>No → default</td><td>No → default</td><td>No</td><td>E-bit only; "totally" is ABR-side, unilateral</td></tr>
+          <tr><td>NSSA</td><td>No Type 5s in, <strong>but</strong> local ASBR originates Type 7 → ABR converts to Type 5 for the rest of the domain</td><td>Yes, full detail</td><td><strong>Yes (via Type 7)</strong></td><td>N-bit variant of the same idea</td></tr>
+          <tr><td>Totally NSSA</td><td>As NSSA</td><td>No → default</td><td>Yes (via Type 7)</td><td>As NSSA; inter-area suppression ABR-side</td></tr>
+        </tbody>
+      </table>
+
+      <p><strong>NSSA exists for one reason:</strong> a plain stub area's Type 5 ban is absolute — it cannot host an ASBR at all. If the leaf site itself needs to redistribute something local (a static route, a small legacy RIP segment), NSSA relaxes the ban with <strong>Type 7</strong>: an external LSA that lives only inside the NSSA, which the area's ABR translates into a genuine Type 5 for everyone else. The DR site as it stands is a pure "everything through HQ" leaf with no local route sources — so totally stubby, not NSSA, is the right call.</p>
+
+      <div class="code-block">
+        <div class="code-label">FortiOS CLI — area types (ABR shown; stub type must match area-wide)</div>
+        <pre><code>config router ospf
+    config area
+        edit 0.0.0.3
+            set type stub
+            set stub-type no-summary     &lt;- ABR only: makes it TOTALLY stubby
+        next                                (summary = plain stub)
+        edit 0.0.0.2
+            set type nssa                &lt;- if a leaf needs a local ASBR
+        next
+    end
+end</code></pre>
+      </div>
+
+      <div class="callout callout-amber"><strong>Exam traps:</strong> (1) "Configure stub on the ABR only" — wrong; the E-bit mismatch means the ABR and internal routers <em>never become neighbors</em>. The symptom is a missing neighbor, not missing routes. (2) "A stub area can have an ASBR if you're careful" — never; that's what NSSA is for. (3) The backbone (area 0) can never be stub of any flavor.</div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Banning a Type needs a handshake (E-bit — mismatch means no neighbor). Sending fewer of a Type needs none ("totally" = ABR alone). Needing a local ASBR anyway = NSSA, smuggled as Type 7, converted to Type 5 at the border.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-areatypes" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-areatypes','Area Types')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-areatypes" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-areatypes')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ SECTION 4 — SUMMARIZATION ═══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · SUMMARIZATION</span>
+      </div>
+      <p class="socratic-insight">Priya wants Harbourview visible for monitoring — no black-box default. There's a middle ground between "flood every /24" and "flood nothing but a default."</p>
+      <ul class="socratic-questions">
+        <li>If 10.50.9.0/24 — one of the four /24s inside the 10.50.8.0/22 range — flaps, what happens to the summary Type 3 in area 0?</li>
+        <li>area range and summary-address both summarize. What's the difference in <em>who</em> runs them and <em>which LSA type</em> they act on?</li>
+      </ul>
+      <div class="answer-area" data-section="summarization">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Nothing. The summary is the ABR claiming "traffic for this block comes through me" — not "all four subnets exist." It stays advertised, unchanged, as long as at least one component subnet remains reachable through that ABR. That's the payoff: one flapping /24 no longer means one flapping LSA reaching every backbone router. Volatility is hidden behind a stable boundary.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">area range: run on the ABR, summarizes Type 3s crossing between areas. summary-address: run on the ASBR, summarizes Type 5s before externals ever hit the backbone — relevant the moment FG-EDGE-P starts redistributing chunky external blocks. Same idea (shorter mask covering multiple prefixes), different border, different LSA type.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-summarization">
+      <div class="section-label">SECTION 04</div>
+      <h2>Summarization — <em>Hiding Volatility Behind a Stable Boundary</em></h2>
+
+      <p>You produced the definition cold this session: <em>advertise a prefix with a shorter mask so it covers multiple subnets</em>. At Harbourview's ABR, <code>area range</code> takes the four contiguous /24s (10.50.8.0 – 10.50.11.0) and originates <strong>one</strong> Type 3 for 10.50.8.0/22 instead of four. The area stays visible — unlike totally stubby's black-box default — but the backbone sees one stable claim instead of four flap-prone ones.</p>
+
+      <p>The critical behavior: the summary is the ABR's claim that <strong>"traffic for this block comes through me"</strong> — not an inventory of live subnets. A component /24 can flap, or die entirely, and the summary in area 0 does not move as long as at least one member remains reachable. This is the same trade as stub-ness, made once at a border instead of area-wide: <strong>visibility traded for stability</strong>. Type 3 summarization is the ABR's tool; the ASBR gets the identical trick for externals via <code>summary-address</code>, compressing Type 5s before they fly domain-wide — which becomes real for FG-EDGE-P the moment redistribution lands (S23).</p>
+
+      <div class="code-block">
+        <div class="code-label">FortiOS CLI — both summarization points</div>
+        <pre><code>config router ospf
+    config area
+        edit 0.0.0.2
+            config range                  &lt;- ABR: inter-area (Type 3)
+                edit 1
+                    set prefix 10.50.8.0 255.255.252.0
+                next
+            end
+        next
+    end
+    config summary-address                &lt;- ASBR: external (Type 5)
+        edit 1
+            set prefix &lt;block&gt; &lt;mask&gt;
+        next
+    end
+end</code></pre>
+      </div>
+
+      <h3>The troubleshooting consequence — the lie of omission</h3>
+      <p>Two weeks after go-live: <em>"Harbourview can't reach 10.50.9.0/24."</em> You check the ABR — the /22 summary is still advertised into area 0, perfectly healthy. <strong>That tells you nothing about 10.50.9.0/24 specifically.</strong> The summary survives on one living member. The specifics still exist in full detail — but only <em>inside area 0.0.0.2</em>, because summarization happens exclusively at the boundary crossing. So the diagnosis moves inside: <code>get router info ospf database</code> on a router in area 2, or its routing table, shows the genuine per-prefix truth the border is hiding.</p>
+
+      <div class="callout callout-green"><strong>Remember:</strong> summarization and stub-ness both trade visibility for stability — and the cost of the trade is that troubleshooting must happen closer to the source, not at the boundary. Know where the lie of omission lives in your own design.</div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">A summary is a claim about a block, not an inventory of subnets. It stays up while one member lives — so a healthy summary at the border proves nothing about any specific prefix. Diagnose inside the area.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-summarization" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-summarization','Summarization')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-summarization" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-summarization')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ SECTION 5 — PASSIVE & GO-LIVE ═══════════ -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · PASSIVE &amp; GO-LIVE</span>
+      </div>
+      <p class="socratic-insight">"Quiet but still in the database" — the session-goal phrase for passive interfaces. It's precisely the distinction the exam tests.</p>
+      <ul class="socratic-questions">
+        <li>An interface is made passive. Does its subnet vanish from OSPF, or is something still advertised — and if so, what and by whom?</li>
+        <li>Why is passive the right tool for the office VLAN but useless for the core trunk in Daniel's scenario?</li>
+      </ul>
+      <div class="answer-area" data-section="passive">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Still advertised. Passive stops the hello process — no hellos out, no adjacency possible — but the router's own Type 1 LSA still lists the subnet as a stub network entry ("I have this link, cost X, no neighbor on it"). The network stays fully reachable area-wide; the router just refuses to peer on that wire. Passive hides the willingness to peer, not the network.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">The office VLAN has no legitimate neighbors — silencing hellos costs nothing and removes the rogue-adjacency surface entirely. The core trunk carries real neighbors — passive would kill them along with the rogue. On interfaces that must peer, the only defense is authentication; passive and auth are complementary tools for two different interface roles.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-passive">
+      <div class="section-label">SECTION 05</div>
+      <h2>Passive Interfaces &amp; <em>the Go-Live Design</em></h2>
+
+      <p>A passive interface originates <strong>no hellos</strong>, so no adjacency can ever form on it — but the router still puts the subnet into its own <strong>Type 1 LSA as a stub network entry</strong>. The route is known and reachable everywhere in the area. "Quiet but still in the database" is exactly right: the exam's trap phrasing is "if I make an interface passive, does that subnet disappear from OSPF?" — and the answer is no.</p>
+
+      <h3>All five features on one map — go-live day</h3>
+      <ul>
+        <li><strong>Office VLAN (FGT-HQ-CORE):</strong> passive — no OSPF spoken, subnet still routed. Daniel's conference-room jack is dead air to a rogue OSPF daemon.</li>
+        <li><strong>Core switch trunk:</strong> HMAC-SHA authentication — real neighbors keep peering; matching the plaintext fields no longer buys a rogue device anything.</li>
+        <li><strong>Area 0.0.0.3 (DR site):</strong> totally stubby — <code>set type stub</code> everywhere in the area (E-bit handshake), <code>no-summary</code> on the ABR. Dozens of Type 3/5s become one default.</li>
+        <li><strong>Area 0.0.0.2 (Harbourview):</strong> regular area + <code>area range</code> 10.50.8.0/22 — visible for monitoring, stable at the border.</li>
+        <li><strong>FG-EDGE-P (next session):</strong> <code>summary-address</code> queued for the moment redistribution makes its ASBR badge real.</li>
+      </ul>
+
+      <h3>Failure-signature table — where this session's faults show up</h3>
+      <table class="data-table">
+        <thead><tr><th>Misconfiguration</th><th>Visible symptom</th><th>First command</th></tr></thead>
+        <tbody>
+          <tr><td>Auth mismatch (type or key) on a link</td><td>No neighbor entry ever — invisible, not stuck</td><td>get router info ospf neighbor</td></tr>
+          <tr><td>Stub configured on ABR only (E-bit mismatch)</td><td>No neighbor entry — internal routers vanish from the ABR</td><td>get router info ospf neighbor</td></tr>
+          <tr><td>MTU mismatch (contrast case, S21)</td><td>Neighbor visible, stuck ExStart</td><td>get router info ospf neighbor</td></tr>
+          <tr><td>Component /24 dead behind a healthy area range</td><td>Summary fine in area 0; specific prefix unreachable</td><td>get router info ospf database — <em>inside</em> the area</td></tr>
+          <tr><td>Interface accidentally passive</td><td>Subnet still advertised, but no adjacency forms on that link</td><td>get router info ospf interface</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout"><strong>The elimination trick, upgraded:</strong> S21 taught that a visible neighbor at any state exonerates timers/area/subnet. Session 22 adds two more to the exonerated list — <em>authentication and the E-bit</em> — because both are hello-stage gates. A visible neighbor means every hello-stage field already matches.</div>
+
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Passive silences the peering, not the prefix. Auth guards interfaces that must speak; passive silences interfaces that never should. Together they answer Daniel's question — one tool per interface role.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-passive" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-passive','Passive & Go-Live')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-passive" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-passive')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+<!-- related-sidebar:start -->
+<aside class="related-sidebar"><div class="related-sidebar-inner"><div class="related-sidebar-title">Related pages</div><div class="related-sidebar-sub">Session 22</div><div class="related-group"><div class="related-group-label">Session</div><ul><li><a href="../index.html"><span class="r-arrow">›</span><span>Session hub</span></a></li><li><a href="summary.txt" target="_blank" rel="noopener"><span class="r-arrow">›</span><span>Session summary</span><span class="r-tag">txt</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Bites</div><ul><li><a href="../bites/who-speaks-how-much-told.html"><span class="r-arrow">›</span><span>Session 22 Bite — Who Speaks, and How Much They're Told</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Nibbles</div><ul><li><a href="../nibbles/handshake-vs-unilateral.html"><span class="r-arrow">›</span><span>Session 22 Nibble — Banning Needs a Handshake, Sending Fewer Needs None</span></a></li></ul></div><div class="related-group"><div class="related-group-label">Audio podcast</div><ul><li><a href="../../../audio-podcasts/index.html#panel-22"><span class="r-arrow">›</span><span>Podcast prompt</span><span class="r-tag">Prompt</span></a></li></ul></div></div></aside>
+<!-- related-sidebar:end -->
+</main>
+
+<div class="page-nav">
+  <a class="page-nav-btn page-nav-prev" href="session-21-complete-ospf-areas-lsas-neighbor-states.html">
+    <span class="page-nav-label">← PREVIOUS</span>
+    <span class="page-nav-title">Session 21 — OSPF Areas, LSAs &amp; Neighbor States</span>
+  </a>
+  <a class="page-nav-btn page-nav-next page-nav-disabled" href="#">
+    <span class="page-nav-label">NEXT →</span>
+    <span class="page-nav-title">Session 23 — eBGP to the ISPs (coming soon)</span>
+  </a>
+</div>
+
+<footer>
+  Vaultline Financial<span>.</span> <span>NSE7 Enterprise Firewall 7.6</span><span>.</span> Session 22 — Locks, Silence, and the Lie of Omission
+</footer>
+
+<script>
+const PAGE_KEY = 'nse7-session22-ospf-auth-stub-summarization';
+
+const SECTIONS = {
+  'section-topology': 'Topology',
+  'section-auth': 'Authentication',
+  'section-areatypes': 'Area Types',
+  'section-summarization': 'Summarization',
+  'section-passive': 'Passive & Go-Live',
+};
+
+/* ── Everything below is fixed — do not modify ── */
+document.querySelectorAll('.socratic-header').forEach(function(h) {
+  h.addEventListener('click', function() { h.closest('.socratic-block').classList.toggle('soc-open'); });
+});
+function getQArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-qs') || '[]'); }
+function saveQArr(qs) { localStorage.setItem(PAGE_KEY+'-qs', JSON.stringify(qs)); }
+function addQuestion(key, name) {
+  const ta = document.getElementById('q-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const qs = getQArr(); qs.push({id: Date.now(), section: key, sectionName: name, text});
+  saveQArr(qs); ta.value = ''; renderQPanel();
+  if (!document.getElementById('qpanel-body').classList.contains('open')) toggleQPanel();
+}
+function deleteQ(id) { saveQArr(getQArr().filter(q => q.id !== id)); renderQPanel(); }
+function toggleQPanel() {
+  const body = document.getElementById('qpanel-body');
+  const header = document.getElementById('qpanel-header');
+  const chevron = document.getElementById('qpanel-chevron');
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-qpanel-open', open);
+}
+function renderQPanel() {
+  const qs = getQArr();
+  const count = document.getElementById('qpanel-count');
+  if (count) { count.textContent = qs.length; count.style.display = qs.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.qpanel-hint');
+  if (hint) hint.textContent = qs.length ? `— ${qs.length} question${qs.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('qpanel-body'); if (!body) return;
+  if (!qs.length) { body.innerHTML = '<p class="no-questions">No questions yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  qs.forEach(q => { if (groups[q.section]) groups[q.section].push(q); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(q => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${q.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteQ(${q.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function getNotesArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-notes') || '[]'); }
+function saveNotesArr(ns) { localStorage.setItem(PAGE_KEY+'-notes', JSON.stringify(ns)); }
+function addNote(key) {
+  const ta = document.getElementById('note-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const ns = getNotesArr(); ns.push({id: Date.now(), section: key, sectionName: SECTIONS[key]||key, text});
+  saveNotesArr(ns); ta.value = ''; renderNotesPanel();
+  if (!document.getElementById('notes-panel-body').classList.contains('open')) toggleNotesPanel();
+}
+function deleteNote(id) { saveNotesArr(getNotesArr().filter(n => n.id !== id)); renderNotesPanel(); }
+function toggleNotesPanel() {
+  const body = document.getElementById('notes-panel-body');
+  const header = document.getElementById('notes-panel-header');
+  const chevron = document.getElementById('notes-panel-chevron');
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-notes-panel-open', open);
+}
+function renderNotesPanel() {
+  const ns = getNotesArr();
+  const count = document.getElementById('notes-panel-count');
+  if (count) { count.textContent = ns.length; count.style.display = ns.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.notes-panel-hint');
+  if (hint) hint.textContent = ns.length ? `— ${ns.length} note${ns.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('notes-panel-body'); if (!body) return;
+  if (!ns.length) { body.innerHTML = '<p class="no-questions">No notes yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  ns.forEach(n => { if (groups[n.section]) groups[n.section].push(n); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(n => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteNote(${n.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function saveSocAnswer(btn) {
+  const area = btn.closest('.answer-area');
+  const ta = area.querySelector('.answer-textarea');
+  if (!ta.value.trim()) { ta.focus(); return; }
+  const key = PAGE_KEY+'-socans-'+area.dataset.section;
+  try { localStorage.setItem(key, ta.value); } catch(e) {}
+  ta.disabled = true; btn.textContent = '✓ Answer saved'; btn.disabled = true;
+  const seeBtn = area.querySelector('.btn-see-answer');
+  seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+}
+function revealSocAnswer(btn) {
+  if (btn.disabled) return;
+  const answers = btn.closest('.answer-area').querySelector('.model-answers');
+  const isHidden = answers.style.display === 'none' || !answers.style.display;
+  answers.style.display = isHidden ? 'block' : 'none';
+  btn.textContent = isHidden ? '▲ Hide Model Answer' : '💡 See Model Answer';
+}
+function togglePrompt(btn) {
+  const c = btn.nextElementSibling;
+  const isHidden = c.hasAttribute('hidden');
+  if (isHidden) { c.removeAttribute('hidden'); btn.textContent = '▴ Hide prompt'; }
+  else { c.setAttribute('hidden', ''); btn.textContent = '▾ Show image prompt'; }
+}
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+document.addEventListener('DOMContentLoaded', function() {
+  renderQPanel(); renderNotesPanel();
+  if (localStorage.getItem(PAGE_KEY+'-qpanel-open') === 'true') toggleQPanel();
+  if (localStorage.getItem(PAGE_KEY+'-notes-panel-open') === 'true') toggleNotesPanel();
+  document.querySelectorAll('.answer-area').forEach(function(area) {
+    const key = PAGE_KEY+'-socans-'+area.dataset.section;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const ta = area.querySelector('.answer-textarea'); ta.value = saved; ta.disabled = true;
+        const addBtn = area.querySelector('.btn-add-answer'); addBtn.textContent = '✓ Answer saved'; addBtn.disabled = true;
+        const seeBtn = area.querySelector('.btn-see-answer'); seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+      }
+    } catch(e) {}
+  });
+  document.querySelectorAll('.analogy-box').forEach(function(box) {
+    if (box.dataset.collapsibleInit) return;
+    box.dataset.collapsibleInit = '1';
+    box.classList.add('expanded');
+    const label = box.querySelector(':scope > .analogy-label');
+    if (label) label.addEventListener('click', () => box.classList.toggle('expanded'));
+  });
+});
+</script>
+</body>
+</html>
