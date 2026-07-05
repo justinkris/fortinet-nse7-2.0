@@ -2592,7 +2592,7 @@ SESSION_TEMPLATE = """<!DOCTYPE html>
   .copy-btn:hover{{opacity:0.85;}}
   .copy-btn.copied{{background:var(--green);color:#fff;}}
   .img-caption{{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}}
-  .section-img-wrap{{margin:0 0 20px;display:flex;flex-direction:column;align-items:center;}}
+  .section-img-wrap{{margin:0 -60px 20px;display:flex;flex-direction:column;align-items:center;}}
   .section-img{{width:100%;max-width:100%;border-radius:16px;cursor:zoom-out;transition:width 0.3s ease;border:1px solid var(--border);display:block;}}
   .section-img.si-expanded{{width:100%;cursor:zoom-out;border-radius:16px;}}
   .si-placeholder{{display:none;width:100%;max-width:100%;border:2px dashed var(--border);border-radius:16px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}}
@@ -2659,7 +2659,7 @@ SESSION_TEMPLATE = """<!DOCTYPE html>
   .extras-kind-group h3{{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;}}
   footer{{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:20px 60px;border-top:1px solid var(--border);background:var(--surface);}}
   footer span{{color:var(--blue);}}
-  @media(max-width:720px){{header{{padding:28px 24px 24px;}}header h1{{font-size:34px;}}.motivation-banner{{padding:16px 24px;}}.main-content{{padding:24px 24px 40px;}}.section-nav{{padding:0 16px;}}footer{{padding:16px 24px;}}.completion-callout{{margin:16px 24px 0;flex-direction:column;align-items:flex-start;}}}}
+  @media(max-width:720px){{header{{padding:28px 24px 24px;}}header h1{{font-size:34px;}}.motivation-banner{{padding:16px 24px;}}.main-content{{padding:24px 24px 40px;}}.section-nav{{padding:0 16px;}}footer{{padding:16px 24px;}}.completion-callout{{margin:16px 24px 0;flex-direction:column;align-items:flex-start;}}.section-img-wrap{{margin:0 -24px 20px;}}}}
 </style>
 </head>
 <body>
@@ -3043,7 +3043,7 @@ def render_study_plan_index(extras=None, completions=None):
         phase_sections_html.append(f"""
     <div class="phase-block" id="phase-{phase['num']:02d}">
       <div class="section-label">PHASE {phase['num']:02d}</div>
-      <h2>{html_escape(phase['title'].split(': ')[0])} — <em>{html_escape(phase['title'].split(': ', 1)[1] if ': ' in phase['title'] else phase['title'])}</em></h2>
+      <h2>{html_escape(phase['title'].split(': ')[0])} <em>{html_escape(phase['title'].split(': ', 1)[1] if ': ' in phase['title'] else phase['title'])}</em></h2>
       <div class="section-img-wrap">
         <img src="../images/hub/phase-{phase['num']:02d}-{phase['slug']}.png" class="section-img"
              alt="Illustration for Phase {phase['num']} — {html_escape(phase['title'])}"
@@ -3430,7 +3430,7 @@ def render_study_plan_index(extras=None, completions=None):
   .session-card-meta{{font-family:'Outfit',sans-serif;font-size:10px;letter-spacing:0.06em;color:var(--text-muted);}}
   .session-card-why{{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-soft);line-height:1.55;margin:0;}}
   .img-caption{{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--text-muted);text-align:center;margin-top:6px;line-height:1.4;font-style:italic;}}
-  .section-img-wrap{{margin:0 0 20px;display:flex;flex-direction:column;align-items:center;}}
+  .section-img-wrap{{margin:0 -60px 20px;display:flex;flex-direction:column;align-items:center;}}
   .section-img{{width:100%;max-width:100%;border-radius:16px;cursor:zoom-out;transition:width 0.3s ease;border:1px solid var(--border);display:block;}}
   .section-img.si-expanded{{width:100%;cursor:zoom-out;border-radius:16px;}}
   .si-placeholder{{display:none;width:100%;max-width:100%;border:2px dashed var(--border);border-radius:16px;background:var(--surface-2);padding:14px 16px;flex-direction:column;align-items:flex-start;gap:8px;}}
@@ -3516,7 +3516,7 @@ def render_study_plan_index(extras=None, completions=None):
   .copy-btn.copied{{background:var(--green);color:#fff;}}
   footer{{font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;padding:24px 60px;border-top:1px solid var(--border);background:var(--surface);}}
   footer span{{color:var(--blue);}}
-  @media(max-width:720px){{header{{padding:32px 24px 24px;}}header h1{{font-size:36px;}}.main-content{{padding:24px 24px 40px;}}.section-nav{{padding:0 16px;}}footer{{padding:16px 24px;}}}}
+  @media(max-width:720px){{header{{padding:32px 24px 24px;}}header h1{{font-size:36px;}}.main-content{{padding:24px 24px 40px;}}.section-nav{{padding:0 16px;}}footer{{padding:16px 24px;}}.section-img-wrap{{margin:0 -24px 20px;}}}}
 </style>
 </head>
 <body>
@@ -3981,26 +3981,52 @@ def render_completed_hub(completions):
             '</div>'
         )
     else:
-        cards = []
-        for s, entry in completed_sessions:
-            summary_hint = '<span class="hub-card-hint">Recap available</span>' if entry.get("has_summary") else ""
-            slug = f"session-{s['num']:02d}-{s['slug']}"
-            title = html_escape(s["title"])
-            cards.append(
-                f'<a class="hub-card" href="sessions/{slug}/completed-session/index.html">'
-                f'<span class="hub-card-chip chip-complete">Completed</span>'
-                f'<span class="hub-card-sub">Session {s["num"]:02d}</span>'
-                f'<span class="hub-card-title">{title}</span>'
-                f'{summary_hint}'
-                f'</a>'
-            )
-        body = (
-            '<div class="anchor-section">'
+        # Group completed sessions by phase (preserves PHASES ordering).
+        completed_by_num = {s["num"]: (s, entry) for s, entry in completed_sessions}
+        intro = (
+            '<div class="anchor-section" style="margin-bottom:36px;">'
             f'<h2>Completed <em>Study Guides · {done} of {total}</em></h2>'
-            '<p class="section-lede">Every finished Socratic session — polished HTML study guides produced at the end of each Claude session, linked to the source session page.</p>'
-            f'<div class="card-grid">{"".join(cards)}</div>'
+            '<p class="section-lede">Every finished Socratic session — polished HTML study guides produced at the end of each Claude session, linked to the source session page. Grouped by phase.</p>'
             '</div>'
         )
+
+        phase_sections = []
+        for phase in PHASES:
+            phase_pairs = [completed_by_num[n] for n in phase["sessions"] if n in completed_by_num]
+            phase_total = len(phase["sessions"])
+            phase_done = len(phase_pairs)
+            if phase_done == 0:
+                continue
+            cards = []
+            for s, entry in phase_pairs:
+                summary_hint = '<span class="hub-card-hint">Recap available</span>' if entry.get("has_summary") else ""
+                slug = f"session-{s['num']:02d}-{s['slug']}"
+                title = html_escape(s["title"])
+                cards.append(
+                    f'<a class="hub-card" href="sessions/{slug}/completed-session/index.html">'
+                    f'<span class="hub-card-chip chip-complete">Completed</span>'
+                    f'<span class="hub-card-sub">Session {s["num"]:02d}</span>'
+                    f'<span class="hub-card-title">{title}</span>'
+                    f'{summary_hint}'
+                    f'</a>'
+                )
+            phase_title = html_escape(phase["title"])
+            phase_sections.append(
+                f'<div class="anchor-section" id="phase-{phase["num"]:02d}">'
+                f'<h2>Phase {phase["num"]} — <em>{phase_title}</em> '
+                f'<span class="section-count">{phase_done} of {phase_total}</span></h2>'
+                f'<p class="section-lede">{html_escape(phase["tagline"])}</p>'
+                f'<div class="card-grid">{"".join(cards)}</div>'
+                f'</div>'
+            )
+
+        extra_css = (
+            '<style>'
+            '.anchor-section h2{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}'
+            '.section-count{display:inline-block;font-family:\'Outfit\',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.06em;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:2px 10px;}'
+            '</style>'
+        )
+        body = extra_css + intro + "".join(phase_sections)
 
     html = _standalone_page(
         title=f"Completed Study Guides · NSE7 EF 7.6",
@@ -5751,11 +5777,28 @@ _WEAKNESS_STYLE = """
   .empty-state h3{font-family:'Playfair Display',serif;font-size:22px;color:var(--text);margin-bottom:8px;}
   .empty-state p{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;font-style:italic;max-width:640px;margin:0 auto;}
   .empty-state code{font-family:'SF Mono','Fira Code',monospace;font-size:13px;background:var(--surface-2);padding:2px 8px;border-radius:4px;color:var(--text);font-style:normal;}
+  .phase-group{margin-bottom:36px;}
+  .phase-group:last-child{margin-bottom:0;}
+  .phase-group-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 20px;background:linear-gradient(135deg, var(--ink-dark) 0%, #182a5e 100%);border-left:4px solid var(--rose);border-radius:0 12px 12px 0;margin-bottom:16px;box-shadow:0 8px 18px -12px rgba(10,24,56,0.4);cursor:pointer;user-select:none;transition:transform .15s ease, box-shadow .15s ease;}
+  .phase-group-head:hover{transform:translateY(-1px);box-shadow:0 10px 22px -12px rgba(10,24,56,0.5);}
+  .phase-group-eyebrow{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--ink-dark);text-transform:uppercase;background:var(--ink-accent);border:1px solid rgba(255,255,255,0.4);border-radius:20px;padding:4px 12px;}
+  .phase-group-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#fbf7ec;line-height:1.15;}
+  .phase-group-count{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#f7a8c0;margin-left:auto;}
+  .phase-group-chevron{font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:#f7a8c0;transition:transform .2s ease;margin-left:6px;}
+  .phase-group.collapsed .phase-group-chevron{transform:rotate(-90deg);}
+  .phase-group-body{overflow:hidden;transition:max-height .3s ease, opacity .2s ease;max-height:none;opacity:1;}
+  .phase-group.collapsed .phase-group-body{max-height:0;opacity:0;margin-bottom:0;}
+  .phase-group.collapsed .session-card{margin-bottom:0;}
   .session-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 26px 24px;margin-bottom:22px;}
   .session-card-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
   .session-card-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;padding:4px 10px;border-radius:12px;text-transform:uppercase;background:var(--rose-light);color:var(--rose);border:1px solid var(--rose-border);white-space:nowrap;}
   .session-card-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;line-height:1.2;color:var(--text);}
   .session-card-count{font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-left:auto;text-transform:uppercase;}
+  .struggles-progress{margin-top:22px;width:100%;}
+  .struggles-progress-label{display:flex;justify-content:space-between;align-items:baseline;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(251,247,236,0.7);margin-bottom:8px;}
+  .struggles-progress-label .pct{color:#a7d8b0;font-size:13px;letter-spacing:0.08em;}
+  .struggles-progress-track{position:relative;height:10px;background:rgba(255,255,255,0.09);border:1px solid rgba(251,247,236,0.14);border-radius:999px;overflow:hidden;}
+  .struggles-progress-fill{height:100%;background:linear-gradient(90deg, #4ade80 0%, #16a34a 100%);border-radius:999px;transition:width .5s ease;box-shadow:0 0 12px -2px rgba(74,222,128,0.55);}
   .struggle-list{list-style:none;padding:0;margin:0;}
   .struggle-list li{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.6;color:var(--text-soft);padding:12px 0 12px 30px;border-bottom:1px solid var(--border-dim);position:relative;}
   .struggle-list li:last-child{border-bottom:none;}
@@ -5847,8 +5890,8 @@ def render_struggles_page(struggles_by_session, resolved):
         )
     else:
         session_by_num = {s["num"]: s for s in SESSIONS}
-        cards = []
-        for sess_num in sorted(struggles_by_session.keys()):
+
+        def _render_session_card(sess_num):
             struggles = struggles_by_session[sess_num]
             s_info = session_by_num.get(sess_num, {"title": f"Session {sess_num}", "slug": ""})
             slug = s_info.get("slug", "")
@@ -5863,7 +5906,7 @@ def render_struggles_page(struggles_by_session, resolved):
                     tag = f' <a class="resolved-tag" href="completed-weakness-sessions/index.html">Resolved · Weakness {wnum:02d}</a>'
                 items.append(f'<li class="{cls}">{html_escape(st)}{tag}</li>')
             session_link = f"../sessions/session-{sess_num:02d}-{slug}/index.html" if slug else "#"
-            cards.append(
+            return (
                 f'<div class="session-card">'
                 f'<div class="session-card-head">'
                 f'<span class="session-card-num">Session {sess_num:02d}</span>'
@@ -5873,19 +5916,95 @@ def render_struggles_page(struggles_by_session, resolved):
                 f'<ul class="struggle-list">{"".join(items)}</ul>'
                 f'</div>'
             )
-        cards_html = "".join(cards)
+
+        struggling_sessions = set(struggles_by_session.keys())
+        groups = []
+        for phase in PHASES:
+            phase_sessions = [n for n in phase["sessions"] if n in struggling_sessions]
+            if not phase_sessions:
+                continue
+            phase_open = sum(
+                sum(1 for i in range(len(struggles_by_session[n])) if (n, i) not in resolved)
+                for n in phase_sessions
+            )
+            phase_res = sum(
+                sum(1 for i in range(len(struggles_by_session[n])) if (n, i) in resolved)
+                for n in phase_sessions
+            )
+            head = (
+                f'<div class="phase-group-head" data-phase="{phase["num"]}">'
+                f'<span class="phase-group-eyebrow">Phase {phase["num"]}</span>'
+                f'<span class="phase-group-title">{html_escape(phase["title"])}</span>'
+                f'<span class="phase-group-count">{phase_open} open · {phase_res} resolved</span>'
+                f'<span class="phase-group-chevron" aria-hidden="true">▾</span>'
+                f'</div>'
+            )
+            cards = "".join(_render_session_card(n) for n in sorted(phase_sessions))
+            groups.append(f'<div class="phase-group" data-phase="{phase["num"]}">{head}<div class="phase-group-body">{cards}</div></div>')
+
+        # Any sessions with struggles that aren't in a phase — render at the tail so nothing gets dropped.
+        phased_nums = {n for phase in PHASES for n in phase["sessions"]}
+        orphans = sorted(struggling_sessions - phased_nums)
+        if orphans:
+            head = (
+                f'<div class="phase-group-head" data-phase="unassigned">'
+                f'<span class="phase-group-eyebrow">Unassigned</span>'
+                f'<span class="phase-group-title">Sessions outside the phase map</span>'
+                f'<span class="phase-group-chevron" aria-hidden="true">▾</span>'
+                f'</div>'
+            )
+            cards = "".join(_render_session_card(n) for n in orphans)
+            groups.append(f'<div class="phase-group" data-phase="unassigned">{head}<div class="phase-group-body">{cards}</div></div>')
+
+        cards_html = "".join(groups)
     n_total = sum(len(v) for v in struggles_by_session.values())
     n_res = len(resolved)
+    pct = (n_res / n_total * 100) if n_total else 0
+    progress_html = (
+        f'<div class="struggles-progress">'
+        f'<div class="struggles-progress-label">'
+        f'<span>Resolved · {n_res} of {n_total}</span>'
+        f'<span class="pct">{pct:.0f}%</span>'
+        f'</div>'
+        f'<div class="struggles-progress-track">'
+        f'<div class="struggles-progress-fill" style="width:{pct:.1f}%"></div>'
+        f'</div>'
+        f'</div>'
+    ) if n_total else ""
     body = f"""
 <header>
   {crumb}
   <div class="eyebrow"><span>Struggles Register</span></div>
   <h1><em>Struggles</em> · session by session</h1>
   <p>Pulled from the <code>Struggles / corrections:</code> block of every completed session summary. {n_res} of {n_total} resolved.</p>
+  {progress_html}
 </header>
 <main>
   {cards_html}
 </main>
+<script>
+(function() {{
+  var KEY = 'nse7_struggles_collapsed_phases_v1';
+  function readState() {{
+    try {{ return JSON.parse(localStorage.getItem(KEY) || '[]'); }} catch(e) {{ return []; }}
+  }}
+  function writeState(arr) {{
+    try {{ localStorage.setItem(KEY, JSON.stringify(arr)); }} catch(e) {{}}
+  }}
+  var collapsed = new Set(readState().map(String));
+  document.querySelectorAll('.phase-group').forEach(function(group) {{
+    var key = String(group.dataset.phase);
+    if (collapsed.has(key)) group.classList.add('collapsed');
+    var head = group.querySelector('.phase-group-head');
+    if (!head) return;
+    head.addEventListener('click', function() {{
+      var isCollapsed = group.classList.toggle('collapsed');
+      if (isCollapsed) collapsed.add(key); else collapsed.delete(key);
+      writeState(Array.from(collapsed));
+    }});
+  }});
+}})();
+</script>
 """
     (WEAKNESS_DIR / "struggles.html").write_text(_weakness_shell("Struggles Register — Weakness · NSE7 EF 7.6", body), encoding="utf-8")
 

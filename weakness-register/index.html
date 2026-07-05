@@ -45,11 +45,28 @@
   .empty-state h3{font-family:'Playfair Display',serif;font-size:22px;color:var(--text);margin-bottom:8px;}
   .empty-state p{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;font-style:italic;max-width:640px;margin:0 auto;}
   .empty-state code{font-family:'SF Mono','Fira Code',monospace;font-size:13px;background:var(--surface-2);padding:2px 8px;border-radius:4px;color:var(--text);font-style:normal;}
+  .phase-group{margin-bottom:36px;}
+  .phase-group:last-child{margin-bottom:0;}
+  .phase-group-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 20px;background:linear-gradient(135deg, var(--ink-dark) 0%, #182a5e 100%);border-left:4px solid var(--rose);border-radius:0 12px 12px 0;margin-bottom:16px;box-shadow:0 8px 18px -12px rgba(10,24,56,0.4);cursor:pointer;user-select:none;transition:transform .15s ease, box-shadow .15s ease;}
+  .phase-group-head:hover{transform:translateY(-1px);box-shadow:0 10px 22px -12px rgba(10,24,56,0.5);}
+  .phase-group-eyebrow{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--ink-dark);text-transform:uppercase;background:var(--ink-accent);border:1px solid rgba(255,255,255,0.4);border-radius:20px;padding:4px 12px;}
+  .phase-group-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#fbf7ec;line-height:1.15;}
+  .phase-group-count{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#f7a8c0;margin-left:auto;}
+  .phase-group-chevron{font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:#f7a8c0;transition:transform .2s ease;margin-left:6px;}
+  .phase-group.collapsed .phase-group-chevron{transform:rotate(-90deg);}
+  .phase-group-body{overflow:hidden;transition:max-height .3s ease, opacity .2s ease;max-height:none;opacity:1;}
+  .phase-group.collapsed .phase-group-body{max-height:0;opacity:0;margin-bottom:0;}
+  .phase-group.collapsed .session-card{margin-bottom:0;}
   .session-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 26px 24px;margin-bottom:22px;}
   .session-card-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
   .session-card-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.18em;padding:4px 10px;border-radius:12px;text-transform:uppercase;background:var(--rose-light);color:var(--rose);border:1px solid var(--rose-border);white-space:nowrap;}
   .session-card-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;line-height:1.2;color:var(--text);}
   .session-card-count{font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-left:auto;text-transform:uppercase;}
+  .struggles-progress{margin-top:22px;width:100%;}
+  .struggles-progress-label{display:flex;justify-content:space-between;align-items:baseline;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(251,247,236,0.7);margin-bottom:8px;}
+  .struggles-progress-label .pct{color:#a7d8b0;font-size:13px;letter-spacing:0.08em;}
+  .struggles-progress-track{position:relative;height:10px;background:rgba(255,255,255,0.09);border:1px solid rgba(251,247,236,0.14);border-radius:999px;overflow:hidden;}
+  .struggles-progress-fill{height:100%;background:linear-gradient(90deg, #4ade80 0%, #16a34a 100%);border-radius:999px;transition:width .5s ease;box-shadow:0 0 12px -2px rgba(74,222,128,0.55);}
   .struggle-list{list-style:none;padding:0;margin:0;}
   .struggle-list li{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.6;color:var(--text-soft);padding:12px 0 12px 30px;border-bottom:1px solid var(--border-dim);position:relative;}
   .struggle-list li:last-child{border-bottom:none;}
@@ -73,7 +90,7 @@
 </header>
 <main>
   <div class="tile-grid">
-    <a class="tile" href="struggles.html"><span class="tile-chip chip-rose">STRUGGLES</span><span class="tile-title">Struggles Register</span><span class="tile-desc">36 open · 0 resolved struggles pulled from your completed session summaries.</span><span class="tile-arrow">→</span></a><a class="tile" href="completed-weakness-sessions/index.html"><span class="tile-chip chip-green">SESSIONS</span><span class="tile-title">Completed Weakness Sessions</span><span class="tile-desc">0 weakness sessions completed — dedicated sessions that knock items off the register.</span><span class="tile-arrow">→</span></a>
+    <a class="tile" href="struggles.html"><span class="tile-chip chip-rose">STRUGGLES</span><span class="tile-title">Struggles Register</span><span class="tile-desc">30 open · 6 resolved struggles pulled from your completed session summaries.</span><span class="tile-arrow">→</span></a><a class="tile" href="completed-weakness-sessions/index.html"><span class="tile-chip chip-green">SESSIONS</span><span class="tile-title">Completed Weakness Sessions</span><span class="tile-desc">1 weakness session completed — dedicated sessions that knock items off the register.</span><span class="tile-arrow">→</span></a>
   </div>
 </main>
 

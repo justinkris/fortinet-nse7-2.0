@@ -1,0 +1,79 @@
+SESSION INFORMATION
+====================
+Session Number: 01
+Topic: FGCP Internals Cold Quiz — heartbeat, timers, hash input, A-A return path
+Date: 2026-07
+
+WHAT WE COVERED
+=================
+This was a six-claim cold-quiz built as a peer-review scenario: a design doc
+from another team's FGCP cluster build, with six specific claims to mark
+correct or wrong. All six claims were deliberately built from Cluster A1 of
+the initial weakness register (Sessions 16 and 17), the highest exam-frequency
+cluster identified in the baseline.
+
+Claim 1 tested the heartbeat EtherType, isolating why 0x8100 (802.1Q VLAN
+tagging) is an unrelated field that only superficially resembles 0x8890
+(FGCP hello) as a hex string. The student initially reached for VLAN
+tagging as the mechanism, then reasoned correctly to "the frame needs its
+own identifying field" before being given the actual value.
+
+Claim 2 tested hb-lost-threshold, deliberately baiting the common "3 missed
+heartbeats" convention borrowed from other protocols (OSPF-style thinking).
+The student initially agreed with the bait, then reversed after being asked
+to weigh 600ms of tolerance against real-world noise (CPU spikes, STP
+recalculation) and correctly concluded the claim was "trigger happy."
+
+Claim 3 tested whether dual heartbeat links load-balance. The student
+correctly rejected load-balancing in favor of ordered/exclusive behavior
+(lower hbdev priority number wins, backup sits idle) and correctly
+identified that session-sync-dev — not heartbeat — is the one that
+actually load-balances.
+
+Claim 4 tested override-off semantics with the classic short-outage vs
+long-outage trap. The student correctly reasoned that a sub-5-minute
+outage produces an uptime tie, which falls through to priority — meaning
+override-off does NOT guarantee "no preemption ever."
+
+Claim 5 tested the A-A load-balancing hash input, correctly ruling out IP
+Identification (varies per packet, fails the same-session-same-box test)
+in favor of the 4-tuple.
+
+Claim 6 tested the A-A return path, correctly identifying that Box B
+replies directly using its own physical MAC rather than relaying back
+through Box A — the single highest-value fact in the cluster, since it
+explains why single-box packet captures on the primary can look like a
+failed handshake for a session that completed successfully.
+
+RESOLVED FROM REGISTER
+=======================
+- Session 16: Guessed heartbeat frames were d
+- Session 16: Guessed hb-lost-threshold = 3
+- Session 16: Initially assumed multiple hear
+- Session 16: "Override off = no preemption" 
+- Session 17: Guessed the IP header's Identif
+- Session 17: Initially modeled the return pa
+
+REMAINING GAPS
+================
+- None new surfaced this session — all six targeted corrections from
+  Cluster A1 were closed cleanly, several through independent reasoning
+  rather than recall alone (notably the 4-tuple derivation and the
+  flapping-risk instinct on the threshold question).
+- Cluster A1 is now fully closed. No open items remain in this cluster
+  for future weakness sessions.
+
+FUTURE WEAKNESS NOTES
+=======================
+Per the suggested weakness-session order, Weakness 02 should target
+Cluster A4 (SPU acceleration boundaries — Sessions 39/40): the four
+slow-path triggers, the SP5-still-needs-the-IPS-bridge point, the
+offload-filter exclusion rule, and reason-code-first troubleshooting
+discipline. Merge in S03's "flow mode is not less security" bullet from
+Cluster A5 as noted in the register.
+
+No spaced re-test of Cluster A1 is needed in the immediate next session —
+all six corrections landed solidly enough (correct answers, several via
+independent reasoning) to defer re-drilling to a longer interval, e.g.
+a brief cold-open mixed-recall check in 3-4 weakness sessions from now
+rather than the very next one.

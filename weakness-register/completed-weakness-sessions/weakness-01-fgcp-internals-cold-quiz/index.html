@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem('pt')){document.documentElement.classList.add('pt-init')}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weakness 01 — FGCP Internals Cold Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#faf5e9; --surface:#fffdf5; --surface-2:#f5eed9;
+    --border:#d4c89a; --border-dim:#ebe1c2;
+    --text:#0a1838; --text-soft:#1e2f5a; --text-muted:#6b7794;
+    --blue:#1e40af; --blue-vivid:#2563eb; --blue-glow:rgba(30,64,175,0.07);
+    --blue-dim:#a8c0e8; --blue-deep:#0c1f5c; --blue-light:#eff4fc; --blue-border:#b8cce8;
+    --ink-dark:#0d1a3a; --ink-accent:#9bb8e6;
+    --green:#1a7c4a; --green-light:#dff0e1; --green-border:#a7d8b0;
+    --amber:#b45309; --amber-light:#fcf2c3; --amber-border:#f3d68a;
+  }
+  html{scroll-behavior:smooth;transition:opacity .3s ease;}
+  html.pt-init body{opacity:0;}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cormorant Garamond','Outfit',serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{padding:48px 60px 36px;background:var(--ink-dark);display:flex;align-items:flex-end;gap:32px;}
+  .header-left{flex:1;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:12px;flex-wrap:wrap;}
+  .breadcrumb a{color:var(--ink-accent);text-decoration:none;}
+  .breadcrumb a:hover{text-decoration:underline;}
+  .breadcrumb-sep{color:rgba(155,184,230,0.4);}
+  .header-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(155,184,230,0.1);border:1px solid rgba(155,184,230,0.28);padding:5px 14px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--ink-accent);letter-spacing:0.1em;margin-bottom:14px;}
+  .dot-live{width:6px;height:6px;background:var(--ink-accent);border-radius:50%;display:inline-block;animation:blink 2.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  header h1{font-family:'Playfair Display',serif;font-size:48px;font-weight:700;line-height:1.0;color:#fbf7ec;margin-bottom:10px;letter-spacing:-0.01em;}
+  header h1 em{font-style:italic;font-weight:500;color:var(--ink-accent);}
+  header p{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:rgba(251,247,236,0.55);margin-top:10px;line-height:1.6;}
+  .motivation-banner{padding:22px 60px;min-height:88px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--border);background:var(--surface);}
+  .motivation-text{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.005em;}
+  .motivation-text em{font-style:italic;font-weight:500;color:var(--blue);}
+  .motivation-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);line-height:1.7;margin-top:6px;}
+  .top-panels{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+  .top-panels .qpanel{border-bottom:none;border-right:1px solid var(--border);}
+  .top-panels .qpanel-header{padding-left:32px;padding-right:32px;}
+  .top-panels .qpanel-body{padding-left:32px;padding-right:32px;}
+  .qpanel{background:var(--surface);}
+  .qpanel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .qpanel-header:hover,.qpanel-header.open{background:var(--surface-2);}
+  .qpanel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .qpanel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .qpanel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .qpanel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .qpanel-body{display:none;padding:0 20px 22px;}
+  .qpanel-body.open{display:block;}
+  .notes-panel{background:var(--surface);}
+  .notes-panel-header{width:100%;display:flex;align-items:center;gap:12px;padding:13px 32px;cursor:pointer;background:var(--surface);border:none;font-family:'Outfit',sans-serif;text-align:left;}
+  .notes-panel-header:hover,.notes-panel-header.open{background:var(--surface-2);}
+  .notes-panel-title{font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--text);text-transform:uppercase;}
+  .notes-panel-count{background:var(--blue);color:#fffdf5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;}
+  .notes-panel-hint{font-size:11px;color:var(--text-muted);margin-left:4px;}
+  .notes-panel-chevron{margin-left:auto;font-size:13px;color:var(--text-muted);}
+  .notes-panel-body{display:none;padding:0 32px 22px;}
+  .notes-panel-body.open{display:block;}
+  .q-group{margin-bottom:16px;}
+  .q-group-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+  .q-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-dim);}
+  .q-item:last-child{border-bottom:none;}
+  .q-num{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;color:var(--blue);min-width:16px;margin-top:2px;}
+  .q-text{font-size:14px;color:var(--text-soft);line-height:1.5;flex:1;}
+  .q-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:0 4px;margin-top:1px;}
+  .q-del:hover{color:var(--blue);}
+  .no-questions{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text-muted);padding:8px 0;}
+  .btn-add-q{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-q:hover{opacity:0.85;}
+  .section-nav{position:sticky;top:0;z-index:90;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px;overflow-x:auto;}
+  .nav-tab{font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:12px 18px;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s,border-color 0.15s;}
+  .nav-tab:hover{color:var(--text);}
+  .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+  main{max-width:1200px;margin:0 auto;padding:0;}
+  .main-content{padding:36px 60px 60px 60px;}
+  .section-block{margin-bottom:48px;}
+  .section-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  .section-block h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:16px;padding-left:16px;border-left:3px solid var(--blue);letter-spacing:-0.01em;}
+  .section-block h2 em{font-style:italic;font-weight:500;color:var(--blue);}
+  .section-block p{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:14px;}
+  .section-block p strong{color:var(--text);font-weight:600;}
+  .section-block p em{color:var(--blue);font-style:italic;}
+  .section-block ul,.section-block ol{padding-left:22px;margin-bottom:14px;}
+  .section-block li{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.7;color:var(--text-soft);margin-bottom:4px;}
+  .section-block li strong{color:var(--text);font-weight:600;}
+  .callout{border-left:3px solid var(--blue-border);background:var(--blue-light);border-radius:0 10px 10px 0;padding:14px 20px;margin:16px 0;font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.65;color:var(--text-soft);}
+  .callout strong{color:var(--text);font-weight:600;}
+  .callout-green{border-left-color:var(--green-border);background:var(--green-light);}
+  .callout-amber{border-left-color:var(--amber-border);background:var(--amber-light);}
+  .data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .data-table th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 14px;text-align:left;}
+  .data-table td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;}
+  .data-table tr:hover td{background:var(--blue-glow);}
+  .data-table td:first-child{color:var(--text);font-weight:600;}
+  .socratic-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:16px;border-top:3px solid var(--blue);}
+  .socratic-header{display:flex;align-items:center;gap:8px;margin-bottom:0;cursor:pointer;user-select:none;}
+  .socratic-header::after{content:'▸ Expand';margin-left:auto;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-block.soc-open .socratic-header{margin-bottom:10px;}
+  .socratic-block.soc-open .socratic-header::after{content:'▾ Collapse';}
+  .socratic-block:not(.soc-open) .socratic-insight,
+  .socratic-block:not(.soc-open) .socratic-questions,
+  .socratic-block:not(.soc-open) .answer-area{display:none;}
+  .socratic-icon{font-size:17px;flex-shrink:0;}
+  .socratic-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.2em;color:var(--text-muted);text-transform:uppercase;}
+  .socratic-insight{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;margin-bottom:12px;border-left:3px solid var(--border);padding-left:14px;font-style:italic;}
+  .socratic-questions{list-style:none;padding:0;margin:0;}
+  .socratic-questions li{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);padding:8px 0 8px 22px;position:relative;border-bottom:1px solid var(--border-dim);line-height:1.6;}
+  .socratic-questions li:last-child{border-bottom:none;}
+  .socratic-questions li::before{content:'?';position:absolute;left:0;font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:16px;top:7px;color:var(--blue);}
+  .answer-area{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+  .answer-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
+  .answer-textarea:focus{border-color:var(--blue);}
+  .answer-textarea:disabled{opacity:0.75;background:var(--surface-2);cursor:default;}
+  .answer-buttons{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .btn-add-answer{background:var(--ink-dark);color:var(--ink-accent);border:none;border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-add-answer:hover:not(:disabled){opacity:0.85;}
+  .btn-add-answer:disabled{opacity:0.5;cursor:default;}
+  .btn-see-answer{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;}
+  .btn-see-answer:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-see-answer:not(:disabled){color:var(--blue);border-color:var(--blue);}
+  .btn-see-answer:hover:not(:disabled){background:var(--blue-glow);}
+  .model-answers{margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .model-answer-item{padding:10px 0;border-bottom:1px solid var(--border-dim);}
+  .model-answer-item:first-child{padding-top:0;}
+  .model-answer-item:last-child{border-bottom:none;padding-bottom:0;}
+  .model-answer-q{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;}
+  .model-answer-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-soft);line-height:1.7;}
+  .mental-note-block{display:flex;gap:14px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-top:18px;align-items:flex-start;}
+  .mental-note-block-icon{font-size:22px;flex-shrink:0;}
+  .mental-note-block-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.18em;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;}
+  .mental-note-block-text{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);line-height:1.65;font-weight:500;}
+  .lesson-tools{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin:-24px 0 48px;}
+  .lesson-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .tool-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;}
+  .tool-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);background:var(--surface);resize:vertical;outline:none;line-height:1.6;margin-bottom:8px;}
+  .tool-textarea:focus{border-color:var(--blue);}
+  .tool-row{display:flex;justify-content:flex-end;}
+  .page-nav{display:flex;justify-content:space-between;gap:16px;padding:24px 60px;border-top:1px solid var(--border);background:var(--surface);}
+  .page-nav-btn{display:flex;flex-direction:column;gap:4px;padding:12px 18px;border:1px solid var(--border);border-radius:10px;text-decoration:none;max-width:45%;}
+  .page-nav-btn:hover{background:var(--surface-2);}
+  .page-nav-prev{text-align:left;}
+  .page-nav-next{text-align:right;margin-left:auto;}
+  .page-nav-label{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.14em;color:var(--text-muted);text-transform:uppercase;}
+  .page-nav-title{font-family:'Playfair Display',serif;font-size:15px;color:var(--text);}
+  footer{padding:22px 60px;text-align:center;font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.1em;color:var(--text-muted);text-transform:uppercase;}
+  footer span{margin:0 4px;}
+  .scorecard{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+  .scorecard th{background:var(--ink-dark);color:var(--ink-accent);font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:10px 12px;text-align:left;}
+  .scorecard td{font-family:'Cormorant Garamond',serif;font-size:15px;padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text-soft);line-height:1.5;vertical-align:top;}
+  .scorecard tr:hover td{background:var(--blue-glow);}
+  .wrong-tag{display:inline-block;background:var(--amber-light);border:1px solid var(--amber-border);color:var(--amber);font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-left">
+    <div class="breadcrumb" style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(251,247,236,0.6);margin-bottom:12px;text-transform:uppercase;"><a href="../../../index.html" style="color:#9bb8e6;text-decoration:none;">Home</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../../index.html" style="color:#9bb8e6;text-decoration:none;">Weakness Register</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><a href="../index.html" style="color:#9bb8e6;text-decoration:none;">Completed Weakness Sessions</a><span class="breadcrumb-sep" style="color:rgba(155,184,230,0.4);margin:0 6px;">›</span><span>Weakness 01</span></div>
+    <div class="header-eyebrow"><span class="dot-live"></span> Weakness Session 01 · FGCP Internals</div>
+    <h1>The Peer Review <em>That Almost Shipped Wrong</em></h1>
+    <p>Six claims from another team's FGCP design doc. All six read plausibly. All six were wrong in the same specific ways you were, once.</p>
+  </div>
+</header>
+
+<div class="motivation-banner">
+  <div class="motivation-text">Cluster A1 is the highest exam-frequency cluster in the register — <em>closed, six for six</em>.</div>
+  <p class="motivation-sub">Heartbeat EtherType, detection timer, link discipline, override semantics, hash input, and the A-A return path — the mechanics most likely to show up cold on exam day.</p>
+</div>
+
+<div class="top-panels">
+  <div class="qpanel" id="qpanel">
+    <button class="qpanel-header" onclick="toggleQPanel()" id="qpanel-header">
+      <span class="qpanel-title">MY QUESTIONS</span>
+      <span class="qpanel-count" id="qpanel-count">0</span>
+      <span class="qpanel-hint">— click to expand</span>
+      <span class="qpanel-chevron" id="qpanel-chevron">▾</span>
+    </button>
+    <div class="qpanel-body" id="qpanel-body"></div>
+  </div>
+  <div class="notes-panel" id="notes-panel">
+    <button class="notes-panel-header" onclick="toggleNotesPanel()" id="notes-panel-header">
+      <span class="notes-panel-title">MY NOTES</span>
+      <span class="notes-panel-count" id="notes-panel-count">0</span>
+      <span class="notes-panel-hint">— click to expand</span>
+      <span class="notes-panel-chevron" id="notes-panel-chevron">▾</span>
+    </button>
+    <div class="notes-panel-body" id="notes-panel-body"></div>
+  </div>
+</div>
+
+<nav class="section-nav" id="section-nav">
+  <a class="nav-tab active" href="#section-heartbeat-id">Heartbeat ID</a>
+  <a class="nav-tab" href="#section-link-discipline">Link Discipline</a>
+  <a class="nav-tab" href="#section-override">Override</a>
+  <a class="nav-tab" href="#section-aa-mechanics">A-A Mechanics</a>
+</nav>
+
+<main>
+  <div class="main-content">
+
+    <!-- SECTION 1: Heartbeat identity — EtherType + threshold -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · HEARTBEAT ID</span>
+      </div>
+      <p class="socratic-insight">A design doc claimed FGCP heartbeats ride VLAN-tagged frames (0x8100) and fail over in ~600ms. Both numbers look reasonable. Both are wrong — and wrong for related reasons: borrowing conventions from adjacent technologies instead of asking what a heartbeat actually needs.</p>
+      <ul class="socratic-questions">
+        <li>What is 0x8100 actually for, and does a heartbeat between two directly-adjacent HA peers need that job done?</li>
+        <li>If the real detection window were only 3 missed heartbeats (~600ms), what would that do to a cluster sitting behind a switch doing STP recalculation?</li>
+      </ul>
+      <div class="answer-area" data-section="heartbeat-id">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">0x8100 signals "an 802.1Q VLAN tag follows" — a switch's tool for keeping multiple logical networks apart on a shared trunk. A heartbeat link is typically a direct, single-purpose L2 segment between two known peers; there's no ambiguity to resolve, so there's nothing for a VLAN tag to do. What the frame actually needs is a way to say "I am FGCP hello traffic" — that's FGCP's own registered EtherType, 0x8890, unrelated to 0x8100 despite the superficial resemblance as hex strings.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">600ms of tolerance would make the cluster hair-trigger — a momentary CPU spike or a switch's STP recalculation could eat 2-3 heartbeat cycles without the peer being remotely unhealthy, causing a false failover (and its full cost: vMAC reassignment, GARP, NP7 resync) for no real reason. That's why the actual default is far more conservative: hb-lost-threshold = 20 at 200ms intervals, ≈4 seconds — roughly 6-7x more forgiving than the "3 missed beats" instinct borrowed from other protocols' dead-timers.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-heartbeat-id">
+      <div class="section-label">CORRECTION 01 + 02</div>
+      <h2>0x8100 Is a <em>Different Job</em></h2>
+      <p>The trap here is purely visual: 0x8100 and 0x8890 are both four-digit hex EtherTypes, and it's easy for the eye to blur them together under exam pressure. But they do completely unrelated jobs. 0x8100 belongs to 802.1Q — it tells a switch "a VLAN tag follows, use it to keep this frame in the right broadcast domain." 0x8890 is FGCP's own registered EtherType for hello/heartbeat frames — it tells the receiving NIC "this is FGCP hello traffic, interpret it accordingly." One is about switch-level traffic segregation; the other is about protocol self-identification. They happen to share a numbering neighborhood and nothing else.</p>
+      <p>The threshold trap runs on the same logic in a different direction: "3" is a plausible-sounding default because it's common elsewhere (OSPF/HSRP-style dead timers), but FGCP's actual default is <strong>hb-lost-threshold = 20</strong> at the standard 200ms interval, giving roughly a <strong>4-second detection window</strong>. The gap between the guessed 600ms and the real ~4s isn't a rounding error — it's the difference between a cluster that flaps on every transient blip and one that tolerates real-world noise.</p>
+      <table class="data-table">
+        <thead><tr><th>Field</th><th>Value</th><th>Job</th></tr></thead>
+        <tbody>
+          <tr><td>0x8100</td><td>802.1Q tag marker</td><td>VLAN segregation on switched trunks — unrelated to FGCP</td></tr>
+          <tr><td>0x8890</td><td>FGCP hello</td><td>Heartbeat / peer-alive detection</td></tr>
+          <tr><td>0x8891</td><td>FGCP forwarding</td><td>A-A session relay (see Correction 06)</td></tr>
+          <tr><td>0x8893</td><td>FGCP config-sync</td><td>Configuration synchronization between members</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-amber"><strong>Common misconception:</strong> "3 missed heartbeats" is imported wholesale from other HA/routing protocols where a false failover is cheap. FGCP failover is expensive (vMAC reassignment, GARP storm, NP7 resync) — the real default (20 × 200ms ≈ 4s) is deliberately conservative to avoid triggering that cost on noise.</div>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">0x8100 and 0x8890 look alike as strings and do nothing alike as protocols. hb-lost-threshold defaults to 20, not 3 — because FGCP failover is too expensive to trigger on noise.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-heartbeat-id" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-heartbeat-id','Heartbeat ID')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-heartbeat-id" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-heartbeat-id')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: Link discipline -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · LINK DISCIPLINE</span>
+      </div>
+      <p class="socratic-insight">The doc claimed two heartbeat links (hbdev priorities p3=10, p4=20) would load-balance "like session-sync-dev." That comparison is backwards — and the reason why says something important about what heartbeat and session-sync are each trying to guarantee.</p>
+      <ul class="socratic-questions">
+        <li>With p3=10 and p4=20, which link is preferred, and what does the other one do while the first is healthy?</li>
+        <li>Why would you NOT want two heartbeat links simultaneously and independently reporting peer-alive status?</li>
+      </ul>
+      <div class="answer-area" data-section="link-discipline">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">Lower priority number wins (same convention as OSPF cost, admin distance). p3 (priority 10) is the active heartbeat link, carrying 100% of heartbeat traffic. p4 (priority 20) sits completely idle for heartbeat purposes — pure standby — until p3 fails, at which point FGCP fails over to it.</div>
+          </div>
+          <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">You want one authoritative source of truth for "is my peer alive," with a clean deterministic fallback — not two links that could theoretically disagree or introduce timing skew in reporting peer status. Session-sync-dev has the opposite requirement: it's bulk data mirroring (the session table), where spreading traffic across multiple links for more bandwidth is a straightforward win with no downside.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-link-discipline">
+      <div class="section-label">CORRECTION 03</div>
+      <h2>Ordered/Exclusive, <em>Not Load-Balanced</em></h2>
+      <p>Heartbeat links with configured priorities (<code>hbdev "p3" 10 "p4" 20</code>) behave as an ordered, exclusive list: the lowest-numbered priority is active and carries all heartbeat traffic; every other configured heartbeat interface sits idle as pure standby, promoted only on failure of the active link. There is no simultaneous sharing of heartbeat traffic across links, ever.</p>
+      <p>The doc's comparison to session-sync-dev inverts the actual pairing. <strong>Session-sync-dev is the one that genuinely load-balances</strong> — when multiple session-sync links are configured, FGCP spreads the session-table mirroring traffic across all of them, because that job (bulk data replication) benefits straightforwardly from more available bandwidth. Heartbeat and session-sync have opposite disciplines because they solve opposite problems: one needs a single authoritative, low-latency signal; the other needs throughput for a large, continuously-changing dataset.</p>
+      <div class="callout"><strong>Exam tip:</strong> This pairing (heartbeat = ordered/exclusive, session-sync = load-balanced) is a classic distractor. If a question describes load-balancing behavior and asks which interface type it applies to, the answer is almost always session-sync-dev, not hbdev.</div>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Heartbeat links: ordered/exclusive, lower priority number wins, backup is pure standby. Session-sync links: load-balanced across all configured interfaces. Two different jobs, two opposite disciplines.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-link-discipline" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-link-discipline','Link Discipline')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-link-discipline" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-link-discipline')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: Override semantics -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · OVERRIDE SEMANTICS</span>
+      </div>
+      <p class="socratic-insight">Priya's question in the doc: "override is off, so Box B keeps primary permanently after Box A comes back, right?" This is the single most counter-intuitive mechanic in the whole cluster — the correct answer depends entirely on how long the outage was.</p>
+      <ul class="socratic-questions">
+        <li>If Box A reboots and rejoins within 90 seconds, does Box B have a decisive uptime lead over it yet? What does the waterfall fall through to if not?</li>
+        <li>Why does a SHORT outage let a higher-priority box preempt, while a LONG outage locks the survivor in — backwards from most people's first guess?</li>
+      </ul>
+      <div class="answer-area" data-section="override">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">No — Box B's uptime lead needs to reach 5 minutes to be decisive. At 90 seconds, the uptime comparison is a tie by the rules (no clear winner), so the election waterfall falls through to the next criterion: priority. Whichever box has the higher configured priority wins — which could be Box A, despite override being off.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">A short outage (&lt;5 min) never lets Box B's uptime lead become decisive, so the waterfall falls through past uptime to priority — meaning a higher-priority Box A can still reclaim primary despite override off. A long outage (≥5 min) lets Box B's uptime lead become decisive on its own, so the waterfall stops at the uptime criterion and priority is never even checked — Box B keeps primary regardless of its priority value. "Override off" only removes priority from being checked FIRST; it doesn't remove priority from the waterfall entirely.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-override">
+      <div class="section-label">CORRECTION 04</div>
+      <h2>Override Off Is <em>Not</em> "No Preemption, Ever"</h2>
+      <p>The most common misreading of override-off is that it disables preemption entirely — that once a peer takes over as primary, it stays primary no matter what. That's wrong, and the failure mode is specifically about outage duration relative to the 5-minute uptime margin.</p>
+      <p>The election is a waterfall: monitored interfaces → HA uptime (decisive only with a ≥5-minute lead) → priority → serial number, stopping at the first criterion that produces a clear winner. A short outage never lets the survivor's uptime lead cross the 5-minute threshold, so the comparison is a tie and the waterfall falls through to priority — where a higher-priority box, even the one that just rebooted, can still reclaim primary. A long outage lets the survivor bank a decisive uptime lead on its own, so the waterfall stops there and priority is never consulted at all.</p>
+      <table class="data-table">
+        <thead><tr><th>Outage length</th><th>Uptime comparison</th><th>Waterfall result</th><th>Who's primary</th></tr></thead>
+        <tbody>
+          <tr><td>Short (&lt;5 min)</td><td>Tie — not decisive</td><td>Falls through to priority</td><td>Higher-priority box (could be the one that just rebooted)</td></tr>
+          <tr><td>Long (≥5 min)</td><td>Decisive lead</td><td>Stops at uptime</td><td>The survivor, regardless of priority</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-amber"><strong>Common misconception:</strong> "Override off = no preemption" is a genuine intuition trap because it's true in the long-outage case and false in the short-outage case. The correct model is "override off removes priority from being checked first" — not "override off removes priority from the equation."</div>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Short outage → uptime tie → falls through to priority → higher-priority box can reclaim primary. Long outage → uptime lead decisive → priority never checked → survivor keeps primary. Backwards from first instinct — that's exactly why it's tested.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-override" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-override','Override')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-override" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-override')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: A-A hash input + return path -->
+    <div class="socratic-block">
+      <div class="socratic-header">
+        <span class="socratic-icon">💭</span>
+        <span class="socratic-label">THINK FIRST · A-A MECHANICS</span>
+      </div>
+      <p class="socratic-insight">Two more claims from the doc: the load-balancing hash uses IP Identification for "granular per-packet distribution," and Box B relays its replies back through Box A because Box A owns the vMAC. Both claims sound mechanically plausible. Both fail the same kind of test once you ask what the mechanism actually has to guarantee.</p>
+      <ul class="socratic-questions">
+        <li>If the hash input changes on every packet, can two packets from the same session even land on the same box? What does that imply about valid hash inputs?</li>
+        <li>Does Box B need to "own" the vMAC to send a reply — or does the vMAC only matter for the client's incoming ARP resolution?</li>
+      </ul>
+      <div class="answer-area" data-section="aa-mechanics">
+        <textarea class="answer-textarea" placeholder="Write your own thoughts before revealing the model answer..." rows="3"></textarea>
+        <div class="answer-buttons">
+          <button class="btn-add-answer" onclick="saveSocAnswer(this)">+ Add My Answer</button>
+          <button class="btn-see-answer" onclick="revealSocAnswer(this)" disabled>🔒 See Model Answer</button>
+        </div>
+        <div class="model-answers" style="display:none;">
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q1 — MODEL ANSWER</div>
+            <div class="model-answer-text">No — if the hash input varies packet-to-packet (like IP Identification), consecutive packets in the same session could hash to different outcomes, splitting a single session's state across two boxes. That's disqualifying. The only field guaranteed stable for the life of a session is the 4-tuple (source/dest IP, source/dest port), so that's the real hash input, computed once at the SYN and never recalculated mid-session.</div>
+          </div>
+          <div class="model-answer-item">
+            <div class="model-answer-q">Q2 — MODEL ANSWER</div>
+            <div class="model-answer-text">The vMAC only matters for the client's outbound packets reaching the cluster — the client ARPs for the cluster IP, gets the vMAC, and its frames land on Box A (the vMAC owner). Box B doesn't need to own or spoof the vMAC to reply; TCP/IP doesn't require a reply to originate from the same MAC the original request targeted. Box B simply sends its reply using its own physical MAC. Door IN is always Box A; door OUT is always Box B — for the whole session, not just the first packet.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" id="section-aa-mechanics">
+      <div class="section-label">CORRECTION 05 + 06</div>
+      <h2>Stable Inputs, <em>Asymmetric Paths</em></h2>
+      <p>The hash-input error and the return-path error share a root cause: both import an assumption from how a naive, simpler system might work, rather than asking what the actual constraint is. For the hash input, the constraint is "every packet in a session must resolve to the same box" — which immediately disqualifies anything that varies per packet, like IP Identification, and points to the <strong>4-tuple</strong> as the only valid input. The decision is made once, at the SYN, and never revisited mid-session.</p>
+      <p>For the return path, the naive assumption is that the box owning the vMAC (Box A) must relay every reply back through itself, since that's the MAC the client resolved. But the vMAC's job ends once the packet reaches the cluster — it doesn't gate outbound traffic. For proxy-inspected A-A sessions, Box B replies to the client directly using its own physical MAC. This produces a genuinely asymmetric path for the life of the session: every inbound packet transits Box A (which relays it to Box B over the FGCP forwarding EtherType, 0x8891), and every outbound packet is sent by Box B with no involvement from Box A at all.</p>
+      <table class="data-table">
+        <thead><tr><th>Direction</th><th>Box</th><th>Mechanism</th></tr></thead>
+        <tbody>
+          <tr><td>Inbound (client/server → cluster)</td><td>Box A</td><td>Received on vMAC, relayed to Box B via 0x8891</td></tr>
+          <tr><td>Outbound (cluster → client/server)</td><td>Box B</td><td>Sent directly, own physical MAC, no relay through A</td></tr>
+        </tbody>
+      </table>
+      <div class="callout"><strong>Exam tip:</strong> This asymmetry directly explains a real troubleshooting trap — a packet capture taken only on Box A for a proxy-inspected A-A session can show a SYN with no visible SYN/ACK, looking like a failed handshake, when the session actually completed fine on Box B. Rule: always check both boxes before declaring an A-A session broken.</div>
+      <div class="mental-note-block">
+        <div class="mental-note-block-icon">🧠</div>
+        <div class="mental-note-block-inner">
+          <div class="mental-note-block-label">MENTAL NOTE</div>
+          <div class="mental-note-block-text">Hash input = 4-tuple, decided once at the SYN — never a per-packet-varying field. Door IN is always Box A, door OUT is always Box B, for the whole session — this is the single highest-value fact in the A-A cluster.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-tools">
+      <div class="lesson-tools-grid">
+        <div>
+          <div class="tool-label">ASK A QUESTION</div>
+          <textarea class="tool-textarea" id="q-section-aa-mechanics" placeholder="What are you unsure about in this section?" rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addQuestion('section-aa-mechanics','A-A Mechanics')">Add Question</button></div>
+        </div>
+        <div>
+          <div class="tool-label">ADD A NOTE</div>
+          <textarea class="tool-textarea" id="note-section-aa-mechanics" placeholder="Write a note about this section..." rows="3"></textarea>
+          <div class="tool-row"><button class="btn-add-q" onclick="addNote('section-aa-mechanics')">+ Add Note</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCORECARD -->
+    <div class="section-block" id="section-scorecard">
+      <div class="section-label">SESSION SCORECARD</div>
+      <h2>Six Claims, <em>Six Corrections</em></h2>
+      <table class="scorecard">
+        <thead><tr><th>#</th><th>Claim</th><th>Verdict</th><th>Correction</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Heartbeat = 0x8100 VLAN tag</td><td><span class="wrong-tag">Wrong</span></td><td>0x8890 hello, custom EtherType, unrelated to VLAN tagging</td></tr>
+          <tr><td>2</td><td>hb-lost-threshold = 3 (~600ms)</td><td><span class="wrong-tag">Wrong</span></td><td>Default is 20 × 200ms ≈ 4s</td></tr>
+          <tr><td>3</td><td>Heartbeat links load-balance like session-sync</td><td><span class="wrong-tag">Wrong</span></td><td>Ordered/exclusive; session-sync is the one that load-balances</td></tr>
+          <tr><td>4</td><td>Override off = permanent no-preemption</td><td><span class="wrong-tag">Wrong</span></td><td>Short outage → priority fallthrough; long outage → uptime decisive</td></tr>
+          <tr><td>5</td><td>LB hash = IP Identification field</td><td><span class="wrong-tag">Wrong</span></td><td>4-tuple, decided once at the SYN</td></tr>
+          <tr><td>6</td><td>Box B relays replies through Box A</td><td><span class="wrong-tag">Wrong</span></td><td>Box B replies directly, own physical MAC</td></tr>
+        </tbody>
+      </table>
+      <p>All six corrected in-session, several through independent reasoning rather than recall alone — the 4-tuple derivation and the flapping-risk read on the threshold question stood out in particular. Cluster A1 is now closed.</p>
+    </div>
+
+  </div>
+</main>
+
+<div class="page-nav">
+  <a class="page-nav-btn page-nav-prev" href="#">
+    <span class="page-nav-label">← WEAKNESS REGISTER</span>
+    <span class="page-nav-title">Back to Completed Weakness Sessions</span>
+  </a>
+  <a class="page-nav-btn page-nav-next" href="#">
+    <span class="page-nav-label">NEXT →</span>
+    <span class="page-nav-title">Weakness 02 — SPU Acceleration Boundaries</span>
+  </a>
+</div>
+
+<footer>
+  Vaultline Financial<span>.</span> <span>NSE7 Enterprise Firewall 7.6</span><span>.</span> Weakness Session 01
+</footer>
+
+<script>
+const PAGE_KEY = 'nse7-weakness01-fgcp-internals';
+
+const SECTIONS = {
+  'section-heartbeat-id': 'Heartbeat ID',
+  'section-link-discipline': 'Link Discipline',
+  'section-override': 'Override',
+  'section-aa-mechanics': 'A-A Mechanics',
+};
+
+document.querySelectorAll('.socratic-header').forEach(function(h) {
+  h.addEventListener('click', function() { h.closest('.socratic-block').classList.toggle('soc-open'); });
+});
+function getQArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-qs') || '[]'); }
+function saveQArr(qs) { localStorage.setItem(PAGE_KEY+'-qs', JSON.stringify(qs)); }
+function addQuestion(key, name) {
+  const ta = document.getElementById('q-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const qs = getQArr(); qs.push({id: Date.now(), section: key, sectionName: name, text});
+  saveQArr(qs); ta.value = ''; renderQPanel();
+  if (!document.getElementById('qpanel-body').classList.contains('open')) toggleQPanel();
+}
+function deleteQ(id) { saveQArr(getQArr().filter(q => q.id !== id)); renderQPanel(); }
+function toggleQPanel() {
+  const body = document.getElementById('qpanel-body');
+  const header = document.getElementById('qpanel-header');
+  const chevron = document.getElementById('qpanel-chevron');
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-qpanel-open', open);
+}
+function renderQPanel() {
+  const qs = getQArr();
+  const count = document.getElementById('qpanel-count');
+  if (count) { count.textContent = qs.length; count.style.display = qs.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.qpanel-hint');
+  if (hint) hint.textContent = qs.length ? `— ${qs.length} question${qs.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('qpanel-body'); if (!body) return;
+  if (!qs.length) { body.innerHTML = '<p class="no-questions">No questions yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  qs.forEach(q => { if (groups[q.section]) groups[q.section].push(q); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(q => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${q.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteQ(${q.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function getNotesArr() { return JSON.parse(localStorage.getItem(PAGE_KEY+'-notes') || '[]'); }
+function saveNotesArr(ns) { localStorage.setItem(PAGE_KEY+'-notes', JSON.stringify(ns)); }
+function addNote(key) {
+  const ta = document.getElementById('note-'+key);
+  const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+  const ns = getNotesArr(); ns.push({id: Date.now(), section: key, sectionName: SECTIONS[key]||key, text});
+  saveNotesArr(ns); ta.value = ''; renderNotesPanel();
+  if (!document.getElementById('notes-panel-body').classList.contains('open')) toggleNotesPanel();
+}
+function deleteNote(id) { saveNotesArr(getNotesArr().filter(n => n.id !== id)); renderNotesPanel(); }
+function toggleNotesPanel() {
+  const body = document.getElementById('notes-panel-body');
+  const header = document.getElementById('notes-panel-header');
+  const chevron = document.getElementById('notes-panel-chevron');
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  header.classList.toggle('open', open); chevron.textContent = open ? '▴' : '▾';
+  localStorage.setItem(PAGE_KEY+'-notes-panel-open', open);
+}
+function renderNotesPanel() {
+  const ns = getNotesArr();
+  const count = document.getElementById('notes-panel-count');
+  if (count) { count.textContent = ns.length; count.style.display = ns.length ? 'inline' : 'none'; }
+  const hint = document.querySelector('.notes-panel-hint');
+  if (hint) hint.textContent = ns.length ? `— ${ns.length} note${ns.length>1?'s':''}, click to expand` : '— click to expand';
+  const body = document.getElementById('notes-panel-body'); if (!body) return;
+  if (!ns.length) { body.innerHTML = '<p class="no-questions">No notes yet. Add one below each section.</p>'; return; }
+  const groups = Object.fromEntries(Object.keys(SECTIONS).map(k => [k, []]));
+  ns.forEach(n => { if (groups[n.section]) groups[n.section].push(n); });
+  let html = ''; let num = 0;
+  Object.entries(groups).forEach(([key, items]) => {
+    if (!items.length) return;
+    html += `<div class="q-group"><div class="q-group-label">${SECTIONS[key]||key}</div>`;
+    items.forEach(n => { num++; html += `<div class="q-item"><div class="q-num">${num}</div><div class="q-text">${n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div><button class="q-del" onclick="deleteNote(${n.id})" title="Remove">✕</button></div>`; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+function saveSocAnswer(btn) {
+  const area = btn.closest('.answer-area');
+  const ta = area.querySelector('.answer-textarea');
+  if (!ta.value.trim()) { ta.focus(); return; }
+  const key = PAGE_KEY+'-socans-'+area.dataset.section;
+  try { localStorage.setItem(key, ta.value); } catch(e) {}
+  ta.disabled = true; btn.textContent = '✓ Answer saved'; btn.disabled = true;
+  const seeBtn = area.querySelector('.btn-see-answer');
+  seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+}
+function revealSocAnswer(btn) {
+  if (btn.disabled) return;
+  const answers = btn.closest('.answer-area').querySelector('.model-answers');
+  const isHidden = answers.style.display === 'none' || !answers.style.display;
+  answers.style.display = isHidden ? 'block' : 'none';
+  btn.textContent = isHidden ? '▲ Hide Model Answer' : '💡 See Model Answer';
+}
+if (sessionStorage.getItem('pt')) { document.documentElement.classList.remove('pt-init'); sessionStorage.removeItem('pt'); }
+document.querySelectorAll('a[href]').forEach(function(a) {
+  a.addEventListener('click', function() { sessionStorage.setItem('pt', '1'); });
+});
+document.addEventListener('DOMContentLoaded', function() {
+  renderQPanel(); renderNotesPanel();
+  if (localStorage.getItem(PAGE_KEY+'-qpanel-open') === 'true') toggleQPanel();
+  if (localStorage.getItem(PAGE_KEY+'-notes-panel-open') === 'true') toggleNotesPanel();
+  document.querySelectorAll('.answer-area').forEach(function(area) {
+    const key = PAGE_KEY+'-socans-'+area.dataset.section;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const ta = area.querySelector('.answer-textarea'); ta.value = saved; ta.disabled = true;
+        const addBtn = area.querySelector('.btn-add-answer'); addBtn.textContent = '✓ Answer saved'; addBtn.disabled = true;
+        const seeBtn = area.querySelector('.btn-see-answer'); seeBtn.disabled = false; seeBtn.textContent = '💡 See Model Answer';
+      }
+    } catch(e) {}
+  });
+});
+</script>
+</body>
+</html>
