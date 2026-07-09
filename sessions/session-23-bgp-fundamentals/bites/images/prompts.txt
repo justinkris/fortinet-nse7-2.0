@@ -1,0 +1,23 @@
+Session 23 — Bite: BGP Best-Path & AS-Path Fundamentals (Memory Hook)
+============================================================
+
+law-vs-polite-request.png
+
+Title: A Law Everyone Obeys, A Request Someone Can Ignore
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic. Warm modern colour palette: cream background (#faf5e9), coral accents, muted gold highlights, sage greens, soft brown outlines. Clean bold line work, no gradients, no photorealism, no 3D rendering, generous spacing, educational storybook mood.
+
+Composition: wide horizontal split-panel illustration, one metaphor per side, connected by a thin sage-green dashed line down the middle labeled "AS BOUNDARY."
+
+LEFT PANEL — "AS-PATH · THE LAW" (coral bold header):
+A tall marble courthouse with columns. Inside, a stern but friendly judge in dark robes stands behind a huge open lawbook titled "AS-PATH LENGTH — Rule of Every Router." Three cartoon routers-with-faces stand in a row before the bench, each holding a small tally slate marked "+1" — visibly, unavoidably counting. A gold gavel rests on the bench. A small caption beneath: "no exceptions · no cooperation required." Soft coral rays behind the courthouse to signal authority. All three routers wear identical calm, obedient expressions.
+
+RIGHT PANEL — "MED · THE POLITE REQUEST" (muted gold bold header):
+A quiet neighborhood mailbox at a hedge that marks the border between two houses. A small cartoon router-with-face on the near side leans over, sliding a hand-folded coral paper note labeled "MED = 100 · please prefer entrance A" into the mailbox. On the far side of the hedge, another cartoon router-with-face is walking away holding a stack of unrelated papers, one hand casually waving off the note — clearly not stopping to read it. A tiny thought bubble above the far router shows a shrug and a small question mark. A small caption beneath: "only works if the other side agrees to play along."
+
+Above the whole strip, a small cursive title banner reads: "A Law Everyone Obeys, A Request Someone Can Ignore."
+Bottom caption strip, small caps in soft brown: "GUARANTEED (AS-PATH · #4) vs OPTIONAL (MED · #6)."
+
+Mood: calm, painterly, whiteboard-turned-storybook. No logos, no real branding, no readable UI screenshots. Icon-driven storytelling. Minimal text — only the two panel headers, the two mini-captions, the note text, and the top banner. Warm and slightly whimsical but professional.
+
+============================================================

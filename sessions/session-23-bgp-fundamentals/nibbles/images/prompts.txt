@@ -1,0 +1,10 @@
+Session 23 — Nibble: Two Jobs, Two Different Guarantees
+============================================================
+
+n1-steer-request.png
+
+Title: Your dial vs. your request — same BGP attributes, opposite guarantees.
+
+Flat minimalistic but highly detailed cartoon illustration, modern vector-art aesthetic, warm modern colour palette with cream background, coral accents, muted gold highlights, sage greens, soft brown outlines, clean bold line work, no gradients, no photorealism, no 3D rendering, highly structured composition with generous spacing, educational yet visually engaging. Split-panel composition, vertical dividing line down the center labeled "AS BOUNDARY" in small sage-green dashed stroke. LEFT PANEL (labeled "OUTBOUND — GUARANTEED" in coral bold text): a friendly cartoon FortiGate firewall character (simple rounded rectangle body, small screen face with a calm confident expression) standing at a control panel with two large physical dials labeled "WEIGHT" and "LOCAL PREF," one hand confidently turning the WEIGHT dial higher; two thin road-like lines lead from the firewall toward two small cartoon cloud icons labeled "ISP-A" and "ISP-B," with a bold coral arrow flowing from the firewall through the ISP-A cloud, showing outbound traffic obeying the dial. RIGHT PANEL (labeled "INBOUND — REQUEST ONLY" in muted gold text): the same FortiGate character now on the other side, folding a small paper airplane labeled "MED" and "AS-PATH PREPEND," tossing it across the AS boundary toward a separate, larger cartoon building labeled "NEIGHBOR AS" with its own small firewall character inside holding a rulebook labeled "THEIR POLICY" — that second character has a neutral, shrugging expression and a thought bubble with a small question mark, showing the outcome is uncertain, not guaranteed. Soft brown outlines throughout, no photorealism, clean educational vector style, plenty of whitespace, small directional arrows showing traffic flow, all text labels in a clean sans-serif font integrated into the illustration.
+
+============================================================

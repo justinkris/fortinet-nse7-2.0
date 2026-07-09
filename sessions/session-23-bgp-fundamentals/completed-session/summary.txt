@@ -1,0 +1,80 @@
+SESSION INFORMATION
+===================
+Session Number: 23
+Topic: BGP Best-Path Selection & AS Fundamentals (Part 1 of the BGP arc)
+Date: July 2026
+Certification: Fortinet NSE7 Enterprise Firewall 7.6 (Domain 4 — Routing)
+
+STORY PROGRESS
+===============
+Setting: Vaultline Financial. Priya's post-Session-20 mandate ("the 55-minute outage must be impossible") has finally produced hardware: FG-EDGE-P is now dual-homed, running eBGP to both ISP-A (existing) and a newly-lit ISP-B circuit — genuine physical path diversity at the primary datacenter, not just theoretical redundancy. FG-EDGE-DR's separate eBGP relationship to ISP-B at the DR site still exists but was not touched this session; no iBGP mesh has been built between FG-EDGE-P and FG-EDGE-DR yet.
+
+Session opened with a mandatory retrieval sweep of three OSPF threads left over from S22 (Type 4/5 originator and scope, reference-bandwidth cost quirk) — all three closed cleanly, with one genuine correction (Type 5 does NOT get converted to Type 3 at ABRs; it crosses unchanged, carrying "this is external" information a Type 3 cannot express) and one factual fix (default reference bandwidth is 100, not 1000 — meaning 100Mbps/1Gbps/10Gbps links all collapse to cost 1 under stock FortiOS defaults).
+
+The core of the session: FG-EDGE-P receives the same prefix from both ISP-A and ISP-B via eBGP. Since AD can't break an eBGP-vs-eBGP tie, the student derived — almost entirely through their own reasoning — the full BGP best-path attribute order, the outbound/inbound steering distinction, AS number semantics, and eBGP's TTL=1 adjacency assumption. Session was deliberately closed before covering BGP timers or the config router bgp skeleton, by student request — those are now the explicit opener for Session 24.
+
+Outstanding / cliffhangers:
+- S24 opens with: BGP timers (keepalive/hold defaults + FortiOS config), `config router bgp` skeleton (AS number, router-id, neighbor block, network statement vs redistribution), and "when is FortiGate the BGP speaker" — all promised-but-deferred from this session.
+- No iBGP session exists yet between FG-EDGE-P and FG-EDGE-DR — flagged mid-session as "Local Preference has nowhere to go" until that mesh is built. Natural setup for iBGP/route-reflector material later in the BGP arc.
+- Redistribution (OSPF↔BGP) at FG-EDGE-P, queued since S22 (summary-address activation), still not done — natural S24/S25 material once the config skeleton exists.
+- WAN-link area assignments, parked since S21, still open.
+- Marcus's NOC alerting hooks, split-policy architecture (S39/40), and VDOM partitioning (S16/18) threads remain open, untouched this session.
+
+CONCEPTS LEARNED
+=================
+1. AD vs best-path scope: Administrative Distance (Static 10, eBGP 20, OSPF 110, iBGP 200) resolves conflicts BETWEEN protocols. It is silent when two routes of the SAME protocol (e.g., two eBGP peers) compete — that gap is filled by BGP's own ordered best-path attribute list, because unlike OSPF's shared bandwidth-derived cost formula, no shared formula exists between two independent ISPs.
+2. Full best-path order (11 steps): Weight (router-local only, default 0/32768) → Local Preference (iBGP-only, stripped at eBGP boundary, default 100) → locally-originated → AS-Path length (shortest; NOT a performance metric, just an AS-boundary count) → Origin type (IGP < EGP < Incomplete) → MED (lowest, compared per-neighbor-AS by default) → eBGP over iBGP → lowest IGP metric to next-hop → oldest route → lowest Router ID → lowest Neighbor IP. BGP stops at the first attribute that differs; nothing lower is ever consulted.
+3. The outbound/inbound steering distinction (the session's central insight): Weight and Local Preference steer YOUR OWN outbound traffic — guaranteed, because the comparison happens entirely on your own router, against routes you already received. AS-Path prepending and MED only influence INBOUND traffic by shaping what you advertise outward — never guaranteed, because the neighboring AS runs its own best-path process on its own hardware. AS-Path prepending works universally (every AS must count hops); MED only works if the neighboring AS's engineer configured policy to honor it — MED is a request, not a law.
+4. ASN semantics: an ASN identifies one routing domain/policy, not a device — hence FG-EDGE-P and FG-EDGE-DR correctly share one ASN (same company, same policy) while ISP-A/ISP-B carry unrelated ASNs. Unlike an OSPF Area ID (locally meaningful, freely reusable), an ASN must be globally unique (IANA/RIR-registered) because BGP's loop-prevention mechanism checks every received AS-Path for the router's own ASN and silently drops any match — duplicate ASNs break even non-overlapping, unrelated traffic the moment a route transits near the collision.
+5. eBGP's TTL=1 default: BGP rides TCP; FortiGate's default eBGP TTL is 1, assuming a direct physical cross-connect to the neighbor. Peers genuinely more than one hop away produce total silence (TCP SYN discarded en route, no error, no neighbor ever appears) — same failure family as S22's OSPF hello-gate mismatches. `ebgp-multihop` is the FortiOS knob that relaxes this for legitimate non-adjacent eBGP scenarios; introduced conceptually only, full CLI deferred to S24.
+
+MY UNDERSTANDING
+==================
+Strong moments:
+- Correctly reasoned that AD can't resolve an eBGP-vs-eBGP tie, and independently proposed "an ordered list, walked until something breaks the tie" before being told the mechanism existed.
+- Nailed the Local Preference vs Weight scope distinction cleanly and unprompted extended it to "this also propagates to FG-EDGE-DR once iBGP exists" — genuine forward reasoning, not retrieval.
+- Correctly worked the full ISP-A/ISP-B worked example (Weight tie → Local Pref tie → AS-Path breaks it) with accurate reasoning at each step, not just the right final answer.
+- Landed the AS-Path-is-not-a-performance-metric distinction with a strong self-generated example ("one AS can mean 100 hops, two AS's can mean 2 hops").
+- Independently reasoned through the ASN-uniqueness/loop-prevention consequence once given the AS-Path-loop-check mechanism, correctly reversing an earlier "otherwise it would work" answer.
+- Correctly self-corrected the TTL=1 contradiction (said "doesn't have to be one hop" then "we need to limit hops") once asked to reconcile the two statements against real ISP handoff topology.
+- Good session self-management again: proactively called time when the session was running long, rather than pushing through fatigued.
+
+Struggles / corrections (register candidates):
+- TYPE 5 → TYPE 3 CONVERSION: initially believed Type 5 gets converted into Type 3 when crossing into other areas. Wrong — Type 5 crosses ABRs unchanged; area range/summary-address only compress Type 3s and Type 5s respectively, never convert between LSA types. RE-DRILL: "Type 5 must survive the ABR unchanged — that's the only way 'this is external' information survives."
+- REFERENCE BANDWIDTH VALUE: recalled the formula correctly but misstated the default as 1000 instead of 100 — corrected with the full three-tier worked example (100M/1G/10G all → cost 1).
+- MED COMPARISON SCOPE: on first pass, described the comparing router as Vaultline ("Vaultline decides with MED") rather than the receiving ISP — needed a full mechanics walk-through (who sends, who receives two competing routes, who runs the comparison) before landing on "Vaultline requests; the ISP decides." Worth a cold re-drill: "who actually reads two MED values side by side?"
+- eBGP MULTIHOP DIRECTION: briefly stated eBGP "doesn't have to be one hop away" immediately before also correctly guessing TTL=1 and "right next to it" — a momentary contradiction, self-resolved once asked to reconcile the two answers against real topology.
+
+TROUBLESHOOTING EXPERIENCE
+============================
+No fault-injection lab this session (concept-heavy per Stage 4 discipline, plus the OSPF retrieval sweep at the top). Troubleshooting reasoning was woven through the concept-building itself: the eBGP TTL=1 discussion produced a genuine troubleshooting pattern — "neighbor never appears, no error logged" — explicitly linked back to S22's OSPF hello-gate failure family (auth mismatch, E-bit mismatch) as the same class of silent, structural refusal rather than a stuck intermediate state. This pattern (visible-vs-invisible failure signatures) is now spanning two protocols and should keep compounding as the BGP arc continues.
+
+CONNECTIONS
+============
+Backward: S20's AD ladder and "why eBGP beats OSPF" carryover was finally resolved in situ, using this session's own eBGP-vs-eBGP scenario as the forcing function (AD picks a protocol; best-path picks between same-protocol peers — the AD carryover and today's new material turned out to be two halves of one idea). S22's OSPF retrieval sweep both closed old threads and supplied direct analogies (Type 5 surviving ABRs unchanged mirrors AS-Path surviving eBGP boundaries unchanged; TTL=1 silent failure mirrors hello-gate silent failure).
+Forward: S24 opens with BGP timers, the config router bgp skeleton, and FortiGate's role as BGP speaker — all of which will finally let Priya's dual-ISP design go live. Once neighbors are actually configured, redistribution (OSPF↔BGP, activating the ASBR badge and summary-address queued since S22) becomes real, and the still-missing FG-EDGE-P/FG-EDGE-DR iBGP mesh becomes a natural next thread (Local Preference currently has "nowhere to go").
+
+IMPORTANT TAKEAWAYS
+=====================
+- AD resolves cross-protocol conflicts; BGP's own ordered attribute list resolves same-protocol (eBGP-vs-eBGP) conflicts. Different jobs, different tools.
+- The best-path ladder is walked top-down and stops at the first differing attribute — a favorable value further down the list never rescues a route that already lost above it.
+- Weight and Local Preference steer YOUR outbound traffic, guaranteed (your hardware, your decision). AS-Path prepending and MED only request influence over INBOUND traffic, never guaranteed (their hardware, their decision).
+- AS-Path length is a policy proxy (AS boundaries crossed), not a performance metric.
+- ASNs must be globally unique because BGP's loop-prevention check scans every AS-Path for your own ASN — duplication breaks unrelated traffic, not just overlapping prefixes.
+- eBGP defaults to TTL=1, assuming direct adjacency; non-adjacent legitimate peering needs `ebgp-multihop`, or the neighbor silently never appears.
+
+FUTURE SESSION NOTES
+======================
+Reinforcement: (a) cold re-drill "Type 5 crosses ABRs unchanged" (S22 correction, now doubly reinforced by today's AS-Path-survives-eBGP parallel); (b) cold re-drill the reference-bandwidth default (100, not 1000) with the three-tier worked example; (c) one retrieval pass on "who actually compares two MED values" — the Vaultline-requests/ISP-decides framing was corrected mid-session and deserves a cold check next time BGP traffic-engineering comes up; (d) revisit the brief TTL=1 self-contradiction once, lightly, to confirm it was genuinely resolved and not just talked past.
+Story: S24 should open with Priya (or Daniel) asking the obvious next question now that peering concepts exist: "so how fast does BGP actually notice a failure, compared to what we just built in OSPF?" — natural bridge into BGP timers, followed by actually typing `config router bgp` on FG-EDGE-P and FG-EDGE-DR. The still-missing iBGP mesh between the two edge routers is a clean mid-session or S25 hook once Local Preference's "nowhere to go" problem needs solving for real.
+Spaced repetition due: FGCP internals cold quiz remains the top weakness-register candidate (unchanged since S18/S20/S21/S22). Weakness-01 session on Cluster A1 still the recommended next weakness session, independent of the BGP arc's progress.
+
+AUDIO PODCAST PROMPT (for "The Packet Path")
+============================================
+Write a two-host podcast script for "The Packet Path," a storytelling podcast for network engineers. Host: Alex, an experienced network security consultant. Co-host: Sam, smart and curious, asks clarifying questions. Tone: intelligent, conversational, true-crime documentary style for network engineers. Episode title: "The Router That Asked Nicely." Length: 12–15 minutes of dialogue.
+
+The case: a financial company finally dual-homes its primary datacenter to two internet providers, ISP-A and ISP-B, closing the single-point-of-failure gap that caused a 55-minute outage months earlier. But now both providers hand back a route to the same destination — and the network's own protocol has no shared formula to judge them by, because they're two completely separate companies with nothing in common except the customer between them.
+
+Beats, in order: (1) The setup — Administrative Distance, the trusted ladder that's ranked every routing source for months, goes silent for the first time: both candidate routes are eBGP, same rank, nothing to say. (2) Alex reveals BGP doesn't have a cost formula at all — it has an ordered list of opinions, walked one at a time, because "which path is better" between two rival companies is a policy question no shared math can answer. (3) The private knob: Weight, so local it won't even tell your own sister router down the hall. Then Local Preference, the same opinion shared honestly with every router in your own house — but silent the instant it tries to cross into someone else's. (4) The twist Sam has to sit with: the router doesn't get to choose who reaches it. Traffic leaving your building, you control completely. Traffic arriving at your door is a decision made entirely on a stranger's hardware, using a stranger's math. (5) The blunt tool — AS-Path prepending, deliberately making your own advertisement look worse, hoping every network on earth's shared law about counting hops does the persuading for you. (6) The polite tool — MED, an actual number sent across the border, except this one isn't a law, it's a request, and the neighbor's engineer can simply decide not to read the letter. (7) The identity crisis — what an AS number really protects: not politeness, but a loop-detection tripwire; two companies sharing one number by mistake doesn't just create administrative confusion, it silently kills real traffic that happens to pass near the collision, for no reason either company can see in their own logs. (8) The silent neighbor — TTL set to 1, assuming your ISP's router is standing right next to yours; break that assumption and you don't get an error, you get nothing at all, forever. Close with Alex's line: "BGP doesn't get to give orders outside its own house. Everything past your own front door is a request — and the internet is under no obligation to say yes."
+
+Sam should ask: "Wait, so my own router can't decide who reaches me?", "If MED is just a request, why does anyone bother sending it?", "Two companies use the same AS number by accident — how does that break traffic that isn't even theirs?", and "The neighbor never showed up and there's no error — how do you even start troubleshooting that?"
