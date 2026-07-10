@@ -1,0 +1,26 @@
+Session 25 — Completed Study Guide: Route Maps & Prefix Lists
+============================================================
+
+s1-prefix-lists.png
+
+Clean technical infographic on a cream background, deep navy and blue accents. A vertical ruler labeled "prefix length" from /24 at the bottom to /32 at the top. Three panels side by side: Panel 1 "198.51.100.0/24 (bare)" shows a single highlighted tick at /24 only. Panel 2 "/24 le 26" shows a shaded band covering /24, /25 and /26, with /24 marked "floor (included)" and /26 marked "ceiling". Panel 3 "/24 ge 26" shows a shaded band from /26 up to /32, with a red X on the /24 tick and a small caption "ge raises the floor — the base /24 no longer matches". Elegant serif labels, minimalist, no clutter.
+
+============================================================
+
+s2-aspath-community.png
+
+Clean technical infographic, cream background, navy/blue palette with one amber accent. Center: a stylized BGP route card labeled "198.51.100.0/24" with three visible attribute rows: "Prefix: 198.51.100.0/24", "AS-PATH: 65500 65210 65001", "Community: 65100:150". Three labeled magnifying glasses point at one row each: "prefix-list" at the prefix row, "as-path access-list (regex _65500_)" at the AS-PATH row, "community-list" at the community row. Small caption beneath: "same route — three different attributes — three different matchers". Elegant serif type, generous whitespace.
+
+============================================================
+
+a1-luggage-tags.png
+
+Warm illustrated scene, airport baggage flow, cream and amber tones. Left: a check-in desk where an agent attaches a bright amber "PRIORITY 150" tag to a suitcase labeled with a network prefix. Center: conveyor belt carrying multiple tagged suitcases past three baggage handlers, each with a small sign reading "if tag = PRIORITY → fast lane" — none of them holds a passenger list. Right: a crossed-out clipboard labeled "40-name passenger list × every gate" to show the alternative being avoided. Gentle vintage-poster style, clean composition.
+
+============================================================
+
+s3-route-map-anatomy.png
+
+Clean vertical flow diagram, cream background, navy/blue with green and red accents. A route (small envelope icon labeled with a prefix) descends past numbered clause boxes: "10 · permit · match prefix-list A · set local-preference 150" (green edge), "20 · deny · match as-path ACL B" (red edge), "30 · permit (no match conditions — matches all)" (green edge). Arrows show the route stopping at the FIRST box it matches. Beneath the last clause, a solid dark bar labeled "IMPLICIT DENY — fail closed" with a small caption "a route-map of only deny clauses blocks everything". Elegant serif labels, minimal clutter.
+
+============================================================

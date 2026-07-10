@@ -1,0 +1,59 @@
+SESSION INFORMATION
+===================
+Session Number: 25
+Topic: Route Maps, Prefix Lists & Filters (Part 1 — Matching Tools & Route-Map Anatomy)
+Date: July 2026
+Certification: Fortinet NSE7 Enterprise Firewall 7.6 (Domain 4 — Routing)
+
+STORY PROGRESS
+===============
+Setting: Vaultline Financial. The FG-EDGE-P/FG-EDGE-DR iBGP+RR mesh from S24 is now conceptually "up" in the narrative. Priya opened with a real complaint: far more is leaking into the IGP than expected, and FG-EDGE-DR has a route learned from ISP-A's peering that "should never happen." The session used that as the forcing function for the entire filtering toolkit. NOTE: the blueprint's stated S25 goal (read a six-clause route-map and predict outcomes for three sample prefixes, plus the `config router route-map` FortiOS walkthrough) was NOT completed this session — the session deliberately stopped after building the conceptual foundation (all three matchers + route-map anatomy). The six-clause exercise and FortiOS syntax are the explicit opener for the next session.
+
+CONCEPTS LEARNED
+=================
+1. BGP's unfiltered default: with no filters, a router accepts EVERYTHING an eBGP peer sends into its BGP table (full internet feed included) and re-advertises all of it onward — including into iBGP, since eBGP-learned routes are not blocked by iBGP split-horizon. "No filters means no restraint" — the leaked ISP-A route on FG-EDGE-DR wasn't a bug, it was the default working as designed. (Student initially jumped to BGP→IGP redistribution as the leak mechanism — right instinct, but the pure BGP-to-BGP propagation had to be isolated first.)
+
+2. Prefix-list le/ge window model: the base prefix length is the IMPLICIT FLOOR of a prefix-length window. Bare entry = exact match only. `le N` raises the ceiling (base stays included): /24 le 26 matches /24, /25s, /26s inside the range — NOT /27. `ge N` raises the FLOOR — which evicts the base prefix itself: /24 ge 26 matches /26–/32 within the range but NOT the bare /24. "Adding ge can exclude the very prefix you wrote" is the canonical exam trap.
+
+3. AS-path access-lists (concept only): a prefix-list has no concept of the AS-PATH attribute — different attribute, different matcher. AS-path ACLs match the AS-PATH string via regex (e.g. _65500_ = "traversed AS 65500 anywhere"). BGP regex syntax deliberately deferred to a dedicated future pass.
+
+4. Communities — policy decoupled from topology: community tags exist for route sets sharing NO common prefix pattern and NO common AS-PATH pattern (e.g. 40 scattered customer prefixes all needing LP 150). The key insight: tagging happens ONCE at origination, but the tag travels with the route as an attribute, so matching can happen anywhere downstream — every downstream router needs one rule ("if tagged X, do Y") instead of its own maintained 40-line prefix-list. Add a 41st prefix → tag at source, nothing downstream changes.
+
+5. Route-map anatomy: numbered sequence of permit/deny clauses; a route walks top-down and stops at the FIRST matching clause. Match decides which routes a clause grabs; permit/deny decides whether they survive; set decides what changes on the way through (matched-and-permitted = admit AND modify).
+
+6. Implicit deny + the deny-only trap: an unmatched route hits an implicit deny at the bottom — same fail-closed philosophy as firewall policy (safe failure = dropped, not silently admitted). Consequence: a route-map of ONLY deny clauses blocks EVERYTHING. "Deny these, allow the rest" requires a final permit clause with no match conditions (empty permit = matches all).
+
+7. Closing S23's loop: Local Preference "had nowhere to go" until iBGP existed (S24); the mechanism that actually APPLIES it is now known — a route-map with `set local-preference`, applied inbound on a neighbor.
+
+CONFIGURATION INTRODUCED
+==========================
+None — deliberately. Per the standard flow (configuration only after understanding), FortiOS syntax for prefix-lists, AS-path ACLs, community-lists, and `config router route-map` was explicitly deferred to next session, alongside the six-clause reading exercise. The `set local-preference` inbound route-map was named as a mechanism but not configured.
+
+STUDENT REASONING QUALITY
+============================
+Solid, efficient session — student arrived already knowing the le/ge vocabulary and needed edge-case sharpening rather than introduction. Notable moments:
+- Correctly predicted BGP's accept-everything/re-advertise-everything default without hesitation.
+- le semantics: correctly reasoned the direction ("base and anything more specific") but needed the boundary pinned — then answered both edge cases correctly (bare /24 matches under le 26; /27 does not).
+- ge semantics: gave correct example prefixes (/28, /27, /30, /32 all inside the window) but initially SKIPPED the critical question of whether the bare /24 still matches — answered correctly ("does not match") when re-asked directly. Worth a cold retrieval check next review: "does 10.0.0.0/8 ge 16 match 10.0.0.0/8 itself?"
+- Correctly identified that a prefix-list cannot express AS-path policy ("you would need an AS identifier").
+- Communities: first answer ("manipulate how routers behave when they see the tag") described the consequence, not the reason; second answer ("write policy based on the label not the prefix") landed the core idea, with the tag-once/match-anywhere-downstream decoupling supplied as the completing insight.
+- Implicit deny: instantly predicted it by analogy to firewall policy ("inherit deny at the bottom") — the firewall-policy mental model transferred cleanly.
+- Set statements: correctly predicted set fires on a matched permit ("the set statement is activated").
+- Self-assessed summary of all three matchers at session end was accurate on all three.
+
+TROUBLESHOOTING EXPERIENCE
+============================
+No fault-injection lab — concept-building session. Priya's leaked-route complaint served as the framing scenario but was not resolved in-session (the fix requires the FortiOS config deferred to next session). Natural follow-up lab once config exists: "why is this prefix still getting through / why did this prefix disappear" scenarios exercising first-match-wins, the ge-evicts-base trap, and the missing-empty-permit trap.
+
+CONNECTIONS
+============
+Backward: Directly continues S24's narrative (RR mesh now up; eBGP-learned routes flowing into iBGP is exactly why the leak reached FG-EDGE-DR). Implicit deny derived by analogy to firewall policy (long-running pattern of reusing security-policy instincts for routing policy). Resolved the final piece of S23's Local Preference cliffhanger: iBGP gave LP somewhere to go (S24), route-maps give LP a way to be set (S25).
+Forward: NEXT SESSION OPENER (promised explicitly): the six-clause route-map reading exercise with three sample prefixes, plus `config router route-map` / prefix-list / as-path-list / community-list FortiOS syntax. BGP regex syntax deferred as its own future rabbit hole. Still outstanding from earlier sessions: BGP timers + config router bgp base skeleton (S23), redistribution OSPF↔BGP at FG-EDGE-P (S22 — note route-maps are the natural redistribution filter, so this thread is now unblocked conceptually), WAN-link area assignments (S21), Marcus's NOC alerting hooks, split-policy architecture (S39/40), VDOM partitioning (S16/18).
+
+IMPORTANT TAKEAWAYS
+=====================
+- BGP's default is trust-and-propagate-everything; every filter is an explicit act of restraint layered on top.
+- Prefix-list = a window on prefix length. Bare = exact. le raises the ceiling (base stays). ge raises the floor (base is EVICTED — the trap).
+- Three matchers, three attributes: prefix-list → the prefix; AS-path ACL → where the route has been; community-list → the label stamped on it. Communities' real value: tag once at origination, match anywhere downstream — policy decoupled from topology.
+- Route-map = match → verdict → modify. First match wins; implicit deny below the last clause; deny-only route-maps block everything; "deny these / allow rest" needs a trailing empty permit.
+- A matched permit with a set statement admits AND modifies — this is the mechanism that applies Local Preference, MED, and community stamps.
